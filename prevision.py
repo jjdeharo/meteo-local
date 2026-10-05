@@ -366,30 +366,29 @@ def decidir(dia, ventana, d):
     for a in d.get("avisos") or []:
         a_ini, a_fin = (dt.datetime.fromisoformat(a[k]) for k in ("inicio", "fin"))
         if a_ini <= fin and a_fin >= ini:
-            grupos.setdefault((a["zona"], a["nivel"], a_ini, a_fin), []).append(a["tipo"])
+            g = grupos.setdefault((a["zona"], a["nivel"]), {"tipos": set(), "fin": a_fin})
+            g["tipos"].add(a["tipo"])
+            g["fin"] = max(g["fin"], a_fin)
     hay_valles = any(z == C.ZONA_TRAYECTO for z, *_ in grupos)
     if "avisos" in d:
         for zona, clave in ((C.ZONA_TRAYECTO, "avis_valles"), (C.ZONA_CERCANA, "avis_costa")):
-            tipos = sorted({t for (z, *_), ts in grupos.items() if z == zona for t in ts})
+            tipos = sorted({t for (z, _), g in grupos.items() if z == zona for t in g["tipos"]})
             senyals[clave] = tipos
-    for (zona, nivel, a_ini, a_fin), tipos in sorted(grupos.items(), key=lambda g: g[0][2]):
-        que = " i ".join(sorted(set(tipos)))
-        horario = f"de {hm(a_ini)} a {hm(a_fin + dt.timedelta(seconds=1))}"
+    for (zona, nivel), g in grupos.items():
+        que = " i ".join(sorted(g["tipos"]))
+        hasta = f"fins a les {hm(g['fin'] + dt.timedelta(seconds=1))}"
         if zona == C.ZONA_TRAYECTO:
-            motivos.append((0, "cotxe", f"L'AEMET té un avís {nivel} per {que} "
-                            f"al Vallès, {horario}."))
+            motivos.append((0, "cotxe", f"Avís {nivel} de l'AEMET per {que} al Vallès, {hasta}.", "aemet"))
         elif not hay_valles:
-            motivos.append((1, "compte", f"Hi ha un avís {nivel} per {que} a la costa "
-                            f"de Barcelona, {horario}."))
+            motivos.append((1, "compte", f"Avís {nivel} de l'AEMET per {que} a la costa, {hasta}.", "aemet"))
     if "avisos" in d and not grupos:
-        motivos.append((5, "moto", "L'AEMET no té cap avís de pluja ni de tempesta "
-                        "per a aquesta hora."))
+        motivos.append((5, "moto", "Cap avís de l'AEMET per a aquesta hora.", "aemet"))
 
     # 1 bis. Planes de Protección Civil: en alerta o emergencia, riesgo alto.
     for p in d.get("planes") or []:
         senyals.setdefault("proteccio_civil", []).append(f"{p['pla']}:{p['fase']}")
         if p["fase"] in ("alerta", "emergència"):
-            motivos.append((0, "cotxe", texto_plan(p)))
+            motivos.append((0, "cotxe", texto_plan(p), "pc"))
 
     # 2. Radar y estaciones: solo valen mientras la ventana no ha terminado y
     # empieza en las próximas horas.
@@ -404,11 +403,11 @@ def decidir(dia, ventana, d):
         if km is not None and km <= C.RADAR_COCHE_KM:
             on = "damunt del trajecte" if km < 2 else f"a {km:.0f} km del trajecte"
             motivos.append((0, "cotxe" if crece else "compte",
-                            f"El radar veu pluja {on}{tendencia}."))
+                            f"El radar veu pluja {on}{tendencia}.", "radar"))
         elif km is not None and km <= C.RADAR_ATENCION_KM:
-            motivos.append((2, "compte", f"El radar veu pluja a {km:.0f} km{tendencia}."))
+            motivos.append((2, "compte", f"El radar veu pluja a {km:.0f} km{tendencia}.", "radar"))
         else:
-            motivos.append((4, "moto", "El radar no veu pluja a prop."))
+            motivos.append((4, "moto", "El radar no veu pluja a prop.", "radar"))
     obs = d.get("observaciones")
     if obs and vigente and falta <= 1.5:
         mullades = [o for o in obs if o["mm_ultima_media_hora"] > 0 or (o.get("intensitat") or 0) > 0]
@@ -421,12 +420,12 @@ def decidir(dia, ventana, d):
                           else f"{coma(o['mm_ultima_media_hora'])}\u00a0mm en mitja hora")
                 parts.append(f"{o['estacion']}, {detall} a les "
                              f"{hm(dt.datetime.fromisoformat(o['hasta']))}")
-            motivos.append((0, "cotxe", f"Plou a {', i a '.join(parts)}."))
+            motivos.append((0, "cotxe", f"Plou a {', i a '.join(parts)}.", "estacions"))
         else:
             noms = ", ".join(o["estacion"] for o in obs)
             hores = sorted({hm(dt.datetime.fromisoformat(o["hasta"])) for o in obs})
-            motivos.append((4, "moto", f"Les estacions ({noms}) no registren pluja "
-                            f"(dades de les {' i '.join(hores)})."))
+            motivos.append((4, "moto", "Les estacions no registren pluja.", "estacions",
+                            f"{noms}, dades de les {' i '.join(hores)}."))
 
     # 3. Modelos finos: lo máximo que dan en cualquiera de los dos extremos.
     m = d.get("modelos")
@@ -445,14 +444,14 @@ def decidir(dia, ventana, d):
         senyals["models_mm"] = por_modelo
         senyals["cape"] = max(cape) if cape else None
         if maximo >= C.UMBRAL_MM_COCHE:
-            nivel, peso, texto = "cotxe", 1, ("Els models més detallats preveuen pluja clara "
-                                              f"(fins a {coma(maximo)}\u00a0mm en una hora).")
+            nivel, peso, texto = "cotxe", 1, ("Els models hi preveuen pluja clara "
+                                              f"({coma(maximo)}\u00a0mm en una hora).")
         elif maximo >= C.UMBRAL_MM:
-            nivel, peso, texto = "compte", 2, ("Els models més detallats preveuen una mica "
-                                               f"de pluja ({coma(maximo)}\u00a0mm en una hora).")
+            nivel, peso, texto = "compte", 2, ("Els models hi preveuen una mica de pluja "
+                                               f"({coma(maximo)}\u00a0mm en una hora).")
         else:
-            nivel, peso, texto = "moto", 3, "Els models més detallats no preveuen pluja."
-        motivos.append((peso, nivel, texto + frase_historico(ventana, nivel)))
+            nivel, peso, texto = "moto", 3, "Els models no hi preveuen pluja."
+        motivos.append((peso, nivel, texto, "models", frase_historico(ventana, nivel).strip()))
 
     # 4. Ensemble: fracción de simulaciones con lluvia.
     e = d.get("ensemble")
@@ -464,15 +463,16 @@ def decidir(dia, ventana, d):
         senyals["simulacions"] = round(prob, 3)
         nivel = "cotxe" if prob >= C.PROB_COCHE else "compte" if prob >= C.PROB_ATENCION else "moto"
         motivos.append(({"cotxe": 1, "compte": 2, "moto": 3}[nivel], nivel,
-                        f"{mullats} de cada {len(claves)} simulacions hi posen pluja "
-                        f"({round(prob * 100)}\u00a0% de probabilitat)."))
+                        f"Probabilitat de pluja segons les simulacions: {round(prob * 100)}\u00a0%.",
+                        "simulacions",
+                        f"{mullats} de cada {len(claves)} simulacions del model ICON-EU hi posen pluja."))
 
     temps = tiempo_ventana(dia, ventana, d.get("modelos"))
 
     orden = ORDEN
     if not motivos:
-        motivos.append((0, "compte", "No s'han pogut obtenir dades."))
-    veredicto = max((n for _, n, _ in motivos), key=orden.index)
+        motivos.append((0, "compte", "No s'han pogut obtenir dades.", "dades"))
+    veredicto = max((m[1] for m in motivos), key=orden.index)
     motivos.sort(key=lambda x: (x[0], -orden.index(x[1])))
     return {
         "dia": dia, "inici": ventana[0], "fi": ventana[1],
@@ -480,7 +480,10 @@ def decidir(dia, ventana, d):
         "nivell": veredicto,
         "temps": temps,
         "senyals": senyals,
-        "motius": [{"nivell": n, "text": t} for _, n, t in motivos],
+        # Cada motivo: nivel, texto corto, de qué fuente sale y, si hay, un
+        # detalle que la web enseña plegado.
+        "motius": [{"nivell": m[1], "text": m[2], "font": m[3] if len(m) > 3 else "",
+                    "detall": m[4] if len(m) > 4 and m[4] else None} for m in motivos],
     }
 
 

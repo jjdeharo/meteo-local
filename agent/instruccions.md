@@ -46,7 +46,12 @@ recomendar medio de transporte ni dar consejos sobre cómo volver. Pon en
 
 ## Cómo escribir el comentario
 
-- En catalán, de dos a tres frases, unas 60 palabras como máximo.
+- En catalán, una o dos frases cortas, 35 palabras como máximo. La página es
+  para leerla de un vistazo.
+- No repitas lo que la página ya muestra: los avisos de AEMET, los planes de
+  Protección Civil, el nivel de riesgo ni la temperatura. Aporta solo lo que
+  ves tú: hacia dónde va la lluvia, a qué hora parará o empezará, si los
+  modelos fallan.
 - Para quien va a coger la moto, no para un meteorólogo: sin siglas de
   modelos, sin «CAPE» ni «dBZ». Di lo que pasa y lo que conviene.
 - Concreto: qué ves en el radar, hacia dónde va, a qué hora, qué dice la

@@ -73,9 +73,9 @@ class Historico(unittest.TestCase):
         if not P.CALIBRACION:
             self.skipTest("sin calibracio/calibracio.json")
         r = P.decidir(MANANA, P.C.IDA, {"modelos": modelos(0)})
-        texto = r["motius"][0]["text"]
-        self.assertIn("Des del 2024", texto)
-        self.assertIn("de cada", texto)
+        detalle = r["motius"][0]["detall"]
+        self.assertIn("Des del 2024", detalle)
+        self.assertIn("de cada", detalle)
 
 
 class EstacionMinutal(unittest.TestCase):

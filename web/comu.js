@@ -40,13 +40,12 @@ function horesActualitzacio(horari) {
 function textHorari(horari) {
   const [[inici, fi]] = horari.trams;
   if (horari.trams.length === 1 && inici === '00:00' && horari.cada_min === 60 && fi === '23:00') {
-    return 'S’actualitza amb dades en directe cada hora, a l’hora en punt.';
+    return 'Dades en directe cada hora.';
   }
-  const trams = horari.trams.map(([a, b]) => `de ${a} a ${b}`).join(' i ');
-  return `S’actualitza amb dades en directe cada ${horari.cada_min} minuts, ${trams}.`;
+  return `Dades en directe cada ${horari.cada_min} min (${horari.trams.map(([a, b]) => `${a}–${b}`).join(' i ')}).`;
 }
 
-// «S'actualitza… Darrera: 07:07. Propera: 07:30.» i, si cal, l'avís de
+// «Dades en directe… Darrera: 07:07 · propera: 07:30.» i, si cal, l'avís de
 // retard quan una actualització prevista no ha arribat.
 function pintaHorari(dades) {
   const ara = new Date();
@@ -54,9 +53,9 @@ function pintaHorari(dades) {
   const hores = horesActualitzacio(dades.horari);
   const propera = hores.find((t) => t > ara);
   const darreraPrevista = hores.filter((t) => t <= ara).pop();
-  $('horari').textContent = `${textHorari(dades.horari)} Darrera actualització: ${horaCurta(generat)}`
+  $('horari').textContent = `${textHorari(dades.horari)} Darrera: ${horaCurta(generat)}`
     + (generat.toDateString() === ara.toDateString() ? '' : ` del ${generat.toLocaleDateString('ca')}`)
-    + `. Propera: ${propera ? horaCurta(propera) : 'demà a les ' + dades.horari.trams[0][0]}.`;
+    + ` · propera: ${propera ? horaCurta(propera) : 'demà a les ' + dades.horari.trams[0][0]}.`;
   const avisos = [];
   if (darreraPrevista && generat < darreraPrevista - 5 * 60000
       && ara - darreraPrevista > MARGE_RETARD_MIN * 60000) {

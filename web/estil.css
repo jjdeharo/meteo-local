@@ -255,3 +255,7 @@ h1 { margin: 0; font-size: 1.6rem; line-height: 1.2; }
 
 /* Comentari de l'agent diari */
 .comentari { margin: .7rem 0 0; padding: .6rem .8rem; border-radius: .5rem; background: var(--fons); font-size: .98rem; }
+
+.mes-detalls { margin-top: .3rem; font-size: .9rem; }
+.mes-detalls summary { cursor: pointer; color: var(--suau); }
+.mes-detalls .detall { color: var(--suau); }

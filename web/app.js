@@ -34,15 +34,37 @@ function liniaTemps(temps) {
   return temps.ratxa_max == null ? t + '.' : `${t}, ratxes de vent de fins a ${temps.ratxa_max}\u00a0km/h.`;
 }
 
-function llistaMotius(motius) {
+const MAX_MOTIUS_VISIBLES = 3;
+
+function liMotiu(motiu, ambDetall) {
+  const li = element('li', 'motiu ' + motiu.nivell);
+  li.append(element('span', 'visualment-amagat', `Risc ${TEXT_RISC[motiu.nivell]}: `));
+  li.append(document.createTextNode(motiu.text));
+  if (ambDetall && motiu.detall) li.append(' ', element('span', 'detall', motiu.detall));
+  return li;
+}
+
+// A la vista, només el que decideix el nivell (com a molt tres línies). La
+// resta, i el detall de cada motiu, plegats a «Més detalls». El pla de
+// Protecció Civil no es repeteix: ja surt a dalt de tot.
+function llistaMotius(trajecte, plans) {
+  const motius = trajecte.motius.filter((m) => !(m.font === 'pc' && plans && plans.length));
+  let visibles = motius.filter((m) => m.nivell === trajecte.nivell).slice(0, MAX_MOTIUS_VISIBLES);
+  if (!visibles.length) visibles = motius.slice(0, 2);
+  const fragment = document.createDocumentFragment();
   const llista = element('ul', 'motius');
-  for (const motiu of motius) {
-    const li = element('li', 'motiu ' + motiu.nivell);
-    li.append(element('span', 'visualment-amagat', `Risc ${TEXT_RISC[motiu.nivell]}: `));
-    li.append(document.createTextNode(motiu.text));
-    llista.append(li);
+  for (const m of visibles) llista.append(liMotiu(m, false));
+  fragment.append(llista);
+  const resta = motius.filter((m) => !visibles.includes(m));
+  if (resta.length || visibles.some((m) => m.detall)) {
+    const plec = element('details', 'mes-detalls');
+    plec.append(element('summary', null, 'Més detalls'));
+    const tot = element('ul', 'motius');
+    for (const m of [...visibles, ...resta]) tot.append(liMotiu(m, true));
+    plec.append(tot);
+    fragment.append(plec);
   }
-  return llista;
+  return fragment;
 }
 
 // Comentari de l'agent diari, només si encara val (el programa dona els
@@ -86,11 +108,11 @@ function blocTornada(dades) {
   if (temps) sec.append(element('p', 'frase', temps));
   const c = comentari(dades, 'tarda');
   if (c) sec.append(c);
-  sec.append(element('h3', 'perque', 'Per què'), llistaMotius(t.motius));
+  sec.append(element('h3', 'perque', 'Per què'), llistaMotius(t, dades.plans));
   return sec;
 }
 
-function targeta(nom, trajecte) {
+function targeta(nom, trajecte, plans) {
   const risc = TEXT_RISC[trajecte.nivell];
   const art = element('article', 'targeta ' + trajecte.nivell + (trajecte.passat ? ' passat' : ''));
   art.setAttribute('aria-label', `${nom}: risc de pluja ${risc}`);
@@ -100,7 +122,7 @@ function targeta(nom, trajecte) {
   art.append(element('p', 'risc', 'Risc de pluja: ' + risc));
   const temps = liniaTemps(trajecte.temps);
   if (temps) art.append(element('p', 'temps', temps));
-  art.append(llistaMotius(trajecte.motius));
+  art.append(llistaMotius(trajecte, plans));
   return art;
 }
 
@@ -113,7 +135,7 @@ function pinta(dades) {
     cont.replaceChildren(blocDecisio(dades));
     cont.append(element('h2', 'perque', 'Per què'));
     const graella = element('div', 'graella');
-    graella.append(targeta('Anada', dades.anada), targeta('Tornada', dades.tornada));
+    graella.append(targeta('Anada', dades.anada, dades.plans), targeta('Tornada', dades.tornada, dades.plans));
     cont.append(graella);
   }
   const plans = blocPlans(dades.plans);
