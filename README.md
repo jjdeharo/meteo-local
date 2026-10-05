@@ -9,7 +9,7 @@ lluvia de cada trayecto con sus motivos.
 Web: <https://jjdeharo.github.io/meteo-local/> (en catalán, para quien hace
 el trayecto). Al lado, [el tiempo en casa](https://jjdeharo.github.io/meteo-local/casa.html):
 lo que mide ahora la estación de Montflorit y la previsión hora a hora para
-las 24 horas siguientes, actualizada cada hora (ADR 0007).
+las 24 horas siguientes, actualizada cada media hora (ADR 0007).
 
 ## Cómo funciona
 

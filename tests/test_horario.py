@@ -26,6 +26,7 @@ class QueToca(unittest.TestCase):
         c = datos(P.horario([C.HORARIO_CASA], C.INTERVALO_CASA_MIN, []))
         self.assertEqual(Q.que_toca("06:30", d, c), "completa")
         self.assertEqual(Q.que_toca("10:00", d, c), "casa")
+        self.assertEqual(Q.que_toca("10:30", d, c), "casa")
         self.assertEqual(Q.que_toca("10:10", d, c), "")
 
     def test_modo_aviso_cada_10_min_con_desfase(self):

@@ -41,7 +41,7 @@ function horesActualitzacio(horari) {
 }
 
 function textHorari(horari) {
-  const [[inici, fi]] = horari.trams;
+  const [[inici]] = horari.trams;
   // Les raons del mode avís ja es veuen a la pàgina (avisos, pluja): aquí no
   // es repeteixen.
   if (horari.mode_avis && horari.mode_avis.length) {
@@ -49,8 +49,9 @@ function textHorari(horari) {
       : ` (${horari.trams.map(([a, b]) => `${a}\u2013${b}`).join(' i ')})`;
     return `Mode avís: dades cada ${horari.cada_min} min${trams}.`;
   }
-  if (horari.trams.length === 1 && inici === '00:00' && horari.cada_min === 60 && fi === '23:00') {
-    return 'Dades en directe cada hora.';
+  // Tot el dia: no cal dir de quina hora a quina.
+  if (horari.trams.length === 1 && inici === '00:00') {
+    return `Dades en directe cada ${horari.cada_min} min.`;
   }
   return `Dades en directe cada ${horari.cada_min} min (${horari.trams.map(([a, b]) => `${a}–${b}`).join(' i ')}).`;
 }

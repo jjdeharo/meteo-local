@@ -24,8 +24,9 @@ todo la previsión hora a hora para las 24 horas siguientes.
     en el tramo;
   - la descripción del cielo se deduce de esos mismos datos, para que no diga
     «serè» en un tramo con lluvia.
-- **Se actualiza cada hora en punto, todo el día** (`HORARIO_CASA`,
-  `INTERVALO_CASA_MIN`), desde el NAS. En esas pasadas solo se recalcula la
+- **Se actualiza cada media hora, todo el día** (`HORARIO_CASA`,
+  `INTERVALO_CASA_MIN`; cada hora hasta el 05-10-2026, cuando Juanjo pidió
+  cada 30 minutos), desde el NAS. En esas pasadas solo se recalcula la
   página de casa (`SOLO_CASA=1` en `publica.sh`): los datos del trayecto se
   vuelven a publicar tal como estaban, para no alterar su horario ni su
   decisión. La página muestra su horario como la del trayecto.
