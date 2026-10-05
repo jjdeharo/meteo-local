@@ -285,8 +285,7 @@ function blocFora(horari, casa) {
   const info = element('p', 'nota');
   const pagina = element('a', null, 'Temps a casa');
   pagina.href = 'casa.html';
-  info.append(`El trajecte de cada dia s\u2019actualitza ${franges}; propera actualització: `
-    + `${p.dia} a les ${p.hora}. Previsió per a Cerdanyola; més detall a la pàgina `, pagina, '.');
+  info.append('Més detall a la pàgina ', pagina, '.');
   sec.append(info);
   return sec;
 }
