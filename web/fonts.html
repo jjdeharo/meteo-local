@@ -1,0 +1,49 @@
+<!doctype html>
+<!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
+<html lang="ca" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Fonts i crèdits · Moto o cotxe?</title>
+  <script>
+    try {
+      const triat = localStorage.getItem('meteo.fosc');
+      const fosc = triat === null ? matchMedia('(prefers-color-scheme: dark)').matches : triat === '1';
+      document.documentElement.dataset.theme = fosc ? 'dark' : 'light';
+    } catch (_) {}
+  </script>
+  <link rel="stylesheet" href="estil.css">
+</head>
+<body>
+  <header class="cap">
+    <div>
+      <h1>Fonts i crèdits</h1>
+      <p class="ruta"><a href="./">← Tornar a la previsió</a></p>
+    </div>
+  </header>
+
+  <main class="contingut">
+    <h2>D'on surten les dades</h2>
+    <ul>
+      <li><strong>Avisos:</strong> <a href="https://www.aemet.es/ca/" target="_blank" rel="noopener">AEMET</a>, a través de <a href="https://meteoalarm.org/" target="_blank" rel="noopener">Meteoalarm</a>.</li>
+      <li><strong>Radar:</strong> <a href="https://www.rainviewer.com/" target="_blank" rel="noopener">RainViewer</a>.</li>
+      <li><strong>Estacions:</strong> Sabadell (Parc Agrari) i Sant Cugat (CAR), de la <a href="https://www.meteo.cat/observacions/xema" target="_blank" rel="noopener">Xarxa d'Estacions Meteorològiques Automàtiques de Meteocat</a>.</li>
+      <li><strong>Models i simulacions:</strong> <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo</a> (dades CC BY 4.0), amb models de Météo-France (AROME), del servei meteorològic alemany (ICON-EU i les seves 40 variants), de l'ECMWF, del Met Office britànic i de la NOAA.</li>
+    </ul>
+
+    <h2>Altres crèdits</h2>
+    <ul>
+      <li>Icones de <a href="https://lucide.dev/" target="_blank" rel="noopener">Lucide</a>, llicència ISC.</li>
+    </ul>
+
+    <h2>Avís</h2>
+    <p>És una recomanació calculada automàticament, no una previsió oficial. En cas de dubte, mana el que es vegi al cel i al radar.</p>
+  </main>
+
+  <footer class="peu">
+    <p>© 2026 <a href="https://bilateria.org" target="_blank" rel="noopener">Juan José de Haro</a> · Continguts <a href="https://creativecommons.org/licenses/by-sa/4.0/deed.ca" target="_blank" rel="noopener">CC BY-SA 4.0</a> · Codi <a href="https://www.gnu.org/licenses/agpl-3.0.html" target="_blank" rel="noopener">AGPL v3</a> · <a href="https://github.com/jjdeharo/meteo-local" target="_blank" rel="noopener">Codi font</a></p>
+    <p>Fet amb IA (Claude Code, octubre de 2026), <a href="https://jjdeharo.github.io/miae/?nivel=4" target="_blank" rel="noopener">nivell 4 del MIAE</a>.</p>
+  </footer>
+</body>
+</html>

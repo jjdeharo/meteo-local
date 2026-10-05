@@ -1,0 +1,61 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Calcula la recomanació i publica la web a GitHub Pages.
+name: Previsió
+
+on:
+  schedule:
+    # Hores UTC. Cobreixen de 5:00 a 7:00 i de 13:00 a 15:00 (hora local),
+    # tant a l'horari d'estiu com al d'hivern, i dues passades al vespre
+    # per a l'endemà. GitHub pot endarrerir-les uns minuts.
+    - cron: "0,30 3-5 * * *"
+    - cron: "0 6 * * *"
+    - cron: "0,30 11-13 * * *"
+    - cron: "0 17,20 * * *"
+    # Un cop al mes, per renovar l'activitat (vegeu el pas «Manté viva»).
+    - cron: "15 9 1 * *"
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+  actions: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  publica:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.desplegament.outputs.page_url }}
+    env:
+      TZ: Europe/Madrid
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install numpy pillow
+      - name: Proves
+        run: python -m unittest discover -s tests
+      - name: Calcula la recomanació
+        run: python prevision.py --json web/dades.json
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: web
+      - id: desplegament
+        uses: actions/deploy-pages@v4
+      # GitHub desactiva les tasques programades d'un repositori sense
+      # activitat durant 60 dies. Tornar-les a activar per l'API reinicia el
+      # comptador sense fer commits.
+      - name: Manté viva la programació
+        if: github.event.schedule == '15 9 1 * *'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X PUT "repos/${{ github.repository }}/actions/workflows/previsio.yml/enable"

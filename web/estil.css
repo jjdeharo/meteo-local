@@ -1,0 +1,193 @@
+/* SPDX-License-Identifier: AGPL-3.0-or-later */
+
+:root {
+  --fons: #f6f7f9;
+  --superficie: #ffffff;
+  --text: #1c2430;
+  --suau: #566173;
+  --vora: #dde2e8;
+  --enllac: #1d4ed8;
+  --moto: #15803d;
+  --moto-fons: #e8f6ec;
+  --compte: #a15c00;
+  --compte-fons: #fdf3e1;
+  --cotxe: #b91c1c;
+  --cotxe-fons: #fdeceb;
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  --fons: #12161c;
+  --superficie: #1b2129;
+  --text: #e8ecf1;
+  --suau: #a3adbb;
+  --vora: #2e3743;
+  --enllac: #8ab4ff;
+  --moto: #4ade80;
+  --moto-fons: #15291d;
+  --compte: #fbbf24;
+  --compte-fons: #2e2412;
+  --cotxe: #f87171;
+  --cotxe-fons: #331a1a;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0 auto;
+  max-width: 60rem;
+  padding: 1rem 1rem 2rem;
+  background: var(--fons);
+  color: var(--text);
+  font: 1rem/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+a { color: var(--enllac); }
+
+.cap {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+h1 { margin: 0; font-size: 1.6rem; line-height: 1.2; }
+.ruta { margin: .2rem 0 0; color: var(--suau); }
+
+.boto-icona {
+  flex: none;
+  width: 2.5rem;
+  height: 2.5rem;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--vora);
+  border-radius: .5rem;
+  background: var(--superficie);
+  color: var(--text);
+  cursor: pointer;
+}
+.boto-icona svg {
+  width: 1.25rem;
+  height: 1.25rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+:focus-visible { outline: 3px solid var(--enllac); outline-offset: 2px; }
+
+.dia h2 {
+  margin: 1.4rem 0 .6rem;
+  font-size: 1.1rem;
+}
+.dia h2::first-letter { text-transform: uppercase; }
+
+.graella {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
+  gap: .8rem;
+}
+
+.targeta {
+  background: var(--superficie);
+  border: 1px solid var(--vora);
+  border-left: .45rem solid var(--color);
+  border-radius: .6rem;
+  padding: .8rem 1rem;
+}
+.targeta.moto { --color: var(--moto); --color-fons: var(--moto-fons); }
+.targeta.compte { --color: var(--compte); --color-fons: var(--compte-fons); }
+.targeta.cotxe { --color: var(--cotxe); --color-fons: var(--cotxe-fons); }
+
+.trajecte {
+  margin: 0;
+  color: var(--suau);
+  font-size: .9rem;
+  display: flex;
+  justify-content: space-between;
+  gap: .5rem;
+}
+.veredicte {
+  margin: .1rem 0 0;
+  font-size: 1.8rem;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--color);
+}
+.frase { margin: 0 0 .5rem; }
+
+.perque {
+  margin: .6rem 0 .3rem;
+  font-size: .8rem;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: var(--suau);
+}
+.motius { margin: 0; padding: 0; list-style: none; }
+.motiu {
+  position: relative;
+  padding: .15rem 0 .15rem 1.1rem;
+  font-size: .95rem;
+}
+/* El color repeteix el que diu el text amagat: no és l'única pista. */
+.motiu::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: .62rem;
+  width: .55rem;
+  height: .55rem;
+  border-radius: 50%;
+  background: var(--moto);
+}
+.motiu.compte::before { background: var(--compte); }
+.motiu.cotxe::before { background: var(--cotxe); }
+
+.targeta.passat { --color: var(--suau); }
+.targeta.passat .motius, .targeta.passat .perque { display: none; }
+.etiqueta-passat { font-weight: 600; }
+
+.avis {
+  margin: 1rem 0 0;
+  padding: .6rem .8rem;
+  border-radius: .5rem;
+  background: var(--compte-fons);
+  border: 1px solid var(--compte);
+}
+
+.carregant { color: var(--suau); }
+
+.com {
+  margin-top: 1.6rem;
+  background: var(--superficie);
+  border: 1px solid var(--vora);
+  border-radius: .6rem;
+  padding: .6rem 1rem;
+}
+.com summary { cursor: pointer; font-weight: 600; }
+.com ol { padding-left: 1.3rem; }
+.com li { margin-bottom: .3rem; }
+
+.enllacos { margin: 1rem 0 0; }
+
+.peu {
+  margin-top: 2rem;
+  padding-top: .8rem;
+  border-top: 1px solid var(--vora);
+  color: var(--suau);
+  font-size: .85rem;
+}
+.peu p { margin: .2rem 0; }
+
+.visualment-amagat {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.contingut h2 { font-size: 1.1rem; margin: 1.4rem 0 .4rem; }

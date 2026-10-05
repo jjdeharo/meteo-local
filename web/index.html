@@ -1,0 +1,72 @@
+<!doctype html>
+<!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
+<html lang="ca" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <meta name="description" content="Plourà al trajecte en moto de Cerdanyola al Parc Taulí? Recomanació per a l'anada i la tornada, amb el perquè.">
+  <title>Moto o cotxe?</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232563eb' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 14.9A7 7 0 1 1 15.7 8h1.8a4.5 4.5 0 0 1 2.5 8.2'/%3E%3Cpath d='M16 14v6M8 14v6M12 16v6'/%3E%3C/svg%3E">
+  <script>
+    // Tema abans de pintar, perquè no parpellegi: el del sistema, si no s'ha triat.
+    try {
+      const triat = localStorage.getItem('meteo.fosc');
+      const fosc = triat === null ? matchMedia('(prefers-color-scheme: dark)').matches : triat === '1';
+      document.documentElement.dataset.theme = fosc ? 'dark' : 'light';
+    } catch (_) {}
+  </script>
+  <link rel="stylesheet" href="estil.css">
+</head>
+<body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <!-- Icones de Lucide (ISC) -->
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2m-7.07-17.07 1.41 1.41m11.32 11.32 1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></symbol>
+  </svg>
+
+  <header class="cap">
+    <div>
+      <h1>Moto o cotxe?</h1>
+      <p class="ruta">Cerdanyola → Parc Taulí · anada 7:00 · tornada 15:00</p>
+    </div>
+    <button type="button" id="btn-fosc" class="boto-icona" title="Canvia entre tema clar i fosc" aria-label="Canvia entre tema clar i fosc">
+      <svg aria-hidden="true"><use href="#i-moon"></use></svg>
+    </button>
+  </header>
+
+  <main>
+    <p id="avis-dades" class="avis" hidden></p>
+    <div id="dies" aria-live="polite">
+      <p class="carregant">Carregant la previsió…</p>
+    </div>
+
+    <details class="com">
+      <summary>Com es decideix</summary>
+      <p>La recomanació surt de cinc fonts. Mana la més desfavorable:</p>
+      <ol>
+        <li><strong>Avisos de l'AEMET.</strong> Si hi ha avís de pluja o de tempesta al Vallès a l'hora del trajecte, cotxe.</li>
+        <li><strong>Radar.</strong> Només per a les properes tres hores. Pluja a menys de 15 km i creixent, cotxe; a menys de 40 km, compte.</li>
+        <li><strong>Estacions de Meteocat</strong> de Sabadell i Sant Cugat. Si hi plou ara i falta poc per sortir, cotxe.</li>
+        <li><strong>Models més detallats</strong> (AROME de Météo-France i ICON-EU). Un milímetre o més en una hora, cotxe; a partir de 0,2 mm, compte.</li>
+        <li><strong>Simulacions</strong> (40 variants del model ICON-EU). Si la meitat o més hi posen pluja, cotxe; si n'hi posen una de cada cinc, compte.</li>
+      </ol>
+      <p>Per a demà encara no hi ha radar ni estacions: compten els avisos, els models i les simulacions. La pàgina s'actualitza sola diverses vegades al matí i al migdia.</p>
+      <p>En dies de tempestes, els models encerten si n'hi haurà però no on cauran. Per això un avís de tempestes decideix per si sol.</p>
+    </details>
+
+    <p class="enllacos">
+      <a href="https://www.meteo.cat/observacions/radar" target="_blank" rel="noopener">Radar de Meteocat</a>
+      · <a href="https://www.aemet.es/ca/eltiempo/prediccion/avisos?w=hoy&amp;k=cat" target="_blank" rel="noopener">Avisos de l'AEMET</a>
+    </p>
+  </main>
+
+  <footer class="peu">
+    <p>Actualitzat <span id="generat">—</span> · <a id="versio" href="https://github.com/jjdeharo/meteo-local/releases" target="_blank" rel="noopener">versió —</a> · <a href="fonts.html">Fonts i crèdits</a></p>
+    <p>© 2026 <a href="https://bilateria.org" target="_blank" rel="noopener">Juan José de Haro</a> · Continguts <a href="https://creativecommons.org/licenses/by-sa/4.0/deed.ca" target="_blank" rel="noopener">CC BY-SA 4.0</a> · Codi <a href="https://www.gnu.org/licenses/agpl-3.0.html" target="_blank" rel="noopener">AGPL v3</a></p>
+    <p>Fet amb IA (Claude Code, octubre de 2026), <a href="https://jjdeharo.github.io/miae/?nivel=4" target="_blank" rel="noopener">nivell 4 del MIAE</a>.</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
