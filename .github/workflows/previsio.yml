@@ -36,8 +36,8 @@ jobs:
     env:
       TZ: Europe/Madrid
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
       - run: pip install numpy pillow
@@ -45,12 +45,12 @@ jobs:
         run: python -m unittest discover -s tests
       - name: Calcula la recomanació
         run: python prevision.py --json web/dades.json
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/configure-pages@v6
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: web
       - id: desplegament
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
       # GitHub desactiva les tasques programades d'un repositori sense
       # activitat durant 60 dies. Tornar-les a activar per l'API reinicia el
       # comptador sense fer commits.
