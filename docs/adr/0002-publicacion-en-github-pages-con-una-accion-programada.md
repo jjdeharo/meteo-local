@@ -1,6 +1,6 @@
 # 2. Publicación en GitHub Pages con una acción programada
 
-Fecha: 2026-10-05 · Estado: aceptado
+Fecha: 2026-10-05 · Estado: sustituido en parte por el ADR 0005 (la programación y la forma de publicar)
 
 ## Contexto
 

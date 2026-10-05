@@ -11,10 +11,15 @@ el trayecto).
 
 ## Cómo funciona
 
-Una acción de GitHub ejecuta `prevision.py` varias veces al día (cada media
-hora de 5:00 a 7:00, también a las 6:15, y de 13:00 a 15:00, hora local), guarda el resultado en
-`web/dades.json` y publica la carpeta `web/` en GitHub Pages. No se guarda
-nada más ni se hacen commits automáticos.
+Un contenedor en el NAS de casa (`nas/`) ejecuta `publica.sh` cada media
+hora de 5:00 a 7:30 y de 13:00 a 15:30, hora local (el horario está en
+`config.py` y la web lo muestra). `publica.sh` calcula la previsión con
+`prevision.py` y publica `web/` con `dades.json` en la rama `gh-pages`, de la
+que sirve GitHub Pages. Al subir cambios a `main`, una acción de GitHub pasa
+las pruebas y publica igual. En `main` no hay commits automáticos.
+
+Hasta las 7:30 la web recomienda un solo medio para el día; desde entonces
+solo da el tiempo de la vuelta (riesgo de lluvia, temperatura y viento).
 
 El riesgo de cada trayecto (bajo, moderado o alto) junta cinco fuentes y
 manda la más desfavorable; el medio del día sale del trayecto con más riesgo:
@@ -58,7 +63,9 @@ al motivo de los modelos. Para repetirla: `python3 calibracio/descarrega.py
 | `web/` | La página: `index.html`, `app.js`, `estil.css` y `fonts.html` (fuentes y créditos) |
 | `calibracio/` | Descarga del histórico, análisis, `informe.md` y `calibracio.json` (los datos, en `dades/`, no se suben) |
 | `tests/` | Pruebas de la regla de decisión, sin red |
-| `.github/workflows/previsio.yml` | Programación, pruebas, cálculo y publicación |
+| `publica.sh` | Calcula y publica en la rama `gh-pages` (lo usan el NAS y GitHub) |
+| `nas/` | Contenedor del NAS: `compose.yml`, `Dockerfile` y `reloj.sh` |
+| `.github/workflows/previsio.yml` | Al subir a `main`: pruebas y publicación |
 | `docs/adr/` | Registro de decisiones |
 
 ## Uso local

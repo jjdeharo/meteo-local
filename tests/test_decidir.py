@@ -166,6 +166,14 @@ class UnSoloMedio(unittest.TestCase):
         self.assertEqual(r["decisio"]["mitja"], "cotxe")
         self.assertFalse(r["decisio"]["mantinguda"])
 
+    def test_la_pasada_de_las_730_aun_recalcula(self):
+        self.a_las("06:00")
+        anterior = P.decidir_dia(MANANA, {"avisos": [], "modelos": modelos(0)})
+        P.AHORA = P.momento(MANANA, "07:30") + dt.timedelta(seconds=13)
+        r = P.decidir_dia(MANANA, {"avisos": [], "modelos": modelos(1.5)}, anterior)
+        self.assertFalse(r["decisio"]["mantinguda"])
+        self.assertEqual(r["decisio"]["mitja"], "cotxe")
+
     def test_sin_decision_previa_se_decide_al_momento(self):
         self.a_las("08:00")
         r = P.decidir_dia(MANANA, {"avisos": [], "modelos": modelos(0)}, None)

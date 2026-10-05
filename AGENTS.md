@@ -23,3 +23,6 @@ Al cambiar algo:
   decideix» de `web/index.html`, el README, las pruebas y el ADR.
 - Pasa las pruebas, `probar-web` y axe-core antes de publicar; sube `VERSION`
   en `config.py` y etiqueta la versión.
+- Las actualizaciones programadas las hace el NAS (`nas/`, ADR 0005). Si cambias
+  `nas/`, copia los archivos a `/volume1/docker/meteo-local` y reconstruye
+  (`docker compose up -d --build`). Ver el estado: `docker logs meteo-local`.

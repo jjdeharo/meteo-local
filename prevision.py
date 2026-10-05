@@ -430,7 +430,9 @@ def decidir_dia(dia, d, anterior=None):
     de mostrar el medio y solo da el tiempo de la vuelta.
     """
     anada, tornada = decidir(dia, C.IDA, d), decidir(dia, C.VUELTA, d)
-    salida = momento(dia, C.IDA[1])
+    # Margen de cinco minutos para que la pasada de las 7:30, que empieza unos
+    # segundos después, aún recalcule.
+    salida = momento(dia, C.IDA[1]) + dt.timedelta(minutes=5)
     previa = anterior if anterior and anterior.get("dia") == dia and "decisio" in anterior else None
     if AHORA >= salida and previa:
         decision = dict(previa["decisio"], mantinguda=True)
