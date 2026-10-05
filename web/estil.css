@@ -125,7 +125,9 @@ h1 { margin: 0; font-size: 1.6rem; line-height: 1.2; }
 .decisio .veredicte { font-size: 2.4rem; }
 .decisio .frase { font-size: 1.1rem; margin-bottom: .3rem; }
 .nota { margin: 0; color: var(--suau); font-size: .9rem; }
-.horari { margin-top: .8rem; }
+.horari { margin: 1rem 0 0; }
+.horari:empty { display: none; }
+.horari .mode { color: var(--suau); font-size: .9rem; }
 .temps { margin: 0 0 .4rem; }
 .decisio .perque { margin-top: 1rem; }
 .risc { margin: .1rem 0 .4rem; font-size: 1.15rem; font-weight: 700; color: var(--color); }

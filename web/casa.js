@@ -217,16 +217,19 @@ function textAprenentatge(a) {
 function pinta(dades) {
   const cont = $('casa');
   cont.replaceChildren();
+  // Tots els avisos junts, a dalt; després, l'hora d'actualització.
+  const avisos = $('avisos');
+  avisos.replaceChildren();
   const plans = blocPlans(dades.plans);
-  if (plans) cont.append(plans);
-  if (dades.ara) cont.append(blocAra(dades.ara));
-  if (dades.avisos && dades.avisos.length) cont.append(element('p', 'avis', textAvisos(dades.avisos)));
+  if (plans) avisos.append(plans);
+  if (dades.avisos && dades.avisos.length) avisos.append(element('p', 'avis', textAvisos(dades.avisos)));
   if (dades.models && dades.models.no_encerten) {
     const m = dades.models;
-    cont.append(element('p', 'avis', `Avui els models no veuen aquesta pluja: en les darreres ${m.hores} hores `
+    avisos.append(element('p', 'avis', `Avui els models no veuen aquesta pluja: en les darreres ${m.hores} hores `
       + `han caigut ${coma(m.mesurada_mm)}\u00a0mm a Montflorit i en preveien ${coma(m.prevista_mm)}. `
       + 'Les primeres hores de la taula parteixen del que mesura l\u2019estació; per a la resta, fes més cas dels avisos.'));
   }
+  if (dades.ara) cont.append(blocAra(dades.ara));
   if (dades.hores) cont.append(taula(dades.hores, dades.aprenentatge));
   pintaHorari(dades);
   posaVersio(dades.versio);

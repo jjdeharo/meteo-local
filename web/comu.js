@@ -64,9 +64,11 @@ function pintaHorari(dades) {
   const hores = horesActualitzacio(dades.horari);
   const propera = hores.find((t) => t > ara);
   const darreraPrevista = hores.filter((t) => t <= ara).pop();
-  $('horari').textContent = `${textHorari(dades.horari)} Darrera: ${horaCurta(generat)}`
-    + (generat.toDateString() === ara.toDateString() ? '' : ` del ${generat.toLocaleDateString('ca')}`)
-    + ` · propera: ${propera ? horaCurta(propera) : 'demà a les ' + dades.horari.trams[0][0]}.`;
+  // L'hora d'actualització, destacada, just després dels avisos.
+  const dia = generat.toDateString() === ara.toDateString() ? '' : ` del ${generat.toLocaleDateString('ca')}`;
+  $('horari').replaceChildren('Actualitzat a les ', element('strong', null, horaCurta(generat) + dia),
+    ' · propera: ', element('strong', null, propera ? horaCurta(propera) : 'demà a les ' + dades.horari.trams[0][0]),
+    '. ', element('span', 'mode', textHorari(dades.horari)));
   const avisos = [];
   if (darreraPrevista && generat < darreraPrevista - 5 * 60000
       && ara - darreraPrevista > MARGE_RETARD_MIN * 60000) {

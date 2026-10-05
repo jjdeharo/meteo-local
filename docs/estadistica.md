@@ -30,14 +30,25 @@ pasó. Con eso se ajustan dos regresiones.
 
 ### Qué es
 
-Una fórmula que convierte varias señales en una probabilidad entre 0 y 1:
+Una fórmula que convierte varias señales $x_1, \dots, x_k$ en una
+probabilidad entre 0 y 1:
 
-> p = 1 / (1 + e^−(w₀ + w₁·x₁ + w₂·x₂ + …))
+$$
+p = \frac{1}{1 + e^{-(w_0 + w_1 x_1 + \dots + w_k x_k)}}
+$$
 
-Cada señal x tiene un peso w. **Los pesos se ajustan con los casos reales**:
-los que dejan la probabilidad más cerca de lo que pasó en todas las horas
-registradas. El ajuste usa el método de Newton-Raphson con una penalización
-pequeña (L2) que evita pesos exagerados cuando hay pocos datos.
+Cada señal $x_j$ tiene un peso $w_j$. **Los pesos se ajustan con los casos
+reales**: son los que hacen más verosímil lo que pasó en las $n$ horas
+registradas, con una penalización pequeña que evita pesos exagerados cuando
+hay pocos datos. Si $y_i = 1$ cuando llovió en la hora $i$ y $y_i = 0$ cuando
+no, y $p_i$ es la probabilidad que da la fórmula, se minimiza
+
+$$
+-\sum_{i=1}^{n} \left[ y_i \ln p_i + (1 - y_i) \ln (1 - p_i) \right]
++ \frac{\lambda}{2} \sum_{j=1}^{k} w_j^2, \qquad \lambda = 1,
+$$
+
+con el método de Newton-Raphson. La constante $w_0$ no se penaliza.
 
 «Llueve» quiere decir 0,2 mm o más en la hora, el umbral a partir del cual ya
 moja en moto (`UMBRAL_MM` de `config.py`).
@@ -46,12 +57,12 @@ moja en moto (`UMBRAL_MM` de `config.py`).
 
 | Señal | Cómo entra | Por qué |
 |---|---|---|
-| Lluvia de AROME HD, AROME e ICON-EU | log(1 + mm), una por modelo | Cada modelo acierta de forma distinta; el logaritmo evita que un chubasco extremo pese demasiado |
-| Antelación | días, de 0 a 1 | Una previsión a 24 horas es menos segura que una a 2 |
-| Hora del día | seno y coseno | Las tormentas de tarde no se reparten igual que la lluvia de frente |
-| Día del año | seno y coseno | La lluvia de otoño no es la de verano |
+| Lluvia de AROME HD, AROME e ICON-EU | $\ln(1 + \text{mm})$, una por modelo | Cada modelo acierta de forma distinta; el logaritmo evita que un chubasco extremo pese demasiado |
+| Antelación | $\min(t / 24, 1)$, con $t$ en horas | Una previsión a 24 horas es menos segura que una a 2 |
+| Hora del día | $\sin(2\pi h / 24)$ y $\cos(2\pi h / 24)$ | Las tormentas de tarde no se reparten igual que la lluvia de frente |
+| Día del año | $\sin(2\pi d / 365{,}25)$ y $\cos(2\pi d / 365{,}25)$ | La lluvia de otoño no es la de verano |
 | Fracción del ensemble* | de 0 a 1 | Cuántas de las 40 simulaciones ven lluvia |
-| Lluvia medida al prever* | log(1 + mm de la última hora), solo hasta 4 horas | Si ya llueve, es probable que siga |
+| Lluvia medida al prever* | $\ln(1 + \text{mm de la última hora})$ si $t \le 4$; si no, 0 | Si ya llueve, es probable que siga |
 
 \* Solo con datos propios: el archivo no las tiene (apartado 2.2).
 
@@ -69,9 +80,14 @@ Son 94.380 muestras (una por hora y estación), con lluvia en 3.622, el 4 %.
 
 **Comprobación antes de usarlo.** Se ajustó sin los últimos 90 días
 (06-07 a 04-10-2026) y se comparó en esos días con lo que mostraba la página
-hasta ahora, la fracción del ensemble. Se mide con el error de Brier: la media
-del cuadrado de la diferencia entre la probabilidad dada y lo que pasó (1 si
-llovió, 0 si no). Menos es mejor.
+hasta ahora, la fracción del ensemble. Se mide con el error de Brier, la media
+del cuadrado de la diferencia entre la probabilidad dada y lo que pasó:
+
+$$
+B = \frac{1}{n} \sum_{i=1}^{n} (p_i - y_i)^2
+$$
+
+Menos es mejor.
 
 | Método | Error de Brier |
 |---|---|
@@ -113,11 +129,25 @@ La temperatura que da el modelo (AROME a 1,5 km) es la de una celda, no la de
 la estación. La diferencia suele repetirse: por ejemplo, las noches
 despejadas y sin viento pueden ser más frías en la estación que en el modelo.
 
-Se ajusta una regresión lineal del **error del modelo** (prevista menos
-medida) según la propia temperatura prevista, las nubes, el viento, la
-humedad, la hora del día y la antelación. La temperatura que se muestra es la
-del modelo menos el error esperado. Es una regresión «ridge»: la misma
-penalización pequeña que en la lluvia.
+Se ajusta una regresión lineal del **error del modelo**,
+$e = T_{\text{modelo}} - T_{\text{medida}}$, a partir de unas señales
+$\mathbf{z}$: la propia temperatura prevista, las nubes (de 0 a 1), el viento
+(en decenas de km/h), la humedad (de 0 a 1), la hora del día (seno y coseno) y
+la antelación. Los pesos $\mathbf{v}$ minimizan
+
+$$
+\sum_{i=1}^{n} \left( e_i - \mathbf{v}^\top \mathbf{z}_i \right)^2
++ \lambda \sum_{j \ge 1} v_j^2, \qquad \lambda = 1,
+$$
+
+una regresión «ridge», con la misma penalización pequeña que en la lluvia. La
+temperatura que se muestra es la del modelo menos el error esperado:
+
+$$
+T_{\text{mostrada}} = T_{\text{modelo}} - \mathbf{v}^\top \mathbf{z}
+$$
+
+Se mide con el error medio absoluto, $\frac{1}{n} \sum_i |T_i - T_{\text{medida},i}|$.
 
 Hace falta un mínimo de **14 días** registrados. Hasta entonces, la página
 muestra la temperatura del modelo sin corregir.
@@ -135,7 +165,8 @@ Cada día a las 16:00, después de la verificación del trayecto, el NAS ejecuta
    comprobación.
 3. Lo compara con lo que se usa ahora con las mismas horas: el modelo del
    archivo para la lluvia; la temperatura sin corregir.
-4. **Solo cambia si el error baja al menos un 5 %**. Un método nuevo se
+4. **Solo cambia si el error baja al menos un 5 %**:
+   $E_{\text{nuevo}} < 0{,}95 \, E_{\text{actual}}$. Un método nuevo se
    propone, se avisa por Telegram con las cifras y se aplica al día
    siguiente. Para pararlo, basta pedírselo a Claude, que crea el archivo
    `/estat/aprenentatge/atura`.

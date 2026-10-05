@@ -175,6 +175,7 @@ function pinta(dades) {
   // encara no ha arribat): no es mostra res del trajecte.
   if (!franja || new Date(dades.generat) < franja.inici) {
     cont.replaceChildren(blocFora(dades.horari));
+    $('avisos').replaceChildren();
     $('horari').hidden = true;
     // Dins de la franja, si l'actualització no arriba, es diu.
     if (franja) pintaHorari(dades);
@@ -195,8 +196,9 @@ function pinta(dades) {
     graella.append(targeta('Anada', dades.anada, dades.plans), targeta('Tornada', dades.tornada, dades.plans));
     cont.append(graella);
   }
+  // Els avisos, a dalt de tot; després, l'hora d'actualització.
   const plans = blocPlans(dades.plans);
-  if (plans) cont.prepend(plans);
+  $('avisos').replaceChildren(...(plans ? [plans] : []));
   pintaHorari(dades);
   posaVersio(dades.versio);
 }
