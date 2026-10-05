@@ -523,9 +523,9 @@ def decidir_dia(dia, d, anterior=None, comentario=None):
     de mostrar el medio y solo da el tiempo de la vuelta.
     """
     anada, tornada = decidir(dia, C.IDA, d), decidir(dia, C.VUELTA, d)
-    # Margen de cinco minutos para que la pasada de las 7:30, que empieza unos
-    # segundos después, aún recalcule.
-    salida = momento(dia, C.IDA[1]) + dt.timedelta(minutes=5)
+    # Margen para que la última pasada de la mañana (a las 7:30 o, en modo
+    # aviso, unos minutos después) aún recalcule.
+    salida = momento(dia, C.IDA[1]) + dt.timedelta(minutes=C.MODO_AVISO_DESFASE_MIN + 2)
     previa = anterior if anterior and anterior.get("dia") == dia and "decisio" in anterior else None
     if AHORA >= salida and previa:
         decision = dict(previa["decisio"], mantinguda=True)
@@ -558,6 +558,30 @@ def llegir_anterior(origen):
         return None
 
 
+def motivos_modo_aviso(avisos_, planes, obs, radar_):
+    """Por qué conviene actualizar cada 10 minutos (lista vacía si no)."""
+    res = []
+    if any(a["zona"] == C.ZONA_TRAYECTO
+           and dt.datetime.fromisoformat(a["inicio"]) <= AHORA < dt.datetime.fromisoformat(a["fin"])
+           for a in avisos_ or []):
+        res.append("avís de l'AEMET")
+    if any(p["fase"] in ("alerta", "emergència") for p in planes or []):
+        res.append("pla de Protecció Civil")
+    if any((o.get("mm_ultima_media_hora") or 0) > 0 or (o.get("intensitat") or 0) > 0 for o in obs or []):
+        res.append("pluja a les estacions")
+    if radar_ and radar_.get("km_lluvia") is not None and radar_["km_lluvia"] <= C.RADAR_AVISO_KM:
+        res.append("pluja al radar")
+    return res
+
+
+def horario(trams, cada_min, motivos_aviso):
+    """El horario que muestra la página y que sigue el reloj del NAS."""
+    if motivos_aviso:
+        return {"trams": trams, "cada_min": C.MODO_AVISO_INTERVALO_MIN,
+                "desfase_min": C.MODO_AVISO_DESFASE_MIN, "mode_avis": motivos_aviso}
+    return {"trams": trams, "cada_min": cada_min, "desfase_min": 0, "mode_avis": []}
+
+
 def recoger(anterior=None, comentario=None):
     dia = AHORA.date().isoformat()
     d, errores = {}, []
@@ -572,7 +596,8 @@ def recoger(anterior=None, comentario=None):
     return {
         "versio": C.VERSION,
         "generat": AHORA.isoformat(timespec="minutes"),
-        "horari": {"trams": C.HORARIO, "cada_min": C.INTERVALO_MIN},
+        "horari": horario(C.HORARIO, C.INTERVALO_MIN, motivos_modo_aviso(
+            d.get("avisos"), d.get("planes"), d.get("observaciones"), d.get("radar"))),
         "errors": errores,
         "avisos": d.get("avisos"),
         "plans": d.get("planes"),

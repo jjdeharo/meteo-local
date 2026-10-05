@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 """Datos fijos del trayecto. Se cambian aquí, no en prevision.py."""
 
-VERSION = "2.0.2"
+VERSION = "2.1.0"
 
 # Coordenadas redondeadas a unos 500 m: para el tiempo da igual una calle u
 # otra, y el repositorio es público.
@@ -33,6 +33,7 @@ INTERVALO_MIN = 30
 # La página de casa (casa.html): previsión a 24 horas, actualizada cada hora
 # todo el día.
 HORARIO_CASA = ("00:00", "23:00")
+HORARIO_CASA_AVISO = ("00:00", "23:50")
 INTERVALO_CASA_MIN = 60
 
 # Agente diario (agent/): a qué hora y en qué modo se ejecuta, y con qué
@@ -40,6 +41,16 @@ INTERVALO_CASA_MIN = 60
 # recientes.
 AGENTE_HORAS = {"06:07": "mati", "13:07": "tarda"}
 AGENTE_MODELO = "claude-sonnet-5-5"   # fijo: el alias «sonnet» cambiaría solo
+
+# Modo aviso: con aviso de AEMET vigente, plan de Protección Civil en alerta o
+# emergencia, lluvia en Montflorit o lluvia en el radar a menos de
+# RADAR_AVISO_KM, las dos páginas se actualizan cada 10 minutos (la del
+# trayecto, dentro de sus franjas). El radar publica una imagen cada 10
+# minutos en punto, con unos minutos de retraso: se actualiza DESFASE minutos
+# después para coger siempre la imagen nueva.
+MODO_AVISO_INTERVALO_MIN = 10
+MODO_AVISO_DESFASE_MIN = 1   # el radar publica unos 20-50 s después de la hora
+RADAR_AVISO_KM = 15
 
 # Registro de aciertos (registre.py): a qué hora se comprueba la lluvia que
 # cayó, a los cuántos días se manda el resumen por Telegram y cuántos días de

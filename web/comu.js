@@ -29,8 +29,11 @@ function avuiA(hhmm) {
 // Totes les hores d'actualització d'avui, segons l'horari de les dades.
 function horesActualitzacio(horari) {
   const hores = [];
+  const desfase = (horari.desfase_min || 0) * 60000;
   for (const [inici, fi] of horari.trams) {
-    for (let t = avuiA(inici); t <= avuiA(fi); t = new Date(t.getTime() + horari.cada_min * 60000)) {
+    const fins = avuiA(fi).getTime() + desfase;
+    for (let t = new Date(avuiA(inici).getTime() + desfase); t <= fins;
+      t = new Date(t.getTime() + horari.cada_min * 60000)) {
       hores.push(t);
     }
   }
@@ -39,6 +42,13 @@ function horesActualitzacio(horari) {
 
 function textHorari(horari) {
   const [[inici, fi]] = horari.trams;
+  // Les raons del mode avís ja es veuen a la pàgina (avisos, pluja): aquí no
+  // es repeteixen.
+  if (horari.mode_avis && horari.mode_avis.length) {
+    const trams = horari.trams.length === 1 && inici === '00:00' ? ''
+      : ` (${horari.trams.map(([a, b]) => `${a}\u2013${b}`).join(' i ')})`;
+    return `Mode avís: dades cada ${horari.cada_min} min${trams}.`;
+  }
   if (horari.trams.length === 1 && inici === '00:00' && horari.cada_min === 60 && fi === '23:00') {
     return 'Dades en directe cada hora.';
   }

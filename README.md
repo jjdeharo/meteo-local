@@ -19,7 +19,13 @@ hora de 5:00 a 7:30 y de 13:00 a 15:30, hora local (el horario está en
 `prevision.py` y publica `web/` con `dades.json` en la rama `gh-pages`, de la
 que sirve GitHub Pages. Al subir cambios a `main`, una acción de GitHub pasa
 las pruebas, y el NAS, que mira cada minuto si hay código nuevo, publica.
-Solo publica el NAS. En `main` no hay commits automáticos.
+Solo publica el NAS.
+
+**Modo aviso:** con aviso de AEMET, plan de Protección Civil activado, lluvia
+en las estaciones o en el radar a menos de 15 km, las dos páginas pasan a
+actualizarse cada 10 minutos, en el minuto 1 (:01, :11…), justo después de cada
+imagen nueva del radar (ADR 0010). El horario lo decide `que_toca.py` con el
+mismo dato que muestra la web. En `main` no hay commits automáticos.
 
 A las 6:07 y a las 13:07, un agente con IA (Claude Sonnet 5.5) mira los datos y el
 radar en imagen y escribe un comentario breve en catalán, que la página muestra

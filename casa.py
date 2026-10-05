@@ -163,7 +163,6 @@ def comprobacion_modelos(desde, h, filas_estacion):
 
 def recoger():
     salida = {"versio": C.VERSION, "generat": P.AHORA.isoformat(timespec="minutes"),
-              "horari": {"trams": [C.HORARIO_CASA], "cada_min": C.INTERVALO_CASA_MIN},
               "errors": []}
     filas_estacion, ara = [], None
     try:
@@ -182,6 +181,16 @@ def recoger():
     except Exception as ex:
         salida["errors"].append(f"plans: {ex}")
     salida["avisos"], salida["plans"] = avisos, planes
+    radar = None
+    try:
+        radar = P.radar()
+    except Exception as ex:
+        salida["errors"].append(f"radar: {ex}")
+    obs = [{"intensitat": ara.get("intensitat"), "mm_ultima_media_hora": ara.get("pluja_30min")}] if ara else []
+    motivos = P.motivos_modo_aviso(avisos, planes, obs, radar)
+    # En modo aviso, todo el día: hasta las 23:50, no solo hasta las 23:00.
+    salida["horari"] = P.horario([C.HORARIO_CASA_AVISO if motivos else C.HORARIO_CASA],
+                                 C.INTERVALO_CASA_MIN, motivos)
     try:
         h, e = modelos(P.AHORA)
         salida["hores"] = previsio(P.AHORA, h, e, ara, avisos)

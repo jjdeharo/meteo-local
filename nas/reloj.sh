@@ -2,9 +2,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # El reloj de meteo-local dentro del contenedor del NAS.
 #
-# Cada minuto mira si la hora local es una de las de actualización, que salen
-# de config.py (HORARIO e INTERVALO_MIN): la misma fuente que lee la web, así
-# que lo que dice la página y lo que se hace no pueden separarse. Si toca, pone
+# Cada minuto pregunta a que_toca.py si es hora de actualizar: lo decide con el
+# horario de los últimos datos publicados, el mismo que muestra la web (en
+# modo aviso, cada 10 minutos), así que lo que dice la página y lo que se hace
+# no pueden separarse. Si toca, pone
 # al día el repositorio, publica con publica.sh y apunta lo publicado en el
 # registro. Las demás horas en punto (HORARIO_CASA) solo rehace la página de
 # casa. A HORA_VERIFICACION comprueba la lluvia que cayó (registre.py). En
@@ -56,17 +57,6 @@ verificacion() {
     || registro "ha fallado la verificación del día"
 }
 
-horas_casa() {
-  python3 -c '
-import sys, datetime as dt
-sys.path.insert(0, "/proyecto")
-import config as C
-ini, fin = C.HORARIO_CASA
-t = dt.datetime.strptime(ini, "%H:%M"); f = dt.datetime.strptime(fin, "%H:%M")
-while t <= f:
-    print(t.strftime("%H:%M")); t += dt.timedelta(minutes=C.INTERVALO_CASA_MIN)
-'
-}
 
 hay_cambios() {
   remoto=$(git -C "$REPO" ls-remote -q origin refs/heads/main 2>/dev/null | cut -f1)
@@ -91,17 +81,6 @@ hora_verificacion() {
   python3 -c 'import sys; sys.path.insert(0, "/proyecto"); import config; print(config.HORA_VERIFICACION)'
 }
 
-horas() {
-  python3 -c '
-import sys, datetime as dt
-sys.path.insert(0, "/proyecto")
-import config as C
-for ini, fin in C.HORARIO:
-    t = dt.datetime.strptime(ini, "%H:%M"); f = dt.datetime.strptime(fin, "%H:%M")
-    while t <= f:
-        print(t.strftime("%H:%M")); t += dt.timedelta(minutes=C.INTERVALO_MIN)
-'
-}
 
 if [ "${1:-}" = "--ara" ]; then pasada; exit; fi
 
@@ -110,12 +89,13 @@ while true; do
   # Espera al principio del minuto siguiente.
   sleep $(( 60 - 10#$(date +%S) ))
   ahora=$(date +%H:%M)
-  if [ -d "$REPO/.git" ] && horas | grep -qx "$ahora"; then
-    pasada
-  elif [ -d "$REPO/.git" ] && horas_casa | grep -qx "$ahora"; then
-    pasada_casa
-  elif [ ! -d "$REPO/.git" ]; then
+  if [ ! -d "$REPO/.git" ]; then
     prepara
+  else
+    case "$(cd "$REPO" && python3 que_toca.py "$ahora" "$ESTAT" /estat/casa.json)" in
+      completa) pasada ;;
+      casa) pasada_casa ;;
+    esac
   fi
   # Código nuevo en main: se publica ya, sin esperar a la próxima hora.
   if [ -d "$REPO/.git" ] && hay_cambios; then
