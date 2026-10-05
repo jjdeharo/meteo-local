@@ -78,6 +78,38 @@ class Historico(unittest.TestCase):
         self.assertIn("de cada", texto)
 
 
+class EstacionMinutal(unittest.TestCase):
+    def filas(self, valores, inicio="2026-10-05 06:30"):
+        t0 = dt.datetime.fromisoformat(inicio)
+        return [{"dt_local": (t0 + dt.timedelta(minutes=i)).isoformat(sep=" "),
+                 "PREC": p, "PINT": 0} for i, p in enumerate(valores)]
+
+    def test_lluvia_de_la_ultima_media_hora(self):
+        # 40 minutos: 1 mm al principio (fuera de la media hora) y 2 mm al final.
+        valores = [0.0] * 5 + [1.0] * 30 + [2.0, 3.0, 3.0, 3.0, 3.0]
+        r = P.resumen_minutal(self.filas(valores), "Prova", "prova")
+        self.assertEqual(r["mm_hoy"], 3.0)
+        self.assertEqual(r["mm_ultima_media_hora"], 2.0)
+
+    def test_el_acumulado_vuelve_a_cero_a_medianoche(self):
+        valores = [5.0] * 10 + [0.0, 0.5, 1.0]
+        r = P.resumen_minutal(self.filas(valores, "2026-10-04 23:50"), "Prova", "prova")
+        self.assertEqual(r["mm_ultima_media_hora"], 1.0)
+
+    def test_si_llueve_en_montflorit_es_coche(self):
+        hora_salida = P.momento(MANANA, P.C.IDA[0])
+        ahora = P.AHORA
+        try:
+            P.AHORA = hora_salida - dt.timedelta(minutes=20)
+            obs = [{"estacion": "Cerdanyola (Montflorit)", "mm_ultima_media_hora": 4.0,
+                    "intensitat": 40.4, "hasta": P.AHORA.isoformat()}]
+            r = P.decidir(MANANA, P.C.IDA, {"observaciones": obs})
+        finally:
+            P.AHORA = ahora
+        self.assertEqual(r["nivell"], "cotxe")
+        self.assertIn("Plou a Cerdanyola (Montflorit), 40,4\u00a0mm/h a les", r["motius"][0]["text"])
+
+
 class UnSoloMedio(unittest.TestCase):
     """Quien va en moto vuelve en moto: un medio para todo el día."""
 

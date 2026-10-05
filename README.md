@@ -29,9 +29,10 @@ Fuentes, de la más a la menos decisiva:
    lluvia o tormenta a la hora del trayecto, riesgo alto.
 2. **Radar** (RainViewer), solo para las 3 horas siguientes: lluvia a menos de
    15 km y creciendo, riesgo alto; a menos de 40 km, moderado.
-3. **Estaciones de Meteocat** de Sabadell y Sant Cugat (página de meteo.cat o,
-   si falla, portal de datos abiertos de la Generalitat): si llueve y falta
-   menos de hora y media, riesgo alto.
+3. **Estaciones**: Montflorit, de meteocerdanyola.com, minuto a minuto, y las
+   de Meteocat en Sabadell y Sant Cugat (página de meteo.cat o, si falla,
+   portal de datos abiertos de la Generalitat). Si llueve y falta menos de
+   hora y media, riesgo alto.
 4. **Modelos finos** (AROME HD, AROME e ICON-EU): 1 mm en una hora, alto;
    0,2 mm, moderado. Los globales (ECMWF, UKMO, GFS) se descargan pero no
    deciden: sus celdas de 10-25 km incluyen mar.
@@ -84,8 +85,9 @@ Necesita Python 3 con `numpy` y `Pillow`. Tarda unos 15 s.
 
 Previsión de [Open-Meteo](https://open-meteo.com/) (CC BY 4.0), observaciones
 de [Meteocat](https://www.meteo.cat/observacions/xema) y del
-[portal de datos abiertos de la Generalitat](https://analisi.transparenciacatalunya.cat/d/nzvn-apee), radar de
-[RainViewer](https://www.rainviewer.com/) y avisos de AEMET a través de
+[portal de datos abiertos de la Generalitat](https://analisi.transparenciacatalunya.cat/d/nzvn-apee), estación de Montflorit de
+[meteocerdanyola.com](https://meteocerdanyola.com/2026/sites/cerdanyola_montflorit/index.html),
+radar de [RainViewer](https://www.rainviewer.com/) y avisos de AEMET a través de
 [Meteoalarm](https://meteoalarm.org/). Iconos de [Lucide](https://lucide.dev/)
 (ISC).
 

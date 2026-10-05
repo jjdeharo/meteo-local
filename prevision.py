@@ -129,9 +129,51 @@ def observaciones_portal(codi, nom):
             "hasta": (ultima + dt.timedelta(minutes=30)).astimezone().isoformat()}
 
 
+METEOCERDANYOLA = "https://meteocerdanyola.com/2026/api/graphs-series.php?slug={}"
+
+
+def resumen_minutal(filas, nom, font):
+    """Lluvia de la última media hora a partir de filas minuto a minuto con el
+    acumulado del día (PREC, se pone a cero a medianoche) y la intensidad
+    (PINT, mm/h)."""
+    filas = [f for f in filas if f.get("PREC") is not None]
+    if not filas:
+        return None
+    ultima = dt.datetime.fromisoformat(filas[-1]["dt_local"]).astimezone()
+    desde = ultima - dt.timedelta(minutes=30)
+    recientes = [f for f in filas if dt.datetime.fromisoformat(f["dt_local"]).astimezone() >= desde]
+    mm = 0.0
+    for antes, despues in zip(recientes, recientes[1:]):
+        salto = despues["PREC"] - antes["PREC"]
+        mm += despues["PREC"] if salto < 0 else salto
+    return {"estacion": nom, "font": font,
+            "mm_hoy": round(filas[-1]["PREC"], 1),
+            "mm_ultima_media_hora": round(mm, 1),
+            "intensitat": filas[-1].get("PINT"),
+            "hasta": ultima.isoformat()}
+
+
+def observaciones_meteocerdanyola(slug, nom):
+    """Estaciones de meteocerdanyola.com, minuto a minuto. Se lee la API de
+    sus gráficas una vez por actualización (unos 380 KB, últimas 24 h): la
+    carpeta /2026/data/ está cerrada a programas en su robots.txt, la API no.
+    Juanjo decidió usarla (05-10-2026); ver el ADR 0004."""
+    datos = json.loads(get(METEOCERDANYOLA.format(slug)))
+    return resumen_minutal(datos.get("rows", []), nom, "meteocerdanyola.com")
+
+
 def observaciones():
-    """meteo.cat va más al día; si falla, el portal de la Generalitat."""
+    """Primero la estación de Montflorit (minuto a minuto); después las de
+    Meteocat: su web, que va más al día, o si falla el portal de la
+    Generalitat."""
     res = []
+    for slug, nom in C.ESTACIONES_LOCALES.items():
+        try:
+            dato = observaciones_meteocerdanyola(slug, nom)
+        except Exception:
+            dato = None
+        if dato:
+            res.append(dato)
     for codi, nom in C.ESTACIONES.items():
         dato = None
         for fuente in (observaciones_web, observaciones_portal):
@@ -282,14 +324,20 @@ def decidir(dia, ventana, d):
             motivos.append((4, "moto", "El radar no veu pluja a prop."))
     obs = d.get("observaciones")
     if obs and -0.5 <= falta <= 1.5:
-        mullades = [o["estacion"] for o in obs if o["mm_ultima_media_hora"] > 0]
-        hora = hm(min(dt.datetime.fromisoformat(o["hasta"]) for o in obs))
+        mullades = [o for o in obs if o["mm_ultima_media_hora"] > 0 or (o.get("intensitat") or 0) > 0]
         if mullades:
-            motivos.append((0, "cotxe", f"Plou a {' i a '.join(mullades)} "
-                            f"(dada de les {hora})."))
+            parts = []
+            for o in mullades:
+                detall = (f"{coma(o['intensitat'])}\u00a0mm/h" if o.get("intensitat")
+                          else f"{coma(o['mm_ultima_media_hora'])}\u00a0mm en mitja hora")
+                parts.append(f"{o['estacion']}, {detall} a les "
+                             f"{hm(dt.datetime.fromisoformat(o['hasta']))}")
+            motivos.append((0, "cotxe", f"Plou a {', i a '.join(parts)}."))
         else:
-            motivos.append((4, "moto", "Les estacions de Sabadell i Sant Cugat no "
-                            f"registren pluja (dada de les {hora})."))
+            noms = ", ".join(o["estacion"] for o in obs)
+            hores = sorted({hm(dt.datetime.fromisoformat(o["hasta"])) for o in obs})
+            motivos.append((4, "moto", f"Les estacions ({noms}) no registren pluja "
+                            f"(dades de les {' i '.join(hores)})."))
 
     # 3. Modelos finos: lo máximo que dan en cualquiera de los dos extremos.
     m = d.get("modelos")
