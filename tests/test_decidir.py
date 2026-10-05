@@ -240,3 +240,27 @@ class UnSoloMedio(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class Roba(unittest.TestCase):
+    def tram(self, tmin, tmax):
+        return {"temps": {"temp_min": tmin, "temp_max": tmax, "ratxa_max": 20}}
+
+    def test_sensacion_a_45_kmh(self):
+        self.assertAlmostEqual(P.sensacion(10), 5.7, places=1)
+        self.assertAlmostEqual(P.sensacion(5), -1.0, places=1)
+        # Por encima de 10 °C el índice no vale: la temperatura del aire.
+        self.assertEqual(P.sensacion(12), 12)
+
+    def test_frio_con_sensacion(self):
+        r = P.roba("moto", self.tram(5, 7), self.tram(8, 9))
+        self.assertIn("Roba d'hivern", r)
+        self.assertIn("5 °C es noten com -1 °C", r)
+
+    def test_lluvia_capas_y_coche(self):
+        r = P.roba("compte", self.tram(12, 14), self.tram(20, 22))
+        self.assertTrue(r.startswith("Impermeable"))
+        self.assertIn("capes", r)
+        self.assertEqual(P.roba("cotxe", self.tram(20, 21), self.tram(22, 23)),
+                         "Jaqueta lleugera o jersei i paraigua.")
+        self.assertIsNone(P.roba("moto", {"temps": None}, {"temps": None}))

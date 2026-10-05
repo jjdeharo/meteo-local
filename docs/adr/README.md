@@ -14,5 +14,6 @@
 | [0010](0010-modo-aviso-actualizacion-cada-10-minutos.md) | Modo aviso: actualización cada 10 minutos | aceptado |
 | [0011](0011-paginas-que-se-ponen-al-dia-solas-y-trayecto-solo-en-franja.md) | Páginas que se ponen al día solas; el trayecto, solo en su franja | aceptado |
 | [0012](0012-aprendizaje-de-la-pagina-de-casa.md) | Aprendizaje de la página de casa | aceptado |
+| [0013](0013-ropa-segun-el-tiempo.md) | Ropa según el tiempo | aceptado |
 
 Plantilla: [0000-plantilla.md](0000-plantilla.md). Para crear uno: `nuevo-adr "Título"`.

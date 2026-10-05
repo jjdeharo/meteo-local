@@ -124,6 +124,7 @@ h1 { margin: 0; font-size: 1.6rem; line-height: 1.2; }
 .decisio .data::first-letter { text-transform: uppercase; }
 .decisio .veredicte { font-size: 2.4rem; }
 .decisio .frase { font-size: 1.1rem; margin-bottom: .3rem; }
+.decisio .roba { margin: 0 0 .5rem; }
 .nota { margin: 0; color: var(--suau); font-size: .9rem; }
 .horari { margin: 1rem 0 0; }
 .horari:empty { display: none; }

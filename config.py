@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 """Datos fijos del trayecto. Se cambian aquí, no en prevision.py."""
 
-VERSION = "2.3.1"
+VERSION = "2.4.0"
 
 # Coordenadas redondeadas a unos 500 m: para el tiempo da igual una calle u
 # otra, y el repositorio es público.
@@ -82,6 +82,12 @@ MODELOS_FINOS = [
 MODELOS_GLOBALES = ["ecmwf_ifs025", "ukmo_seamless", "gfs_seamless"]
 # Ensemble horario usado como probabilidad.
 ENSEMBLE = "icon_eu_eps"
+
+# Ropa (prevision.roba): el ciclomotor va como mucho a 45 km/h. Con 10 °C o
+# menos, el frío se calcula como sensación térmica a esa velocidad (índice de
+# Environment Canada); por encima, con la temperatura del aire.
+VELOCIDAD_CICLOMOTOR_KMH = 45
+ROPA_DIFERENCIA_CAPAS = 8      # °C entre ida y vuelta para avisar de las capas
 
 # Umbrales de la decisión (mm en una hora; fracción de miembros; km).
 UMBRAL_MM = 0.2          # ya moja en moto

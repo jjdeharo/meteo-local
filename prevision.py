@@ -514,6 +514,56 @@ def comentario_vigente(c, dia, anada, tornada):
     return antes.get("anada") == anada["nivell"] and antes.get("tornada") == tornada["nivell"]
 
 
+def sensacion(t, kmh=C.VELOCIDAD_CICLOMOTOR_KMH):
+    """Sensación térmica por el viento de la marcha (índice de Environment
+    Canada, válido con 10 °C o menos); por encima, la temperatura del aire."""
+    if t > 10 or kmh < 4.8:
+        return t
+    v = kmh ** 0.16
+    return 13.12 + 0.6215 * t - 11.37 * v + 0.3965 * t * v
+
+
+def roba(mitja, anada, tornada):
+    """Qué ponerse para el día, según el medio, la temperatura más baja de los
+    dos trayectos (de ella depende el frío) y la diferencia con la más alta."""
+    temps = [t["temps"] for t in (anada, tornada) if t.get("temps")]
+    if not temps:
+        return None
+    t_min = min(t["temp_min"] for t in temps)
+    t_max = max(t["temp_max"] for t in temps)
+    parts = []
+    if mitja == "cotxe":
+        if t_min <= 10:
+            parts.append("Abric")
+        elif t_min <= 17:
+            parts.append("Jaqueta")
+        elif t_min <= 24:
+            parts.append("Jaqueta lleugera o jersei")
+        else:
+            parts.append("Roba d'estiu")
+        parts[-1] += " i paraigua."
+    else:
+        if mitja == "compte":
+            parts.append("Impermeable: jaqueta i pantalons de pluja i guants impermeables.")
+        s = round(sensacion(t_min))
+        if t_min <= 10:
+            base = ("Roba d'hivern: jaqueta i pantalons de moto tèrmics, primera capa tèrmica "
+                    "i folre polar a sota, guants d'hivern i tub de coll." if s < 0 else
+                    "Jaqueta de moto d'hivern, folre polar o dessuadora a sota, "
+                    "guants d'hivern i tub de coll.")
+            parts.append(f"{base} A {C.VELOCIDAD_CICLOMOTOR_KMH} km/h, {t_min} °C es noten com {s} °C.")
+        elif t_min <= 17:
+            parts.append("Jaqueta de moto amb folre, una dessuadora a sota i guants d'entretemps; "
+                         "el tub de coll ajuda.")
+        elif t_min <= 24:
+            parts.append("Jaqueta de moto de mitja temporada i guants d'entretemps.")
+        else:
+            parts.append("Jaqueta de moto d'estiu, ventilada, i guants d'estiu. Porta aigua.")
+    if t_max - t_min >= C.ROPA_DIFERENCIA_CAPAS:
+        parts.append(f"De {t_min} a {t_max} °C durant el dia: millor capes que et puguis treure.")
+    return " ".join(parts)
+
+
 def decidir_dia(dia, d, anterior=None, comentario=None):
     """Un solo medio para ida y vuelta: el del trayecto más desfavorable.
 
@@ -545,7 +595,7 @@ def decidir_dia(dia, d, anterior=None, comentario=None):
     if comentario and comentario.get("dia") == dia:
         salida_c = dict(comentario, vigent=comentario_vigente(comentario, dia, anada, tornada))
     return {"dia": dia, "decisio": decision, "anada": anada, "tornada": tornada,
-            "comentari": salida_c}
+            "roba": roba(decision["mitja"], anada, tornada), "comentari": salida_c}
 
 
 def llegir_anterior(origen):

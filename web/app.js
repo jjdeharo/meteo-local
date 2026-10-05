@@ -88,6 +88,11 @@ function blocDecisio(dades) {
   sec.append(element('h2', 'data', nomDia(dades.dia)));
   sec.append(element('p', 'veredicte', v.titol));
   sec.append(element('p', 'frase', v.frase));
+  if (dades.roba) {
+    const roba = element('p', 'roba');
+    roba.append(element('strong', null, 'Roba: '), dades.roba);
+    sec.append(roba);
+  }
   sec.append(element('p', 'nota', notaDecisio(dades.decisio, dades.anada.fi)
     + (dades.decisio.per_la_ia ? ' La valoració de la IA l\u2019ha fet més prudent que el càlcul.' : '')));
   const c = comentari(dades, 'mati');
