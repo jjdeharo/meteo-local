@@ -10,5 +10,6 @@
 | [0006](0006-registro-de-aciertos-y-de-todas-las-senales.md) | Registro de aciertos y de todas las señales | aceptado |
 | [0007](0007-pagina-del-tiempo-en-casa.md) | Página del tiempo en casa | aceptado |
 | [0008](0008-planes-de-proteccion-civil.md) | Planes de Protección Civil | aceptado |
+| [0009](0009-agente-diario-con-ia-en-el-nas.md) | Agente diario con IA en el NAS | aceptado |
 
 Plantilla: [0000-plantilla.md](0000-plantilla.md). Para crear uno: `nuevo-adr "Título"`.

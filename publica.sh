@@ -12,6 +12,7 @@
 #   DESTINO     adónde se empuja (por defecto, el remoto origin)
 #   SOLO_CASA   si vale 1, solo recalcula la página de casa y vuelve a
 #               publicar los datos del trayecto tal como estaban (ANTERIOR)
+#   COMENTARI   comentario del agente diario (agent/), si lo hay
 set -euo pipefail
 cd "$(dirname "$0")"
 
@@ -28,9 +29,14 @@ if [ "${SOLO_CASA:-0}" = 1 ]; then
     *) cp "$ANTERIOR" "$sitio/dades.json" ;;
   esac
 else
-  python3 prevision.py --anterior "$ANTERIOR" --json "$sitio/dades.json"
+  python3 prevision.py --anterior "$ANTERIOR" --comentari "${COMENTARI:-/dev/null}" \
+    --json "$sitio/dades.json"
 fi
 python3 casa.py --json "$sitio/casa.json" >/dev/null
+# Una copia de casa.json para el agente, junto a los datos del trayecto.
+if [ "${ANTERIOR#http}" = "$ANTERIOR" ]; then
+  cp "$sitio/casa.json" "$(dirname "$ANTERIOR")/casa.json"
+fi
 # Sin Jekyll: la web es HTML ya hecho.
 touch "$sitio/.nojekyll"
 

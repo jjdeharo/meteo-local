@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 """Datos fijos del trayecto. Se cambian aquí, no en prevision.py."""
 
-VERSION = "1.9.0"
+VERSION = "2.0.0"
 
 # Coordenadas redondeadas a unos 500 m: para el tiempo da igual una calle u
 # otra, y el repositorio es público.
@@ -34,6 +34,12 @@ INTERVALO_MIN = 30
 # todo el día.
 HORARIO_CASA = ("00:00", "23:00")
 INTERVALO_CASA_MIN = 60
+
+# Agente diario (agent/): a qué hora y en qué modo se ejecuta, y con qué
+# modelo. Va después de la actualización de la hora en punto, para leer datos
+# recientes.
+AGENTE_HORAS = {"06:07": "mati", "13:07": "tarda"}
+AGENTE_MODELO = "claude-sonnet-5-5"   # fijo: el alias «sonnet» cambiaría solo
 
 # Registro de aciertos (registre.py): a qué hora se comprueba la lluvia que
 # cayó, a los cuántos días se manda el resumen por Telegram y cuántos días de

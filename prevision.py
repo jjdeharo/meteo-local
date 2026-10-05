@@ -491,7 +491,27 @@ def peor(*niveles):
     return max(niveles, key=ORDEN.index)
 
 
-def decidir_dia(dia, d, anterior=None):
+def leer_comentario(ruta):
+    """Comentario del agente diario (agent/), si lo hay."""
+    try:
+        with open(ruta, encoding="utf-8") as f:
+            return json.load(f)
+    except (OSError, ValueError, TypeError):
+        return None
+
+
+def comentario_vigente(c, dia, anada, tornada):
+    """Vale mientras el programa siga dando los mismos niveles que cuando se
+    escribió: si cambian, el comentario se ha quedado viejo."""
+    if not c or c.get("dia") != dia:
+        return False
+    antes = c.get("nivells_programa", {})
+    if c.get("mode") == "tarda":
+        return antes.get("tornada") == tornada["nivell"]
+    return antes.get("anada") == anada["nivell"] and antes.get("tornada") == tornada["nivell"]
+
+
+def decidir_dia(dia, d, anterior=None, comentario=None):
     """Un solo medio para ida y vuelta: el del trayecto más desfavorable.
 
     Hasta el final de la ventana de ida (7:30) se recalcula en cada ejecución,
@@ -513,7 +533,16 @@ def decidir_dia(dia, d, anterior=None):
                     "decidit": AHORA.isoformat(timespec="minutes"),
                     "abans_de_sortir": AHORA < salida,
                     "mantinguda": False}
-    return {"dia": dia, "decisio": decision, "anada": anada, "tornada": tornada}
+        # El agente puede hacer la recomendación más prudente, nunca menos.
+        if (comentario_vigente(comentario, dia, anada, tornada)
+                and comentario.get("mode") == "mati"
+                and ORDEN.index(comentario["mitja"]) > ORDEN.index(decision["mitja"])):
+            decision.update(mitja=comentario["mitja"], per_la_ia=True)
+    salida_c = None
+    if comentario and comentario.get("dia") == dia:
+        salida_c = dict(comentario, vigent=comentario_vigente(comentario, dia, anada, tornada))
+    return {"dia": dia, "decisio": decision, "anada": anada, "tornada": tornada,
+            "comentari": salida_c}
 
 
 def llegir_anterior(origen):
@@ -526,7 +555,7 @@ def llegir_anterior(origen):
         return None
 
 
-def recoger(anterior=None):
+def recoger(anterior=None, comentario=None):
     dia = AHORA.date().isoformat()
     d, errores = {}, []
     for clave, funcion in (("avisos", avisos), ("planes", planes_proteccion_civil),
@@ -546,14 +575,15 @@ def recoger(anterior=None):
         "plans": d.get("planes"),
         "radar": d.get("radar"),
         "observacions": d.get("observaciones"),
-        **decidir_dia(dia, d, anterior),
+        **decidir_dia(dia, d, anterior, comentario),
     }
 
 
 if __name__ == "__main__":
     args = sys.argv
     anterior = llegir_anterior(args[args.index("--anterior") + 1]) if "--anterior" in args else None
-    datos = recoger(anterior)
+    comentario = leer_comentario(args[args.index("--comentari") + 1]) if "--comentari" in args else None
+    datos = recoger(anterior, comentario)
     if "--json" in args:
         with open(args[args.index("--json") + 1], "w", encoding="utf-8") as f:
             json.dump(datos, f, ensure_ascii=False, indent=1)

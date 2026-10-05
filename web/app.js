@@ -45,6 +45,17 @@ function llistaMotius(motius) {
   return llista;
 }
 
+// Comentari de l'agent diari, només si encara val (el programa dona els
+// mateixos nivells que quan es va escriure) i és del moment del dia que toca.
+function comentari(dades, mode) {
+  const c = dades.comentari;
+  if (!c || !c.vigent || c.mode !== mode) return null;
+  const p = element('p', 'comentari');
+  p.append(element('strong', null, `Valoració feta amb IA (${horaCurta(c.generat)}): `));
+  p.append(document.createTextNode(c.text));
+  return p;
+}
+
 // Matí: el mitjà del dia.
 function blocDecisio(dades) {
   const v = TEXT_MITJA[dades.decisio.mitja];
@@ -53,7 +64,10 @@ function blocDecisio(dades) {
   sec.append(element('h2', 'data', nomDia(dades.dia)));
   sec.append(element('p', 'veredicte', v.titol));
   sec.append(element('p', 'frase', v.frase));
-  sec.append(element('p', 'nota', notaDecisio(dades.decisio, dades.anada.fi)));
+  sec.append(element('p', 'nota', notaDecisio(dades.decisio, dades.anada.fi)
+    + (dades.decisio.per_la_ia ? ' La valoració de la IA l\u2019ha fet més prudent que el càlcul.' : '')));
+  const c = comentari(dades, 'mati');
+  if (c) sec.append(c);
   return sec;
 }
 
@@ -70,6 +84,8 @@ function blocTornada(dades) {
   sec.append(element('p', 'veredicte', 'Risc de pluja: ' + risc));
   const temps = liniaTemps(t.temps);
   if (temps) sec.append(element('p', 'frase', temps));
+  const c = comentari(dades, 'tarda');
+  if (c) sec.append(c);
   sec.append(element('h3', 'perque', 'Per què'), llistaMotius(t.motius));
   return sec;
 }

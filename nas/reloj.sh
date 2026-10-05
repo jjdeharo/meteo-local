@@ -7,7 +7,8 @@
 # que lo que dice la página y lo que se hace no pueden separarse. Si toca, pone
 # al día el repositorio, publica con publica.sh y apunta lo publicado en el
 # registro. Las demás horas en punto (HORARIO_CASA) solo rehace la página de
-# casa. A HORA_VERIFICACION comprueba la lluvia que cayó (registre.py).
+# casa. A HORA_VERIFICACION comprueba la lluvia que cayó (registre.py). En
+# AGENTE_HORAS ejecuta el agente diario y vuelve a publicar con su comentario.
 #
 #   reloj.sh         bucle (lo que arranca el contenedor)
 #   reloj.sh --ara   una sola pasada, ya
@@ -16,6 +17,7 @@ set -u
 REPO=/proyecto
 URL_REPO=git@github.com:jjdeharo/meteo-local.git
 ESTAT=/estat/dades.json
+COMENTARI=/estat/comentari.json
 WEB=https://jjdeharo.github.io/meteo-local/dades.json
 
 registro() { printf '%s  %s\n' "$(date '+%F %T')" "$*"; }
@@ -32,7 +34,7 @@ prepara() {
 
 pasada() {
   prepara || return
-  if ANTERIOR="$ESTAT" DESTINO="$URL_REPO" bash "$REPO/publica.sh" >/dev/null; then
+  if ANTERIOR="$ESTAT" COMENTARI="$COMENTARI" DESTINO="$URL_REPO" bash "$REPO/publica.sh" >/dev/null; then
     registro "publicado"
     (cd "$REPO" && python3 registre.py apunta "$ESTAT") || registro "no he podido apuntar en el registro"
   else
@@ -64,6 +66,20 @@ while t <= f:
 '
 }
 
+agente() {
+  prepara || return
+  if (cd "$REPO" && agent/executa.sh "$1" >/dev/null); then
+    registro "agente ($1): comentario escrito"
+    pasada
+  else
+    registro "agente ($1): ha fallado; la página sigue sin comentario"
+  fi
+}
+
+modo_agente() {
+  python3 -c 'import sys; sys.path.insert(0, "/proyecto"); import config; print(config.AGENTE_HORAS.get(sys.argv[1], ""))' "$1"
+}
+
 hora_verificacion() {
   python3 -c 'import sys; sys.path.insert(0, "/proyecto"); import config; print(config.HORA_VERIFICACION)'
 }
@@ -93,6 +109,10 @@ while true; do
     pasada_casa
   elif [ ! -d "$REPO/.git" ]; then
     prepara
+  fi
+  modo=$([ -d "$REPO/.git" ] && modo_agente "$ahora" || true)
+  if [ -n "$modo" ]; then
+    agente "$modo"
   fi
   if [ -d "$REPO/.git" ] && [ "$ahora" = "$(hora_verificacion)" ]; then
     verificacion

@@ -252,3 +252,6 @@ h1 { margin: 0; font-size: 1.6rem; line-height: 1.2; }
 }
 .marca-avis.taronja { background: #fb923c; }
 .marca-avis.vermell { background: #ef4444; color: #fff; }
+
+/* Comentari de l'agent diari */
+.comentari { margin: .7rem 0 0; padding: .6rem .8rem; border-radius: .5rem; background: var(--fons); font-size: .98rem; }

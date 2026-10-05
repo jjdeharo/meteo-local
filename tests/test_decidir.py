@@ -140,6 +140,37 @@ class ProteccionCivil(unittest.TestCase):
         self.assertTrue(P.afecta_al_trayecto("Pluges intenses a Girona i al Vallès"))
 
 
+class Agente(unittest.TestCase):
+    def setUp(self):
+        self.ahora = P.AHORA
+        P.AHORA = P.momento(MANANA, "06:10")
+
+    def tearDown(self):
+        P.AHORA = self.ahora
+
+    def comentario(self, mitja, anada="moto", tornada="moto", mode="mati"):
+        return {"dia": MANANA, "mode": mode, "text": "Prova.", "mitja": mitja,
+                "nivells_programa": {"anada": anada, "tornada": tornada}}
+
+    def test_puede_hacerla_mas_prudente(self):
+        r = P.decidir_dia(MANANA, {"avisos": [], "modelos": modelos(0)}, None, self.comentario("cotxe"))
+        self.assertEqual(r["decisio"]["mitja"], "cotxe")
+        self.assertTrue(r["decisio"]["per_la_ia"])
+        self.assertTrue(r["comentari"]["vigent"])
+
+    def test_no_puede_hacerla_menos_prudente(self):
+        c = self.comentario("moto", "cotxe", "cotxe")
+        r = P.decidir_dia(MANANA, {"avisos": [], "modelos": modelos(1.5)}, None, c)
+        self.assertEqual(r["decisio"]["mitja"], "cotxe")
+        self.assertNotIn("per_la_ia", r["decisio"])
+
+    def test_caduca_si_cambian_los_niveles(self):
+        c = self.comentario("cotxe", "moto", "moto")
+        r = P.decidir_dia(MANANA, {"avisos": [], "modelos": modelos(0.5)}, None, c)
+        self.assertFalse(r["comentari"]["vigent"])
+        self.assertEqual(r["decisio"]["mitja"], "compte")
+
+
 class UnSoloMedio(unittest.TestCase):
     """Quien va en moto vuelve en moto: un medio para todo el día."""
 
