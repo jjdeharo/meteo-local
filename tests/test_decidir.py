@@ -63,8 +63,8 @@ class Decision(unittest.TestCase):
         self.assertEqual(self.ida()["veredicte"], "compte")
 
     def test_ventana_cuenta_la_hora_siguiente(self):
-        # La lluvia de 7:00 a 7:30 está en el acumulado que acaba a las 8:00.
-        self.assertEqual(P.horas_ventana(("07:00", "07:30")), [8])
+        # La lluvia de 6:30 a 7:30 está en los acumulados que acaban a las 7 y a las 8.
+        self.assertEqual(P.horas_ventana(("06:30", "07:30")), [7, 8])
         self.assertEqual(P.horas_ventana(("15:00", "15:30")), [16])
 
 

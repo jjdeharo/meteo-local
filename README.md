@@ -1,7 +1,7 @@
 # meteo-local
 
 Responde a una pregunta concreta: **¿lloverá en el trayecto en moto de
-Cerdanyola del Vallès al Parc Taulí (Sabadell), a la ida (7:00-7:30) o a la
+Cerdanyola del Vallès al Parc Taulí (Sabadell), a la ida (6:30-7:30) o a la
 vuelta (15:00-15:30)?** Da una recomendación (moto, moto con impermeable o
 coche) para hoy, con sus motivos.
 

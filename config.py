@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 """Datos fijos del trayecto. Se cambian aquí, no en prevision.py."""
 
-VERSION = "1.1.0"
+VERSION = "1.1.1"
 
 # Coordenadas redondeadas a unos 500 m: para el tiempo da igual una calle u
 # otra, y el repositorio es público.
@@ -9,7 +9,7 @@ CASA = (41.482, 2.135)      # Cerdanyola del Vallès (Montflorit)
 DESTINO = (41.557, 2.109)   # Parc Taulí, Sabadell
 
 # Ventanas del trayecto en moto (hora local). Unos 8 km, 15-20 minutos.
-IDA = ("07:00", "07:30")      # llegada a las 7:30
+IDA = ("06:30", "07:30")      # llegada a las 7:30
 VUELTA = ("15:00", "15:30")   # salida a las 15:00
 
 # Estaciones automáticas de Meteocat más próximas (código: nombre).
