@@ -56,8 +56,13 @@ cambiando la fecha en el código; entonces no cuentan radar ni estaciones.
 
 - **API de Meteocat y AEMET OpenData**: piden clave; las páginas públicas y
   Meteoalarm dan lo necesario sin ella.
-- **Portal de datos abiertos de la Generalitat** (Socrata, XEMA): el dominio
-  `analisi.transparencia.gencat.cat` no resuelve desde la red de casa.
+- **Portal de datos abiertos de la Generalitat**
+  (`analisi.transparenciacatalunya.cat`, conjunto XEMA `nzvn-apee`): funciona
+  sin clave y es una API estable, pero va más atrasado. El 05-10-2026 a las
+  6:07, la página de meteo.cat tenía la lluvia de XF hasta las 6:00 y el portal
+  solo hasta la lectura de las 5:00 (hora local). Para saber si llueve ahora
+  importa ese desfase. Al principio se probó con un dominio equivocado,
+  `analisi.transparencia.gencat.cat`, que no existe.
 - **Calcular el desplazamiento de la lluvia por correlación entre fotogramas**:
   se probó y dio 22 km/h hacia el este en una ejecución y 2 km/h en la
   siguiente, con tormentas formándose en el mismo intervalo. Se sustituyó por
