@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 """Datos fijos del trayecto. Se cambian aquí, no en prevision.py."""
 
-VERSION = "2.1.1"
+VERSION = "2.1.2"
 
 # Coordenadas redondeadas a unos 500 m: para el tiempo da igual una calle u
 # otra, y el repositorio es público.
@@ -39,7 +39,7 @@ INTERVALO_CASA_MIN = 30
 # Agente diario (agent/): a qué hora y en qué modo se ejecuta, y con qué
 # modelo. Va después de la actualización de la hora en punto, para leer datos
 # recientes.
-AGENTE_HORAS = {"06:07": "mati", "13:07": "tarda"}
+AGENTE_HORAS = {"05:47": "mati", "13:07": "tarda"}   # la de la mañana, lista antes de las 6
 AGENTE_MODELO = "claude-sonnet-5-5"   # fijo: el alias «sonnet» cambiaría solo
 
 # Modo aviso: con aviso de AEMET vigente, plan de Protección Civil en alerta o

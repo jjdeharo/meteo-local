@@ -27,7 +27,7 @@ actualizarse cada 10 minutos, en el minuto 1 (:01, :11…), justo después de ca
 imagen nueva del radar (ADR 0010). El horario lo decide `que_toca.py` con el
 mismo dato que muestra la web. En `main` no hay commits automáticos.
 
-A las 6:07 y a las 13:07, un agente con IA (Claude Sonnet 5.5) mira los datos y el
+A las 5:47 y a las 13:07, un agente con IA (Claude Sonnet 5.5) mira los datos y el
 radar en imagen y escribe un comentario breve en catalán, que la página muestra
 como «Valoració feta amb IA». Por la mañana puede hacer la recomendación más
 prudente, nunca menos; el comentario caduca si el programa cambia los niveles

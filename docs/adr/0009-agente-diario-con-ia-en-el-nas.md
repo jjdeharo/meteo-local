@@ -11,7 +11,9 @@ el gasto de suscripción es el mismo que en la nube (ADR 0005).
 
 ## Decisión
 
-- **Cuándo:** a las 6:07 (modo «mati») y a las 13:07 (modo «tarda»)
+- **Cuándo:** a las 5:47 (modo «mati»; hasta el 05-10-2026 era a las 6:07,
+  y Juanjo pidió que la valoración estuviera antes de las 6) y a las 13:07
+  (modo «tarda»)
   (`AGENTE_HORAS`), después de la actualización de la hora en punto; después,
   el reloj vuelve a publicar con el comentario.
 - **Qué recibe:** `dades.json` y `casa.json` ya calculados y una imagen del
