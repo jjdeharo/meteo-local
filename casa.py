@@ -214,19 +214,27 @@ def nivel_hora(f, planes):
     return "moto", pluja
 
 
+def moja(f):
+    """Riesgo de lluvia en una hora: probabilidad, cantidad, lluvia ahora o
+    aviso de AEMET por lluvia o tormentas."""
+    return ((f.get("probabilitat") or 0) >= C.PROB_ATENCION or (f.get("pluja_mm") or 0) >= C.UMBRAL_MM
+            or bool(f.get("plou_ara"))
+            or any(t in ("pluja", "tempestes") for a in f.get("avisos") or [] for t in a["tipus"]))
+
+
 def canvis(tramo):
-    """Cómo cambia el tiempo entre la salida y la vuelta: si empieza o para de
-    llover y si la temperatura cambia mucho."""
+    """Cómo cambia el tiempo entre la salida y la vuelta: si empieza o acaba el
+    riesgo de lluvia (moja) y si la temperatura cambia mucho."""
     res = []
-    moja = [f["probabilitat"] is not None and f["probabilitat"] >= C.PROB_ATENCION
-            or (f["pluja_mm"] or 0) >= C.UMBRAL_MM or f.get("plou_ara") for f in tramo]
-    if not moja[0] and any(moja):
-        f = tramo[moja.index(True)]
-        res.append(f"A partir de les {int(f['hora'][11:13])}\u00a0h, pluja probable"
-                   + (f" ({round(f['probabilitat'] * 100)}\u00a0%)." if f["probabilitat"] is not None else "."))
-    elif moja[0] and not all(moja):
-        f = tramo[moja.index(False)]
-        res.append(f"Cap a les {int(f['hora'][11:13])}\u00a0h deixa de ploure.")
+    mullat = [moja(f) for f in tramo]
+    if not mullat[0] and any(mullat):
+        f = tramo[mullat.index(True)]
+        p = f["probabilitat"]
+        res.append(f"A partir de les {int(f['hora'][11:13])}\u00a0h, risc de pluja"
+                   + (f" ({round(p * 100)}\u00a0%)." if p is not None and p >= C.PROB_ATENCION else "."))
+    elif mullat[0] and not all(mullat):
+        f = tramo[mullat.index(False)]
+        res.append(f"Cap a les {int(f['hora'][11:13])}\u00a0h s\u2019acaba el risc de pluja.")
     temps = [(f["temperatura"], f["hora"]) for f in tramo if f["temperatura"] is not None]
     if temps:
         (t_min, h_min), (t_max, h_max) = min(temps), max(temps)
@@ -254,11 +262,15 @@ def sortides(hores, planes):
             mitja = P.peor(niv_ida, niv_vuelta)
             temps = [{"temps": {"temp_min": round(f["temperatura"]), "temp_max": round(f["temperatura"])}}
                      if f["temperatura"] is not None else {} for f in (ida, vuelta)]
+            # El paraguas, si llueve en algún momento fuera de casa; el coche
+            # por Protección Civil sin lluvia, explicado.
+            pluja = any(moja(f) for f in hores[k:j + 1])
+            explicacio = P.explica_cotxe(planes) if mitja == "cotxe" and not pluja else None
             tornades.append({
-                "hora": vuelta["hora"], "mitja": mitja,
+                "hora": vuelta["hora"], "mitja": mitja, "explicacio": explicacio,
                 "anada": {"nivell": niv_ida, "motiu": mot_ida},
                 "tornada": {"nivell": niv_vuelta, "motiu": mot_vuelta},
-                "roba": P.roba(mitja, *temps), "canvis": canvis(hores[k:j + 1])})
+                "roba": P.roba(mitja, *temps, pluja=pluja), "canvis": canvis(hores[k:j + 1])})
         res.append({"surt": ida["hora"], "tornades": tornades})
     return res
 

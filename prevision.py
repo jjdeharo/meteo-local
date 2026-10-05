@@ -528,9 +528,25 @@ def graus(t):
     return f"{t}\u00a0°C".replace("-", "\u2212")
 
 
-def roba(mitja, anada, tornada):
+def risc_pluja(*trajectes):
+    """Si algún motivo que no es de Protección Civil ve riesgo de lluvia: el
+    coche por una emergencia no quiere decir que llueva."""
+    return any(m["nivell"] != "moto" and m.get("font") != "pc"
+               for t in trajectes for m in t.get("motius") or [])
+
+
+def explica_cotxe(planes):
+    """Frase del coche cuando lo decide Protección Civil y no se prevé lluvia."""
+    p = next((x for x in planes or [] if x["fase"] in ("alerta", "emergència")), None)
+    if not p:
+        return None
+    return f"Agafa el cotxe per l\u2019{p['fase']} de Protecció Civil (pla {p['nom']}): no es preveu pluja."
+
+
+def roba(mitja, anada, tornada, pluja=True):
     """Qué ponerse para el día, según el medio, la temperatura más baja de los
     dos trayectos (de ella depende el frío) y la diferencia con la más alta.
+    El paraguas, solo si hay riesgo de lluvia (pluja), no por ir en coche.
     Devuelve el texto, la prenda que dibuja la web (jaqueta o samarreta) y la
     protección de lluvia (paraigua, impermeable o ninguna)."""
     temps = [t["temps"] for t in (anada, tornada) if t.get("temps")]
@@ -548,7 +564,7 @@ def roba(mitja, anada, tornada):
             parts.append("Jaqueta lleugera o jersei")
         else:
             parts.append("Roba d'estiu")
-        parts[-1] += " i paraigua."
+        parts[-1] += " i paraigua." if pluja else "."
     else:
         if mitja == "compte":
             parts.append("Impermeable: jaqueta i pantalons de pluja i guants impermeables.")
@@ -573,8 +589,8 @@ def roba(mitja, anada, tornada):
     # En moto, siempre chaqueta (con protecciones); en coche, camiseta solo con
     # ropa de verano.
     peca = "samarreta" if mitja == "cotxe" and t_min > 24 else "jaqueta"
-    pluja = {"cotxe": "paraigua", "compte": "impermeable"}.get(mitja)
-    return {"text": " ".join(parts), "peca": peca, "pluja": pluja}
+    proteccio = "impermeable" if mitja == "compte" else "paraigua" if mitja == "cotxe" and pluja else None
+    return {"text": " ".join(parts), "peca": peca, "pluja": proteccio}
 
 
 def decidir_dia(dia, d, anterior=None, comentario=None):
@@ -607,8 +623,11 @@ def decidir_dia(dia, d, anterior=None, comentario=None):
     salida_c = None
     if comentario and comentario.get("dia") == dia:
         salida_c = dict(comentario, vigent=comentario_vigente(comentario, dia, anada, tornada))
+    pluja = risc_pluja(anada, tornada)
+    if decision["mitja"] == "cotxe" and not pluja:
+        decision["explicacio"] = explica_cotxe(d.get("planes"))
     return {"dia": dia, "decisio": decision, "anada": anada, "tornada": tornada,
-            "roba": roba(decision["mitja"], anada, tornada), "comentari": salida_c}
+            "roba": roba(decision["mitja"], anada, tornada, pluja), "comentari": salida_c}
 
 
 def llegir_anterior(origen):

@@ -24,7 +24,7 @@ class Sortides(unittest.TestCase):
         self.assertEqual(tornades["17"]["mitja"], "cotxe")
         self.assertEqual(tornades["19"]["mitja"], "compte")
         self.assertEqual(tornades["19"]["tornada"]["motiu"], "pluja 30 %")
-        self.assertIn("A partir de les 17 h, pluja probable", tornades["18"]["canvis"][0])
+        self.assertEqual(tornades["18"]["canvis"][0], "A partir de les 17\u00a0h, risc de pluja (80\u00a0%).")
         # También con la salida en la hora siguiente.
         self.assertEqual(s[1]["surt"], "2026-10-05T17:00")
 
@@ -32,8 +32,18 @@ class Sortides(unittest.TestCase):
         hores = [hora(8), hora(9, avisos=[{"nivell": "groc", "tipus": ["pluja"]}])]
         t = casa.sortides(hores, [])[0]["tornades"][0]
         self.assertEqual((t["mitja"], t["tornada"]["motiu"]), ("cotxe", "avís groc de l’AEMET"))
-        t = casa.sortides([hora(8), hora(9)], [{"fase": "emergència"}])[0]["tornades"][0]
+        pla = [{"fase": "emergència", "nom": "d'inundacions"}]
+        t = casa.sortides([hora(8), hora(9)], pla)[0]["tornades"][0]
         self.assertEqual(t["anada"]["motiu"], "Protecció Civil en emergència")
+        # Coche por la emergencia, sin lluvia prevista: se dice, y sin paraguas.
+        self.assertEqual(t["explicacio"],
+                         "Agafa el cotxe per l\u2019emergència de Protecció Civil (pla d'inundacions): no es preveu pluja.")
+        self.assertIsNone(t["roba"]["pluja"])
+        self.assertNotIn("paraigua", t["roba"]["text"])
+        # Con lluvia en algún momento fuera de casa, paraguas y sin explicación.
+        t = casa.sortides([hora(8), hora(9, p=0.4), hora(10)], pla)[0]["tornades"][1]
+        self.assertIsNone(t["explicacio"])
+        self.assertEqual(t["roba"]["pluja"], "paraigua")
 
     def test_cambio_de_temperatura_y_ropa(self):
         hores = [hora(6, t=8), hora(9, t=12), hora(14, t=19)]

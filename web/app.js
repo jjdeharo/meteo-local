@@ -120,7 +120,7 @@ function blocDecisio(dades) {
   sec.setAttribute('aria-label', `Recomanació d\u2019avui: ${v.titol}`);
   sec.append(element('h2', 'data', nomDia(dades.dia)));
   sec.append(veredicte(dades.decisio.mitja));
-  sec.append(element('p', 'frase', v.frase));
+  sec.append(element('p', 'frase', dades.decisio.explicacio || v.frase));
   if (dades.roba) sec.append(blocRoba(dades.roba));
   sec.append(element('p', 'nota', notaDecisio(dades.decisio, dades.anada.fi)
     + (dades.decisio.per_la_ia ? ' La valoració de la IA l\u2019ha fet més prudent que el càlcul.' : '')));
@@ -224,7 +224,7 @@ function resultatSortida(sortida, hhmm) {
   }
   const v = TEXT_MITJA[t.mitja];
   res.append(veredicte(t.mitja));
-  res.append(element('p', 'frase', v.frase));
+  res.append(element('p', 'frase', t.explicacio || v.frase));
   res.append(element('p', 'nota', textMotius(t)));
   if (t.roba) res.append(blocRoba(t.roba));
   if (t.canvis.length) {

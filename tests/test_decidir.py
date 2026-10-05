@@ -268,3 +268,12 @@ class Roba(unittest.TestCase):
                           "pluja": "paraigua"})
         self.assertEqual(P.roba("cotxe", self.tram(25, 26), self.tram(27, 28))["peca"], "samarreta")
         self.assertIsNone(P.roba("moto", {"temps": None}, {"temps": None}))
+
+    def test_paraguas_solo_con_lluvia(self):
+        seco = P.roba("cotxe", self.tram(20, 21), self.tram(22, 23), pluja=False)
+        self.assertEqual((seco["text"], seco["pluja"]), ("Jaqueta lleugera o jersei.", None))
+        pc = {"motius": [{"nivell": "cotxe", "font": "pc"}, {"nivell": "moto", "font": "models"}]}
+        self.assertFalse(P.risc_pluja(pc, {"motius": []}))
+        self.assertTrue(P.risc_pluja(pc, {"motius": [{"nivell": "compte", "font": "radar"}]}))
+        self.assertEqual(P.explica_cotxe([{"fase": "alerta", "nom": "de vent"}]),
+                         "Agafa el cotxe per l\u2019alerta de Protecció Civil (pla de vent): no es preveu pluja.")

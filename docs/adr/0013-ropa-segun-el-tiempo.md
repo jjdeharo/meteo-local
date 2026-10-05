@@ -23,6 +23,14 @@ el frío, el calor o la lluvia. El vehículo es un ciclomotor: no pasa de
   ligera o ropa de verano, y paraguas.
 - Si entre la ida y la vuelta hay 8 °C o más (`ROPA_DIFERENCIA_CAPAS`),
   recomienda capas.
+- **El paraguas, solo con riesgo de lluvia** (corrección del 05-10-2026): no
+  por ir en coche. En el trayecto, si algún motivo que no es de Protección
+  Civil ve lluvia (`risc_pluja`); en la salida fuera de las franjas, si alguna
+  hora fuera de casa tiene un 20 % o 0,2 mm, «Plou ara» o aviso de AEMET por
+  lluvia o tormentas. Si el coche lo decide Protección Civil sin lluvia
+  prevista, la frase lo explica: «Agafa el cotxe per l'emergència de Protecció
+  Civil (pla d'inundacions): no es preveu pluja.» Juanjo vio la discrepancia:
+  coche y paraguas mientras la tabla de casa no daba lluvia.
 - Destacada en un recuadro con iconos de MingCute (Apache 2.0): chaqueta (en
   moto siempre, porque va con protecciones; en coche hasta 24 °C) o camiseta
   (coche con ropa de verano), y paraguas (coche) o nube con lluvia
