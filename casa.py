@@ -11,7 +11,10 @@ mientras caían más de 20 mm/h y había alerta de Protección Civil). Por eso:
 - cada hora lleva los avisos de AEMET y los planes de Protección Civil que la
   cubren.
 
-Uso: python3 casa.py --json web/casa.json
+Si Open-Meteo falla, se reutiliza la última previsión buena (--anterior), con
+las horas que aún no han pasado y los avisos y la lluvia de ahora (ADR 0016).
+
+Uso: python3 casa.py --json web/casa.json [--anterior casa.json|URL]
 """
 import datetime as dt
 import json
@@ -260,6 +263,39 @@ def sortides(hores, planes):
     return res
 
 
+def previsio_anterior(origen, ara, avisos):
+    """Las horas que aún no han pasado de la última previsión buena, con los
+    avisos y la lluvia de ahora. None si no la hay o tiene más de
+    CASA_PREVISION_ANTERIOR_MAX_H horas."""
+    if not origen:
+        return None
+    try:
+        if origen.startswith("http"):
+            antes = json.loads(P.get(origen))
+        else:
+            with open(origen, encoding="utf-8") as f:
+                antes = json.load(f)
+    except Exception:
+        return None
+    de = antes.get("previsio_de") or antes.get("generat")
+    if not antes.get("hores") or not de:
+        return None
+    if P.AHORA - dt.datetime.fromisoformat(de) > dt.timedelta(hours=C.CASA_PREVISION_ANTERIOR_MAX_H):
+        return None
+    ara_hora = P.AHORA.strftime("%Y-%m-%dT%H:%M")
+    hores = [dict(f) for f in antes["hores"] if f["fins"] > ara_hora]
+    if not hores:
+        return None
+    llueve_ahora = bool(ara) and ((ara.get("intensitat") or 0) > 0 or (ara.get("pluja_30min") or 0) > 0)
+    for n, f in enumerate(hores):
+        fin = dt.datetime.fromisoformat(f["fins"]).astimezone()
+        f["avisos"] = avisos_del_tramo(fin - dt.timedelta(hours=1), fin, avisos)
+        f["plou_ara"] = n == 0 and llueve_ahora
+        if f["plou_ara"]:
+            f["probabilitat"], f["segons_estacio"] = 1.0, True
+    return {"hores": hores, "previsio_de": de, "aprenentatge": antes.get("aprenentatge")}
+
+
 def comprobacion_modelos(desde, h, filas_estacion):
     """Lluvia medida y prevista en las últimas horas completas. Si los modelos
     se han quedado muy cortos, la página lo dice."""
@@ -278,7 +314,7 @@ def comprobacion_modelos(desde, h, filas_estacion):
             "prevista_mm": round(prevista, 1), "no_encerten": fallan}
 
 
-def recoger():
+def recoger(anterior=None):
     salida = {"versio": C.VERSION, "generat": P.AHORA.isoformat(timespec="minutes"),
               "errors": []}
     filas_estacion, ara = [], None
@@ -319,12 +355,18 @@ def recoger():
     except Exception as ex:
         salida["hores"] = salida["models"] = None
         salida["errors"].append(f"previsió: {ex}")
+        # Sin modelos: la última previsión buena, si es reciente, avisando.
+        antes = previsio_anterior(anterior, ara, avisos)
+        if antes:
+            salida.update(antes)
+            salida["sortides"] = sortides(salida["hores"], planes)
+            salida["sortida_per_defecte_h"] = C.SALIDA_VUELTA_POR_DEFECTO_H
     # Registro para aprender (solo en el NAS, que tiene /estat): lo que medía
     # Montflorit y, una vez por hora, lo que daban los modelos.
     if R.hay_registro():
         try:
             R.apunta_montflorit(filas_estacion)
-            if salida["hores"]:
+            if salida["hores"] and not salida.get("previsio_de"):
                 R.apunta_casa(P.AHORA, ara, filas_registro(P.AHORA, h, e, ara, salida["hores"]))
         except Exception as ex:
             print("No he podido apuntar en el registro:", ex, file=sys.stderr)
@@ -332,7 +374,7 @@ def recoger():
 
 
 if __name__ == "__main__":
-    datos = recoger()
+    datos = recoger(sys.argv[sys.argv.index("--anterior") + 1] if "--anterior" in sys.argv else None)
     if "--json" in sys.argv:
         with open(sys.argv[sys.argv.index("--json") + 1], "w", encoding="utf-8") as f:
             json.dump(datos, f, ensure_ascii=False, indent=1)

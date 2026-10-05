@@ -49,7 +49,8 @@ de las franjas hace lo mismo para quien sale en ese momento: se elige la hora
 de vuelta y dice el medio, la ropa y cómo cambiará el tiempo (ADR 0014).
 
 Se puede instalar en el móvil como aplicación (manifiesto, iconos y service
-worker que nunca guarda los datos; ADR 0015). Las
+worker que nunca guarda los datos; ADR 0015). Si Open-Meteo falla, la página de casa mantiene la
+última previsión buena, de 6 horas como mucho, y lo avisa (ADR 0016). Las
 dos páginas, si están abiertas, se ponen al día solas después de cada
 actualización prevista (ADR 0011).
 

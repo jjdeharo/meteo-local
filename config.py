@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 """Datos fijos del trayecto. Se cambian aquí, no en prevision.py."""
 
-VERSION = "2.6.0"
+VERSION = "2.7.0"
 
 # Coordenadas redondeadas a unos 500 m: para el tiempo da igual una calle u
 # otra, y el repositorio es público.
@@ -88,6 +88,10 @@ ENSEMBLE = "icon_eu_eps"
 # Environment Canada); por encima, con la temperatura del aire.
 VELOCIDAD_CICLOMOTOR_KMH = 45
 ROPA_DIFERENCIA_CAPAS = 8      # °C entre ida y vuelta para avisar de las capas
+
+# Si Open-Meteo falla, la página de casa usa la última previsión buena, si no
+# tiene más de estas horas (ADR 0016).
+CASA_PREVISION_ANTERIOR_MAX_H = 6
 
 # Salida fuera de las franjas (casa.py, sortides): vuelta por defecto dentro de
 # estas horas, y cambio de temperatura que se avisa.

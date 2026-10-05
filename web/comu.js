@@ -75,7 +75,8 @@ function pintaHorari(dades) {
     avisos.push(`L’actualització de les ${horaCurta(darreraPrevista)} no s’ha fet: `
       + `les dades són de les ${horaCurta(generat)}.`);
   }
-  if (dades.errors.length) {
+  // La previsió que falla i s'ha substituït per l'anterior ja té el seu avís.
+  if (dades.errors.some((e) => !(dades.previsio_de && e.startsWith('previsió')))) {
     avisos.push('No s’han pogut llegir totes les fonts: la informació és menys segura.');
   }
   $('avis-dades').textContent = avisos.join(' ');
@@ -235,6 +236,14 @@ function textAvisos(avisos, ara = new Date()) {
       const quan = dies.map((d) => d.parts.join(' i ')).join('; ');
       return `Avís ${NIVELL_AVIS[nivell] || nivell} de l’AEMET per ${tipus} al Vallès: ${quan}.`;
     }).join(' ');
+}
+
+// Quan Open-Meteo no respon, la previsió és l'última bona (ADR 0016).
+function textPrevisioAnterior(dades) {
+  if (!dades || !dades.previsio_de) return '';
+  const de = new Date(dades.previsio_de);
+  const dia = de.toDateString() === new Date().toDateString() ? '' : ` del ${de.toLocaleDateString('ca')}`;
+  return `Open-Meteo, d\u2019on surten els models, ara no respon: la previsió és la de les ${horaCurta(de)}${dia}.`;
 }
 
 // Plans de Protecció Civil activats (inundacions, vent, neu): avís destacat

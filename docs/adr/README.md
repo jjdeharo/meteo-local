@@ -17,5 +17,6 @@
 | [0013](0013-ropa-segun-el-tiempo.md) | Ropa según el tiempo | aceptado |
 | [0014](0014-salida-fuera-de-las-franjas.md) | Salida fuera de las franjas | aceptado |
 | [0015](0015-instalable-como-aplicacion.md) | Instalable como aplicación | aceptado |
+| [0016](0016-prevision-de-reserva-si-falla-open-meteo.md) | Previsión de reserva si falla Open-Meteo | aceptado |
 
 Plantilla: [0000-plantilla.md](0000-plantilla.md). Para crear uno: `nuevo-adr "Título"`.

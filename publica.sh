@@ -33,7 +33,12 @@ else
   python3 prevision.py --anterior "$ANTERIOR" --comentari "${COMENTARI:-/dev/null}" \
     --json "$sitio/dades.json"
 fi
-python3 casa.py --json "$sitio/casa.json" >/dev/null
+# Si Open-Meteo falla, casa.py reutiliza la última previsión buena (ADR 0016).
+case "$ANTERIOR" in
+  http*) CASA_ANTERIOR=https://jjdeharo.github.io/meteo-local/casa.json ;;
+  *) CASA_ANTERIOR="$(dirname "$ANTERIOR")/casa.json" ;;
+esac
+python3 casa.py --json "$sitio/casa.json" --anterior "$CASA_ANTERIOR" >/dev/null
 # Una copia de casa.json para el agente, junto a los datos del trayecto.
 if [ "${ANTERIOR#http}" = "$ANTERIOR" ]; then
   cp "$sitio/casa.json" "$(dirname "$ANTERIOR")/casa.json"

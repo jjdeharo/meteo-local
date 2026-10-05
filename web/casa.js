@@ -132,6 +132,7 @@ function pinta(dades) {
   const plans = blocPlans(dades.plans);
   if (plans) avisos.append(plans);
   if (dades.avisos && dades.avisos.length) avisos.append(element('p', 'avis', textAvisos(dades.avisos)));
+  if (dades.previsio_de) avisos.append(element('p', 'avis', textPrevisioAnterior(dades)));
   if (dades.models && dades.models.no_encerten) {
     const m = dades.models;
     avisos.append(element('p', 'avis', `Avui els models no veuen aquesta pluja: en les darreres ${m.hores} hores `

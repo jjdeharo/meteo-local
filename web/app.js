@@ -298,6 +298,7 @@ function avisosFora(casa) {
   const plans = blocPlans(casa.plans);
   if (plans) res.push(plans);
   if (casa.avisos && casa.avisos.length) res.push(element('p', 'avis', textAvisos(casa.avisos)));
+  if (casa.previsio_de) res.push(element('p', 'avis', textPrevisioAnterior(casa)));
   return res;
 }
 
