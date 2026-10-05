@@ -12,6 +12,10 @@ Lo ejecuta el reloj del NAS, sin IA:
                                           Telegram una sola vez, cuando hay
                                           bastantes días
 
+Además, casa.py apunta en cada pasada lo que mide Montflorit hora a hora
+(montflorit.csv) y, una vez por hora, lo que daban los modelos para las 24
+horas siguientes (casa-AAAA-MM.jsonl), para aprender de los fallos (ADR 0012).
+
 Los datos van a REGISTRE_DIR (en el NAS, /estat/registre), no al repositorio.
 """
 import csv
@@ -39,6 +43,84 @@ def apunta(ruta):
     mes = datos["generat"][:7]
     with open(os.path.join(DIR, f"{mes}.jsonl"), "a", encoding="utf-8") as f:
         f.write(json.dumps(datos, ensure_ascii=False) + "\n")
+
+
+# --- Página de casa: previsiones y lo que pasó -----------------------------------
+
+MONTFLORIT = os.path.join(DIR, "montflorit.csv")
+CAMPOS_MONTFLORIT = ["fins", "pluja_mm", "temperatura", "humitat", "lectures"]
+CASA_DARRERA = os.path.join(DIR, "casa-darrera")
+
+
+def hay_registro():
+    """El registro vive en el NAS (/estat); en un ordenador no se apunta nada."""
+    return os.path.isdir(os.path.dirname(DIR))
+
+
+def horas_montflorit(filas):
+    """Horas completas de los datos minuto a minuto: la lluvia de la hora que
+    acaba en «fins» y la temperatura y la humedad de la lectura más cercana a
+    la hora en punto (a 5 minutos como mucho; la estación se salta minutos)."""
+    if not filas:
+        return {}
+    por_hora, cerca = {}, {}
+    for antes, despues in zip(filas, filas[1:]):
+        t = dt.datetime.fromisoformat(despues["dt_local"])
+        fin = t.replace(minute=0, second=0) + (dt.timedelta(hours=1) if t.minute or t.second else dt.timedelta())
+        salto = despues["PREC"] - antes["PREC"]
+        h = por_hora.setdefault(fin, {"pluja_mm": 0.0, "lectures": 0})
+        h["pluja_mm"] += despues["PREC"] if salto < 0 else salto
+        h["lectures"] += 1
+    for f in filas:
+        t = dt.datetime.fromisoformat(f["dt_local"])
+        marca = (t + dt.timedelta(minutes=30)).replace(minute=0, second=0)
+        dist = abs((t - marca).total_seconds())
+        if dist <= 300 and f.get("TEMP") is not None and dist < cerca.get(marca, (999, None))[0]:
+            cerca[marca] = (dist, f)
+    ultima = dt.datetime.fromisoformat(filas[-1]["dt_local"])
+    primera = dt.datetime.fromisoformat(filas[0]["dt_local"])
+    res = {}
+    # Solo las horas enteras: ni la que está en curso ni la primera, cortada.
+    for fin, h in por_hora.items():
+        if fin <= ultima and fin - dt.timedelta(hours=1) >= primera:
+            f = cerca.get(fin, (None, {}))[1]
+            res[fin] = {**h, "temperatura": f.get("TEMP"), "humitat": f.get("HUM")}
+    return res
+
+
+def apunta_montflorit(filas):
+    nuevas = horas_montflorit(filas)
+    if not nuevas:
+        return
+    os.makedirs(DIR, exist_ok=True)
+    guardadas = {}
+    if os.path.exists(MONTFLORIT):
+        with open(MONTFLORIT, encoding="utf-8") as f:
+            guardadas = {r["fins"]: r for r in csv.DictReader(f)}
+    for fin, h in nuevas.items():
+        guardadas[fin.strftime("%Y-%m-%dT%H:%M")] = {
+            "fins": fin.strftime("%Y-%m-%dT%H:%M"), "pluja_mm": round(h["pluja_mm"], 1),
+            "temperatura": h.get("temperatura"), "humitat": h.get("humitat"), "lectures": h["lectures"]}
+    with open(MONTFLORIT + ".tmp", "w", newline="", encoding="utf-8") as f:
+        w = csv.DictWriter(f, fieldnames=CAMPOS_MONTFLORIT)
+        w.writeheader()
+        w.writerows(guardadas[k] for k in sorted(guardadas))
+    os.replace(MONTFLORIT + ".tmp", MONTFLORIT)
+
+
+def apunta_casa(emes, ara, hores):
+    """Una línea por hora de reloj: la primera pasada de cada hora."""
+    hora = emes.strftime("%Y-%m-%dT%H")
+    if os.path.exists(CASA_DARRERA):
+        with open(CASA_DARRERA) as f:
+            if f.read().strip() == hora:
+                return
+    os.makedirs(DIR, exist_ok=True)
+    linea = {"emes": emes.isoformat(timespec="minutes"), "ara": ara, "hores": hores}
+    with open(os.path.join(DIR, f"casa-{emes.strftime('%Y-%m')}.jsonl"), "a", encoding="utf-8") as f:
+        f.write(json.dumps(linea, ensure_ascii=False) + "\n")
+    with open(CASA_DARRERA, "w") as f:
+        f.write(hora)
 
 
 def lineas_del_dia(dia):

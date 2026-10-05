@@ -20,6 +20,7 @@ import urllib.parse
 
 import config as C
 import prevision as P
+import registre as R
 
 HORAS = 24
 HORAS_PERSISTENCIA = 4      # las que tiene la tabla de calibracio.json
@@ -98,13 +99,20 @@ def avisos_del_tramo(ini, fin, avisos):
     return [{"nivell": n, "tipus": sorted(t)} for n, t in res.items()]
 
 
+def prob_ensemble(e):
+    """Fracción de miembros del ensemble con lluvia, por hora."""
+    miembros = [k for k in e if k.startswith("precipitation")]
+    if not miembros:
+        return {}
+    return {t: sum((e[k][i] or 0) >= C.UMBRAL_MM for k in miembros) / len(miembros)
+            for i, t in enumerate(e["time"])}
+
+
 def previsio(desde, h, e, ara, avisos):
     """Una fila por tramo de una hora («de 10 a 11»), de la hora actual a 24
     horas después. Open-Meteo da la lluvia acumulada en la hora anterior: el
     tramo de 10 a 11 se lee en la hora 11:00, y los demás valores también."""
-    miembros = [k for k in e if k.startswith("precipitation")]
-    prob = {t: sum((e[k][i] or 0) >= C.UMBRAL_MM for k in miembros) / len(miembros)
-            for i, t in enumerate(e["time"])} if miembros else {}
+    prob = prob_ensemble(e)
     llueve_ahora = bool(ara) and ((ara.get("intensitat") or 0) > 0 or (ara.get("pluja_30min") or 0) > 0)
     ultima_hora = (ara or {}).get("pluja_1h") or 0.0
 
@@ -140,6 +148,28 @@ def previsio(desde, h, e, ara, avisos):
             "avisos": avisos_del_tramo(ini, fin, avisos),
             "nuvols": valor("cloud_cover", i), "codi": valor("weather_code", i),
             "vent": valor("wind_speed_10m", i), "ratxa": valor("wind_gusts_10m", i)})
+    return filas
+
+
+def filas_registro(desde, h, e, mostradas):
+    """Todo lo que los modelos daban para cada hora de la tabla, junto a lo que
+    mostró la página: lo que hace falta para aprender de los fallos (ADR 0012)."""
+    prob = prob_ensemble(e)
+    indice = {t: i for i, t in enumerate(h["time"])}
+    filas = []
+    for f in mostradas:
+        i = indice[f["fins"]]
+        fin = dt.datetime.fromisoformat(f["fins"]).astimezone()
+        fila = {"fins": f["fins"], "antelacio_h": round((fin - desde).total_seconds() / 3600, 2),
+                "prob_ens": prob.get(f["fins"])}
+        for m in C.MODELOS_FINOS:
+            fila[f"pluja_{m}"] = h.get(f"precipitation_{m}", [None] * (i + 1))[i]
+        for campo in ("temperature_2m", "relative_humidity_2m", "cloud_cover",
+                      "wind_speed_10m", "wind_gusts_10m", "weather_code"):
+            fila[campo] = h.get(f"{campo}_meteofrance_seamless", [None] * (i + 1))[i]
+        fila["mostrat"] = {"pluja_mm": f["pluja_mm"], "probabilitat": f["probabilitat"],
+                           "temperatura": f["temperatura"], "segons_estacio": f["segons_estacio"]}
+        filas.append(fila)
     return filas
 
 
@@ -198,6 +228,15 @@ def recoger():
     except Exception as ex:
         salida["hores"] = salida["models"] = None
         salida["errors"].append(f"previsió: {ex}")
+    # Registro para aprender (solo en el NAS, que tiene /estat): lo que medía
+    # Montflorit y, una vez por hora, lo que daban los modelos.
+    if R.hay_registro():
+        try:
+            R.apunta_montflorit(filas_estacion)
+            if salida["hores"]:
+                R.apunta_casa(P.AHORA, ara, filas_registro(P.AHORA, h, e, salida["hores"]))
+        except Exception as ex:
+            print("No he podido apuntar en el registro:", ex, file=sys.stderr)
     return salida
 
 
