@@ -3,6 +3,14 @@
 """El tiempo en casa (Montflorit): lo que mide ahora la estación y la
 previsión hora a hora para las próximas 24 horas.
 
+Los modelos pueden no ver un episodio (el 05-10-2026 daban 0,3 mm por hora
+mientras caían más de 20 mm/h y había alerta de Protección Civil). Por eso:
+- las primeras horas parten de la lluvia que mide la estación, con la
+  persistencia real de la lluvia en Sabadell y Sant Cugat (calibracio.json);
+- si los modelos se han quedado muy cortos en las últimas horas, se dice;
+- cada hora lleva los avisos de AEMET y los planes de Protección Civil que la
+  cubren.
+
 Uso: python3 casa.py --json web/casa.json
 """
 import datetime as dt
@@ -14,26 +22,39 @@ import config as C
 import prevision as P
 
 HORAS = 24
+HORAS_PERSISTENCIA = 4      # las que tiene la tabla de calibracio.json
+HORAS_COMPROBACION = 3      # últimas horas en que se comparan modelos y estación
 
 
-def ahora_montflorit():
-    """Últimos valores de la estación de Montflorit (meteocerdanyola.com)."""
+def lluvia_entre(filas, ini, fin):
+    """mm medidos entre ini y fin con el acumulado diario minuto a minuto."""
+    mm = 0.0
+    for antes, despues in zip(filas, filas[1:]):
+        t = dt.datetime.fromisoformat(despues["dt_local"]).astimezone()
+        if ini < t <= fin:
+            salto = despues["PREC"] - antes["PREC"]
+            mm += despues["PREC"] if salto < 0 else salto
+    return round(mm, 1)
+
+
+def montflorit():
+    """Filas minuto a minuto de la estación y el resumen de ahora."""
     slug = next(iter(C.ESTACIONES_LOCALES))
     filas = json.loads(P.get(P.METEOCERDANYOLA.format(slug))).get("rows", [])
-    filas = [f for f in filas if f.get("TEMP") is not None]
+    filas = [f for f in filas if f.get("PREC") is not None]
     if not filas:
-        return None
+        return [], None
     u = filas[-1]
-    resumen = P.resumen_minutal(filas, C.ESTACIONES_LOCALES[slug], "meteocerdanyola.com")
-    return {"hora": dt.datetime.fromisoformat(u["dt_local"]).astimezone().isoformat(),
-            "temperatura": u.get("TEMP"), "humitat": u.get("HUM"),
-            "vent": u.get("VEL"), "pluja_avui": u.get("PREC"),
-            "pluja_30min": resumen["mm_ultima_media_hora"] if resumen else None,
-            "intensitat": u.get("PINT")}
+    hora = dt.datetime.fromisoformat(u["dt_local"]).astimezone()
+    ara = {"hora": hora.isoformat(), "temperatura": u.get("TEMP"), "humitat": u.get("HUM"),
+           "vent": u.get("VEL"), "pluja_avui": u.get("PREC"),
+           "pluja_30min": lluvia_entre(filas, hora - dt.timedelta(minutes=30), hora),
+           "pluja_1h": lluvia_entre(filas, hora - dt.timedelta(hours=1), hora),
+           "intensitat": u.get("PINT")}
+    return filas, ara
 
 
-def previsio(desde):
-    """Una fila por hora, de la hora actual a 24 horas después."""
+def modelos(desde):
     dias = [desde.date().isoformat(), (desde + dt.timedelta(days=2)).date().isoformat()]
     q = urllib.parse.urlencode({
         "latitude": C.CASA[0], "longitude": C.CASA[1],
@@ -46,49 +67,128 @@ def previsio(desde):
         "latitude": C.CASA[0], "longitude": C.CASA[1], "hourly": "precipitation",
         "models": C.ENSEMBLE, "timezone": P.TZ, "start_date": dias[0], "end_date": dias[1]})
     e = json.loads(P.get(f"https://ensemble-api.open-meteo.com/v1/ensemble?{q}"))["hourly"]
+    return h, e
+
+
+def lluvia_modelos(h, i):
+    """Lluvia de la hora i: la mayor de los modelos finos."""
+    v = [h.get(f"precipitation_{m}", [None] * (i + 1))[i] for m in C.MODELOS_FINOS]
+    v = [x for x in v if x is not None]
+    return max(v) if v else (h.get("precipitation_meteofrance_seamless", [0] * (i + 1))[i] or 0.0)
+
+
+def persistencia(mm_ultima_hora, k):
+    """Probabilidad y lluvia mediana k horas después de una hora con esa
+    lluvia, según el histórico (None si no ha llovido)."""
+    tabla = P.CALIBRACION_COMPLETA.get("persistencia", {})
+    for clase in sorted(tabla, key=float, reverse=True):
+        if mm_ultima_hora >= float(clase):
+            return tabla[clase].get(str(k))
+    return None
+
+
+def avisos_del_tramo(ini, fin, avisos):
+    """Avisos de AEMET que cubren el tramo. Los planes de Protección Civil no
+    tienen hora de fin: van en un aviso aparte, encima de la tabla."""
+    res = {}
+    for a in avisos or []:
+        a_ini, a_fin = (dt.datetime.fromisoformat(a[k]) for k in ("inicio", "fin"))
+        if a["zona"] == C.ZONA_TRAYECTO and a_ini < fin and a_fin > ini:
+            res.setdefault(a["nivel"], set()).add(a["tipo"])
+    return [{"nivell": n, "tipus": sorted(t)} for n, t in res.items()]
+
+
+def previsio(desde, h, e, ara, avisos):
+    """Una fila por tramo de una hora («de 10 a 11»), de la hora actual a 24
+    horas después. Open-Meteo da la lluvia acumulada en la hora anterior: el
+    tramo de 10 a 11 se lee en la hora 11:00, y los demás valores también."""
     miembros = [k for k in e if k.startswith("precipitation")]
     prob = {t: sum((e[k][i] or 0) >= C.UMBRAL_MM for k in miembros) / len(miembros)
             for i, t in enumerate(e["time"])} if miembros else {}
+    llueve_ahora = bool(ara) and ((ara.get("intensitat") or 0) > 0 or (ara.get("pluja_30min") or 0) > 0)
+    ultima_hora = (ara or {}).get("pluja_1h") or 0.0
 
     def valor(campo, i):
         return h.get(f"{campo}_meteofrance_seamless", [None] * (i + 1))[i]
 
-    # Cada fila es un tramo de una hora («de 10 a 11»). Open-Meteo da la lluvia
-    # acumulada en la hora anterior, así que el tramo de 10 a 11 se lee en la
-    # hora 11:00; los demás valores, también los de esa hora.
     primera = desde.replace(minute=0, second=0, microsecond=0) + dt.timedelta(hours=1)
-    fin_tramo = primera.strftime("%Y-%m-%dT%H:%M")
     filas = []
     for i, t in enumerate(h["time"]):
-        if t < fin_tramo or len(filas) >= HORAS:
+        if t < primera.strftime("%Y-%m-%dT%H:%M") or len(filas) >= HORAS:
             continue
-        lluvias = [h.get(f"precipitation_{m}", [None] * (i + 1))[i] for m in C.MODELOS_FINOS]
-        lluvias = [v for v in lluvias if v is not None] or [valor("precipitation", i) or 0.0]
-        inicio_tramo = (dt.datetime.fromisoformat(t) - dt.timedelta(hours=1)).strftime("%Y-%m-%dT%H:%M")
+        fin = dt.datetime.fromisoformat(t).astimezone()
+        ini = fin - dt.timedelta(hours=1)
+        n = len(filas)
+        mm, p = round(lluvia_modelos(h, i), 1), prob.get(t)
+        segun_estacion = False
+        # Primeras horas: la persistencia de la lluvia que mide ahora la
+        # estación, si da más que los modelos.
+        dato = persistencia(ultima_hora, n + 1) if n < HORAS_PERSISTENCIA else None
+        if dato:
+            if p is None or dato["probabilitat"] > p:
+                p, segun_estacion = dato["probabilitat"], True
+            if dato["mediana_mm"] > mm:
+                mm, segun_estacion = dato["mediana_mm"], True
+        plou_ara = n == 0 and llueve_ahora
+        if plou_ara:
+            p, segun_estacion = 1.0, True
         filas.append({
-            "hora": inicio_tramo, "fins": t, "temperatura": valor("temperature_2m", i),
-            "pluja_mm": round(max(lluvias), 1),
-            "probabilitat": round(prob[t], 2) if t in prob else None,
+            "hora": ini.strftime("%Y-%m-%dT%H:%M"), "fins": t,
+            "temperatura": valor("temperature_2m", i),
+            "pluja_mm": round(mm, 1), "probabilitat": round(p, 2) if p is not None else None,
+            "plou_ara": plou_ara, "segons_estacio": segun_estacion,
+            "avisos": avisos_del_tramo(ini, fin, avisos),
             "nuvols": valor("cloud_cover", i), "codi": valor("weather_code", i),
-            "vent": valor("wind_speed_10m", i), "ratxa": valor("wind_gusts_10m", i),
-            "humitat": valor("relative_humidity_2m", i)})
+            "vent": valor("wind_speed_10m", i), "ratxa": valor("wind_gusts_10m", i)})
     return filas
+
+
+def comprobacion_modelos(desde, h, filas_estacion):
+    """Lluvia medida y prevista en las últimas horas completas. Si los modelos
+    se han quedado muy cortos, la página lo dice."""
+    if not filas_estacion:
+        return None
+    fin = desde.replace(minute=0, second=0, microsecond=0)
+    ini = fin - dt.timedelta(hours=HORAS_COMPROBACION)
+    medida = lluvia_entre(filas_estacion, ini, fin)
+    prevista = 0.0
+    for i, t in enumerate(h["time"]):
+        tt = dt.datetime.fromisoformat(t).astimezone()
+        if ini < tt <= fin:
+            prevista += lluvia_modelos(h, i)
+    fallan = medida >= 3 and medida > 3 * prevista + 1
+    return {"hores": HORAS_COMPROBACION, "mesurada_mm": round(medida, 1),
+            "prevista_mm": round(prevista, 1), "no_encerten": fallan}
 
 
 def recoger():
     salida = {"versio": C.VERSION, "generat": P.AHORA.isoformat(timespec="minutes"),
               "horari": {"trams": [C.HORARIO_CASA], "cada_min": C.INTERVALO_CASA_MIN},
               "errors": []}
-    for clave, funcion in (("ara", ahora_montflorit), ("hores", lambda: previsio(P.AHORA)),
-                           ("avisos", P.avisos)):
-        try:
-            salida[clave] = funcion()
-        except Exception as ex:
-            salida[clave] = None
-            salida["errors"].append(f"{clave}: {ex}")
-    if salida["avisos"]:
-        salida["avisos"] = [a for a in salida["avisos"] if a["zona"] == C.ZONA_TRAYECTO
-                            and dt.datetime.fromisoformat(a["fin"]) > P.AHORA]
+    filas_estacion, ara = [], None
+    try:
+        filas_estacion, ara = montflorit()
+    except Exception as ex:
+        salida["errors"].append(f"estació: {ex}")
+    salida["ara"] = ara
+    avisos = planes = None
+    try:
+        avisos = [a for a in P.avisos() if a["zona"] == C.ZONA_TRAYECTO
+                  and dt.datetime.fromisoformat(a["fin"]) > P.AHORA]
+    except Exception as ex:
+        salida["errors"].append(f"avisos: {ex}")
+    try:
+        planes = P.planes_proteccion_civil()
+    except Exception as ex:
+        salida["errors"].append(f"plans: {ex}")
+    salida["avisos"], salida["plans"] = avisos, planes
+    try:
+        h, e = modelos(P.AHORA)
+        salida["hores"] = previsio(P.AHORA, h, e, ara, avisos)
+        salida["models"] = comprobacion_modelos(P.AHORA, h, filas_estacion)
+    except Exception as ex:
+        salida["hores"] = salida["models"] = None
+        salida["errors"].append(f"previsió: {ex}")
     return salida
 
 
@@ -99,6 +199,9 @@ if __name__ == "__main__":
             json.dump(datos, f, ensure_ascii=False, indent=1)
     print(f"Generado {datos['generat']}", datos["errors"] or "")
     print("Ahora:", datos["ara"])
-    for f in datos["hores"] or []:
-        print(f["hora"][11:16], f["temperatura"], "°C", f["pluja_mm"], "mm",
-              f["probabilitat"], f["codi"], f["vent"], f["ratxa"])
+    print("Modelos:", datos["models"])
+    print("Planes:", datos["plans"])
+    for f in (datos["hores"] or [])[:8]:
+        print(f["hora"][11:16], f["temperatura"], "°C", f["pluja_mm"], "mm", f["probabilitat"],
+              "estació" if f["segons_estacio"] else "", "PLOU ARA" if f["plou_ara"] else "",
+              f["avisos"])

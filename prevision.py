@@ -32,15 +32,17 @@ AHORA = dt.datetime.now().astimezone()
 
 
 def leer_calibracion():
-    """Frecuencia real de lluvia en cada nivel de la regla (calibracio/)."""
+    """Lo que sale de la calibración con datos reales (calibracio/)."""
     try:
         with open(os.path.join(DIR, "calibracio", "calibracio.json"), encoding="utf-8") as f:
-            return json.load(f)["ventanas"]
-    except (OSError, KeyError, ValueError):
+            return json.load(f)
+    except (OSError, ValueError):
         return {}
 
 
-CALIBRACION = leer_calibracion()
+CALIBRACION_COMPLETA = leer_calibracion()
+# Frecuencia real de lluvia en cada nivel de la regla.
+CALIBRACION = CALIBRACION_COMPLETA.get("ventanas", {})
 
 
 def frase_historico(ventana, nivel):
@@ -282,6 +284,40 @@ def avisos():
     return sorted((dict(t) for t in unicos), key=lambda a: (a["inicio"], a["zona"], a["tipo"]))
 
 
+PLANES_PC_URL = "https://analisi.transparenciacatalunya.cat/resource/wj9c-j6vf.json"
+
+
+def afecta_al_trayecto(descripcion):
+    """Un plan afecta salvo que su descripción nombre solo otras zonas."""
+    d = descripcion or ""
+    if any(z in d for z in C.ZONAS_PROPIAS_PC):
+        return True
+    return not any(z in d for z in C.ZONAS_AJENAS_PC)
+
+
+def planes_proteccion_civil():
+    """Planes meteorológicos de Protección Civil activados (datos abiertos de
+    la Generalitat, actualizados en tiempo real), uno por plan."""
+    res = {}
+    for p in json.loads(get(PLANES_PC_URL)):
+        acronimo = p.get("plaacronim", "")
+        if (p.get("plaactivat") != "SI" or acronimo not in C.PLANES_PC
+                or not afecta_al_trayecto(p.get("descripcio"))):
+            continue
+        if acronimo in res:
+            continue
+        res[acronimo] = {"pla": acronimo, "nom": C.PLANES_PC[acronimo],
+                         "fase": (p.get("plafase") or "").lower(),
+                         "des_de": p.get("fasedatahora"),
+                         "descripcio": (p.get("descripcio") or "").strip(" -"),
+                         "comunicat": (p.get("comunicatpdf") or {}).get("url")}
+    return list(res.values())
+
+
+def texto_plan(p):
+    return f"Protecció Civil té activat el pla {p['nom']} ({p['pla']}) en fase d'{p['fase']}."
+
+
 # --- Decisión ------------------------------------------------------------------
 
 def valores_ventana(serie_horas, serie_valores, dia, ventana):
@@ -348,6 +384,12 @@ def decidir(dia, ventana, d):
     if "avisos" in d and not grupos:
         motivos.append((5, "moto", "L'AEMET no té cap avís de pluja ni de tempesta "
                         "per a aquesta hora."))
+
+    # 1 bis. Planes de Protección Civil: en alerta o emergencia, riesgo alto.
+    for p in d.get("planes") or []:
+        senyals.setdefault("proteccio_civil", []).append(f"{p['pla']}:{p['fase']}")
+        if p["fase"] in ("alerta", "emergència"):
+            motivos.append((0, "cotxe", texto_plan(p)))
 
     # 2. Radar y estaciones: solo valen mientras la ventana no ha terminado y
     # empieza en las próximas horas.
@@ -487,7 +529,8 @@ def llegir_anterior(origen):
 def recoger(anterior=None):
     dia = AHORA.date().isoformat()
     d, errores = {}, []
-    for clave, funcion in (("avisos", avisos), ("observaciones", observaciones),
+    for clave, funcion in (("avisos", avisos), ("planes", planes_proteccion_civil),
+                           ("observaciones", observaciones),
                            ("radar", radar), ("modelos", lambda: modelos([dia])),
                            ("ensemble", lambda: ensemble([dia]))):
         try:
@@ -500,6 +543,7 @@ def recoger(anterior=None):
         "horari": {"trams": C.HORARIO, "cada_min": C.INTERVALO_MIN},
         "errors": errores,
         "avisos": d.get("avisos"),
+        "plans": d.get("planes"),
         "radar": d.get("radar"),
         "observacions": d.get("observaciones"),
         **decidir_dia(dia, d, anterior),

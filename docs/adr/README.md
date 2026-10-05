@@ -9,5 +9,6 @@
 | [0005](0005-actualizacion-desde-el-nas-y-publicacion-en-la-rama-gh-pages.md) | Actualización desde el NAS y publicación en la rama gh-pages | aceptado |
 | [0006](0006-registro-de-aciertos-y-de-todas-las-senales.md) | Registro de aciertos y de todas las señales | aceptado |
 | [0007](0007-pagina-del-tiempo-en-casa.md) | Página del tiempo en casa | aceptado |
+| [0008](0008-planes-de-proteccion-civil.md) | Planes de Protección Civil | aceptado |
 
 Plantilla: [0000-plantilla.md](0000-plantilla.md). Para crear uno: `nuevo-adr "Título"`.

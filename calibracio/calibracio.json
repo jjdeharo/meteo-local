@@ -39,5 +39,73 @@
     }
    }
   }
+ },
+ "persistencia": {
+  "4.0": {
+   "1": {
+    "casos": 245,
+    "probabilitat": 0.861,
+    "mediana_mm": 2.0
+   },
+   "2": {
+    "casos": 245,
+    "probabilitat": 0.571,
+    "mediana_mm": 0.4
+   },
+   "3": {
+    "casos": 245,
+    "probabilitat": 0.433,
+    "mediana_mm": 0.0
+   },
+   "4": {
+    "casos": 245,
+    "probabilitat": 0.376,
+    "mediana_mm": 0.0
+   }
+  },
+  "1.0": {
+   "1": {
+    "casos": 859,
+    "probabilitat": 0.778,
+    "mediana_mm": 1.1
+   },
+   "2": {
+    "casos": 859,
+    "probabilitat": 0.563,
+    "mediana_mm": 0.3
+   },
+   "3": {
+    "casos": 859,
+    "probabilitat": 0.435,
+    "mediana_mm": 0.1
+   },
+   "4": {
+    "casos": 859,
+    "probabilitat": 0.377,
+    "mediana_mm": 0.0
+   }
+  },
+  "0.2": {
+   "1": {
+    "casos": 1842,
+    "probabilitat": 0.631,
+    "mediana_mm": 0.4
+   },
+   "2": {
+    "casos": 1842,
+    "probabilitat": 0.475,
+    "mediana_mm": 0.1
+   },
+   "3": {
+    "casos": 1838,
+    "probabilitat": 0.4,
+    "mediana_mm": 0.0
+   },
+   "4": {
+    "casos": 1839,
+    "probabilitat": 0.337,
+    "mediana_mm": 0.0
+   }
+  }
  }
 }

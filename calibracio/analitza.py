@@ -233,6 +233,36 @@ def pct(x):
     return f"{100 * x:.0f} %"
 
 
+CLASES_PERSISTENCIA = [4.0, 1.0, 0.2]   # mm en la última hora, de más a menos
+
+
+def persistencia(obs, horas=4):
+    """Si ha llovido en una hora, probabilidad de que siga lloviendo (0,2 mm o
+    más) 1, 2, 3 y 4 horas después, y lluvia mediana. Juntando las dos
+    estaciones: lo usa la página de casa para las primeras horas, que los
+    modelos pueden no ver."""
+    res = {}
+    for clase in CLASES_PERSISTENCIA:
+        filas = {k: [] for k in range(1, horas + 1)}
+        for serie in obs.values():
+            por_hora = {}
+            for t, mm in serie.items():
+                h = t.replace(minute=0)
+                por_hora[h] = por_hora.get(h, 0.0) + mm
+            for h, mm in por_hora.items():
+                if mm < clase:
+                    continue
+                for k in filas:
+                    despues = por_hora.get(h + dt.timedelta(hours=k))
+                    if despues is not None:
+                        filas[k].append(despues)
+        res[str(clase)] = {str(k): {"casos": len(v),
+                                    "probabilitat": round(sum(x >= UMBRAL_LLUVIA for x in v) / len(v), 3),
+                                    "mediana_mm": round(sorted(v)[len(v) // 2], 1)}
+                           for k, v in filas.items() if v}
+    return res
+
+
 def analizar():
     obs, prev = leer_obs(), leer_prev()
     salida = {"version": 2, "generat": dt.date.today().isoformat(),
@@ -311,6 +341,15 @@ def analizar():
             lineas.append(f"| {rot} | {c['avisa']} | {c['aciertos']} | {c['fallos']} | "
                           f"{c['falsas_alarmas']} |")
         lineas.append("")
+    salida["persistencia"] = persistencia(obs)
+    lineas += ["## Persistencia de la lluvia", "",
+               "Si en una hora ha llovido al menos lo que dice la fila, cuántas veces siguió "
+               "lloviendo (0,2 mm o más) en las horas siguientes, en Sabadell y Sant Cugat juntas:", "",
+               "| Última hora | +1 h | +2 h | +3 h | +4 h |", "|---|---|---|---|---|"]
+    for clase, dato in salida["persistencia"].items():
+        lineas.append(f"| ≥ {clase.replace('.', ',')} mm | " + " | ".join(
+            f"{pct(dato[k]['probabilitat'])} ({dato[k]['casos']})" for k in sorted(dato)) + " |")
+    lineas.append("")
     with open(os.path.join(AQUI, "informe.md"), "w") as f:
         f.write("\n".join(lineas))
     with open(os.path.join(AQUI, "calibracio.json"), "w") as f:

@@ -70,6 +70,32 @@ function pintaHorari(dades) {
   $('avis-dades').hidden = !avisos.length;
 }
 
+// Plans de Protecció Civil activats (inundacions, vent, neu): avís destacat
+// a dalt de la pàgina, amb l'enllaç al comunicat.
+const NOM_FASE = { prealerta: 'prealerta', alerta: 'alerta', 'emergència': 'emergència' };
+
+function blocPlans(plans) {
+  if (!plans || !plans.length) return null;
+  const caixa = element('section', 'avis avis-pc');
+  caixa.setAttribute('aria-label', 'Avís de Protecció Civil');
+  for (const p of plans) {
+    const par = element('p', null,
+      `Protecció Civil: pla ${p.nom} (${p.pla}) en fase d\u2019${NOM_FASE[p.fase] || p.fase}.`);
+    if (p.fase === 'emergència') {
+      par.append(' Eviteu els desplaçaments que no siguin necessaris.');
+    }
+    if (p.comunicat) {
+      const a = element('a', null, 'Comunicat (PDF)');
+      a.href = p.comunicat;
+      a.target = '_blank';
+      a.rel = 'noopener';
+      par.append(' ', a);
+    }
+    caixa.append(par);
+  }
+  return caixa;
+}
+
 function posaVersio(versio) {
   $('versio').textContent = 'versió ' + versio;
   $('versio').href = 'https://github.com/jjdeharo/meteo-local/releases/tag/v' + versio;

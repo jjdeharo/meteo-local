@@ -100,6 +100,8 @@ function pinta(dades) {
     graella.append(targeta('Anada', dades.anada), targeta('Tornada', dades.tornada));
     cont.append(graella);
   }
+  const plans = blocPlans(dades.plans);
+  if (plans) cont.prepend(plans);
   pintaHorari(dades);
   posaVersio(dades.versio);
 }

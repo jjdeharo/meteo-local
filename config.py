@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 """Datos fijos del trayecto. Se cambian aquí, no en prevision.py."""
 
-VERSION = "1.8.0"
+VERSION = "1.9.0"
 
 # Coordenadas redondeadas a unos 500 m: para el tiempo da igual una calle u
 # otra, y el repositorio es público.
@@ -46,6 +46,14 @@ REGISTRO_LLUVIAS_MINIMAS = 5
 # segunda, la costa, se tiene en cuenta pero no decide.
 ZONA_TRAYECTO = "Prelitoral de Barcelona"
 ZONA_CERCANA = "Litoral de Barcelona"
+
+# Planes de Protección Civil de la Generalitat que dependen del tiempo, con el
+# nombre que ve el lector. Un plan en alerta o emergencia cuenta como riesgo
+# alto; en prealerta solo se avisa.
+PLANES_PC = {"INUNCAT": "d'inundacions", "VENTCAT": "de vent", "NEUCAT": "de neu"}
+# Si la descripción del plan nombra solo otras zonas, no afecta al trayecto.
+ZONAS_PROPIAS_PC = ["Vallès", "Barcelona", "Catalunya"]
+ZONAS_AJENAS_PC = ["Ebre", "Pirineu", "Aran", "Lleida", "Girona", "Tarragona", "Empordà"]
 
 # Modelos deterministas de Open-Meteo. Los «finos» deciden; los globales,
 # con celdas de 10-25 km que incluyen mar, solo se muestran.

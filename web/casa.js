@@ -15,6 +15,8 @@ function cel(f) {
   if (f.pluja_mm >= 4) return 'Pluja forta';
   if (f.pluja_mm >= 1) return 'Pluja';
   if (f.pluja_mm >= 0.2) return 'Pluja feble';
+  // Sense pluja prevista però amb probabilitat clara: no pot dir «serè».
+  if (f.probabilitat >= 0.3) return 'Possible pluja';
   if (f.codi === 45 || f.codi === 48) return 'Boira';
   if (f.nuvols == null) return '';
   if (f.nuvols < 20) return 'Serè';
@@ -67,7 +69,7 @@ function taula(hores) {
   const fila = element('tr');
   // Les unitats van a la capçalera perquè la taula càpiga al mòbil.
   for (const [text, classe] of [['Hora', ''], ['Cel', ''], ['°C', 'num'], ['Pluja (mm)', 'num'],
-    ['Prob.', 'num'], ['Vent (km/h)', 'num']]) {
+    ['Prob.', 'num'], ['Vent', 'num']]) {
     const th = element('th', classe, text);
     th.scope = 'col';
     fila.append(th);
@@ -92,13 +94,20 @@ function taula(hores) {
     const hora = element('th', 'hora', `${h0}–${(h0 + 1) % 24}`);
     hora.scope = 'row';
     tr.append(hora);
-    tr.append(element('td', '', cel(f)));
+    const celCel = element('td', 'cel', f.plou_ara ? 'Plou ara' : cel(f));
+    for (const a of f.avisos || []) {
+      const marca = element('span', `marca-avis ${a.nivell}`, `Avís ${a.nivell}`);
+      marca.title = `Avís ${a.nivell} de l\u2019AEMET per ${a.tipus.join(' i ')}`;
+      marca.append(element('span', 'visualment-amagat', ` per ${a.tipus.join(' i ')}`));
+      celCel.append(marca);
+    }
+    tr.append(celCel);
     tr.append(element('td', 'num', f.temperatura == null ? '' : `${Math.round(f.temperatura)}`));
     tr.append(element('td', 'num', f.pluja_mm >= 0.1 ? coma(f.pluja_mm) : '\u2013'));
     const prob = element('td', 'num prob');
     if (f.probabilitat != null) {
       const pct = Math.round(f.probabilitat * 100);
-      prob.textContent = `${pct} %`;
+      prob.textContent = `${pct} %${f.segons_estacio ? '*' : ''}`;
       prob.style.setProperty('--prob', `${pct}%`);
     }
     tr.append(prob);
@@ -109,15 +118,27 @@ function taula(hores) {
   t.append(cos);
   contenidor.append(t);
   sec.append(contenidor);
-  sec.append(element('p', 'nota', 'Vent: mitjana i, entre parèntesis, les ratxes.'));
+  if (hores.some((f) => f.segons_estacio)) {
+    sec.append(element('p', 'nota', '* Segons la pluja que mesura ara l\u2019estació i el que va passar '
+      + 'en casos semblants a Sabadell i Sant Cugat entre el 2024 i el 2026.'));
+  }
+  sec.append(element('p', 'nota', 'Vent en km/h: mitjana i, entre parèntesis, les ratxes.'));
   return sec;
 }
 
 function pinta(dades) {
   const cont = $('casa');
   cont.replaceChildren();
+  const plans = blocPlans(dades.plans);
+  if (plans) cont.append(plans);
   if (dades.ara) cont.append(blocAra(dades.ara));
   if (dades.avisos && dades.avisos.length) cont.append(element('p', 'avis', textAvisos(dades.avisos)));
+  if (dades.models && dades.models.no_encerten) {
+    const m = dades.models;
+    cont.append(element('p', 'avis', `Avui els models no veuen aquesta pluja: en les darreres ${m.hores} hores `
+      + `han caigut ${coma(m.mesurada_mm)}\u00a0mm a Montflorit i en preveien ${coma(m.prevista_mm)}. `
+      + 'Les primeres hores de la taula parteixen del que mesura l\u2019estació; per a la resta, fes més cas dels avisos.'));
+  }
   if (dades.hores) cont.append(taula(dades.hores));
   pintaHorari(dades);
   posaVersio(dades.versio);

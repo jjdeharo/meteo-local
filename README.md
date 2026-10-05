@@ -37,7 +37,9 @@ después empeora la vuelta, la web lo avisa sin cambiar el medio.
 Fuentes, de la más a la menos decisiva:
 
 1. **Avisos de AEMET** del Prelitoral de Barcelona (el Vallès): un aviso de
-   lluvia o tormenta a la hora del trayecto, riesgo alto.
+   lluvia o tormenta a la hora del trayecto, riesgo alto. **Planes de Protección
+   Civil** de inundaciones, viento o nieve en alerta o emergencia: riesgo alto
+   (ADR 0008).
 2. **Radar** (RainViewer), solo para las 3 horas siguientes: lluvia a menos de
    15 km y creciendo, riesgo alto; a menos de 40 km, moderado.
 3. **Estaciones**: Montflorit, de meteocerdanyola.com, minuto a minuto, y las

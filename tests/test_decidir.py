@@ -121,6 +121,25 @@ class TiempoDeLaVuelta(unittest.TestCase):
         self.assertEqual((t["temp_min"], t["temp_max"], t["ratxa_max"]), (25, 26, 5))
 
 
+class ProteccionCivil(unittest.TestCase):
+    def plan(self, fase):
+        return {"pla": "INUNCAT", "nom": "d'inundacions", "fase": fase}
+
+    def test_emergencia_es_coche(self):
+        r = P.decidir(MANANA, P.C.IDA, {"planes": [self.plan("emergència")], "modelos": modelos(0)})
+        self.assertEqual(r["nivell"], "cotxe")
+        self.assertIn("INUNCAT", r["motius"][0]["text"])
+
+    def test_prealerta_no_cambia_el_riesgo(self):
+        r = P.decidir(MANANA, P.C.IDA, {"planes": [self.plan("prealerta")], "modelos": modelos(0)})
+        self.assertEqual(r["nivell"], "moto")
+
+    def test_un_plan_de_otra_zona_no_cuenta(self):
+        self.assertFalse(P.afecta_al_trayecto("CHE. Vigilància per previsió meteorològica adversa conca de l'Ebre - "))
+        self.assertTrue(P.afecta_al_trayecto("Emergència INUNCAT 3-5 Octubre"))
+        self.assertTrue(P.afecta_al_trayecto("Pluges intenses a Girona i al Vallès"))
+
+
 class UnSoloMedio(unittest.TestCase):
     """Quien va en moto vuelve en moto: un medio para todo el día."""
 

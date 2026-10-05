@@ -30,6 +30,26 @@ todo la previsión hora a hora para las 24 horas siguientes.
   vuelven a publicar tal como estaban, para no alterar su horario ni su
   decisión. La página muestra su horario como la del trayecto.
 
+### Corrección del 05-10-2026, 10:10
+
+Con alerta de Protección Civil por lluvias torrenciales, la tabla decía
+«pluja feble, 33 %» porque solo enseñaba los modelos (Juanjo: «esto es
+claramente incorrecto»). Se añadió:
+
+- **Persistencia:** si ha llovido en la última hora en Montflorit, las cuatro
+  primeras filas no bajan de lo que pasó en casos parecidos en Sabadell y Sant
+  Cugat entre 2024 y 2026 (`persistencia` en `calibracio/calibracio.json`):
+  tras una hora con 1 mm o más, siguió lloviendo la hora siguiente el 78 % de
+  las veces, y dos horas después el 56 %. La fila en curso, si llueve, dice
+  «Plou ara». Estas cifras llevan asterisco.
+- **Comprobación de los modelos:** si en las tres últimas horas han caído al
+  menos 3 mm y más del triple de lo previsto más 1 mm, la página lo dice (el
+  05-10-2026 a las 10:09, 27,4 mm medidos frente a 0,5 previstos).
+- **Avisos por hora:** cada fila lleva los avisos de AEMET que la cubren; los
+  planes de Protección Civil, sin hora de fin, van arriba (ADR 0008).
+- Sin lluvia prevista pero con probabilidad del 30 % o más, el cielo dice
+  «Possible pluja», no «serè».
+
 ## Alternativas descartadas
 
 - **Iconos del tiempo:** la descripción en una palabra se lee igual y no

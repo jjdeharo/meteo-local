@@ -234,3 +234,21 @@ h1 { margin: 0; font-size: 1.6rem; line-height: 1.2; }
   .taula-hores { font-size: .88rem; }
   .taula-hores th, .taula-hores td { padding: .3rem .25rem; }
 }
+
+.avis-pc { border-color: var(--cotxe); background: var(--cotxe-fons); }
+.avis-pc p { margin: 0; }
+.avis-pc p + p { margin-top: .4rem; }
+.taula-hores td.cel { white-space: normal; }
+.marca-avis {
+  display: block;
+  width: fit-content;
+  margin-top: .1rem;
+  padding: 0 .3rem;
+  border-radius: .25rem;
+  font-size: .72rem;
+  font-weight: 600;
+  color: #1c2430;
+  background: #facc15;
+}
+.marca-avis.taronja { background: #fb923c; }
+.marca-avis.vermell { background: #ef4444; color: #fff; }

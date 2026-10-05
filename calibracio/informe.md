@@ -158,3 +158,13 @@ Frecuencia real de lluvia según el nivel de la regla:
 | Regla actual (cotxe o compte) | 203 | 60 | 9 | 143 |
 | Calibrado ≥ 20 % en algún trayecto | 64 | 35 | 34 | 29 |
 | Calibrado ≥ 30 % en algún trayecto | 46 | 27 | 42 | 19 |
+
+## Persistencia de la lluvia
+
+Si en una hora ha llovido al menos lo que dice la fila, cuántas veces siguió lloviendo (0,2 mm o más) en las horas siguientes, en Sabadell y Sant Cugat juntas:
+
+| Última hora | +1 h | +2 h | +3 h | +4 h |
+|---|---|---|---|---|
+| ≥ 4,0 mm | 86 % (245) | 57 % (245) | 43 % (245) | 38 % (245) |
+| ≥ 1,0 mm | 78 % (859) | 56 % (859) | 44 % (859) | 38 % (859) |
+| ≥ 0,2 mm | 63 % (1842) | 48 % (1842) | 40 % (1838) | 34 % (1839) |
