@@ -3,12 +3,14 @@
 """¿Moto o coche? Lluvia en el trayecto Cerdanyola → Parc Taulí.
 
 Junta avisos de AEMET, radar, estaciones de Meteocat, modelos y un ensemble,
-y decide para la ida y la vuelta de hoy. Los motivos salen en
-catalán porque son los que lee la web.
+y da un solo medio para todo el día: quien va en moto vuelve en moto. Los
+motivos salen en catalán porque son los que lee la web.
 
 Uso:
   python3 prevision.py               resumen legible
   python3 prevision.py --json FICH   además, guarda los datos para la web
+  --anterior URL|FICH                 datos publicados antes, para mantener la
+                                      decisión una vez ha salido de casa
 """
 import datetime as dt
 import html
@@ -175,7 +177,8 @@ def valores_ventana(serie_horas, serie_valores, dia, ventana):
 
 
 def decidir(dia, ventana, d):
-    """Devuelve el veredicto (moto, compte, cotxe) y los motivos, en catalán."""
+    """Riesgo de lluvia en una ventana: moto (bajo), compte (moderado) o
+    cotxe (alto), con los motivos en catalán."""
     ini, fin = momento(dia, ventana[0]), momento(dia, ventana[1])
     motivos = []          # (peso, nivel, texto); el peso ordena la lista
 
@@ -253,7 +256,7 @@ def decidir(dia, ventana, d):
                         f"{mullats} de cada {len(claves)} simulacions hi posen pluja "
                         f"({round(prob * 100)}\u00a0% de probabilitat)."))
 
-    orden = ["moto", "compte", "cotxe"]
+    orden = ORDEN
     if not motivos:
         motivos.append((0, "compte", "No s'han pogut obtenir dades."))
     veredicto = max((n for _, n, _ in motivos), key=orden.index)
@@ -261,17 +264,64 @@ def decidir(dia, ventana, d):
     return {
         "dia": dia, "inici": ventana[0], "fi": ventana[1],
         "passat": fin < AHORA,
-        "veredicte": veredicto,
+        "nivell": veredicto,
         "motius": [{"nivell": n, "text": t} for _, n, t in motivos],
     }
 
 
-def recoger():
-    dias = [AHORA.date().isoformat()]
+ORDEN = ["moto", "compte", "cotxe"]
+
+
+def peor(*niveles):
+    return max(niveles, key=ORDEN.index)
+
+
+def decidir_dia(dia, d, anterior=None):
+    """Un solo medio para ida y vuelta: el del trayecto más desfavorable.
+
+    Hasta la hora de salida se recalcula en cada ejecución. Desde entonces se
+    mantiene la decisión publicada antes (ya ha salido de casa) y solo se avisa
+    si la vuelta ha empeorado respecto a lo decidido.
+    """
+    anada, tornada = decidir(dia, C.IDA, d), decidir(dia, C.VUELTA, d)
+    salida = momento(dia, C.IDA[0])
+    previa = anterior if anterior and anterior.get("dia") == dia and "decisio" in anterior else None
+    if AHORA >= salida and previa:
+        decision = dict(previa["decisio"], mantinguda=True)
+        anada = previa["anada"]
+        anada["passat"] = momento(dia, C.IDA[1]) < AHORA
+    else:
+        decision = {"mitja": peor(anada["nivell"], tornada["nivell"]),
+                    "decidit": AHORA.isoformat(timespec="minutes"),
+                    "abans_de_sortir": AHORA < salida,
+                    "mantinguda": False}
+    avis_tornada = None
+    if (decision["mantinguda"] and not tornada["passat"]
+            and ORDEN.index(tornada["nivell"]) > ORDEN.index(decision["mitja"])):
+        avis_tornada = ("La previsió per a la tornada ha empitjorat des del matí. "
+                        if tornada["nivell"] == "cotxe" else
+                        "Ara hi ha una mica de risc de pluja a la tornada. ") + \
+            "Porta l'impermeable o, si pots, espera que passi el ruixat."
+    return {"dia": dia, "decisio": decision, "avis_tornada": avis_tornada,
+            "anada": anada, "tornada": tornada}
+
+
+def llegir_anterior(origen):
+    try:
+        if origen.startswith("http"):
+            return json.loads(get(origen))
+        with open(origen, encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return None
+
+
+def recoger(anterior=None):
+    dia = AHORA.date().isoformat()
     d, errores = {}, []
     for clave, funcion in (("avisos", avisos), ("observaciones", observaciones),
-                           ("radar", radar), ("modelos", lambda: modelos(dias)),
-                           ("ensemble", lambda: ensemble(dias))):
+                           ("radar", radar), ("modelos", lambda: modelos([dia])),
+                           ("ensemble", lambda: ensemble([dia]))):
         try:
             d[clave] = funcion()
         except Exception as ex:
@@ -283,23 +333,28 @@ def recoger():
         "avisos": d.get("avisos"),
         "radar": d.get("radar"),
         "observacions": d.get("observaciones"),
-        "dies": [{"dia": dia, "anada": decidir(dia, C.IDA, d),
-                  "tornada": decidir(dia, C.VUELTA, d)} for dia in dias],
+        **decidir_dia(dia, d, anterior),
     }
 
 
 if __name__ == "__main__":
-    datos = recoger()
-    if "--json" in sys.argv:
-        with open(sys.argv[sys.argv.index("--json") + 1], "w", encoding="utf-8") as f:
+    args = sys.argv
+    anterior = llegir_anterior(args[args.index("--anterior") + 1]) if "--anterior" in args else None
+    datos = recoger(anterior)
+    if "--json" in args:
+        with open(args[args.index("--json") + 1], "w", encoding="utf-8") as f:
             json.dump(datos, f, ensure_ascii=False, indent=1)
+    dec = datos["decisio"]
     print(f"Generado {datos['generat']}")
     for error in datos["errors"]:
         print("  fallo:", error)
-    for dia in datos["dies"]:
-        for nombre in ("anada", "tornada"):
-            v = dia[nombre]
-            print(f"\n{v['dia']} {nombre} {v['inici']}-{v['fi']}: {v['veredicte'].upper()}"
-                  + (" (ya pasó)" if v["passat"] else ""))
-            for m in v["motius"]:
-                print(f"  [{m['nivell']}] {m['text']}")
+    print(f"\n{datos['dia']}: {dec['mitja'].upper()} (decidido {dec['decidit']}"
+          + (", se mantiene" if dec["mantinguda"] else "") + ")")
+    if datos["avis_tornada"]:
+        print("  Aviso vuelta:", datos["avis_tornada"])
+    for nombre in ("anada", "tornada"):
+        v = datos[nombre]
+        print(f"\n{nombre} {v['inici']}-{v['fi']}: riesgo {v['nivell']}"
+              + (" (ya pasó)" if v["passat"] else ""))
+        for m in v["motius"]:
+            print(f"  [{m['nivell']}] {m['text']}")

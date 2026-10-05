@@ -1,20 +1,20 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Llegeix dades.json (el genera prevision.py) i pinta la recomanació.
+// Hi ha un sol mitjà per a tot el dia: qui va en moto torna en moto.
 
-const TEXT_VEREDICTE = {
-  moto: { titol: 'Moto', frase: 'Pots anar en moto.' },
-  compte: { titol: 'Moto, amb impermeable', frase: 'Probablement no plourà, però porta l’impermeable.' },
-  cotxe: { titol: 'Cotxe', frase: 'Millor agafa el cotxe.' },
+const TEXT_MITJA = {
+  moto: { titol: 'Moto', frase: 'Pots anar i tornar en moto.' },
+  compte: { titol: 'Moto, amb impermeable', frase: 'Pots anar en moto, però porta l\u2019impermeable: pot caure algun ruixat.' },
+  cotxe: { titol: 'Cotxe', frase: 'Agafa el cotxe per anar i per tornar.' },
 };
-const TEXT_NIVELL = { moto: 'A favor de la moto', compte: 'Compte', cotxe: 'A favor del cotxe' };
+const TEXT_RISC = { moto: 'baix', compte: 'moderat', cotxe: 'alt' };
 const HORES_DADES_ANTIGUES = 3;
 
 const $ = (id) => document.getElementById(id);
 
 function nomDia(iso) {
   const data = new Date(iso + 'T12:00:00');
-  const llarg = data.toLocaleDateString('ca', { weekday: 'long', day: 'numeric', month: 'long' });
-  return 'Avui, ' + llarg;
+  return 'Avui, ' + data.toLocaleDateString('ca', { weekday: 'long', day: 'numeric', month: 'long' });
 }
 
 function horaCurta(iso) {
@@ -28,38 +28,56 @@ function element(etiqueta, classe, text) {
   return el;
 }
 
+// Quan es va decidir i si encara pot canviar.
+function notaDecisio(decisio, sortida) {
+  const hora = horaCurta(decisio.decidit);
+  if (decisio.mantinguda && decisio.abans_de_sortir) {
+    return `Decidit a les ${hora}, abans de sortir. Ja no canvia.`;
+  }
+  if (decisio.mantinguda || !decisio.abans_de_sortir) {
+    return `Decidit a les ${hora}: no hi havia dades d\u2019abans de les ${sortida}.`;
+  }
+  return `Recomanació de les ${hora}. Es pot actualitzar fins a les ${sortida}; després ja no canvia.`;
+}
+
+function blocDecisio(dades) {
+  const v = TEXT_MITJA[dades.decisio.mitja];
+  const sec = element('section', 'decisio targeta ' + dades.decisio.mitja);
+  sec.setAttribute('aria-label', `Recomanació d\u2019avui: ${v.titol}`);
+  sec.append(element('h2', 'data', nomDia(dades.dia)));
+  sec.append(element('p', 'veredicte', v.titol));
+  sec.append(element('p', 'frase', v.frase));
+  sec.append(element('p', 'nota', notaDecisio(dades.decisio, dades.anada.inici)));
+  return sec;
+}
+
 function targeta(nom, trajecte) {
-  const v = TEXT_VEREDICTE[trajecte.veredicte];
-  const art = element('article', 'targeta ' + trajecte.veredicte + (trajecte.passat ? ' passat' : ''));
-  art.setAttribute('aria-label', `${nom}: ${v.titol}`);
-  const cap = element('p', 'trajecte', `${nom} · ${trajecte.inici}–${trajecte.fi}`);
+  const risc = TEXT_RISC[trajecte.nivell];
+  const art = element('article', 'targeta ' + trajecte.nivell + (trajecte.passat ? ' passat' : ''));
+  art.setAttribute('aria-label', `${nom}: risc de pluja ${risc}`);
+  const cap = element('h3', 'trajecte', `${nom} · ${trajecte.inici}\u2013${trajecte.fi}`);
   if (trajecte.passat) cap.append(element('span', 'etiqueta-passat', 'Ja ha passat'));
   art.append(cap);
-  art.append(element('p', 'veredicte', v.titol));
-  art.append(element('p', 'frase', v.frase));
-  const perque = element('h3', 'perque', 'Per què');
+  art.append(element('p', 'risc', 'Risc de pluja: ' + risc));
   const llista = element('ul', 'motius');
   for (const motiu of trajecte.motius) {
     const li = element('li', 'motiu ' + motiu.nivell);
-    li.append(element('span', 'visualment-amagat', TEXT_NIVELL[motiu.nivell] + ': '));
+    li.append(element('span', 'visualment-amagat', `Risc ${TEXT_RISC[motiu.nivell]}: `));
     li.append(document.createTextNode(motiu.text));
     llista.append(li);
   }
-  art.append(perque, llista);
+  art.append(llista);
   return art;
 }
 
 function pinta(dades) {
   const cont = $('dies');
-  cont.replaceChildren();
-  dades.dies.forEach((dia) => {
-    const sec = element('section', 'dia');
-    sec.append(element('h2', null, nomDia(dia.dia)));
-    const graella = element('div', 'graella');
-    graella.append(targeta('Anada', dia.anada), targeta('Tornada', dia.tornada));
-    sec.append(graella);
-    cont.append(sec);
-  });
+  cont.replaceChildren(blocDecisio(dades));
+  if (dades.avis_tornada) cont.append(element('p', 'avis', dades.avis_tornada));
+  cont.append(element('h2', 'perque', 'Per què'));
+  const graella = element('div', 'graella');
+  graella.append(targeta('Anada', dades.anada), targeta('Tornada', dades.tornada));
+  cont.append(graella);
 
   const generat = new Date(dades.generat);
   $('generat').textContent = generat.toLocaleDateString('ca', { weekday: 'long', day: 'numeric' })
@@ -73,7 +91,7 @@ function pinta(dades) {
     avisos.push(`Aquestes dades són de fa ${Math.floor(hores)} hores. Mira el radar abans de sortir.`);
   }
   if (dades.errors.length) {
-    avisos.push('No s’han pogut llegir totes les fonts: la recomanació és menys segura.');
+    avisos.push('No s\u2019han pogut llegir totes les fonts: la recomanació és menys segura.');
   }
   $('avis-dades').textContent = avisos.join(' ');
   $('avis-dades').hidden = !avisos.length;
@@ -83,7 +101,7 @@ fetch('dades.json', { cache: 'no-store' })
   .then((r) => r.json())
   .then(pinta)
   .catch(() => {
-    $('dies').replaceChildren(element('p', 'avis', 'No s’ha pogut carregar la previsió. Torna-ho a provar d’aquí a una estona.'));
+    $('dies').replaceChildren(element('p', 'avis', 'No s\u2019ha pogut carregar la previsió. Torna-ho a provar d\u2019aquí a una estona.'));
   });
 
 // Tema: segueix el del dispositiu mentre no se'n triï un altre; si es tria

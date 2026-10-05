@@ -2,8 +2,9 @@
 
 Responde a una pregunta concreta: **¿lloverá en el trayecto en moto de
 Cerdanyola del Vallès al Parc Taulí (Sabadell), a la ida (6:30-7:30) o a la
-vuelta (15:00-15:30)?** Da una recomendación (moto, moto con impermeable o
-coche) para hoy, con sus motivos.
+vuelta (15:00-15:30)?** Da **un solo medio para todo el día** (moto, moto con
+impermeable o coche), porque quien va en moto vuelve en moto, y el riesgo de
+lluvia de cada trayecto con sus motivos.
 
 Web: <https://jjdeharo.github.io/meteo-local/> (en catalán, para quien hace
 el trayecto).
@@ -11,23 +12,30 @@ el trayecto).
 ## Cómo funciona
 
 Una acción de GitHub ejecuta `prevision.py` varias veces al día (cada media
-hora de 5:00 a 7:00 y de 13:00 a 15:00, hora local), guarda el resultado en
+hora de 5:00 a 7:00, también a las 6:15, y de 13:00 a 15:00, hora local), guarda el resultado en
 `web/dades.json` y publica la carpeta `web/` en GitHub Pages. No se guarda
 nada más ni se hacen commits automáticos.
 
-La recomendación junta cinco fuentes y manda la más desfavorable:
+El riesgo de cada trayecto (bajo, moderado o alto) junta cinco fuentes y
+manda la más desfavorable; el medio del día sale del trayecto con más riesgo:
+alto, coche; moderado, moto con impermeable; bajo en los dos, moto. La
+decisión se recalcula hasta la hora de salida (6:30) y desde entonces se
+mantiene: cada ejecución lee los datos ya publicados (`--anterior`). Si
+después empeora la vuelta, la web lo avisa sin cambiar el medio.
+
+Fuentes, de la más a la menos decisiva:
 
 1. **Avisos de AEMET** del Prelitoral de Barcelona (el Vallès): un aviso de
-   lluvia o tormenta a la hora del trayecto decide por sí solo, coche.
+   lluvia o tormenta a la hora del trayecto, riesgo alto.
 2. **Radar** (RainViewer), solo para las 3 horas siguientes: lluvia a menos de
-   15 km y creciendo, coche; a menos de 40 km, atención.
+   15 km y creciendo, riesgo alto; a menos de 40 km, moderado.
 3. **Estaciones de Meteocat** de Sabadell y Sant Cugat: si llueve ahora y falta
-   menos de hora y media, coche.
-4. **Modelos finos** (AROME HD, AROME e ICON-EU): 1 mm en una hora, coche;
-   0,2 mm, atención. Los globales (ECMWF, UKMO, GFS) se descargan pero no
+   menos de hora y media, riesgo alto.
+4. **Modelos finos** (AROME HD, AROME e ICON-EU): 1 mm en una hora, alto;
+   0,2 mm, moderado. Los globales (ECMWF, UKMO, GFS) se descargan pero no
    deciden: sus celdas de 10-25 km incluyen mar.
-5. **Ensemble ICON-EU-EPS** (40 miembros): el 50 % o más con lluvia, coche; el
-   20 %, atención.
+5. **Ensemble ICON-EU-EPS** (40 miembros): el 50 % o más con lluvia, alto; el
+   20 %, moderado.
 
 Umbrales y lugares, en `config.py`. El porqué, en los ADR.
 
@@ -60,6 +68,7 @@ Necesita Python 3 con `numpy` y `Pillow`. Tarda unos 15 s.
 - axe-core no encuentra incidencias.
 - Con una fuente caída, la web lo avisa y la recomendación sigue saliendo.
 - Con datos de más de 3 horas, la web lo avisa.
+- Tras la hora de salida, el medio no cambia aunque cambie la previsión.
 
 ## Fuentes y licencias
 

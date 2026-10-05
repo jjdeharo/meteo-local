@@ -1,6 +1,6 @@
 # 1. Fuentes de datos y método para decidir moto o coche
 
-Fecha: 2026-10-05 · Estado: aceptado (regla de decisión añadida el mismo día)
+Fecha: 2026-10-05 · Estado: aceptado (regla de decisión y medio único añadidos el mismo día)
 
 ## Contexto
 
@@ -12,10 +12,24 @@ es convectiva: chubascos que nacen y mueren en menos de una hora.
 
 ## Decisión
 
-`prevision.py` junta cinco fuentes y da para cada ventana uno de tres
-veredictos: moto, moto con impermeable («compte») o coche. **Manda la fuente
-más desfavorable**, porque el coste de equivocarse no es simétrico: ir en
-coche sin necesidad es una molestia; una tormenta en moto, un riesgo.
+**Un solo medio para todo el día**, porque quien va en moto vuelve en moto
+(Juanjo, 05-10-2026: «si va en moto debe volver en moto… no puedes decir dos a
+la vez»). `prevision.py` calcula el riesgo de lluvia de cada trayecto (bajo,
+moderado o alto; en el código, `moto`, `compte` y `cotxe`) y el medio del día
+es el del trayecto con más riesgo: alto, coche; moderado, moto con
+impermeable; bajo en los dos, moto.
+
+La decisión se recalcula hasta la hora de salida (6:30). Desde entonces se
+mantiene la publicada antes, que cada ejecución lee de la web (`--anterior`):
+ya ha salido de casa y cambiar el medio no tiene sentido. Si después la vuelta
+empeora respecto a lo decidido, la web lo avisa («porta l'impermeable o, si
+pots, espera») sin proponer otro medio. Si no hay decisión anterior del día
+(fallaron las ejecuciones de la mañana), se decide con los datos del momento y
+la web dice a qué hora.
+
+Para el riesgo de cada trayecto **manda la fuente más desfavorable**, porque
+el coste de equivocarse no es simétrico: ir en coche sin necesidad es una
+molestia; una tormenta en moto, un riesgo.
 
 1. **Avisos de AEMET** (feed de Meteoalarm). Un aviso de lluvia o tormenta en
    el Prelitoral de Barcelona que toque la ventana: coche. Uno solo en el
@@ -66,6 +80,9 @@ decide sobre todo por avisos y modelos.
 - La precipitación horaria de Open-Meteo es la acumulada en la hora anterior.
 
 ## Riesgos y limitaciones
+
+- La decisión anterior se lee de GitHub Pages, que puede servirla con hasta
+  10 minutos de caché; con ejecuciones cada 15-30 minutos no afecta.
 
 - La lectura de meteo.cat depende del HTML de su página (clase `tblperiode`).
 - El umbral de intensidad del radar (transparencia del PNG mayor que 100) se

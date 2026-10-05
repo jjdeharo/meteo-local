@@ -11,8 +11,8 @@ Al preguntar:
    no la des por vacía.
 2. **Mira el radar en imagen**, no solo los números: compón el mosaico de
    RainViewer sobre el mapa y ábrelo. Las tormentas se forman en minutos.
-3. Responde con la recomendación para la ida y la vuelta y, en pocas frases,
-   el porqué.
+3. Responde con **un solo medio para todo el día** (quien va en moto vuelve
+   en moto), el riesgo de cada trayecto y, en pocas frases, el porqué.
 
 Al cambiar algo:
 
