@@ -1,0 +1,27 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# meteo-local en el NAS: actualiza la web de «Moto o cotxe?» cada media hora
+# en las franjas de config.py (HORARIO), con la hora local exacta.
+#
+#   docker compose up -d --build          construir y arrancar
+#   docker compose logs -f                ver el reloj
+#   docker exec meteo-local /usr/local/bin/reloj.sh --ara   publicar ya
+#
+# Fuera del contenedor, en /volume1/docker/meteo-local:
+#   repo/   copia del repositorio (el reloj la pone al día antes de cada pasada)
+#   home/   la clave de despliegue (.ssh), que solo da acceso a este repositorio
+#   estat/  los últimos datos publicados, para mantener la decisión del día
+services:
+  meteo-local:
+    build: .
+    image: meteo-local:local
+    container_name: meteo-local
+    restart: unless-stopped
+    user: "1000:10"
+    environment:
+      TZ: Europe/Madrid
+      HOME: /home/jjdeharo
+    cpus: 0.5
+    volumes:
+      - ./repo:/proyecto
+      - ./home:/home/jjdeharo
+      - ./estat:/estat
