@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- SPDX-License-Identifier: AGPL-3.0-or-later. Núvol: Lucide (ISC); ciclomotor: Tabler Icons (MIT). -->
+  <rect width="512" height="512" fill="#1d4ed8"/>
+  <g fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round">
+    <g transform="translate(146 104) scale(6)" stroke-width="1.9">
+      <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/>
+      <path d="M16 14v6"/><path d="M8 14v6"/><path d="M12 16v6"/>
+    </g>
+    <g transform="translate(162 210) scale(10)" stroke-width="1.6">
+      <path d="M16 17a2 2 0 1 0 4 0a2 2 0 1 0-4 0M5 16v1a2 2 0 0 0 4 0v-5H6a3 3 0 0 0-3 3v1h10a6 6 0 0 1 5-4V7a2 2 0 0 0-2-2h-1M6 9h3"/>
+    </g>
+  </g>
+</svg>

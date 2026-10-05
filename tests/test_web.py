@@ -28,7 +28,7 @@ const ctx = vm.createContext({
   document: { getElementById: el, createElement: el, addEventListener() {},
     documentElement: { dataset: {} } },
   matchMedia: () => ({ matches: false, addEventListener() {} }),
-  localStorage: { getItem: () => null },
+  localStorage: { getItem: () => null }, navigator: {},
   fetch: () => new Promise(() => {}), setTimeout: () => 0, clearTimeout() {},
 });
 for (const f of ['comu.js', pagina]) vm.runInContext(fs.readFileSync(`${web}/${f}`, 'utf8'), ctx);

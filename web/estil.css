@@ -123,6 +123,17 @@ h1 { margin: 0; font-size: 1.6rem; line-height: 1.2; }
 .decisio .data { margin: 0; font-size: 1rem; color: var(--suau); font-weight: 600; }
 .decisio .data::first-letter { text-transform: uppercase; }
 .decisio .veredicte { font-size: 2.4rem; }
+.veredicte .vehicle {
+  width: 1.15em;
+  height: 1.15em;
+  margin-right: .3em;
+  vertical-align: -.2em;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
 .decisio .frase { font-size: 1.1rem; margin-bottom: .3rem; }
 .roba {
   display: flex;

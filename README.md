@@ -46,7 +46,10 @@ La página del trayecto solo informa dentro de sus franjas (5:00-7:30 y
 (según el frío a 45 km/h, el calor y la lluvia; ADR 0013); por la tarde
 solo da el tiempo de la vuelta (riesgo de lluvia, temperatura y viento). Fuera
 de las franjas hace lo mismo para quien sale en ese momento: se elige la hora
-de vuelta y dice el medio, la ropa y cómo cambiará el tiempo (ADR 0014). Las
+de vuelta y dice el medio, la ropa y cómo cambiará el tiempo (ADR 0014).
+
+Se puede instalar en el móvil como aplicación (manifiesto, iconos y service
+worker que nunca guarda los datos; ADR 0015). Las
 dos páginas, si están abiertas, se ponen al día solas después de cada
 actualización prevista (ADR 0011).
 
@@ -91,7 +94,7 @@ al motivo de los modelos. Para repetirla: `python3 calibracio/descarrega.py
 |---|---|
 | `prevision.py` | Recoge los datos, decide y escribe `dades.json`; sin `--json`, imprime un resumen |
 | `config.py` | Coordenadas, horario, estaciones, zonas de aviso, modelos y umbrales |
-| `web/` | Las páginas: `index.html` y `app.js` (trayecto), `casa.html` y `casa.js` (casa), `comu.js` (lo común), `estil.css` y `fonts.html` (fuentes y créditos) |
+| `web/` | Las páginas: `index.html` y `app.js` (trayecto), `casa.html` y `casa.js` (casa), `comu.js` (lo común), `estil.css` y `fonts.html` (fuentes y créditos); `manifest.webmanifest`, `sw.js` e `icones/` para instalarla como aplicación |
 | `calibracio/` | Descarga del histórico, análisis, `informe.md` y `calibracio.json` (los datos, en `dades/`, no se suben) |
 | `tests/` | Pruebas de la regla, del horario, de la web y del aprendizaje, sin red |
 | `casa.py` | Datos de la página de casa (`casa.json`) |

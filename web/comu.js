@@ -294,3 +294,6 @@ $('btn-fosc').addEventListener('click', () => {
 sistemaFosc.addEventListener('change', (e) => {
   if (segueixSistema()) aplicaFosc(e.matches, false);
 });
+
+// Per poder instal·lar la web com a aplicació (sw.js).
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});

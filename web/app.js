@@ -80,6 +80,15 @@ function comentari(dades, mode) {
   return p;
 }
 
+// El veredicte amb el dibuix del vehicle al davant: cotxe o ciclomotor.
+function veredicte(mitja) {
+  const p = element('p', 'veredicte');
+  const svg = icona(mitja === 'cotxe' ? 'i-cotxe' : 'i-moto');
+  svg.classList.add('vehicle');
+  p.append(svg, TEXT_MITJA[mitja].titol);
+  return p;
+}
+
 function icona(id) {
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
   svg.setAttribute('aria-hidden', 'true');
@@ -110,7 +119,7 @@ function blocDecisio(dades) {
   const sec = element('section', 'decisio targeta ' + dades.decisio.mitja);
   sec.setAttribute('aria-label', `Recomanació d\u2019avui: ${v.titol}`);
   sec.append(element('h2', 'data', nomDia(dades.dia)));
-  sec.append(element('p', 'veredicte', v.titol));
+  sec.append(veredicte(dades.decisio.mitja));
   sec.append(element('p', 'frase', v.frase));
   if (dades.roba) sec.append(blocRoba(dades.roba));
   sec.append(element('p', 'nota', notaDecisio(dades.decisio, dades.anada.fi)
@@ -214,7 +223,7 @@ function resultatSortida(sortida, hhmm) {
     return { res, mitja: null };
   }
   const v = TEXT_MITJA[t.mitja];
-  res.append(element('p', 'veredicte', v.titol));
+  res.append(veredicte(t.mitja));
   res.append(element('p', 'frase', v.frase));
   res.append(element('p', 'nota', textMotius(t)));
   if (t.roba) res.append(blocRoba(t.roba));
@@ -274,8 +283,10 @@ function blocFora(horari, casa) {
     res = nou.res;
   });
   const info = element('p', 'nota');
+  const pagina = element('a', null, 'Temps a casa');
+  pagina.href = 'casa.html';
   info.append(`El trajecte de cada dia s\u2019actualitza ${franges}; propera actualització: `
-    + `${p.dia} a les ${p.hora}. Previsió per a Cerdanyola; més detall a `, enllac, '.');
+    + `${p.dia} a les ${p.hora}. Previsió per a Cerdanyola; més detall a la pàgina `, pagina, '.');
   sec.append(info);
   return sec;
 }
