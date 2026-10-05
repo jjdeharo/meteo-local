@@ -18,6 +18,10 @@ hora de 5:00 a 7:30 y de 13:00 a 15:30, hora local (el horario está en
 que sirve GitHub Pages. Al subir cambios a `main`, una acción de GitHub pasa
 las pruebas y publica igual. En `main` no hay commits automáticos.
 
+Cada actualización queda apuntada en el NAS, y a las 16:00 se comprueba la
+lluvia que cayó y si la recomendación acertó (`registre.py`). A los 28 días
+llega un resumen por Telegram.
+
 Hasta las 7:30 la web recomienda un solo medio para el día; desde entonces
 solo da el tiempo de la vuelta (riesgo de lluvia, temperatura y viento).
 
@@ -65,6 +69,7 @@ al motivo de los modelos. Para repetirla: `python3 calibracio/descarrega.py
 | `tests/` | Pruebas de la regla de decisión, sin red |
 | `publica.sh` | Calcula y publica en la rama `gh-pages` (lo usan el NAS y GitHub) |
 | `nas/` | Contenedor del NAS: `compose.yml`, `Dockerfile` y `reloj.sh` |
+| `registre.py` | Registro en el NAS de cada actualización y del resultado de cada día (ADR 0006) |
 | `.github/workflows/previsio.yml` | Al subir a `main`: pruebas y publicación |
 | `docs/adr/` | Registro de decisiones |
 

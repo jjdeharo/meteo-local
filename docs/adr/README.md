@@ -7,5 +7,6 @@
 | [0003](0003-calibracion-con-datos-reales-se-mantiene-la-regla.md) | Calibración con datos reales: se mantiene la regla | aceptado |
 | [0004](0004-estacion-de-montflorit-de-meteocerdanyola-com.md) | Estación de Montflorit de meteocerdanyola.com | aceptado |
 | [0005](0005-actualizacion-desde-el-nas-y-publicacion-en-la-rama-gh-pages.md) | Actualización desde el NAS y publicación en la rama gh-pages | aceptado |
+| [0006](0006-registro-de-aciertos-y-de-todas-las-senales.md) | Registro de aciertos y de todas las señales | aceptado |
 
 Plantilla: [0000-plantilla.md](0000-plantilla.md). Para crear uno: `nuevo-adr "Título"`.

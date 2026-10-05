@@ -26,3 +26,6 @@ Al cambiar algo:
 - Las actualizaciones programadas las hace el NAS (`nas/`, ADR 0005). Si cambias
   `nas/`, copia los archivos a `/volume1/docker/meteo-local` y reconstruye
   (`docker compose up -d --build`). Ver el estado: `docker logs meteo-local`.
+- El registro está en el NAS, en `/volume1/docker/meteo-local/estat/registre`
+  (`resultats.csv` y un `.jsonl` por mes). Resumen: `docker exec meteo-local
+  python3 /proyecto/registre.py resum`.
