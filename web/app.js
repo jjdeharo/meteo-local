@@ -31,14 +31,14 @@ function element(etiqueta, classe, text) {
 // Quan es va decidir i si encara pot canviar.
 function notaDecisio(decisio, sortida) {
   const hora = horaCurta(decisio.decidit);
-  // Passada l'hora de sortida, la decisió d'abans ja és la definitiva encara
-  // que no hi hagi hagut cap actualització posterior.
+  // Passada l'hora límit (el final de la franja de l'anada), la decisió
+  // d'abans ja és la definitiva encara que no s'hagi tornat a actualitzar.
   const [h, m] = sortida.split(':').map(Number);
   const araMateix = new Date();
   const jaHaSortit = araMateix.getHours() * 60 + araMateix.getMinutes() >= h * 60 + m
     && new Date(decisio.decidit).toDateString() === araMateix.toDateString();
   if (decisio.abans_de_sortir && (decisio.mantinguda || jaHaSortit)) {
-    return `Decidit a les ${hora}, abans de sortir. Ja no canvia.`;
+    return `Decidit a les ${hora}. Ja no canvia.`;
   }
   if (decisio.mantinguda || !decisio.abans_de_sortir) {
     return `Decidit a les ${hora}: no hi havia dades d\u2019abans de les ${sortida}.`;
@@ -53,7 +53,7 @@ function blocDecisio(dades) {
   sec.append(element('h2', 'data', nomDia(dades.dia)));
   sec.append(element('p', 'veredicte', v.titol));
   sec.append(element('p', 'frase', v.frase));
-  sec.append(element('p', 'nota', notaDecisio(dades.decisio, dades.anada.inici)));
+  sec.append(element('p', 'nota', notaDecisio(dades.decisio, dades.anada.fi)));
   return sec;
 }
 

@@ -19,8 +19,8 @@ nada más ni se hacen commits automáticos.
 El riesgo de cada trayecto (bajo, moderado o alto) junta cinco fuentes y
 manda la más desfavorable; el medio del día sale del trayecto con más riesgo:
 alto, coche; moderado, moto con impermeable; bajo en los dos, moto. La
-decisión se recalcula hasta la hora de salida (6:30) y desde entonces se
-mantiene: cada ejecución lee los datos ya publicados (`--anterior`). Si
+decisión se recalcula hasta el final de la ventana de ida (7:30) y desde
+entonces se mantiene: cada ejecución lee los datos ya publicados (`--anterior`). Si
 después empeora la vuelta, la web lo avisa sin cambiar el medio.
 
 Fuentes, de la más a la menos decisiva:

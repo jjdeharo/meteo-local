@@ -146,6 +146,14 @@ class UnSoloMedio(unittest.TestCase):
         self.assertTrue(r["decisio"]["mantinguda"])
         self.assertIn("impermeable", r["avis_tornada"])
 
+    def test_dentro_de_la_ventana_de_ida_aun_se_recalcula(self):
+        self.a_las("06:00")
+        anterior = P.decidir_dia(MANANA, {"avisos": [], "modelos": modelos(0)})
+        self.a_las("07:10")
+        r = P.decidir_dia(MANANA, {"avisos": [], "modelos": modelos(1.5)}, anterior)
+        self.assertEqual(r["decisio"]["mitja"], "cotxe")
+        self.assertFalse(r["decisio"]["mantinguda"])
+
     def test_sin_decision_previa_se_decide_al_momento(self):
         self.a_las("08:00")
         r = P.decidir_dia(MANANA, {"avisos": [], "modelos": modelos(0)}, None)

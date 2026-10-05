@@ -4,13 +4,13 @@ name: Previsió
 
 on:
   schedule:
-    # Hores UTC. Cobreixen de 5:00 a 7:00 (amb una passada a les 6:15, just
-    # abans de fixar la decisió) i de 13:00 a 15:00 (hora local),
+    # Hores UTC. Cobreixen de 5:00 a 7:30 (amb una passada extra a les 6:15)
+    # i de 13:00 a 15:00 (hora local),
     # tant a l'horari d'estiu com al d'hivern. GitHub pot endarrerir-les
     # uns minuts.
     - cron: "0,30 3-5 * * *"
     - cron: "15 4,5 * * *"
-    - cron: "0 6 * * *"
+    - cron: "0,30 6 * * *"
     - cron: "0,30 11-13 * * *"
     # Un cop al mes, per renovar l'activitat (vegeu el pas «Manté viva»).
     - cron: "15 9 1 * *"

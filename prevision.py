@@ -308,10 +308,12 @@ def decidir(dia, ventana, d):
         motivos.append((5, "moto", "L'AEMET no té cap avís de pluja ni de tempesta "
                         "per a aquesta hora."))
 
-    # 2. Radar y estaciones: solo valen para las próximas horas.
+    # 2. Radar y estaciones: solo valen mientras la ventana no ha terminado y
+    # empieza en las próximas horas.
     falta = (ini - AHORA).total_seconds() / 3600
+    vigente = AHORA < fin
     r = d.get("radar")
-    if r and -0.5 <= falta <= 3:
+    if r and vigente and falta <= 3:
         km = r["km_lluvia"]
         crece = r["km2_50km_ahora"] > 1.3 * max(r["km2_50km_antes"], 1)
         tendencia = ", i la zona de pluja creix" if crece else ""
@@ -323,7 +325,7 @@ def decidir(dia, ventana, d):
         else:
             motivos.append((4, "moto", "El radar no veu pluja a prop."))
     obs = d.get("observaciones")
-    if obs and -0.5 <= falta <= 1.5:
+    if obs and vigente and falta <= 1.5:
         mullades = [o for o in obs if o["mm_ultima_media_hora"] > 0 or (o.get("intensitat") or 0) > 0]
         if mullades:
             parts = []
@@ -393,12 +395,13 @@ def peor(*niveles):
 def decidir_dia(dia, d, anterior=None):
     """Un solo medio para ida y vuelta: el del trayecto más desfavorable.
 
-    Hasta la hora de salida se recalcula en cada ejecución. Desde entonces se
+    Hasta el final de la ventana de ida (7:30) se recalcula en cada ejecución,
+    porque puede salir en cualquier momento de la ventana. Desde entonces se
     mantiene la decisión publicada antes (ya ha salido de casa) y solo se avisa
     si la vuelta ha empeorado respecto a lo decidido.
     """
     anada, tornada = decidir(dia, C.IDA, d), decidir(dia, C.VUELTA, d)
-    salida = momento(dia, C.IDA[0])
+    salida = momento(dia, C.IDA[1])
     previa = anterior if anterior and anterior.get("dia") == dia and "decisio" in anterior else None
     if AHORA >= salida and previa:
         decision = dict(previa["decisio"], mantinguda=True)

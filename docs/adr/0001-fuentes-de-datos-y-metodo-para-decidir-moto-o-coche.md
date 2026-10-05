@@ -19,9 +19,12 @@ moderado o alto; en el código, `moto`, `compte` y `cotxe`) y el medio del día
 es el del trayecto con más riesgo: alto, coche; moderado, moto con
 impermeable; bajo en los dos, moto.
 
-La decisión se recalcula hasta la hora de salida (6:30). Desde entonces se
+La decisión se recalcula hasta el final de la ventana de ida (7:30), porque
+puede salir en cualquier momento de esa hora (Juanjo, 05-10-2026: «haz que se
+actualice hasta las 7.30»; antes se fijaba a las 6:30). Desde entonces se
 mantiene la publicada antes, que cada ejecución lee de la web (`--anterior`):
-ya ha salido de casa y cambiar el medio no tiene sentido. Si después la vuelta
+ya ha salido de casa y cambiar el medio no tiene sentido. El radar y las
+estaciones cuentan para un trayecto mientras su ventana no ha terminado. Si después la vuelta
 empeora respecto a lo decidido, la web lo avisa («porta l'impermeable o, si
 pots, espera») sin proponer otro medio. Si no hay decisión anterior del día
 (fallaron las ejecuciones de la mañana), se decide con los datos del momento y
