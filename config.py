@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 """Datos fijos del trayecto. Se cambian aquí, no en prevision.py."""
 
-VERSION = "1.5.1"
+VERSION = "1.6.0"
 
 # Coordenadas redondeadas a unos 500 m: para el tiempo da igual una calle u
 # otra, y el repositorio es público.
@@ -23,6 +23,12 @@ ESTACIONES = {
     "XF": "Sabadell (Parc Agrari)",
     "XV": "Sant Cugat (CAR)",
 }
+
+# Horario de actualización con datos en directo (hora local), cada media
+# hora. Por la mañana, para decidir el medio; al mediodía, el tiempo de la
+# vuelta. La web lo muestra tal cual.
+HORARIO = [("05:00", "07:30"), ("13:00", "15:30")]
+INTERVALO_MIN = 30
 
 # Zonas de aviso de AEMET. La primera es la del trayecto; un aviso solo en la
 # segunda, la costa, se tiene en cuenta pero no decide.

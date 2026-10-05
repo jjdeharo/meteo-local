@@ -40,6 +40,7 @@
     <div id="dies" aria-live="polite">
       <p class="carregant">Carregant la previsió…</p>
     </div>
+    <p id="horari" class="nota horari"></p>
 
     <details class="com">
       <summary>Com es decideix</summary>
@@ -52,7 +53,7 @@
         <li><strong>Models més detallats</strong> (AROME de Météo-France i ICON-EU). Un mil·límetre o més en una hora: risc alt; a partir de 0,2 mm: moderat.</li>
         <li><strong>Simulacions</strong> (40 variants del model ICON-EU). Si la meitat o més hi posen pluja: risc alt; si n'hi posen una de cada cinc: moderat.</li>
       </ol>
-      <p>La recomanació s'actualitza cada mitja hora des de les 5:00 i queda fixada a les 7:30, quan acaba la franja de l'anada. Després només s'actualitza el risc de la tornada, de 13:00 a 15:00; si empitjora, la pàgina t'avisa.</p>
+      <p>La recomanació del mitjà s'actualitza fins a les 7:30, quan acaba la franja de l'anada, i després ja no canvia. A partir d'aleshores la pàgina ja no recomana mitjà: només diu el temps que farà a la tornada (risc de pluja, temperatura i vent), que es torna a actualitzar a partir de les 13:00. Després només s'actualitza el risc de la tornada, de 13:00 a 15:00; si empitjora, la pàgina t'avisa.</p>
       <p>Els límits dels models s'han comprovat amb la pluja que va caure de veritat a Sabadell i Sant Cugat entre el 2024 i el 2026. Quan la regla deia moto, va ploure l'1&nbsp;% dels dies; compte, entre el 10 i el 13&nbsp;%; cotxe, entre el 37 i el 52&nbsp;%.</p>
       <p>En dies de tempestes, els models encerten si n'hi haurà però no on cauran. Per això un avís de tempestes decideix per si sol.</p>
     </details>
@@ -64,7 +65,7 @@
   </main>
 
   <footer class="peu">
-    <p>Actualitzat <span id="generat">—</span> · <a id="versio" href="https://github.com/jjdeharo/meteo-local/releases" target="_blank" rel="noopener">versió —</a> · <a href="fonts.html">Fonts i crèdits</a></p>
+    <p><a id="versio" href="https://github.com/jjdeharo/meteo-local/releases" target="_blank" rel="noopener">versió —</a> · <a href="fonts.html">Fonts i crèdits</a></p>
     <p>© 2026 <a href="https://bilateria.org" target="_blank" rel="noopener">Juan José de Haro</a> · Continguts <a href="https://creativecommons.org/licenses/by-sa/4.0/deed.ca" target="_blank" rel="noopener">CC BY-SA 4.0</a> · Codi <a href="https://www.gnu.org/licenses/agpl-3.0.html" target="_blank" rel="noopener">AGPL v3</a></p>
     <p>Fet amb IA (Claude Code, octubre de 2026), <a href="https://jjdeharo.github.io/miae/?nivel=4" target="_blank" rel="noopener">nivell 4 del MIAE</a>.</p>
   </footer>

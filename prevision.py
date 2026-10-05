@@ -234,7 +234,7 @@ def modelos(dias):
     q = urllib.parse.urlencode({
         "latitude": f"{C.CASA[0]},{C.DESTINO[0]}",
         "longitude": f"{C.CASA[1]},{C.DESTINO[1]}",
-        "hourly": "precipitation",
+        "hourly": "precipitation,temperature_2m,wind_gusts_10m",
         "models": ",".join(C.MODELOS_FINOS + C.MODELOS_GLOBALES),
         "timezone": TZ, "start_date": dias[0], "end_date": dias[-1]})
     return json.loads(get(f"https://api.open-meteo.com/v1/forecast?{q}"))
@@ -279,6 +279,31 @@ def valores_ventana(serie_horas, serie_valores, dia, ventana):
     hs = horas_ventana(ventana)
     return [v for t, v in zip(serie_horas, serie_valores)
             if t.startswith(dia) and int(t[11:13]) in hs and v is not None]
+
+
+def tiempo_ventana(dia, ventana, m):
+    """Temperatura y rachas de viento en la ventana, en los dos extremos del
+    trayecto, del modelo más fino que tenga datos."""
+    if not m:
+        return None
+    ini, fin = (dt.time.fromisoformat(x) for x in ventana)
+    horas = set(range(ini.hour, fin.hour + (2 if fin.minute else 1)))
+    for mod in C.MODELOS_FINOS:
+        temp, ratxa = [], []
+        for loc in m:
+            h = loc["hourly"]
+            for i, t in enumerate(h["time"]):
+                if t.startswith(dia) and int(t[11:13]) in horas:
+                    v = h.get(f"temperature_2m_{mod}", [None] * (i + 1))[i]
+                    w = h.get(f"wind_gusts_10m_{mod}", [None] * (i + 1))[i]
+                    if v is not None:
+                        temp.append(v)
+                    if w is not None:
+                        ratxa.append(w)
+        if temp:
+            return {"temp_min": round(min(temp)), "temp_max": round(max(temp)),
+                    "ratxa_max": round(max(ratxa)) if ratxa else None}
+    return None
 
 
 def decidir(dia, ventana, d):
@@ -373,6 +398,8 @@ def decidir(dia, ventana, d):
                         f"{mullats} de cada {len(claves)} simulacions hi posen pluja "
                         f"({round(prob * 100)}\u00a0% de probabilitat)."))
 
+    temps = tiempo_ventana(dia, ventana, d.get("modelos"))
+
     orden = ORDEN
     if not motivos:
         motivos.append((0, "compte", "No s'han pogut obtenir dades."))
@@ -382,6 +409,7 @@ def decidir(dia, ventana, d):
         "dia": dia, "inici": ventana[0], "fi": ventana[1],
         "passat": fin < AHORA,
         "nivell": veredicto,
+        "temps": temps,
         "motius": [{"nivell": n, "text": t} for _, n, t in motivos],
     }
 
@@ -398,8 +426,8 @@ def decidir_dia(dia, d, anterior=None):
 
     Hasta el final de la ventana de ida (7:30) se recalcula en cada ejecución,
     porque puede salir en cualquier momento de la ventana. Desde entonces se
-    mantiene la decisión publicada antes (ya ha salido de casa) y solo se avisa
-    si la vuelta ha empeorado respecto a lo decidido.
+    mantiene la decisión publicada antes (ya ha salido de casa); la web deja
+    de mostrar el medio y solo da el tiempo de la vuelta.
     """
     anada, tornada = decidir(dia, C.IDA, d), decidir(dia, C.VUELTA, d)
     salida = momento(dia, C.IDA[1])
@@ -413,15 +441,7 @@ def decidir_dia(dia, d, anterior=None):
                     "decidit": AHORA.isoformat(timespec="minutes"),
                     "abans_de_sortir": AHORA < salida,
                     "mantinguda": False}
-    avis_tornada = None
-    if (decision["mantinguda"] and not tornada["passat"]
-            and ORDEN.index(tornada["nivell"]) > ORDEN.index(decision["mitja"])):
-        avis_tornada = ("La previsió per a la tornada ha empitjorat des del matí. "
-                        if tornada["nivell"] == "cotxe" else
-                        "Ara hi ha una mica de risc de pluja a la tornada. ") + \
-            "Porta l'impermeable o, si pots, espera que passi el ruixat."
-    return {"dia": dia, "decisio": decision, "avis_tornada": avis_tornada,
-            "anada": anada, "tornada": tornada}
+    return {"dia": dia, "decisio": decision, "anada": anada, "tornada": tornada}
 
 
 def llegir_anterior(origen):
@@ -447,6 +467,7 @@ def recoger(anterior=None):
     return {
         "versio": C.VERSION,
         "generat": AHORA.isoformat(timespec="minutes"),
+        "horari": {"trams": C.HORARIO, "cada_min": C.INTERVALO_MIN},
         "errors": errores,
         "avisos": d.get("avisos"),
         "radar": d.get("radar"),
@@ -468,8 +489,6 @@ if __name__ == "__main__":
         print("  fallo:", error)
     print(f"\n{datos['dia']}: {dec['mitja'].upper()} (decidido {dec['decidit']}"
           + (", se mantiene" if dec["mantinguda"] else "") + ")")
-    if datos["avis_tornada"]:
-        print("  Aviso vuelta:", datos["avis_tornada"])
     for nombre in ("anada", "tornada"):
         v = datos[nombre]
         print(f"\n{nombre} {v['inici']}-{v['fi']}: riesgo {v['nivell']}"

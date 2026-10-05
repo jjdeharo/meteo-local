@@ -110,6 +110,17 @@ class EstacionMinutal(unittest.TestCase):
         self.assertIn("Plou a Cerdanyola (Montflorit), 40,4\u00a0mm/h a les", r["motius"][0]["text"])
 
 
+class TiempoDeLaVuelta(unittest.TestCase):
+    def test_temperatura_y_rachas_de_la_ventana(self):
+        horas = [f"{MANANA}T{h:02d}:00" for h in range(24)]
+        hourly = {"time": horas}
+        for m in P.C.MODELOS_FINOS:
+            hourly[f"temperature_2m_{m}"] = [10.0 + h for h in range(24)]
+            hourly[f"wind_gusts_10m_{m}"] = [5.0 * (h == 16) for h in range(24)]
+        t = P.tiempo_ventana(MANANA, P.C.VUELTA, [{"hourly": hourly}])
+        self.assertEqual((t["temp_min"], t["temp_max"], t["ratxa_max"]), (25, 26, 5))
+
+
 class UnSoloMedio(unittest.TestCase):
     """Quien va en moto vuelve en moto: un medio para todo el día."""
 
@@ -136,7 +147,7 @@ class UnSoloMedio(unittest.TestCase):
         r = P.decidir_dia(MANANA, {"avisos": [], "modelos": modelos(1.5)}, anterior)
         self.assertEqual(r["decisio"]["mitja"], "cotxe")
 
-    def test_despues_de_salir_se_mantiene_y_avisa(self):
+    def test_despues_de_salir_se_mantiene(self):
         self.a_las("06:00")
         anterior = P.decidir_dia(MANANA, {"avisos": [], "modelos": modelos(0)})
         self.assertEqual(anterior["decisio"]["mitja"], "moto")
@@ -144,7 +155,8 @@ class UnSoloMedio(unittest.TestCase):
         r = P.decidir_dia(MANANA, {"avisos": [], "modelos": modelos(1.5)}, anterior)
         self.assertEqual(r["decisio"]["mitja"], "moto")
         self.assertTrue(r["decisio"]["mantinguda"])
-        self.assertIn("impermeable", r["avis_tornada"])
+        # La vuelta se sigue actualizando, aunque ya no cambie el medio.
+        self.assertEqual(r["tornada"]["nivell"], "cotxe")
 
     def test_dentro_de_la_ventana_de_ida_aun_se_recalcula(self):
         self.a_las("06:00")
@@ -158,7 +170,6 @@ class UnSoloMedio(unittest.TestCase):
         self.a_las("08:00")
         r = P.decidir_dia(MANANA, {"avisos": [], "modelos": modelos(0)}, None)
         self.assertFalse(r["decisio"]["abans_de_sortir"])
-        self.assertIsNone(r["avis_tornada"])
 
     def test_decision_de_otro_dia_no_cuenta(self):
         self.a_las("06:00")
