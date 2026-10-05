@@ -40,6 +40,14 @@ Fuentes, de la más a la menos decisiva:
 
 Umbrales y lugares, en `config.py`. El porqué, en los ADR.
 
+**Calibración.** Los umbrales de los modelos se han comprobado con lo que
+llovió de verdad entre 2024 y 2026 en Sabadell y Sant Cugat
+(`calibracio/`). Cuando la regla dice moto, llovió el 1 % de los días; compte,
+del 10 al 13 %; coche, del 37 al 52 %. Ajustar un modelo estadístico o añadir
+el CAPE no la mejora de forma apreciable. La web muestra esas frecuencias junto
+al motivo de los modelos. Para repetirla: `python3 calibracio/descarrega.py
+--forzar` y `python3 calibracio/analitza.py`.
+
 ## Archivos
 
 | Archivo | Para qué |
@@ -47,6 +55,7 @@ Umbrales y lugares, en `config.py`. El porqué, en los ADR.
 | `prevision.py` | Recoge los datos, decide y escribe `dades.json`; sin `--json`, imprime un resumen |
 | `config.py` | Coordenadas, horario, estaciones, zonas de aviso, modelos y umbrales |
 | `web/` | La página: `index.html`, `app.js`, `estil.css` y `fonts.html` (fuentes y créditos) |
+| `calibracio/` | Descarga del histórico, análisis, `informe.md` y `calibracio.json` (los datos, en `dades/`, no se suben) |
 | `tests/` | Pruebas de la regla de decisión, sin red |
 | `.github/workflows/previsio.yml` | Programación, pruebas, cálculo y publicación |
 | `docs/adr/` | Registro de decisiones |

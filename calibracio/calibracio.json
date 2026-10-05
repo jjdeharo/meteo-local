@@ -1,0 +1,43 @@
+{
+ "version": 2,
+ "generat": "2026-10-05",
+ "umbral_lluvia_mm": 0.2,
+ "ventanas": {
+  "anada": {
+   "desde": "2024-01-01",
+   "fins": "2026-10-04",
+   "nivells": {
+    "moto": {
+     "dies": 897,
+     "pluja": 7
+    },
+    "compte": {
+     "dies": 58,
+     "pluja": 6
+    },
+    "cotxe": {
+     "dies": 48,
+     "pluja": 25
+    }
+   }
+  },
+  "tornada": {
+   "desde": "2024-01-01",
+   "fins": "2026-10-04",
+   "nivells": {
+    "moto": {
+     "dies": 853,
+     "pluja": 5
+    },
+    "compte": {
+     "dies": 90,
+     "pluja": 12
+    },
+    "cotxe": {
+     "dies": 63,
+     "pluja": 23
+    }
+   }
+  }
+ }
+}

@@ -68,6 +68,16 @@ class Decision(unittest.TestCase):
         self.assertEqual(P.horas_ventana(("15:00", "15:30")), [16])
 
 
+class Historico(unittest.TestCase):
+    def test_el_motivo_de_los_modelos_da_la_frecuencia_real(self):
+        if not P.CALIBRACION:
+            self.skipTest("sin calibracio/calibracio.json")
+        r = P.decidir(MANANA, P.C.IDA, {"modelos": modelos(0)})
+        texto = r["motius"][0]["text"]
+        self.assertIn("Des del 2024", texto)
+        self.assertIn("de cada", texto)
+
+
 class UnSoloMedio(unittest.TestCase):
     """Quien va en moto vuelve en moto: un medio para todo el día."""
 

@@ -17,6 +17,7 @@ import html
 import io
 import json
 import math
+import os
 import re
 import sys
 import urllib.parse
@@ -25,8 +26,34 @@ import urllib.request
 import config as C
 
 UA = {"User-Agent": "meteo-local/" + C.VERSION}
+DIR = os.path.dirname(os.path.abspath(__file__))
 TZ = "Europe/Madrid"
 AHORA = dt.datetime.now().astimezone()
+
+
+def leer_calibracion():
+    """Frecuencia real de lluvia en cada nivel de la regla (calibracio/)."""
+    try:
+        with open(os.path.join(DIR, "calibracio", "calibracio.json"), encoding="utf-8") as f:
+            return json.load(f)["ventanas"]
+    except (OSError, KeyError, ValueError):
+        return {}
+
+
+CALIBRACION = leer_calibracion()
+
+
+def frase_historico(ventana, nivel):
+    """«Des del 2024, quan els models deien això, a l'hora del trajecte ha
+    plogut 6 de cada 58 dies (10 %).»"""
+    nombre = "anada" if ventana == C.IDA else "tornada"
+    dato = CALIBRACION.get(nombre, {}).get("nivells", {}).get(nivel)
+    if not dato or not dato["dies"]:
+        return ""
+    pct = round(100 * dato["pluja"] / dato["dies"])
+    desde = CALIBRACION[nombre]["desde"][:4]
+    return (f" Des del {desde}, quan els models deien això, a l'hora del trajecte ha "
+            f"plogut {dato['pluja']} de cada {dato['dies']} dies ({pct}\u00a0%).")
 
 
 def get(url, binario=False):
@@ -274,13 +301,14 @@ def decidir(dia, ventana, d):
                 vals = valores_ventana(h["time"], h.get(f"precipitation_{mod}", []), dia, ventana)
                 maximo = max([maximo] + vals)
         if maximo >= C.UMBRAL_MM_COCHE:
-            motivos.append((1, "cotxe", f"Els models més detallats preveuen pluja clara "
-                            f"(fins a {coma(maximo)}\u00a0mm en una hora)."))
+            nivel, peso, texto = "cotxe", 1, ("Els models més detallats preveuen pluja clara "
+                                              f"(fins a {coma(maximo)}\u00a0mm en una hora).")
         elif maximo >= C.UMBRAL_MM:
-            motivos.append((2, "compte", f"Els models més detallats preveuen una mica "
-                            f"de pluja ({coma(maximo)}\u00a0mm en una hora)."))
+            nivel, peso, texto = "compte", 2, ("Els models més detallats preveuen una mica "
+                                               f"de pluja ({coma(maximo)}\u00a0mm en una hora).")
         else:
-            motivos.append((3, "moto", "Els models més detallats no preveuen pluja."))
+            nivel, peso, texto = "moto", 3, "Els models més detallats no preveuen pluja."
+        motivos.append((peso, nivel, texto + frase_historico(ventana, nivel)))
 
     # 4. Ensemble: fracción de simulaciones con lluvia.
     e = d.get("ensemble")
