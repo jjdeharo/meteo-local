@@ -20,7 +20,7 @@ RUN useradd -u 1000 -m -s /bin/bash jjdeharo
 # Para subirla, se cambia este valor y se reconstruye.
 ARG CLAUDE_CODE_VERSION=2.1.289
 RUN mkdir -p /opt/claude \
- && curl -fsSL https://claude.ai/install.sh | HOME=/opt/claude bash -s "$CLAUDE_CODE_VERSION" \
+ && curl -fsSL https://claude.ai/install.sh | HOME=/opt/claude bash -s "${CLAUDE_CODE_VERSION:-2.1.289}" \
  && ln -s /opt/claude/.local/bin/claude /usr/local/bin/claude \
  && chown -R 1000:1000 /opt/claude
 

@@ -14,7 +14,14 @@
 #           registre/: cada actualización y el resultado de cada día
 services:
   meteo-local:
-    build: .
+    # La versión de Claude Code sale del archivo común del NAS
+    # (/volume1/docker/versiones/versiones.env, enlazado aquí como .env), que el
+    # actualizador semanal de vigilancia mantiene al día. Si falta, se usa la
+    # que trae el Dockerfile.
+    build:
+      context: .
+      args:
+        CLAUDE_CODE_VERSION: ${CLAUDE_CODE_VERSION:-}
     image: meteo-local:local
     container_name: meteo-local
     restart: unless-stopped

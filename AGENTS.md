@@ -28,6 +28,9 @@ Al cambiar algo:
   (`docker compose up -d --build`). Ver el estado: `docker logs meteo-local`.
 - El agente diario (`agent/`, ADR 0009) se prueba en local con
   `DADES=web/dades.json CASA=web/casa.json COMENTARI=/tmp/c.json CLAUDE_ENV=/nonexistent agent/executa.sh mati`.
+- Los automatismos de este proyecto figuran en el inventario del NAS
+  (`vigilancia-nas/config/automatismos.json`, ficha «Automatismos» de
+  bilateria.org/nas). Si se añade, cambia o retira uno, se actualiza allí.
 - El registro está en el NAS, en `/volume1/docker/meteo-local/estat/registre`
   (`resultats.csv` y un `.jsonl` por mes). Resumen: `docker exec meteo-local
   python3 /proyecto/registre.py resum`.

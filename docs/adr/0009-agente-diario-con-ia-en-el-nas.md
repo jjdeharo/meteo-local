@@ -41,8 +41,10 @@ el gasto de suscripción es el mismo que en la nube (ADR 0005).
   `home/.config/meteo-local/claude.env` (`CLAUDE_CODE_OAUTH_TOKEN`), separado
   de la sesión del contenedor del boletín, porque compartir una sesión que se
   renueva sola puede invalidar la del otro.
-- **Claude Code fijo en la imagen** (2.1.289): dentro del contenedor no se
-  actualiza solo.
+- **Claude Code en la imagen**, con la versión común de los contenedores de
+  agentes del NAS (`/volume1/docker/versiones/versiones.env`, enlazado como
+  `.env`), que el actualizador semanal de vigilancia-nas pone al día con
+  comprobación y vuelta atrás. El `Dockerfile` conserva la 2.1.289 por si falta.
 
 ## Alternativas descartadas
 
