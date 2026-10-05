@@ -23,6 +23,10 @@ el frío, el calor o la lluvia. El vehículo es un ciclomotor: no pasa de
   ligera o ropa de verano, y paraguas.
 - Si entre la ida y la vuelta hay 8 °C o más (`ROPA_DIFERENCIA_CAPAS`),
   recomienda capas.
+- Destacada en un recuadro con iconos de MingCute (Apache 2.0): chaqueta (en
+  moto siempre, porque va con protecciones; en coche hasta 24 °C) o camiseta
+  (coche con ropa de verano), y paraguas (coche) o nube con lluvia
+  (impermeable en moto). Solo por la mañana, cuando se elige.
 
 ## Alternativas descartadas
 
@@ -30,6 +34,8 @@ el frío, el calor o la lluvia. El vehículo es un ciclomotor: no pasa de
   oficial (por ejemplo, −2 °C con 10 °C a 50 km/h, cuando el índice da unos
   5 °C).
 - **Usar el índice por encima de 10 °C**: está fuera de su validez.
+- **Iconos de Lucide o Tabler**: Lucide solo tiene camiseta; la «chaqueta» de
+  Tabler es un chaleco sin mangas.
 
 ## Evidencia
 

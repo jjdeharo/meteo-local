@@ -80,6 +80,30 @@ function comentari(dades, mode) {
   return p;
 }
 
+function icona(id) {
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('aria-hidden', 'true');
+  const use = document.createElementNS('http://www.w3.org/2000/svg', 'use');
+  use.setAttribute('href', '#' + id);
+  svg.append(use);
+  return svg;
+}
+
+// La roba del dia, destacada: la peça (jaqueta o samarreta) i, si cal, el
+// paraigua (cotxe) o la pluja (impermeable a la moto). Només al matí, quan es
+// tria.
+function blocRoba(roba) {
+  const caixa = element('div', 'roba');
+  const icones = element('span', 'roba-icones');
+  icones.append(icona('i-' + roba.peca));
+  if (roba.pluja === 'paraigua') icones.append(icona('i-paraigua'));
+  if (roba.pluja === 'impermeable') icones.append(icona('i-pluja'));
+  const p = element('p');
+  p.append(element('strong', null, 'Roba: '), roba.text);
+  caixa.append(icones, p);
+  return caixa;
+}
+
 // Matí: el mitjà del dia.
 function blocDecisio(dades) {
   const v = TEXT_MITJA[dades.decisio.mitja];
@@ -88,11 +112,7 @@ function blocDecisio(dades) {
   sec.append(element('h2', 'data', nomDia(dades.dia)));
   sec.append(element('p', 'veredicte', v.titol));
   sec.append(element('p', 'frase', v.frase));
-  if (dades.roba) {
-    const roba = element('p', 'roba');
-    roba.append(element('strong', null, 'Roba: '), dades.roba);
-    sec.append(roba);
-  }
+  if (dades.roba) sec.append(blocRoba(dades.roba));
   sec.append(element('p', 'nota', notaDecisio(dades.decisio, dades.anada.fi)
     + (dades.decisio.per_la_ia ? ' La valoració de la IA l\u2019ha fet més prudent que el càlcul.' : '')));
   const c = comentari(dades, 'mati');

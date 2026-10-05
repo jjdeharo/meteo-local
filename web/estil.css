@@ -124,7 +124,27 @@ h1 { margin: 0; font-size: 1.6rem; line-height: 1.2; }
 .decisio .data::first-letter { text-transform: uppercase; }
 .decisio .veredicte { font-size: 2.4rem; }
 .decisio .frase { font-size: 1.1rem; margin-bottom: .3rem; }
-.decisio .roba { margin: 0 0 .5rem; }
+.roba {
+  display: flex;
+  gap: .8rem;
+  align-items: flex-start;
+  margin: .6rem 0 .7rem;
+  padding: .7rem .9rem;
+  border-radius: .5rem;
+  background: var(--fons);
+  border: 1px solid var(--vora);
+}
+.roba p { margin: 0; }
+.roba-icones { display: flex; flex-direction: column; gap: .3rem; flex-shrink: 0; color: var(--color, var(--enllac)); }
+.roba-icones svg {
+  width: 2.4rem;
+  height: 2.4rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
 .nota { margin: 0; color: var(--suau); font-size: .9rem; }
 .horari { margin: 1rem 0 0; }
 .horari:empty { display: none; }

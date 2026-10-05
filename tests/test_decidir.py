@@ -254,13 +254,17 @@ class Roba(unittest.TestCase):
 
     def test_frio_con_sensacion(self):
         r = P.roba("moto", self.tram(5, 7), self.tram(8, 9))
-        self.assertIn("Roba d'hivern", r)
-        self.assertIn("5 °C es noten com -1 °C", r)
+        self.assertIn("Roba d'hivern", r["text"])
+        self.assertIn("5\u00a0°C es noten com \u22121\u00a0°C", r["text"])
+        self.assertEqual((r["peca"], r["pluja"]), ("jaqueta", None))
 
     def test_lluvia_capas_y_coche(self):
         r = P.roba("compte", self.tram(12, 14), self.tram(20, 22))
-        self.assertTrue(r.startswith("Impermeable"))
-        self.assertIn("capes", r)
+        self.assertTrue(r["text"].startswith("Impermeable"))
+        self.assertIn("capes", r["text"])
+        self.assertEqual(r["pluja"], "impermeable")
         self.assertEqual(P.roba("cotxe", self.tram(20, 21), self.tram(22, 23)),
-                         "Jaqueta lleugera o jersei i paraigua.")
+                         {"text": "Jaqueta lleugera o jersei i paraigua.", "peca": "jaqueta",
+                          "pluja": "paraigua"})
+        self.assertEqual(P.roba("cotxe", self.tram(25, 26), self.tram(27, 28))["peca"], "samarreta")
         self.assertIsNone(P.roba("moto", {"temps": None}, {"temps": None}))

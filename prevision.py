@@ -523,9 +523,16 @@ def sensacion(t, kmh=C.VELOCIDAD_CICLOMOTOR_KMH):
     return 13.12 + 0.6215 * t - 11.37 * v + 0.3965 * t * v
 
 
+def graus(t):
+    """«−5 °C», con el signo menos y sin partir la línea."""
+    return f"{t}\u00a0°C".replace("-", "\u2212")
+
+
 def roba(mitja, anada, tornada):
     """Qué ponerse para el día, según el medio, la temperatura más baja de los
-    dos trayectos (de ella depende el frío) y la diferencia con la más alta."""
+    dos trayectos (de ella depende el frío) y la diferencia con la más alta.
+    Devuelve el texto, la prenda que dibuja la web (jaqueta o samarreta) y la
+    protección de lluvia (paraigua, impermeable o ninguna)."""
     temps = [t["temps"] for t in (anada, tornada) if t.get("temps")]
     if not temps:
         return None
@@ -551,7 +558,8 @@ def roba(mitja, anada, tornada):
                     "i folre polar a sota, guants d'hivern i tub de coll." if s < 0 else
                     "Jaqueta de moto d'hivern, folre polar o dessuadora a sota, "
                     "guants d'hivern i tub de coll.")
-            parts.append(f"{base} A {C.VELOCIDAD_CICLOMOTOR_KMH} km/h, {t_min} °C es noten com {s} °C.")
+            parts.append(f"{base} A {C.VELOCIDAD_CICLOMOTOR_KMH}\u00a0km/\u2060h, {graus(t_min)} es noten "
+                         f"com {graus(s)}.")
         elif t_min <= 17:
             parts.append("Jaqueta de moto amb folre, una dessuadora a sota i guants d'entretemps; "
                          "el tub de coll ajuda.")
@@ -560,8 +568,13 @@ def roba(mitja, anada, tornada):
         else:
             parts.append("Jaqueta de moto d'estiu, ventilada, i guants d'estiu. Porta aigua.")
     if t_max - t_min >= C.ROPA_DIFERENCIA_CAPAS:
-        parts.append(f"De {t_min} a {t_max} °C durant el dia: millor capes que et puguis treure.")
-    return " ".join(parts)
+        parts.append(f"De {graus(t_min)} a {graus(t_max)} durant el dia: millor capes que et "
+                     "puguis treure.")
+    # En moto, siempre chaqueta (con protecciones); en coche, camiseta solo con
+    # ropa de verano.
+    peca = "samarreta" if mitja == "cotxe" and t_min > 24 else "jaqueta"
+    pluja = {"cotxe": "paraigua", "compte": "impermeable"}.get(mitja)
+    return {"text": " ".join(parts), "peca": peca, "pluja": pluja}
 
 
 def decidir_dia(dia, d, anterior=None, comentario=None):
