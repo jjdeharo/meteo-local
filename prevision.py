@@ -318,8 +318,9 @@ def decidir(dia, ventana, d):
         crece = r["km2_50km_ahora"] > 1.3 * max(r["km2_50km_antes"], 1)
         tendencia = ", i la zona de pluja creix" if crece else ""
         if km is not None and km <= C.RADAR_COCHE_KM:
+            on = "damunt del trajecte" if km < 2 else f"a {km:.0f} km del trajecte"
             motivos.append((0, "cotxe" if crece else "compte",
-                            f"El radar veu pluja a {km:.0f} km del trajecte{tendencia}."))
+                            f"El radar veu pluja {on}{tendencia}."))
         elif km is not None and km <= C.RADAR_ATENCION_KM:
             motivos.append((2, "compte", f"El radar veu pluja a {km:.0f} km{tendencia}."))
         else:
