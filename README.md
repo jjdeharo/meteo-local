@@ -29,7 +29,8 @@ Fuentes, de la más a la menos decisiva:
    lluvia o tormenta a la hora del trayecto, riesgo alto.
 2. **Radar** (RainViewer), solo para las 3 horas siguientes: lluvia a menos de
    15 km y creciendo, riesgo alto; a menos de 40 km, moderado.
-3. **Estaciones de Meteocat** de Sabadell y Sant Cugat: si llueve ahora y falta
+3. **Estaciones de Meteocat** de Sabadell y Sant Cugat (página de meteo.cat o,
+   si falla, portal de datos abiertos de la Generalitat): si llueve y falta
    menos de hora y media, riesgo alto.
 4. **Modelos finos** (AROME HD, AROME e ICON-EU): 1 mm en una hora, alto;
    0,2 mm, moderado. Los globales (ECMWF, UKMO, GFS) se descargan pero no
@@ -73,7 +74,8 @@ Necesita Python 3 con `numpy` y `Pillow`. Tarda unos 15 s.
 ## Fuentes y licencias
 
 Previsión de [Open-Meteo](https://open-meteo.com/) (CC BY 4.0), observaciones
-de [Meteocat](https://www.meteo.cat/observacions/xema), radar de
+de [Meteocat](https://www.meteo.cat/observacions/xema) y del
+[portal de datos abiertos de la Generalitat](https://analisi.transparenciacatalunya.cat/d/nzvn-apee), radar de
 [RainViewer](https://www.rainviewer.com/) y avisos de AEMET a través de
 [Meteoalarm](https://meteoalarm.org/). Iconos de [Lucide](https://lucide.dev/)
 (ISC).

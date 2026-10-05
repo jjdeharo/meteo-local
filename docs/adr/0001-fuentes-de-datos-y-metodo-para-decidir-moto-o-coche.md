@@ -39,7 +39,12 @@ molestia; una tormenta en moto, un riesgo.
    de superficie en 50 km en la última hora): coche; a menos de 15 km sin
    crecer, o a menos de 40 km: compte.
 3. **Estaciones** de Meteocat de Sabadell - Parc Agrari (XF) y Sant Cugat - CAR
-   (XV), leídas de la página pública de meteo.cat. Si alguna registra lluvia en
+   (XV). Se leen de la página pública de meteo.cat, que va más al día; si
+   falla, del portal de datos abiertos de la Generalitat
+   (`analisi.transparenciacatalunya.cat`, conjunto `nzvn-apee`), que es una
+   API estable pero va de 30 a 60 minutos por detrás (medido el 05-10-2026).
+   El motivo dice la hora del dato. El portal tiene además el histórico
+   semihorario desde 2009, útil para calibrar la regla. Si alguna registra lluvia en
    la última media hora y falta menos de hora y media: coche.
 4. **Modelos finos** de Open-Meteo (AROME HD, AROME, ICON-EU), en los dos
    extremos del trayecto: máximo de 1 mm en una hora, coche; 0,2 mm, compte.
@@ -56,13 +61,6 @@ cambiando la fecha en el código; entonces no cuentan radar ni estaciones.
 
 - **API de Meteocat y AEMET OpenData**: piden clave; las páginas públicas y
   Meteoalarm dan lo necesario sin ella.
-- **Portal de datos abiertos de la Generalitat**
-  (`analisi.transparenciacatalunya.cat`, conjunto XEMA `nzvn-apee`): funciona
-  sin clave y es una API estable, pero va más atrasado. El 05-10-2026 a las
-  6:07, la página de meteo.cat tenía la lluvia de XF hasta las 6:00 y el portal
-  solo hasta la lectura de las 5:00 (hora local). Para saber si llueve ahora
-  importa ese desfase. Al principio se probó con un dominio equivocado,
-  `analisi.transparencia.gencat.cat`, que no existe.
 - **Calcular el desplazamiento de la lluvia por correlación entre fotogramas**:
   se probó y dio 22 km/h hacia el este en una ejecución y 2 km/h en la
   siguiente, con tormentas formándose en el mismo intervalo. Se sustituyó por
@@ -82,6 +80,12 @@ decide sobre todo por avisos y modelos.
   sur, en el mar, y AEMET tenía aviso amarillo de lluvia y tormentas en el
   Prelitoral de Barcelona de 5:00 a 20:00.
 - La tabla de meteo.cat (`/observacions/xema/dades?codi=XX`) va en hora UTC.
+- En el portal, `data_lectura` es el inicio de la media hora, en UTC: la
+  lectura de XF «2026-10-04T01:00» (17,3 mm) coincide con el periodo
+  01:00-01:30 TU de la tabla de meteo.cat.
+- Al principio se probó el portal con un dominio equivocado,
+  `analisi.transparencia.gencat.cat`, que no existe; por eso se creyó
+  inaccesible.
 - La precipitación horaria de Open-Meteo es la acumulada en la hora anterior.
 
 ## Riesgos y limitaciones
@@ -89,7 +93,8 @@ decide sobre todo por avisos y modelos.
 - La decisión anterior se lee de GitHub Pages, que puede servirla con hasta
   10 minutos de caché; con ejecuciones cada 15-30 minutos no afecta.
 
-- La lectura de meteo.cat depende del HTML de su página (clase `tblperiode`).
+- La lectura de meteo.cat depende del HTML de su página (clase `tblperiode`);
+  si cambia, el portal la sustituye con algo más de retraso.
 - El umbral de intensidad del radar (transparencia del PNG mayor que 100) se
   ha fijado a ojo con la escala de colores 2 de RainViewer: hipótesis pendiente
   de contrastar con la lluvia medida en las estaciones.

@@ -56,30 +56,66 @@ def hm(t):
 
 # --- Recogida de datos ---------------------------------------------------------
 
+PORTAL = "https://analisi.transparenciacatalunya.cat/resource/nzvn-apee.json"
+
+
+def observaciones_web(codi, nom):
+    """Lluvia de hoy según la página de meteo.cat (la tabla va en UTC)."""
+    s = get(f"https://www.meteo.cat/observacions/xema/dades?codi={codi}")
+    t = re.search(r"<table[^>]*tblperiode.*?</table>", s, re.S)
+    cab, filas = None, []
+    for f in re.findall(r"<tr.*?</tr>", t.group(0), re.S) if t else []:
+        celdas = [html.unescape(re.sub("<[^>]+>", "", c)).strip()
+                  for c in re.findall(r"<t[hd][^>]*>(.*?)</t[hd]>", f, re.S)]
+        if celdas and celdas[0].startswith("Període"):
+            cab = celdas
+        elif cab and len(celdas) > 1 and "(s/d)" not in celdas[1]:
+            filas.append(dict(zip(cab, celdas)))
+    if not filas:
+        return None
+    col = next(k for k in cab if k.startswith("PPT"))
+    fin_utc = filas[-1][cab[0]].split("-")[-1].strip()
+    hora = dt.datetime.combine(AHORA.astimezone(dt.timezone.utc).date(),
+                               dt.time.fromisoformat(fin_utc), dt.timezone.utc)
+    return {"estacion": nom, "font": "meteo.cat",
+            "mm_hoy": round(sum(float(x[col]) for x in filas), 1),
+            "mm_ultima_media_hora": float(filas[-1][col]),
+            "hasta": hora.astimezone().isoformat()}
+
+
+def observaciones_portal(codi, nom):
+    """Lo mismo desde el portal de datos abiertos de la Generalitat. Va
+    aproximadamente una hora por detrás, pero es una API estable. Cada lectura
+    marca el inicio de su media hora, en UTC (comprobado con la tabla de
+    meteo.cat del 04-10-2026)."""
+    inicio = AHORA.astimezone(dt.timezone.utc).strftime("%Y-%m-%dT00:00:00")
+    q = urllib.parse.urlencode({
+        "$where": f"codi_estacio='{codi}' AND codi_variable='35' AND data_lectura>='{inicio}'",
+        "$order": "data_lectura", "$limit": 100})
+    filas = json.loads(get(f"{PORTAL}?{q}"))
+    if not filas:
+        return None
+    ultima = dt.datetime.fromisoformat(filas[-1]["data_lectura"]).replace(tzinfo=dt.timezone.utc)
+    return {"estacion": nom, "font": "portal de dades obertes",
+            "mm_hoy": round(sum(float(f["valor_lectura"]) for f in filas), 1),
+            "mm_ultima_media_hora": float(filas[-1]["valor_lectura"]),
+            "hasta": (ultima + dt.timedelta(minutes=30)).astimezone().isoformat()}
+
+
 def observaciones():
-    """Lluvia de hoy en las estaciones; la tabla de meteo.cat va en UTC."""
+    """meteo.cat va más al día; si falla, el portal de la Generalitat."""
     res = []
     for codi, nom in C.ESTACIONES.items():
-        s = get(f"https://www.meteo.cat/observacions/xema/dades?codi={codi}")
-        t = re.search(r"<table[^>]*tblperiode.*?</table>", s, re.S)
-        cab, filas = None, []
-        for f in re.findall(r"<tr.*?</tr>", t.group(0), re.S) if t else []:
-            celdas = [html.unescape(re.sub("<[^>]+>", "", c)).strip()
-                      for c in re.findall(r"<t[hd][^>]*>(.*?)</t[hd]>", f, re.S)]
-            if celdas and celdas[0].startswith("Període"):
-                cab = celdas
-            elif cab and len(celdas) > 1 and "(s/d)" not in celdas[1]:
-                filas.append(dict(zip(cab, celdas)))
-        if not filas:
-            continue
-        col = next(k for k in cab if k.startswith("PPT"))
-        fin_utc = filas[-1][cab[0]].split("-")[-1].strip()
-        hora = dt.datetime.combine(AHORA.astimezone(dt.timezone.utc).date(),
-                                   dt.time.fromisoformat(fin_utc), dt.timezone.utc)
-        res.append({"estacion": nom,
-                    "mm_hoy": round(sum(float(x[col]) for x in filas), 1),
-                    "mm_ultima_media_hora": float(filas[-1][col]),
-                    "hasta": hora.astimezone().isoformat()})
+        dato = None
+        for fuente in (observaciones_web, observaciones_portal):
+            try:
+                dato = fuente(codi, nom)
+            except Exception:
+                dato = None
+            if dato:
+                break
+        if dato:
+            res.append(dato)
     return res
 
 
@@ -220,11 +256,13 @@ def decidir(dia, ventana, d):
     obs = d.get("observaciones")
     if obs and -0.5 <= falta <= 1.5:
         mullades = [o["estacion"] for o in obs if o["mm_ultima_media_hora"] > 0]
+        hora = hm(min(dt.datetime.fromisoformat(o["hasta"]) for o in obs))
         if mullades:
-            motivos.append((0, "cotxe", f"Ara mateix plou a {' i a '.join(mullades)}."))
+            motivos.append((0, "cotxe", f"Plou a {' i a '.join(mullades)} "
+                            f"(dada de les {hora})."))
         else:
             motivos.append((4, "moto", "Les estacions de Sabadell i Sant Cugat no "
-                            "registren pluja ara mateix."))
+                            f"registren pluja (dada de les {hora})."))
 
     # 3. Modelos finos: lo máximo que dan en cualquiera de los dos extremos.
     m = d.get("modelos")
