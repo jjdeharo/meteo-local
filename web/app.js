@@ -31,7 +31,13 @@ function element(etiqueta, classe, text) {
 // Quan es va decidir i si encara pot canviar.
 function notaDecisio(decisio, sortida) {
   const hora = horaCurta(decisio.decidit);
-  if (decisio.mantinguda && decisio.abans_de_sortir) {
+  // Passada l'hora de sortida, la decisió d'abans ja és la definitiva encara
+  // que no hi hagi hagut cap actualització posterior.
+  const [h, m] = sortida.split(':').map(Number);
+  const araMateix = new Date();
+  const jaHaSortit = araMateix.getHours() * 60 + araMateix.getMinutes() >= h * 60 + m
+    && new Date(decisio.decidit).toDateString() === araMateix.toDateString();
+  if (decisio.abans_de_sortir && (decisio.mantinguda || jaHaSortit)) {
     return `Decidit a les ${hora}, abans de sortir. Ja no canvia.`;
   }
   if (decisio.mantinguda || !decisio.abans_de_sortir) {
