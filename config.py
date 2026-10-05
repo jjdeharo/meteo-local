@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 """Datos fijos del trayecto. Se cambian aquí, no en prevision.py."""
 
-VERSION = "1.7.0"
+VERSION = "1.8.0"
 
 # Coordenadas redondeadas a unos 500 m: para el tiempo da igual una calle u
 # otra, y el repositorio es público.
@@ -29,6 +29,11 @@ ESTACIONES = {
 # vuelta. La web lo muestra tal cual.
 HORARIO = [("05:00", "07:30"), ("13:00", "15:30")]
 INTERVALO_MIN = 30
+
+# La página de casa (casa.html): previsión a 24 horas, actualizada cada hora
+# todo el día.
+HORARIO_CASA = ("00:00", "23:00")
+INTERVALO_CASA_MIN = 60
 
 # Registro de aciertos (registre.py): a qué hora se comprueba la lluvia que
 # cayó, a los cuántos días se manda el resumen por Telegram y cuántos días de

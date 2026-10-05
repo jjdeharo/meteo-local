@@ -1,0 +1,103 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Peces comunes de les dues pàgines: utilitats, horari d'actualització,
+// versió i commutador de tema.
+
+// Marge abans de dir que una actualització prevista no s'ha fet.
+const MARGE_RETARD_MIN = 20;
+
+const $ = (id) => document.getElementById(id);
+
+function horaCurta(data) {
+  return new Date(data).toLocaleTimeString('ca', { hour: '2-digit', minute: '2-digit' });
+}
+
+function element(etiqueta, classe, text) {
+  const el = document.createElement(etiqueta);
+  if (classe) el.className = classe;
+  if (text) el.textContent = text;
+  return el;
+}
+
+// Data d'avui (hora local) a l'hora «HH:MM».
+function avuiA(hhmm) {
+  const [h, m] = hhmm.split(':').map(Number);
+  const d = new Date();
+  d.setHours(h, m, 0, 0);
+  return d;
+}
+
+// Totes les hores d'actualització d'avui, segons l'horari de les dades.
+function horesActualitzacio(horari) {
+  const hores = [];
+  for (const [inici, fi] of horari.trams) {
+    for (let t = avuiA(inici); t <= avuiA(fi); t = new Date(t.getTime() + horari.cada_min * 60000)) {
+      hores.push(t);
+    }
+  }
+  return hores;
+}
+
+function textHorari(horari) {
+  const [[inici, fi]] = horari.trams;
+  if (horari.trams.length === 1 && inici === '00:00' && horari.cada_min === 60 && fi === '23:00') {
+    return 'S’actualitza amb dades en directe cada hora, a l’hora en punt.';
+  }
+  const trams = horari.trams.map(([a, b]) => `de ${a} a ${b}`).join(' i ');
+  return `S’actualitza amb dades en directe cada ${horari.cada_min} minuts, ${trams}.`;
+}
+
+// «S'actualitza… Darrera: 07:07. Propera: 07:30.» i, si cal, l'avís de
+// retard quan una actualització prevista no ha arribat.
+function pintaHorari(dades) {
+  const ara = new Date();
+  const generat = new Date(dades.generat);
+  const hores = horesActualitzacio(dades.horari);
+  const propera = hores.find((t) => t > ara);
+  const darreraPrevista = hores.filter((t) => t <= ara).pop();
+  $('horari').textContent = `${textHorari(dades.horari)} Darrera actualització: ${horaCurta(generat)}`
+    + (generat.toDateString() === ara.toDateString() ? '' : ` del ${generat.toLocaleDateString('ca')}`)
+    + `. Propera: ${propera ? horaCurta(propera) : 'demà a les ' + dades.horari.trams[0][0]}.`;
+  const avisos = [];
+  if (darreraPrevista && generat < darreraPrevista - 5 * 60000
+      && ara - darreraPrevista > MARGE_RETARD_MIN * 60000) {
+    avisos.push(`L’actualització de les ${horaCurta(darreraPrevista)} no s’ha fet: `
+      + `les dades són de les ${horaCurta(generat)}.`);
+  }
+  if (dades.errors.length) {
+    avisos.push('No s’han pogut llegir totes les fonts: la informació és menys segura.');
+  }
+  $('avis-dades').textContent = avisos.join(' ');
+  $('avis-dades').hidden = !avisos.length;
+}
+
+function posaVersio(versio) {
+  $('versio').textContent = 'versió ' + versio;
+  $('versio').href = 'https://github.com/jjdeharo/meteo-local/releases/tag/v' + versio;
+}
+
+// Tema: segueix el del dispositiu mentre no se'n triï un altre; si es tria
+// el mateix que el del dispositiu, es torna a seguir-lo (com a Sirena).
+const sistemaFosc = matchMedia('(prefers-color-scheme: dark)');
+
+function aplicaFosc(fosc, manual) {
+  document.documentElement.dataset.theme = fosc ? 'dark' : 'light';
+  if (manual) {
+    try {
+      if (fosc === sistemaFosc.matches) localStorage.removeItem('meteo.fosc');
+      else localStorage.setItem('meteo.fosc', fosc ? '1' : '0');
+    } catch (_) {}
+  }
+  $('btn-fosc').querySelector('use').setAttribute('href', fosc ? '#i-sun' : '#i-moon');
+}
+
+function segueixSistema() {
+  try { return localStorage.getItem('meteo.fosc') === null; } catch (_) { return true; }
+}
+
+aplicaFosc(document.documentElement.dataset.theme === 'dark', false);
+$('btn-fosc').addEventListener('click', () => {
+  aplicaFosc(document.documentElement.dataset.theme !== 'dark', true);
+});
+sistemaFosc.addEventListener('change', (e) => {
+  if (segueixSistema()) aplicaFosc(e.matches, false);
+});

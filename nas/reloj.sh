@@ -6,7 +6,8 @@
 # de config.py (HORARIO e INTERVALO_MIN): la misma fuente que lee la web, así
 # que lo que dice la página y lo que se hace no pueden separarse. Si toca, pone
 # al día el repositorio, publica con publica.sh y apunta lo publicado en el
-# registro. A HORA_VERIFICACION comprueba la lluvia que cayó (registre.py).
+# registro. Las demás horas en punto (HORARIO_CASA) solo rehace la página de
+# casa. A HORA_VERIFICACION comprueba la lluvia que cayó (registre.py).
 #
 #   reloj.sh         bucle (lo que arranca el contenedor)
 #   reloj.sh --ara   una sola pasada, ya
@@ -39,10 +40,28 @@ pasada() {
   fi
 }
 
+pasada_casa() {
+  prepara || return
+  SOLO_CASA=1 ANTERIOR="$ESTAT" DESTINO="$URL_REPO" bash "$REPO/publica.sh" >/dev/null \
+    && registro "publicada la página de casa" || registro "ha fallado la página de casa"
+}
+
 verificacion() {
   prepara || return
   (cd "$REPO" && python3 registre.py verifica && python3 registre.py resum --avisa >/dev/null) \
     || registro "ha fallado la verificación del día"
+}
+
+horas_casa() {
+  python3 -c '
+import sys, datetime as dt
+sys.path.insert(0, "/proyecto")
+import config as C
+ini, fin = C.HORARIO_CASA
+t = dt.datetime.strptime(ini, "%H:%M"); f = dt.datetime.strptime(fin, "%H:%M")
+while t <= f:
+    print(t.strftime("%H:%M")); t += dt.timedelta(minutes=C.INTERVALO_CASA_MIN)
+'
 }
 
 hora_verificacion() {
@@ -70,9 +89,12 @@ while true; do
   ahora=$(date +%H:%M)
   if [ -d "$REPO/.git" ] && horas | grep -qx "$ahora"; then
     pasada
-  elif [ -d "$REPO/.git" ] && [ "$ahora" = "$(hora_verificacion)" ]; then
-    verificacion
+  elif [ -d "$REPO/.git" ] && horas_casa | grep -qx "$ahora"; then
+    pasada_casa
   elif [ ! -d "$REPO/.git" ]; then
     prepara
+  fi
+  if [ -d "$REPO/.git" ] && [ "$ahora" = "$(hora_verificacion)" ]; then
+    verificacion
   fi
 done

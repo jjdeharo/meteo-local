@@ -203,3 +203,34 @@ h1 { margin: 0; font-size: 1.6rem; line-height: 1.2; }
 }
 
 .contingut h2 { font-size: 1.1rem; margin: 1.4rem 0 .4rem; }
+
+/* Navegació entre les dues pàgines, sempre al mateix lloc. */
+.pagines { display: flex; gap: .4rem; margin: .8rem 0 0; flex-wrap: wrap; }
+.pagines a {
+  padding: .3rem .8rem;
+  border: 1px solid var(--vora);
+  border-radius: 999px;
+  text-decoration: none;
+  color: var(--text);
+  background: var(--superficie);
+}
+.pagines a[aria-current="page"] { background: var(--text); color: var(--fons); border-color: var(--text); }
+
+/* Pàgina de casa */
+.targeta.ara { --color: var(--enllac); }
+.previsio { margin-top: 1rem; }
+.taula-contenidor { overflow-x: auto; }
+.taula-hores { width: 100%; border-collapse: collapse; font-size: .95rem; background: var(--superficie); border-radius: .6rem; }
+.taula-hores th, .taula-hores td { padding: .35rem .35rem; text-align: left; border-bottom: 1px solid var(--vora); white-space: nowrap; }
+.taula-hores thead th { font-size: .8rem; color: var(--suau); white-space: normal; vertical-align: bottom; }
+.taula-hores .num { text-align: right; font-variant-numeric: tabular-nums; }
+.taula-hores th.hora { font-weight: 600; }
+.taula-hores tr.dia-nou th { background: var(--fons); color: var(--suau); font-size: .85rem; text-transform: none; }
+.taula-hores tr.dia-nou th::first-letter { text-transform: uppercase; }
+.taula-hores tr.amb-pluja td:nth-child(2) { color: var(--enllac); font-weight: 600; }
+/* La probabilitat porta una barra darrere del número; el número ja ho diu. */
+.taula-hores td.prob { background: linear-gradient(to left, color-mix(in srgb, var(--enllac) 22%, transparent) var(--prob, 0%), transparent var(--prob, 0%)); }
+@media (max-width: 380px) {
+  .taula-hores { font-size: .88rem; }
+  .taula-hores th, .taula-hores td { padding: .3rem .25rem; }
+}

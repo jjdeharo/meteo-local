@@ -7,7 +7,9 @@ impermeable o coche), porque quien va en moto vuelve en moto, y el riesgo de
 lluvia de cada trayecto con sus motivos.
 
 Web: <https://jjdeharo.github.io/meteo-local/> (en catalán, para quien hace
-el trayecto).
+el trayecto). Al lado, [el tiempo en casa](https://jjdeharo.github.io/meteo-local/casa.html):
+lo que mide ahora la estación de Montflorit y la previsión hora a hora para
+las 24 horas siguientes, actualizada cada hora (ADR 0007).
 
 ## Cómo funciona
 
@@ -64,9 +66,10 @@ al motivo de los modelos. Para repetirla: `python3 calibracio/descarrega.py
 |---|---|
 | `prevision.py` | Recoge los datos, decide y escribe `dades.json`; sin `--json`, imprime un resumen |
 | `config.py` | Coordenadas, horario, estaciones, zonas de aviso, modelos y umbrales |
-| `web/` | La página: `index.html`, `app.js`, `estil.css` y `fonts.html` (fuentes y créditos) |
+| `web/` | Las páginas: `index.html` y `app.js` (trayecto), `casa.html` y `casa.js` (casa), `comu.js` (lo común), `estil.css` y `fonts.html` (fuentes y créditos) |
 | `calibracio/` | Descarga del histórico, análisis, `informe.md` y `calibracio.json` (los datos, en `dades/`, no se suben) |
 | `tests/` | Pruebas de la regla de decisión, sin red |
+| `casa.py` | Datos de la página de casa (`casa.json`) |
 | `publica.sh` | Calcula y publica en la rama `gh-pages` (lo usan el NAS y GitHub) |
 | `nas/` | Contenedor del NAS: `compose.yml`, `Dockerfile` y `reloj.sh` |
 | `registre.py` | Registro en el NAS de cada actualización y del resultado de cada día (ADR 0006) |

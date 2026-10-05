@@ -5,8 +5,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex">
-  <meta name="description" content="Plourà al trajecte en moto de Cerdanyola al Parc Taulí? Recomanació per a l'anada i la tornada, amb el perquè.">
-  <title>Moto o cotxe?</title>
+  <meta name="description" content="El temps ara a Montflorit (Cerdanyola del Vallès) i la previsió hora a hora per a les pròximes 24 hores.">
+  <title>Temps a casa</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232563eb' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 14.9A7 7 0 1 1 15.7 8h1.8a4.5 4.5 0 0 1 2.5 8.2'/%3E%3Cpath d='M16 14v6M8 14v6M12 16v6'/%3E%3C/svg%3E">
   <script>
     // Tema abans de pintar, perquè no parpellegi: el del sistema, si no s'ha triat.
@@ -27,44 +27,40 @@
 
   <header class="cap">
     <div>
-      <h1>Moto o cotxe?</h1>
-      <p class="ruta">Cerdanyola → Parc Taulí · anada 6:30 · tornada 15:00</p>
+      <h1>Temps a casa</h1>
+      <p class="ruta">Montflorit, Cerdanyola del Vallès</p>
     </div>
     <button type="button" id="btn-fosc" class="boto-icona" title="Canvia entre tema clar i fosc" aria-label="Canvia entre tema clar i fosc">
       <svg aria-hidden="true"><use href="#i-moon"></use></svg>
     </button>
   </header>
   <nav class="pagines" aria-label="Pàgines">
-    <a href="./" aria-current="page">Trajecte</a>
-    <a href="casa.html">Temps a casa</a>
+    <a href="./">Trajecte</a>
+    <a href="casa.html" aria-current="page">Temps a casa</a>
   </nav>
 
   <main>
     <p id="avis-dades" class="avis" hidden></p>
-    <div id="dies" aria-live="polite">
+    <div id="casa" aria-live="polite">
       <p class="carregant">Carregant la previsió…</p>
     </div>
     <p id="horari" class="nota horari"></p>
 
     <details class="com">
-      <summary>Com es decideix</summary>
-      <p>Es tria <strong>un sol mitjà per a tot el dia</strong>, perquè si vas en moto tornes en moto. Mana el trajecte amb més risc de pluja: si l'anada o la tornada tenen risc alt, cotxe; si el pitjor és moderat, moto amb impermeable; si tots dos són baixos, moto.</p>
-      <p>El risc de cada trajecte surt de cinc fonts, i mana la més desfavorable:</p>
-      <ol>
-        <li><strong>Avisos de l'AEMET.</strong> Avís de pluja o de tempesta al Vallès a l'hora del trajecte: risc alt.</li>
-        <li><strong>Radar</strong>, només per a les properes tres hores. Pluja a menys de 15 km i creixent: risc alt; a menys de 40 km: moderat.</li>
-        <li><strong>Estacions</strong> de Montflorit (meteocerdanyola.com, minut a minut) i de Meteocat a Sabadell i Sant Cugat. Si hi plou ara i falta poc per sortir: risc alt.</li>
-        <li><strong>Models més detallats</strong> (AROME de Météo-France i ICON-EU). Un mil·límetre o més en una hora: risc alt; a partir de 0,2 mm: moderat.</li>
-        <li><strong>Simulacions</strong> (40 variants del model ICON-EU). Si la meitat o més hi posen pluja: risc alt; si n'hi posen una de cada cinc: moderat.</li>
-      </ol>
-      <p>La recomanació del mitjà s'actualitza fins a les 7:30, quan acaba la franja de l'anada, i després ja no canvia. A partir d'aleshores la pàgina ja no recomana mitjà: només diu el temps que farà a la tornada (risc de pluja, temperatura i vent), que es torna a actualitzar a partir de les 13:00. Després només s'actualitza el risc de la tornada, de 13:00 a 15:00; si empitjora, la pàgina t'avisa.</p>
-      <p>Els límits dels models s'han comprovat amb la pluja que va caure de veritat a Sabadell i Sant Cugat entre el 2024 i el 2026. Quan la regla deia moto, va ploure l'1&nbsp;% dels dies; compte, entre el 10 i el 13&nbsp;%; cotxe, entre el 37 i el 52&nbsp;%.</p>
-      <p>En dies de tempestes, els models encerten si n'hi haurà però no on cauran. Per això un avís de tempestes decideix per si sol.</p>
+      <summary>D'on surt</summary>
+      <ul>
+        <li><strong>Ara:</strong> l'estació de Montflorit de meteocerdanyola.com, minut a minut.</li>
+        <li><strong>Temperatura, cel i vent:</strong> el model AROME de Météo-France, a 1,5 km, completat amb ARPEGE quan cal.</li>
+        <li><strong>Pluja:</strong> la més alta de les que donen els tres models més detallats (AROME, AROME a 1,5 km i ICON-EU). Un sol model pot fallar: aquest matí AROME no veia la pluja que queia.</li>
+        <li><strong>Probabilitat:</strong> quantes de les 40 simulacions del model ICON-EU hi posen pluja (0,2 mm o més en l'hora).</li>
+        <li><strong>Avisos:</strong> els de l'AEMET per al Vallès (Prelitoral de Barcelona).</li>
+      </ul>
+      <p>Cada fila és una hora: «10–11» vol dir de les 10 a les 11. La temperatura i el vent són els de l'hora final del tram.</p>
     </details>
 
     <p class="enllacos">
       <a href="https://www.meteo.cat/observacions/radar" target="_blank" rel="noopener">Radar de Meteocat</a>
-      · <a href="https://www.aemet.es/ca/eltiempo/prediccion/avisos?w=hoy&amp;k=cat" target="_blank" rel="noopener">Avisos de l'AEMET</a>
+      · <a href="https://meteocerdanyola.com/2026/sites/cerdanyola_montflorit/index.html" target="_blank" rel="noopener">Estació de Montflorit</a>
     </p>
   </main>
 
@@ -75,6 +71,6 @@
   </footer>
 
   <script src="comu.js"></script>
-  <script src="app.js"></script>
+  <script src="casa.js"></script>
 </body>
 </html>
