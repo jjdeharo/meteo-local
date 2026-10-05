@@ -12,5 +12,6 @@
 | [0008](0008-planes-de-proteccion-civil.md) | Planes de Protección Civil | aceptado |
 | [0009](0009-agente-diario-con-ia-en-el-nas.md) | Agente diario con IA en el NAS | aceptado |
 | [0010](0010-modo-aviso-actualizacion-cada-10-minutos.md) | Modo aviso: actualización cada 10 minutos | aceptado |
+| [0011](0011-paginas-que-se-ponen-al-dia-solas-y-trayecto-solo-en-franja.md) | Páginas que se ponen al día solas; el trayecto, solo en su franja | aceptado |
 
 Plantilla: [0000-plantilla.md](0000-plantilla.md). Para crear uno: `nuevo-adr "Título"`.

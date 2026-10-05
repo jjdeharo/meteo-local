@@ -80,6 +80,69 @@ function pintaHorari(dades) {
   $('avis-dades').hidden = !avisos.length;
 }
 
+// La pàgina oberta es posa al dia sola: torna a llegir les dades després de
+// cada actualització prevista. La publicació (càlcul i GitHub Pages) tarda
+// un minut o dos: es mira ESPERA_PUBLICACIO_MIN després de l'hora i, si les
+// dades encara no són noves, cada minut fins a REINTENTS vegades.
+const ESPERA_PUBLICACIO_MIN = 2;
+const REINTENTS = 10;
+
+// Propera actualització segons l'horari: avui o, si ja no n'hi ha cap, la
+// primera de demà.
+function properaActualitzacio(horari, ara = new Date()) {
+  const propera = horesActualitzacio(horari).find((t) => t > ara);
+  if (propera) return propera;
+  const dema = avuiA(horari.trams[0][0]);
+  dema.setDate(dema.getDate() + 1);
+  return new Date(dema.getTime() + (horari.desfase_min || 0) * 60000);
+}
+
+function carrega(url, pinta, error) {
+  let dades = null;
+  let reintents = 0;
+  let temporitzador = null;
+  let previst = 0;
+
+  function programa() {
+    clearTimeout(temporitzador);
+    previst = reintents && reintents <= REINTENTS ? Date.now() + 60000
+      : properaActualitzacio(dades.horari).getTime() + ESPERA_PUBLICACIO_MIN * 60000;
+    temporitzador = setTimeout(llegeix, previst - Date.now());
+  }
+
+  function llegeix() {
+    clearTimeout(temporitzador);
+    fetch(`${url}?t=${Date.now()}`, { cache: 'no-store' })
+      .then((r) => {
+        if (!r.ok) throw new Error(r.status);
+        return r.json();
+      })
+      .then((noves) => {
+        // Les mateixes dades d'abans: la publicació encara no ha arribat.
+        reintents = dades && noves.generat === dades.generat ? reintents + 1 : 0;
+        dades = noves;
+        // Es torna a pintar sempre: l'hora també canvia el que es mostra.
+        pinta(dades);
+        programa();
+      })
+      .catch(() => {
+        if (!dades) {
+          error();
+          return;
+        }
+        reintents += 1;
+        programa();
+      });
+  }
+
+  // Amb la pestanya amagada (sobretot al mòbil) els temporitzadors s'aturen:
+  // en tornar-hi, es mira si ja tocava.
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && dades && Date.now() >= previst) llegeix();
+  });
+  llegeix();
+}
+
 // Plans de Protecció Civil activats (inundacions, vent, neu): avís destacat
 // a dalt de la pàgina, amb l'enllaç al comunicat.
 const NOM_FASE = { prealerta: 'prealerta', alerta: 'alerta', 'emergència': 'emergència' };

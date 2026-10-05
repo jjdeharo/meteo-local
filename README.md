@@ -37,8 +37,12 @@ Cada actualización queda apuntada en el NAS, y a las 16:00 se comprueba la
 lluvia que cayó y si la recomendación acertó (`registre.py`). A los 28 días
 llega un resumen por Telegram.
 
-Hasta las 7:30 la web recomienda un solo medio para el día; desde entonces
-solo da el tiempo de la vuelta (riesgo de lluvia, temperatura y viento).
+La página del trayecto solo informa dentro de sus franjas (5:00-7:30 y
+13:00-15:30). Por la mañana recomienda un solo medio para el día; por la tarde
+solo da el tiempo de la vuelta (riesgo de lluvia, temperatura y viento). Fuera
+de las franjas dice cuándo vuelve a informar y enlaza al tiempo en casa. Las
+dos páginas, si están abiertas, se ponen al día solas después de cada
+actualización prevista (ADR 0011).
 
 El riesgo de cada trayecto (bajo, moderado o alto) junta cinco fuentes y
 manda la más desfavorable; el medio del día sale del trayecto con más riesgo:

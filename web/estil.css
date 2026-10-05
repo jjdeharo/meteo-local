@@ -218,6 +218,7 @@ h1 { margin: 0; font-size: 1.6rem; line-height: 1.2; }
 
 /* Pàgina de casa */
 .targeta.ara { --color: var(--enllac); }
+.targeta.fora { --color: var(--suau); }
 .previsio { margin-top: 1rem; }
 .taula-contenidor { overflow-x: auto; }
 .taula-hores { width: 100%; border-collapse: collapse; font-size: .95rem; background: var(--superficie); border-radius: .6rem; }

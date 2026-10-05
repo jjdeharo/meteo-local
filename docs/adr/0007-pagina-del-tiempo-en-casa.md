@@ -51,6 +51,15 @@ claramente incorrecto»). Se añadió:
 - Sin lluvia prevista pero con probabilidad del 30 % o más, el cielo dice
   «Possible pluja», no «serè».
 
+### Corrección del 05-10-2026, 16:50: avisos con día y franja
+
+La línea de avisos agrupaba por nivel y hora de fin, sin el día: un aviso de
+hoy hasta las 20:00 y dos de mañana (9:00-18:00 y 22:00-24:00) salían como
+tres avisos de hoy con finales distintos. Ahora hay una frase por nivel y
+tipo, con cada franja y su día («avui fins a les 20:00; demà de 09:00 a 18:00
+i de 22:00 a mitjanit»); las franjas seguidas se juntan y las acabadas no
+salen (`textAvisos` en `web/casa.js`, `tests/test_web.py`).
+
 ## Alternativas descartadas
 
 - **Iconos del tiempo:** la descripción en una palabra se lee igual y no

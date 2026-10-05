@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Llegeix dades.json (el genera prevision.py) i pinta la pàgina del trajecte.
 // Les peces comunes amb la pàgina de casa són a comu.js.
-// Fins a les 7:30 recomana un sol mitjà per a tot el dia (qui va en moto torna
-// en moto). Després ja no en recomana cap: només diu el temps de la tornada.
+// Només informa dins de les franges de l'horari (anada i tornada). Fins a les
+// 7:30 recomana un sol mitjà per a tot el dia (qui va en moto torna en moto); a
+// la tarda ja no en recomana cap: només diu el temps de la tornada. Fora de
+// les franges diu quan és la propera actualització.
 
 const TEXT_MITJA = {
   moto: { titol: 'Moto', frase: 'Pots anar i tornar en moto.' },
@@ -126,8 +128,63 @@ function targeta(nom, trajecte, plans) {
   return art;
 }
 
+// Franja activa ara, segons l'horari: des de la primera actualització fins
+// que s'ha publicat la darrera. Si no n'hi ha cap, null.
+function franjaActiva(horari, ara = new Date()) {
+  const marge = ((horari.desfase_min || 0) + ESPERA_PUBLICACIO_MIN) * 60000;
+  for (const [inici, fi] of horari.trams) {
+    const franja = { inici: avuiA(inici), fins: new Date(avuiA(fi).getTime() + marge) };
+    if (ara >= franja.inici && ara < franja.fins) return franja;
+  }
+  return null;
+}
+
+// Quan torna a informar: la franja que acaba de començar (si les seves dades
+// encara no han arribat), la propera d'avui o la primera de demà.
+function properaFranja(horari, ara = new Date()) {
+  const activa = franjaActiva(horari, ara);
+  const avui = activa ? activa.inici : horari.trams.map(([inici]) => avuiA(inici)).find((t) => t > ara);
+  if (avui) return { dia: 'avui', hora: horaCurta(avui) };
+  return { dia: 'demà', hora: horari.trams[0][0] };
+}
+
+// Fora de les franges: quan torna a informar i l'enllaç al temps a casa.
+function blocFora(horari) {
+  const p = properaFranja(horari);
+  const sec = element('section', 'decisio targeta fora');
+  sec.setAttribute('aria-label', 'Fora d\u2019horari');
+  sec.append(element('h2', 'data', 'Propera actualització'));
+  sec.append(element('p', 'veredicte', `${p.dia === 'avui' ? 'Avui' : 'Demà'} a les ${p.hora}`));
+  const franges = horari.trams.map(([a, b]) => `de ${a} a ${b}`).join(' i ');
+  sec.append(element('p', 'frase', `Aquesta pàgina només informa del trajecte ${franges}.`));
+  const mes = element('p', 'frase');
+  const enllac = element('a', null, 'el temps a casa');
+  enllac.href = 'casa.html';
+  mes.append('Mentrestant, pots consultar ', enllac, '.');
+  sec.append(mes);
+  return sec;
+}
+
+let repinta = null;
+
 function pinta(dades) {
   const cont = $('dies');
+  clearTimeout(repinta);
+  const franja = franjaActiva(dades.horari);
+  // Fora de franja, o dades d'abans que comencés (la primera actualització
+  // encara no ha arribat): no es mostra res del trajecte.
+  if (!franja || new Date(dades.generat) < franja.inici) {
+    cont.replaceChildren(blocFora(dades.horari));
+    $('horari').hidden = true;
+    // Dins de la franja, si l'actualització no arriba, es diu.
+    if (franja) pintaHorari(dades);
+    else $('avis-dades').hidden = true;
+    posaVersio(dades.versio);
+    return;
+  }
+  // En acabar la franja, la pàgina passa sola a dir quan torna.
+  repinta = setTimeout(() => pinta(dades), franja.fins - new Date());
+  $('horari').hidden = false;
   const tarda = new Date() >= avuiA(dades.anada.fi) && dades.dia === new Date().toLocaleDateString('sv');
   if (tarda) {
     cont.replaceChildren(blocTornada(dades));
@@ -144,9 +201,6 @@ function pinta(dades) {
   posaVersio(dades.versio);
 }
 
-fetch('dades.json', { cache: 'no-store' })
-  .then((r) => r.json())
-  .then(pinta)
-  .catch(() => {
-    $('dies').replaceChildren(element('p', 'avis', 'No s\u2019ha pogut carregar la previsió. Torna-ho a provar d\u2019aquí a una estona.'));
-  });
+carrega('dades.json', pinta, () => {
+  $('dies').replaceChildren(element('p', 'avis', 'No s\u2019ha pogut carregar la previsió. Torna-ho a provar d\u2019aquí a una estona.'));
+});
