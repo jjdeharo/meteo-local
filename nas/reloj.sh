@@ -9,6 +9,8 @@
 # registro. Las demás horas en punto (HORARIO_CASA) solo rehace la página de
 # casa. A HORA_VERIFICACION comprueba la lluvia que cayó (registre.py). En
 # AGENTE_HORAS ejecuta el agente diario y vuelve a publicar con su comentario.
+# Además, cada minuto mira si main tiene commits nuevos y, si los tiene,
+# publica enseguida: es el único que publica la web (ADR 0005).
 #
 #   reloj.sh         bucle (lo que arranca el contenedor)
 #   reloj.sh --ara   una sola pasada, ya
@@ -66,6 +68,11 @@ while t <= f:
 '
 }
 
+hay_cambios() {
+  remoto=$(git -C "$REPO" ls-remote -q origin refs/heads/main 2>/dev/null | cut -f1)
+  [ -n "$remoto" ] && [ "$remoto" != "$(git -C "$REPO" rev-parse HEAD)" ]
+}
+
 agente() {
   prepara || return
   if (cd "$REPO" && agent/executa.sh "$1" >/dev/null); then
@@ -109,6 +116,11 @@ while true; do
     pasada_casa
   elif [ ! -d "$REPO/.git" ]; then
     prepara
+  fi
+  # Código nuevo en main: se publica ya, sin esperar a la próxima hora.
+  if [ -d "$REPO/.git" ] && hay_cambios; then
+    registro "hay código nuevo en main"
+    pasada
   fi
   modo=$([ -d "$REPO/.git" ] && modo_agente "$ahora" || true)
   if [ -n "$modo" ]; then

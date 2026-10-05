@@ -22,8 +22,13 @@ NAS para el agente diario.
 - **Se publica en la rama `gh-pages`**, de la que sirve GitHub Pages, con un
   solo commit que se rehace cada vez. La rama `main` no recibe commits
   automáticos.
-- **GitHub Actions ya no programa nada:** en cada subida a `main` pasa las
-  pruebas y publica con el mismo `publica.sh`.
+- **GitHub Actions solo pasa las pruebas** en cada subida a `main`. **Publica
+  únicamente el NAS**: cada minuto mira si `main` tiene commits nuevos
+  (`git ls-remote`) y, si los hay, publica enseguida. Antes publicaba también
+  GitHub, pero sin el comentario del agente ni los datos guardados en el NAS,
+  y la web los perdía hasta la siguiente actualización del NAS, hasta una hora
+  después (corregido el 05-10-2026: «por las mañanas no es posible esperar una
+  hora»).
 - **El NAS empuja con una clave de despliegue** que solo da acceso a este
   repositorio («NAS meteo-local», de escritura), no con la sesión de GitHub de
   Juanjo.
@@ -46,8 +51,7 @@ NAS para el agente diario.
 
 Si el NAS está apagado, la web no se actualiza y lo dice: avisa cuando una
 actualización prevista lleva más de 20 minutos sin llegar. Los cambios de
-código salen al subirlos (acción de GitHub) y el NAS los recoge en la pasada
-siguiente.
+código salen en menos de un minuto, desde el NAS.
 
 ## Evidencia
 
@@ -62,8 +66,8 @@ siguiente.
 
 ## Riesgos y limitaciones
 
-- La rama `gh-pages` la pueden reescribir a la vez el NAS y la acción de
-  GitHub; gana la última, y las dos calculan con los mismos datos.
+- Si el NAS está apagado, los cambios de código tampoco se publican hasta que
+  vuelva.
 - GitHub Pages tarda alrededor de un minuto en servir cada publicación.
 
 ## Validación

@@ -4,7 +4,8 @@
 # gh-pages, de la que sirve GitHub Pages. La rama tiene siempre un solo
 # commit: se rehace en cada publicación para no llenar el historial.
 #
-# Lo usan el NAS (con reloj.sh) y la acción de GitHub (al subir cambios).
+# Lo usa el NAS (con reloj.sh), que es el único que publica; a mano también
+# se puede ejecutar desde un ordenador con acceso al repositorio.
 # Calcula las dos páginas: la del trayecto (dades.json) y la de casa
 # (casa.json). Variables:
 #   ANTERIOR    datos del trayecto publicados antes, para mantener la decisión

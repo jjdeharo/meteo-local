@@ -18,7 +18,8 @@ hora de 5:00 a 7:30 y de 13:00 a 15:30, hora local (el horario está en
 `config.py` y la web lo muestra). `publica.sh` calcula la previsión con
 `prevision.py` y publica `web/` con `dades.json` en la rama `gh-pages`, de la
 que sirve GitHub Pages. Al subir cambios a `main`, una acción de GitHub pasa
-las pruebas y publica igual. En `main` no hay commits automáticos.
+las pruebas, y el NAS, que mira cada minuto si hay código nuevo, publica.
+Solo publica el NAS. En `main` no hay commits automáticos.
 
 A las 6:07 y a las 13:07, un agente con IA (Claude Sonnet 5.5) mira los datos y el
 radar en imagen y escribe un comentario breve en catalán, que la página muestra
@@ -78,11 +79,11 @@ al motivo de los modelos. Para repetirla: `python3 calibracio/descarrega.py
 | `calibracio/` | Descarga del histórico, análisis, `informe.md` y `calibracio.json` (los datos, en `dades/`, no se suben) |
 | `tests/` | Pruebas de la regla de decisión, sin red |
 | `casa.py` | Datos de la página de casa (`casa.json`) |
-| `publica.sh` | Calcula y publica en la rama `gh-pages` (lo usan el NAS y GitHub) |
+| `publica.sh` | Calcula y publica en la rama `gh-pages` (lo usa el NAS) |
 | `nas/` | Contenedor del NAS: `compose.yml`, `Dockerfile` y `reloj.sh` |
 | `agent/` | Agente diario: instrucciones, imagen del radar, ejecución y validación |
 | `registre.py` | Registro en el NAS de cada actualización y del resultado de cada día (ADR 0006) |
-| `.github/workflows/previsio.yml` | Al subir a `main`: pruebas y publicación |
+| `.github/workflows/previsio.yml` | Al subir a `main`: pruebas |
 | `docs/adr/` | Registro de decisiones |
 
 ## Uso local

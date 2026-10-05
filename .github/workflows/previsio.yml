@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# En cada cambio de main: pasa las pruebas y publica la web en la rama
-# gh-pages. Las actualizaciones programadas no se hacen aquí sino en el NAS
-# (nas/), porque GitHub no lanzaba las programadas con puntualidad: ver el
-# ADR 0005.
-name: Previsió
+# En cada cambio de main: pasa las pruebas. No publica: la web la publica
+# solo el NAS (nas/), que tiene la decisión del día, el comentario del agente
+# y el registro. El NAS detecta los cambios de main en menos de un minuto
+# (ADR 0005).
+name: Proves
 
 on:
   push:
@@ -11,14 +11,10 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
-
-concurrency:
-  group: publica
-  cancel-in-progress: false
+  contents: read
 
 jobs:
-  publica:
+  proves:
     runs-on: ubuntu-latest
     env:
       TZ: Europe/Madrid
@@ -28,9 +24,4 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install numpy pillow
-      - name: Proves
-        run: python -m unittest discover -s tests
-      - name: Calcula i publica
-        env:
-          DESTINO: https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git
-        run: bash publica.sh
+      - run: python -m unittest discover -s tests
