@@ -86,28 +86,37 @@ def hm(t):
 PORTAL = "https://analisi.transparenciacatalunya.cat/resource/nzvn-apee.json"
 
 
-def observaciones_web(codi, nom):
-    """Lluvia de hoy según la página de meteo.cat (la tabla va en UTC)."""
+def taula_meteocat(codi):
+    """Lluvia semihoraria de hoy en la página de meteo.cat: lista de
+    (inicio de la media hora en UTC, mm). La tabla va en hora UTC."""
     s = get(f"https://www.meteo.cat/observacions/xema/dades?codi={codi}")
     t = re.search(r"<table[^>]*tblperiode.*?</table>", s, re.S)
-    cab, filas = None, []
+    cab, res = None, []
+    dia_utc = AHORA.astimezone(dt.timezone.utc).date()
     for f in re.findall(r"<tr.*?</tr>", t.group(0), re.S) if t else []:
         celdas = [html.unescape(re.sub("<[^>]+>", "", c)).strip()
                   for c in re.findall(r"<t[hd][^>]*>(.*?)</t[hd]>", f, re.S)]
         if celdas and celdas[0].startswith("Període"):
             cab = celdas
         elif cab and len(celdas) > 1 and "(s/d)" not in celdas[1]:
-            filas.append(dict(zip(cab, celdas)))
+            fila = dict(zip(cab, celdas))
+            col = next(k for k in cab if k.startswith("PPT"))
+            ini = fila[cab[0]].split("-")[0].strip()
+            res.append((dt.datetime.combine(dia_utc, dt.time.fromisoformat(ini), dt.timezone.utc),
+                        float(fila[col])))
+    return res
+
+
+def observaciones_web(codi, nom):
+    """Lluvia de hoy según la página de meteo.cat."""
+    filas = taula_meteocat(codi)
     if not filas:
         return None
-    col = next(k for k in cab if k.startswith("PPT"))
-    fin_utc = filas[-1][cab[0]].split("-")[-1].strip()
-    hora = dt.datetime.combine(AHORA.astimezone(dt.timezone.utc).date(),
-                               dt.time.fromisoformat(fin_utc), dt.timezone.utc)
+    hasta = filas[-1][0] + dt.timedelta(minutes=30)
     return {"estacion": nom, "font": "meteo.cat",
-            "mm_hoy": round(sum(float(x[col]) for x in filas), 1),
-            "mm_ultima_media_hora": float(filas[-1][col]),
-            "hasta": hora.astimezone().isoformat()}
+            "mm_hoy": round(sum(mm for _, mm in filas), 1),
+            "mm_ultima_media_hora": filas[-1][1],
+            "hasta": hasta.astimezone().isoformat()}
 
 
 def observaciones_portal(codi, nom):
@@ -234,7 +243,7 @@ def modelos(dias):
     q = urllib.parse.urlencode({
         "latitude": f"{C.CASA[0]},{C.DESTINO[0]}",
         "longitude": f"{C.CASA[1]},{C.DESTINO[1]}",
-        "hourly": "precipitation,temperature_2m,wind_gusts_10m",
+        "hourly": "precipitation,temperature_2m,wind_gusts_10m,cape",
         "models": ",".join(C.MODELOS_FINOS + C.MODELOS_GLOBALES),
         "timezone": TZ, "start_date": dias[0], "end_date": dias[-1]})
     return json.loads(get(f"https://api.open-meteo.com/v1/forecast?{q}"))
@@ -311,6 +320,9 @@ def decidir(dia, ventana, d):
     cotxe (alto), con los motivos en catalán."""
     ini, fin = momento(dia, ventana[0]), momento(dia, ventana[1])
     motivos = []          # (peso, nivel, texto); el peso ordena la lista
+    # Todo lo que se ha mirado, en números, para el registro (registre.py):
+    # con él se podrá ajustar un modelo estadístico con todas las fuentes.
+    senyals = {}
 
     # 1. Avisos que tocan la ventana. Lluvia y tormenta con el mismo horario
     # se cuentan juntas; los de la costa solo si no hay ninguno en el Vallès.
@@ -320,6 +332,10 @@ def decidir(dia, ventana, d):
         if a_ini <= fin and a_fin >= ini:
             grupos.setdefault((a["zona"], a["nivel"], a_ini, a_fin), []).append(a["tipo"])
     hay_valles = any(z == C.ZONA_TRAYECTO for z, *_ in grupos)
+    if "avisos" in d:
+        for zona, clave in ((C.ZONA_TRAYECTO, "avis_valles"), (C.ZONA_CERCANA, "avis_costa")):
+            tipos = sorted({t for (z, *_), ts in grupos.items() if z == zona for t in ts})
+            senyals[clave] = tipos
     for (zona, nivel, a_ini, a_fin), tipos in sorted(grupos.items(), key=lambda g: g[0][2]):
         que = " i ".join(sorted(set(tipos)))
         horario = f"de {hm(a_ini)} a {hm(a_fin + dt.timedelta(seconds=1))}"
@@ -342,6 +358,7 @@ def decidir(dia, ventana, d):
         km = r["km_lluvia"]
         crece = r["km2_50km_ahora"] > 1.3 * max(r["km2_50km_antes"], 1)
         tendencia = ", i la zona de pluja creix" if crece else ""
+        senyals["radar"] = {"km": km, "creix": crece}
         if km is not None and km <= C.RADAR_COCHE_KM:
             on = "damunt del trajecte" if km < 2 else f"a {km:.0f} km del trajecte"
             motivos.append((0, "cotxe" if crece else "compte",
@@ -353,6 +370,8 @@ def decidir(dia, ventana, d):
     obs = d.get("observaciones")
     if obs and vigente and falta <= 1.5:
         mullades = [o for o in obs if o["mm_ultima_media_hora"] > 0 or (o.get("intensitat") or 0) > 0]
+        senyals["estacions"] = {o["estacion"]: {"mm_30min": o["mm_ultima_media_hora"],
+                                                "intensitat": o.get("intensitat")} for o in obs}
         if mullades:
             parts = []
             for o in mullades:
@@ -371,11 +390,18 @@ def decidir(dia, ventana, d):
     m = d.get("modelos")
     if m:
         maximo = 0.0
+        por_modelo, cape = {}, []
         for loc in m:
             h = loc["hourly"]
-            for mod in C.MODELOS_FINOS:
+            for mod in C.MODELOS_FINOS + C.MODELOS_GLOBALES:
                 vals = valores_ventana(h["time"], h.get(f"precipitation_{mod}", []), dia, ventana)
-                maximo = max([maximo] + vals)
+                if vals:
+                    por_modelo[mod] = max([por_modelo.get(mod, 0.0)] + vals)
+                if mod in C.MODELOS_FINOS:
+                    maximo = max([maximo] + vals)
+                cape += valores_ventana(h["time"], h.get(f"cape_{mod}", []), dia, ventana)
+        senyals["models_mm"] = por_modelo
+        senyals["cape"] = max(cape) if cape else None
         if maximo >= C.UMBRAL_MM_COCHE:
             nivel, peso, texto = "cotxe", 1, ("Els models més detallats preveuen pluja clara "
                                               f"(fins a {coma(maximo)}\u00a0mm en una hora).")
@@ -393,6 +419,7 @@ def decidir(dia, ventana, d):
         mullats = sum(any(v >= C.UMBRAL_MM for v in valores_ventana(e["time"], e[k], dia, ventana))
                       for k in claves)
         prob = mullats / len(claves) if claves else 0
+        senyals["simulacions"] = round(prob, 3)
         nivel = "cotxe" if prob >= C.PROB_COCHE else "compte" if prob >= C.PROB_ATENCION else "moto"
         motivos.append(({"cotxe": 1, "compte": 2, "moto": 3}[nivel], nivel,
                         f"{mullats} de cada {len(claves)} simulacions hi posen pluja "
@@ -410,6 +437,7 @@ def decidir(dia, ventana, d):
         "passat": fin < AHORA,
         "nivell": veredicto,
         "temps": temps,
+        "senyals": senyals,
         "motius": [{"nivell": n, "text": t} for _, n, t in motivos],
     }
 

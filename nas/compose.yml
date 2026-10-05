@@ -8,8 +8,10 @@
 #
 # Fuera del contenedor, en /volume1/docker/meteo-local:
 #   repo/   copia del repositorio (el reloj la pone al día antes de cada pasada)
-#   home/   la clave de despliegue (.ssh), que solo da acceso a este repositorio
-#   estat/  los últimos datos publicados, para mantener la decisión del día
+#   home/   la clave de despliegue (.ssh), que solo da acceso a este repositorio,
+#           y el aviso por Telegram (.local/bin/avisar-juanjo y su configuración)
+#   estat/  los últimos datos publicados, para mantener la decisión del día, y
+#           registre/: cada actualización y el resultado de cada día
 services:
   meteo-local:
     build: .
@@ -20,6 +22,8 @@ services:
     environment:
       TZ: Europe/Madrid
       HOME: /home/jjdeharo
+      REGISTRE_DIR: /estat/registre
+      PATH: /home/jjdeharo/.local/bin:/usr/local/bin:/usr/bin:/bin
     cpus: 0.5
     volumes:
       - ./repo:/proyecto

@@ -5,7 +5,8 @@
 # Cada minuto mira si la hora local es una de las de actualización, que salen
 # de config.py (HORARIO e INTERVALO_MIN): la misma fuente que lee la web, así
 # que lo que dice la página y lo que se hace no pueden separarse. Si toca, pone
-# al día el repositorio y publica con publica.sh.
+# al día el repositorio, publica con publica.sh y apunta lo publicado en el
+# registro. A HORA_VERIFICACION comprueba la lluvia que cayó (registre.py).
 #
 #   reloj.sh         bucle (lo que arranca el contenedor)
 #   reloj.sh --ara   una sola pasada, ya
@@ -30,8 +31,22 @@ prepara() {
 
 pasada() {
   prepara || return
-  ANTERIOR="$ESTAT" DESTINO="$URL_REPO" bash "$REPO/publica.sh" >/dev/null \
-    && registro "publicado" || registro "ha fallado la publicación"
+  if ANTERIOR="$ESTAT" DESTINO="$URL_REPO" bash "$REPO/publica.sh" >/dev/null; then
+    registro "publicado"
+    (cd "$REPO" && python3 registre.py apunta "$ESTAT") || registro "no he podido apuntar en el registro"
+  else
+    registro "ha fallado la publicación"
+  fi
+}
+
+verificacion() {
+  prepara || return
+  (cd "$REPO" && python3 registre.py verifica && python3 registre.py resum --avisa >/dev/null) \
+    || registro "ha fallado la verificación del día"
+}
+
+hora_verificacion() {
+  python3 -c 'import sys; sys.path.insert(0, "/proyecto"); import config; print(config.HORA_VERIFICACION)'
 }
 
 horas() {
@@ -55,6 +70,8 @@ while true; do
   ahora=$(date +%H:%M)
   if [ -d "$REPO/.git" ] && horas | grep -qx "$ahora"; then
     pasada
+  elif [ -d "$REPO/.git" ] && [ "$ahora" = "$(hora_verificacion)" ]; then
+    verificacion
   elif [ ! -d "$REPO/.git" ]; then
     prepara
   fi

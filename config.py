@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 """Datos fijos del trayecto. Se cambian aquí, no en prevision.py."""
 
-VERSION = "1.6.0"
+VERSION = "1.7.0"
 
 # Coordenadas redondeadas a unos 500 m: para el tiempo da igual una calle u
 # otra, y el repositorio es público.
@@ -29,6 +29,13 @@ ESTACIONES = {
 # vuelta. La web lo muestra tal cual.
 HORARIO = [("05:00", "07:30"), ("13:00", "15:30")]
 INTERVALO_MIN = 30
+
+# Registro de aciertos (registre.py): a qué hora se comprueba la lluvia que
+# cayó, a los cuántos días se manda el resumen por Telegram y cuántos días de
+# lluvia hacen falta para juzgar la regla.
+HORA_VERIFICACION = "16:00"
+REGISTRO_DIAS_AVISO = 28
+REGISTRO_LLUVIAS_MINIMAS = 5
 
 # Zonas de aviso de AEMET. La primera es la del trayecto; un aviso solo en la
 # segunda, la costa, se tiene en cuenta pero no decide.
