@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 """Datos fijos del trayecto. Se cambian aquí, no en prevision.py."""
 
-VERSION = "2.4.1"
+VERSION = "2.5.0"
 
 # Coordenadas redondeadas a unos 500 m: para el tiempo da igual una calle u
 # otra, y el repositorio es público.
@@ -88,6 +88,11 @@ ENSEMBLE = "icon_eu_eps"
 # Environment Canada); por encima, con la temperatura del aire.
 VELOCIDAD_CICLOMOTOR_KMH = 45
 ROPA_DIFERENCIA_CAPAS = 8      # °C entre ida y vuelta para avisar de las capas
+
+# Salida fuera de las franjas (casa.py, sortides): vuelta por defecto dentro de
+# estas horas, y cambio de temperatura que se avisa.
+SALIDA_VUELTA_POR_DEFECTO_H = 4
+SALIDA_CAMBIO_TEMPERATURA = 6
 
 # Umbrales de la decisión (mm en una hora; fracción de miembros; km).
 UMBRAL_MM = 0.2          # ya moja en moto

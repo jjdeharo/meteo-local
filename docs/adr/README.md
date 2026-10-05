@@ -15,5 +15,6 @@
 | [0011](0011-paginas-que-se-ponen-al-dia-solas-y-trayecto-solo-en-franja.md) | Páginas que se ponen al día solas; el trayecto, solo en su franja | aceptado |
 | [0012](0012-aprendizaje-de-la-pagina-de-casa.md) | Aprendizaje de la página de casa | aceptado |
 | [0013](0013-ropa-segun-el-tiempo.md) | Ropa según el tiempo | aceptado |
+| [0014](0014-salida-fuera-de-las-franjas.md) | Salida fuera de las franjas | aceptado |
 
 Plantilla: [0000-plantilla.md](0000-plantilla.md). Para crear uno: `nuevo-adr "Título"`.

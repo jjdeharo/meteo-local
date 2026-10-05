@@ -114,6 +114,17 @@ class Web(unittest.TestCase):
         self.assertEqual(franja("2026-10-05T16:00:00+02:00"), [False, {"dia": "demà", "hora": "05:00"}])
         self.assertEqual(franja("2026-10-05T03:00:00+02:00"), [False, {"dia": "avui", "hora": "05:00"}])
 
+    def test_tornada_triada(self):
+        casa = {"sortides": [{"surt": "2026-10-05T19:00", "tornades": [
+            {"hora": "2026-10-05T23:00"}, {"hora": "2026-10-06T08:00"}]}]}
+        expr = f"(() => {{ const s = sortidaAra({json.dumps(casa)}); return [s && s.surt, "
+        expr += "tornadaTriada(s, '23:00').hora, tornadaTriada(s, '08:30').hora, tornadaTriada(s, '12:00')]; })()"
+        self.assertEqual(self.avalua("2026-10-05T19:20:00+02:00", expr, "app.js"),
+                         ["2026-10-05T19:00", "2026-10-05T23:00", "2026-10-06T08:00", None])
+        # Dades d'una hora que ja ha passat: cap sortida.
+        self.assertIsNone(self.avalua("2026-10-05T20:05:00+02:00",
+                                      f"sortidaAra({json.dumps(casa)})", "app.js"))
+
 
 if __name__ == "__main__":
     unittest.main()

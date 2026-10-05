@@ -190,6 +190,76 @@ def filas_registro(desde, h, e, ara, mostradas):
     return filas
 
 
+def nivel_hora(f, planes):
+    """Riesgo de lluvia de una hora de la tabla y su motivo, con los umbrales del
+    trayecto: plan de Protección Civil activado, aviso de AEMET, lluvia ahora,
+    1 mm o 50 %, coche; 0,2 mm o 20 %, moto con impermeable."""
+    p, mm = f.get("probabilitat") or 0, f.get("pluja_mm") or 0
+    pluja = f"pluja {round(p * 100)}\u00a0%"
+    plan = next((x for x in planes or [] if x["fase"] in ("alerta", "emergència")), None)
+    if plan:
+        return "cotxe", f"Protecció Civil en {plan['fase']}"
+    if f.get("avisos"):
+        a = f["avisos"][0]
+        return "cotxe", f"avís {a['nivell']} de l\u2019AEMET"
+    if f.get("plou_ara"):
+        return "cotxe", "plou ara"
+    if p >= C.PROB_COCHE or mm >= C.UMBRAL_MM_COCHE:
+        return "cotxe", pluja
+    if p >= C.PROB_ATENCION or mm >= C.UMBRAL_MM:
+        return "compte", pluja
+    return "moto", pluja
+
+
+def canvis(tramo):
+    """Cómo cambia el tiempo entre la salida y la vuelta: si empieza o para de
+    llover y si la temperatura cambia mucho."""
+    res = []
+    moja = [f["probabilitat"] is not None and f["probabilitat"] >= C.PROB_ATENCION
+            or (f["pluja_mm"] or 0) >= C.UMBRAL_MM or f.get("plou_ara") for f in tramo]
+    if not moja[0] and any(moja):
+        f = tramo[moja.index(True)]
+        res.append(f"A partir de les {int(f['hora'][11:13])}\u00a0h, pluja probable"
+                   + (f" ({round(f['probabilitat'] * 100)}\u00a0%)." if f["probabilitat"] is not None else "."))
+    elif moja[0] and not all(moja):
+        f = tramo[moja.index(False)]
+        res.append(f"Cap a les {int(f['hora'][11:13])}\u00a0h deixa de ploure.")
+    temps = [(f["temperatura"], f["hora"]) for f in tramo if f["temperatura"] is not None]
+    if temps:
+        (t_min, h_min), (t_max, h_max) = min(temps), max(temps)
+        if t_max - t_min >= C.SALIDA_CAMBIO_TEMPERATURA:
+            res.append(f"La temperatura va de {P.graus(round(t_min))} ({int(h_min[11:13])}\u00a0h) "
+                       f"a {P.graus(round(t_max))} ({int(h_max[11:13])}\u00a0h).")
+    return res
+
+
+def sortides(hores, planes):
+    """Para quien sale ahora, fuera de las franjas del trayecto: medio, ropa y
+    cambios para cada hora de vuelta posible (ADR 0014). El medio sale de las
+    dos horas en que se circula, la de salir y la de volver. Se calcula con la
+    salida en la hora en curso y en la siguiente: la página usa la que coincide
+    con su hora, aunque los datos sean de la hora anterior."""
+    res = []
+    for k in (0, 1):
+        if len(hores) < k + 2:
+            break
+        ida = hores[k]
+        tornades = []
+        for j in range(k + 1, len(hores)):
+            vuelta = hores[j]
+            (niv_ida, mot_ida), (niv_vuelta, mot_vuelta) = nivel_hora(ida, planes), nivel_hora(vuelta, planes)
+            mitja = P.peor(niv_ida, niv_vuelta)
+            temps = [{"temps": {"temp_min": round(f["temperatura"]), "temp_max": round(f["temperatura"])}}
+                     if f["temperatura"] is not None else {} for f in (ida, vuelta)]
+            tornades.append({
+                "hora": vuelta["hora"], "mitja": mitja,
+                "anada": {"nivell": niv_ida, "motiu": mot_ida},
+                "tornada": {"nivell": niv_vuelta, "motiu": mot_vuelta},
+                "roba": P.roba(mitja, *temps), "canvis": canvis(hores[k:j + 1])})
+        res.append({"surt": ida["hora"], "tornades": tornades})
+    return res
+
+
 def comprobacion_modelos(desde, h, filas_estacion):
     """Lluvia medida y prevista en las últimas horas completas. Si los modelos
     se han quedado muy cortos, la página lo dice."""
@@ -243,6 +313,8 @@ def recoger():
         model = A.carrega()
         salida["aprenentatge"] = A.resum_pagina(model)
         salida["hores"] = previsio(P.AHORA, h, e, ara, avisos, model)
+        salida["sortides"] = sortides(salida["hores"], planes)
+        salida["sortida_per_defecte_h"] = C.SALIDA_VUELTA_POR_DEFECTO_H
         salida["models"] = comprobacion_modelos(P.AHORA, h, filas_estacion)
     except Exception as ex:
         salida["hores"] = salida["models"] = None

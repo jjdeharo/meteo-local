@@ -242,6 +242,15 @@ h1 { margin: 0; font-size: 1.6rem; line-height: 1.2; }
 /* Pàgina de casa */
 .targeta.ara { --color: var(--enllac); }
 .targeta.fora { --color: var(--suau); }
+.camp-tornada { margin: .5rem 0 .4rem; font-size: 1.05rem; }
+.camp-tornada input {
+  font: inherit;
+  padding: .2rem .5rem;
+  border: 1px solid var(--vora);
+  border-radius: .4rem;
+  background: var(--superficie);
+  color: var(--text);
+}
 .previsio { margin-top: 1rem; }
 .taula-contenidor { overflow-x: auto; }
 .taula-hores { width: 100%; border-collapse: collapse; font-size: .95rem; background: var(--superficie); border-radius: .6rem; }

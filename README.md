@@ -45,7 +45,8 @@ La página del trayecto solo informa dentro de sus franjas (5:00-7:30 y
 13:00-15:30). Por la mañana recomienda un solo medio para el día y la ropa
 (según el frío a 45 km/h, el calor y la lluvia; ADR 0013); por la tarde
 solo da el tiempo de la vuelta (riesgo de lluvia, temperatura y viento). Fuera
-de las franjas dice cuándo vuelve a informar y enlaza al tiempo en casa. Las
+de las franjas hace lo mismo para quien sale en ese momento: se elige la hora
+de vuelta y dice el medio, la ropa y cómo cambiará el tiempo (ADR 0014). Las
 dos páginas, si están abiertas, se ponen al día solas después de cada
 actualización prevista (ADR 0011).
 

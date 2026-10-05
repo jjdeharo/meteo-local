@@ -2,8 +2,6 @@
 // Llegeix casa.json (el genera casa.py) i pinta el temps a casa: el que mesura
 // ara l'estació de Montflorit i la previsió hora a hora per a 24 hores.
 
-const NIVELL_AVIS = { groc: 'groc', taronja: 'taronja', vermell: 'vermell' };
-
 function coma(x, decimals = 1) {
   return Number(x).toFixed(decimals).replace('.', ',');
 }
@@ -39,95 +37,6 @@ function blocAra(ara) {
   if (ara.vent != null) parts.push(`vent ${coma(ara.vent, 0)} km/h`);
   sec.append(element('p', 'frase', parts.join(' · ') + '.'));
   return sec;
-}
-
-// «avui», «demà» o el dia de la setmana.
-function nomDiaCurt(data, ara) {
-  const dies = Math.round((new Date(data).setHours(0, 0, 0, 0) - new Date(ara).setHours(0, 0, 0, 0)) / 864e5);
-  if (dies === 0) return 'avui';
-  if (dies === 1) return 'demà';
-  return new Date(data).toLocaleDateString('ca', { weekday: 'long' });
-}
-
-// «a les 18:00», «a la 01:00» o «a mitjanit».
-function aLaHora(data) {
-  const h = horaCurta(data);
-  if (h === '00:00') return 'a mitjanit';
-  return h.startsWith('01:') ? `a la ${h}` : `a les ${h}`;
-}
-
-// Franja d'un avís, amb el dia: «avui fins a les 20:00», «demà de 09:00 a
-// 18:00», «demà de 22:00 a mitjanit». Si ja ha començat, només el final.
-function textFranja(inici, fi, ara) {
-  // Mitjanit és el final del dia de l'avís, no el començament del següent.
-  const diaFi = nomDiaCurt(new Date(fi - 1), ara);
-  if (inici <= ara) return diaFi === 'avui' ? `avui fins ${aLaHora(fi)}` : `fins ${diaFi} ${aLaHora(fi)}`;
-  const h = horaCurta(inici);
-  const de = /^(01|11):/.test(h) ? `d\u2019${h}` : `de ${h}`;
-  const dia = nomDiaCurt(inici, ara);
-  if (diaFi !== dia) return `${dia} ${de} fins ${diaFi} ${aLaHora(fi)}`;
-  return `${dia} ${de} ${aLaHora(fi).replace(/^a (les |la )?/, 'a ')}`;
-}
-
-// Una frase per nivell i tipus d'avís, amb totes les franges i el dia de
-// cadascuna: «Avís groc de l'AEMET per pluja i tempestes al Vallès: avui fins
-// a les 20:00; demà de 09:00 a 18:00 i de 22:00 a mitjanit.»
-function textAvisos(avisos, ara = new Date()) {
-  // 1. Franges de cada nivell i tipus, ajuntant les que es toquen. Els avisos
-  // acaben a «hh:59:59»: un segon més dona l'hora en punt.
-  const perTipus = {};
-  for (const a of avisos) {
-    const fi = new Date(a.fin).getTime() + 1000;
-    if (fi <= ara.getTime()) continue;
-    const inici = Math.max(new Date(a.inicio).getTime(), ara.getTime());
-    (perTipus[`${a.nivel}|${a.tipo}`] = perTipus[`${a.nivel}|${a.tipo}`] || []).push([inici, fi]);
-  }
-  // 2. Tipus que comparteixen franja: «pluja i tempestes».
-  const perFranja = {};
-  for (const [clau, franges] of Object.entries(perTipus)) {
-    const [nivell, tipus] = clau.split('|');
-    franges.sort((x, y) => x[0] - y[0]);
-    const juntes = [];
-    for (const f of franges) {
-      const darrera = juntes[juntes.length - 1];
-      if (darrera && f[0] <= darrera[1]) darrera[1] = Math.max(darrera[1], f[1]);
-      else juntes.push([...f]);
-    }
-    for (const [inici, fi] of juntes) {
-      const k = `${nivell}|${inici}|${fi}`;
-      (perFranja[k] = perFranja[k] || new Set()).add(tipus);
-    }
-  }
-  // 3. Una frase per nivell i tipus, amb les franges en ordre i agrupades
-  // per dia.
-  const frases = {};
-  for (const [k, tipus] of Object.entries(perFranja)) {
-    const [nivell, inici, fi] = k.split('|');
-    const clau = `${nivell}|${[...tipus].sort().join(' i ')}`;
-    (frases[clau] = frases[clau] || []).push([Number(inici), Number(fi)]);
-  }
-  const ordre = { vermell: 0, taronja: 1, groc: 2 };
-  return Object.entries(frases)
-    .sort(([a, fa], [b, fb]) => (ordre[a.split('|')[0]] ?? 3) - (ordre[b.split('|')[0]] ?? 3)
-      || Math.min(...fa.map((f) => f[0])) - Math.min(...fb.map((f) => f[0])))
-    .map(([clau, franges]) => {
-      const [nivell, tipus] = clau.split('|');
-      franges.sort((x, y) => x[0] - y[0]);
-      // Les franges del mateix dia, juntes: «demà de 09:00 a 18:00 i de 22:00 a mitjanit».
-      const dies = [];
-      for (const [inici, fi] of franges) {
-        const text = textFranja(new Date(inici), new Date(fi), ara);
-        const dia = text.split(' ')[0];
-        const darrer = dies[dies.length - 1];
-        if (darrer && darrer.dia === dia && text.startsWith(`${dia} d`)) {
-          darrer.parts.push(text.slice(dia.length + 1));
-        } else {
-          dies.push({ dia, parts: [text] });
-        }
-      }
-      const quan = dies.map((d) => d.parts.join(' i ')).join('; ');
-      return `Avís ${NIVELL_AVIS[nivell] || nivell} de l’AEMET per ${tipus} al Vallès: ${quan}.`;
-    }).join(' ');
 }
 
 function nomDia(iso) {

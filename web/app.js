@@ -173,34 +173,136 @@ function properaFranja(horari, ara = new Date()) {
   return { dia: 'demà', hora: horari.trams[0][0] };
 }
 
-// Fora de les franges: quan torna a informar i l'enllaç al temps a casa.
-function blocFora(horari) {
+// Fora de les franges: si surts ara, el mitjà, la roba i com canviarà el temps
+// fins a l'hora de tornar (casa.json, sortides; ADR 0014). A sota, quan torna a
+// informar del trajecte i l'enllaç al temps a casa.
+let dadesCasa = null;
+let horaTornada = null;      // la que ha triat qui mira la pàgina, «HH:MM»
+
+// «2026-10-05T19:00» de l'hora en curs (o de la de dins d'n hores), en hora local.
+function horaLocal(d) {
+  const z = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${z(d.getMonth() + 1)}-${z(d.getDate())}T${z(d.getHours())}:00`;
+}
+
+// La sortida calculada per a l'hora en curs; si les dades són més velles, cap.
+function sortidaAra(casa) {
+  return (casa && casa.sortides || []).find((s) => s.surt === horaLocal(new Date())) || null;
+}
+
+// Tornada de l'hora triada: la propera vegada que arriba aquesta hora.
+function tornadaTriada(sortida, hhmm) {
+  const [h] = hhmm.split(':').map(Number);
+  const d = new Date(sortida.surt);
+  d.setHours(h, 0, 0, 0);
+  if (d <= new Date(sortida.surt)) d.setDate(d.getDate() + 1);
+  return sortida.tornades.find((t) => t.hora === horaLocal(d)) || null;
+}
+
+function textMotius(t) {
+  const hora = new Date(t.hora);
+  const dema = hora.toDateString() !== new Date().toDateString() ? ' de demà' : '';
+  return `Anada (ara): ${t.anada.motiu}. Tornada (${horaCurta(hora)}${dema}): ${t.tornada.motiu}.`;
+}
+
+function resultatSortida(sortida, hhmm) {
+  const res = element('div', 'resultat-sortida');
+  const t = tornadaTriada(sortida, hhmm);
+  if (!t) {
+    const darrera = sortida.tornades[sortida.tornades.length - 1].hora;
+    res.append(element('p', 'frase', `Només hi ha previsió fins a les ${horaCurta(darrera)} de demà.`));
+    return { res, mitja: null };
+  }
+  const v = TEXT_MITJA[t.mitja];
+  res.append(element('p', 'veredicte', v.titol));
+  res.append(element('p', 'frase', v.frase));
+  res.append(element('p', 'nota', textMotius(t)));
+  if (t.roba) res.append(blocRoba(t.roba));
+  if (t.canvis.length) {
+    const p = element('p', 'frase');
+    const text = t.canvis.join(' ');
+    p.append(element('strong', null, 'Com canviarà: '), text[0].toLowerCase() + text.slice(1));
+    res.append(p);
+  }
+  return { res, mitja: t.mitja };
+}
+
+function blocFora(horari, casa) {
   const p = properaFranja(horari);
+  const sortida = sortidaAra(casa);
   const sec = element('section', 'decisio targeta fora');
-  sec.setAttribute('aria-label', 'Fora d\u2019horari');
-  sec.append(element('h2', 'data', 'Propera actualització'));
-  sec.append(element('p', 'veredicte', `${p.dia === 'avui' ? 'Avui' : 'Demà'} a les ${p.hora}`));
   const franges = horari.trams.map(([a, b]) => `de ${a} a ${b}`).join(' i ');
-  sec.append(element('p', 'frase', `Aquesta pàgina només informa del trajecte ${franges}.`));
-  const mes = element('p', 'frase');
   const enllac = element('a', null, 'el temps a casa');
   enllac.href = 'casa.html';
-  mes.append('Mentrestant, pots consultar ', enllac, '.');
-  sec.append(mes);
+  if (!sortida) {
+    // Sense dades de sortida: només quan torna a informar.
+    sec.setAttribute('aria-label', 'Fora d\u2019horari');
+    sec.append(element('h2', 'data', 'Propera actualització'));
+    sec.append(element('p', 'veredicte', `${p.dia === 'avui' ? 'Avui' : 'Demà'} a les ${p.hora}`));
+    sec.append(element('p', 'frase', `Aquesta pàgina només informa del trajecte ${franges}.`));
+    const mes = element('p', 'frase');
+    mes.append('Mentrestant, pots consultar ', enllac, '.');
+    sec.append(mes);
+    return sec;
+  }
+  sec.setAttribute('aria-label', 'Si surts ara');
+  sec.append(element('h2', 'data', `Si surts ara (${horaCurta(new Date())})`));
+  const camp = element('p', 'camp-tornada');
+  const etiqueta = element('label', null, 'Tornaré a les ');
+  etiqueta.htmlFor = 'hora-tornada';
+  const input = element('input');
+  input.type = 'time';
+  input.id = 'hora-tornada';
+  if (!horaTornada) {
+    const d = new Date(sortida.surt);
+    d.setHours(d.getHours() + (casa.sortida_per_defecte_h || 4));
+    horaTornada = horaCurta(d);
+  }
+  input.value = horaTornada;
+  camp.append(etiqueta, input);
+  sec.append(camp);
+  let { res, mitja } = resultatSortida(sortida, horaTornada);
+  sec.classList.replace('fora', mitja || 'fora');
+  sec.append(res);
+  input.addEventListener('change', () => {
+    if (!input.value) return;
+    horaTornada = input.value;
+    const nou = resultatSortida(sortida, horaTornada);
+    sec.classList.remove('moto', 'compte', 'cotxe', 'fora');
+    sec.classList.add(nou.mitja || 'fora');
+    res.replaceWith(nou.res);
+    res = nou.res;
+  });
+  const info = element('p', 'nota');
+  info.append(`El trajecte de cada dia s\u2019actualitza ${franges}; propera actualització: `
+    + `${p.dia} a les ${p.hora}. Previsió per a Cerdanyola; més detall a `, enllac, '.');
+  sec.append(info);
   return sec;
 }
 
+// Avisos de fora de franja: els de les dades de casa, que s'actualitzen tot el dia.
+function avisosFora(casa) {
+  if (!casa) return [];
+  const res = [];
+  const plans = blocPlans(casa.plans);
+  if (plans) res.push(plans);
+  if (casa.avisos && casa.avisos.length) res.push(element('p', 'avis', textAvisos(casa.avisos)));
+  return res;
+}
+
 let repinta = null;
+let dadesTrajecte = null;
 
 function pinta(dades) {
+  dadesTrajecte = dades;
   const cont = $('dies');
   clearTimeout(repinta);
   const franja = franjaActiva(dades.horari);
   // Fora de franja, o dades d'abans que comencés (la primera actualització
   // encara no ha arribat): no es mostra res del trajecte.
   if (!franja || new Date(dades.generat) < franja.inici) {
-    cont.replaceChildren(blocFora(dades.horari));
-    $('avisos').replaceChildren();
+    cont.replaceChildren(blocFora(dades.horari, dadesCasa));
+    $('avisos').replaceChildren(...avisosFora(dadesCasa));
     $('horari').hidden = true;
     // Dins de la franja, si l'actualització no arriba, es diu.
     if (franja) pintaHorari(dades);
@@ -227,6 +329,13 @@ function pinta(dades) {
   pintaHorari(dades);
   posaVersio(dades.versio);
 }
+
+// Les dades de casa, per a la sortida de fora de franja: s'actualitzen tot el
+// dia i, quan arriben, es torna a pintar.
+carrega('casa.json', (casa) => {
+  dadesCasa = casa;
+  if (dadesTrajecte) pinta(dadesTrajecte);
+}, () => {});
 
 carrega('dades.json', pinta, () => {
   $('dies').replaceChildren(element('p', 'avis', 'No s\u2019ha pogut carregar la previsió. Torna-ho a provar d\u2019aquí a una estona.'));
