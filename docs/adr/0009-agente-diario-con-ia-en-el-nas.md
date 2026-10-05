@@ -38,7 +38,10 @@ el gasto de suscripción es el mismo que en la nube (ADR 0005).
   su nombre exacto y no con el alias `sonnet`, que pasaría solo al siguiente
   Sonnet y podría cambiar cómo escribe.
 - **Acceso:** token de un año creado con `claude setup-token`, en
-  `home/.config/meteo-local/claude.env` (`CLAUDE_CODE_OAUTH_TOKEN`), separado
+  `home/.config/meteo-local/claude.env` (`CLAUDE_CODE_OAUTH_TOKEN`), que el
+  `compose.yml` carga en todo el contenedor (`env_file`): así lo usan también el
+  actualizador semanal y la comprobación diaria de sesiones del vigía, que
+  vigila meteo-local desde el 05-10-2026, separado
   de la sesión del contenedor del boletín, porque compartir una sesión que se
   renueva sola puede invalidar la del otro.
 - **Claude Code en la imagen**, con la versión común de los contenedores de

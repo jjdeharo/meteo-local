@@ -32,6 +32,12 @@ services:
       REGISTRE_DIR: /estat/registre
       PATH: /home/jjdeharo/.local/bin:/usr/local/bin:/usr/bin:/bin
     cpus: 0.5
+    # El token de Claude (claude setup-token), para todo el contenedor: así lo
+    # usan el agente diario, el actualizador semanal y la comprobación diaria
+    # de sesiones del vigía. No está en el repositorio.
+    env_file:
+      - path: ./home/.config/meteo-local/claude.env
+        required: false
     volumes:
       - ./repo:/proyecto
       - ./home:/home/jjdeharo
