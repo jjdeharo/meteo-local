@@ -38,7 +38,10 @@ el gasto de suscripción es el mismo que en la nube (ADR 0005).
 - **Modelo:** Claude Sonnet 5.5 (`claude-sonnet-5-5` en `AGENTE_MODELO`),
   suficiente para este juicio y más barato en uso de suscripción. Se fija por
   su nombre exacto y no con el alias `sonnet`, que pasaría solo al siguiente
-  Sonnet y podría cambiar cómo escribe.
+  Sonnet y podría cambiar cómo escribe. Además, `home/.claude/settings.json` del contenedor fija
+  `claude-sonnet-5-5` por defecto, para que las consultas sin `--model` (la
+  comprobación diaria del vigía, la prueba del actualizador) tampoco usen menos
+  de la 5.5, que es la versión mínima que quiere Juanjo (05-10-2026).
 - **Acceso:** token de un año creado con `claude setup-token`, en
   `home/.config/meteo-local/claude.env` (`CLAUDE_CODE_OAUTH_TOKEN`), que el
   `compose.yml` carga en todo el contenedor (`env_file`): así lo usan también el
