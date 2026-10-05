@@ -11,10 +11,10 @@ const HORES_DADES_ANTIGUES = 3;
 
 const $ = (id) => document.getElementById(id);
 
-function nomDia(iso, index) {
+function nomDia(iso) {
   const data = new Date(iso + 'T12:00:00');
   const llarg = data.toLocaleDateString('ca', { weekday: 'long', day: 'numeric', month: 'long' });
-  return (index === 0 ? 'Avui, ' : 'Demà, ') + llarg;
+  return 'Avui, ' + llarg;
 }
 
 function horaCurta(iso) {
@@ -52,9 +52,9 @@ function targeta(nom, trajecte) {
 function pinta(dades) {
   const cont = $('dies');
   cont.replaceChildren();
-  dades.dies.forEach((dia, i) => {
+  dades.dies.forEach((dia) => {
     const sec = element('section', 'dia');
-    sec.append(element('h2', null, nomDia(dia.dia, i)));
+    sec.append(element('h2', null, nomDia(dia.dia)));
     const graella = element('div', 'graella');
     graella.append(targeta('Anada', dia.anada), targeta('Tornada', dia.tornada));
     sec.append(graella);

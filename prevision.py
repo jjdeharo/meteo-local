@@ -3,7 +3,7 @@
 """¿Moto o coche? Lluvia en el trayecto Cerdanyola → Parc Taulí.
 
 Junta avisos de AEMET, radar, estaciones de Meteocat, modelos y un ensemble,
-y decide para la ida y la vuelta de hoy y de mañana. Los motivos salen en
+y decide para la ida y la vuelta de hoy. Los motivos salen en
 catalán porque son los que lee la web.
 
 Uso:
@@ -267,8 +267,7 @@ def decidir(dia, ventana, d):
 
 
 def recoger():
-    hoy = AHORA.date()
-    dias = [hoy.isoformat(), (hoy + dt.timedelta(days=1)).isoformat()]
+    dias = [AHORA.date().isoformat()]
     d, errores = {}, []
     for clave, funcion in (("avisos", avisos), ("observaciones", observaciones),
                            ("radar", radar), ("modelos", lambda: modelos(dias)),

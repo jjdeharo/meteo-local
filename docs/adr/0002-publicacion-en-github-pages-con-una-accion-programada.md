@@ -13,8 +13,9 @@ un repositorio público.
 - Una acción de GitHub (`.github/workflows/previsio.yml`) pasa las pruebas,
   ejecuta `prevision.py` y despliega `web/` en GitHub Pages con
   `actions/deploy-pages`. Se programa cada media hora de 5:00 a 7:00 y de
-  13:00 a 15:00 (hora local, en horario de verano y de invierno) y dos veces
-  por la tarde para el día siguiente.
+  13:00 a 15:00 (hora local, en horario de verano y de invierno).
+- Solo el día de hoy, a petición de Juanjo (05-10-2026). La v1.0.0 mostraba
+  también mañana, con dos ejecuciones por la tarde; se quitaron en la v1.1.0.
 - `dades.json` no se guarda en el repositorio: se genera en cada ejecución.
   Así no hay commits automáticos.
 - La web está en catalán, dirigida a quien hace el trayecto, sin su nombre.

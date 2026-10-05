@@ -35,7 +35,8 @@ coche sin necesidad es una molestia; una tormenta en moto, un riesgo.
    umbral de coche en el 40 %, un día sin aviso y con los modelos secos daba
    coche solo por el ensemble; se subió al 50 %.
 
-Para mañana solo cuentan avisos, modelos y ensemble.
+La web da solo el día de hoy. Con `prevision.py` se puede pedir otro día
+cambiando la fecha en el código; entonces no cuentan radar ni estaciones.
 
 ## Alternativas descartadas
 

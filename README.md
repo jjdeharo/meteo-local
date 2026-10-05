@@ -3,15 +3,15 @@
 Responde a una pregunta concreta: **¿lloverá en el trayecto en moto de
 Cerdanyola del Vallès al Parc Taulí (Sabadell), a la ida (7:00-7:30) o a la
 vuelta (15:00-15:30)?** Da una recomendación (moto, moto con impermeable o
-coche) para hoy y mañana, con sus motivos.
+coche) para hoy, con sus motivos.
 
 Web: <https://jjdeharo.github.io/meteo-local/> (en catalán, para quien hace
 el trayecto).
 
 ## Cómo funciona
 
-Una acción de GitHub ejecuta `prevision.py` varias veces al día (de 5:00 a
-7:00, de 13:00 a 15:00 y por la tarde, hora local), guarda el resultado en
+Una acción de GitHub ejecuta `prevision.py` varias veces al día (cada media
+hora de 5:00 a 7:00 y de 13:00 a 15:00, hora local), guarda el resultado en
 `web/dades.json` y publica la carpeta `web/` en GitHub Pages. No se guarda
 nada más ni se hacen commits automáticos.
 
