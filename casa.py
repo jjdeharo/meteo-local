@@ -18,6 +18,7 @@ import json
 import sys
 import urllib.parse
 
+import aprenentatge as A
 import config as C
 import prevision as P
 import registre as R
@@ -108,7 +109,23 @@ def prob_ensemble(e):
             for i, t in enumerate(e["time"])}
 
 
-def previsio(desde, h, e, ara, avisos):
+def variables_hora(desde, h, prob, i, ara):
+    """Lo que dan los modelos para la hora que acaba en h["time"][i]: lo que
+    usa el modelo aprendido y lo que se guarda en el registro."""
+    t = h["time"][i]
+    fin = dt.datetime.fromisoformat(t).astimezone()
+    d = {"fins": t, "antelacio_h": round((fin - desde).total_seconds() / 3600, 2),
+         "prob_ens": prob.get(t)}
+    for m in C.MODELOS_FINOS:
+        d[f"pluja_{m}"] = h.get(f"precipitation_{m}", [None] * (i + 1))[i]
+    for campo in ("temperature_2m", "relative_humidity_2m", "cloud_cover",
+                  "wind_speed_10m", "wind_gusts_10m", "weather_code"):
+        d[campo] = h.get(f"{campo}_meteofrance_seamless", [None] * (i + 1))[i]
+    d["pluja_1h_emes"] = (ara or {}).get("pluja_1h")
+    return d
+
+
+def previsio(desde, h, e, ara, avisos, model=None):
     """Una fila por tramo de una hora («de 10 a 11»), de la hora actual a 24
     horas después. Open-Meteo da la lluvia acumulada en la hora anterior: el
     tramo de 10 a 11 se lee en la hora 11:00, y los demás valores también."""
@@ -127,7 +144,14 @@ def previsio(desde, h, e, ara, avisos):
         fin = dt.datetime.fromisoformat(t).astimezone()
         ini = fin - dt.timedelta(hours=1)
         n = len(filas)
-        mm, p = round(lluvia_modelos(h, i), 1), prob.get(t)
+        d = variables_hora(desde, h, prob, i, ara)
+        # Probabilidad aprendida con lo que llovió de verdad; sin modelo, la
+        # fracción del ensemble.
+        p = A.prob_pluja(model, d)
+        if p is None:
+            p = prob.get(t)
+        mm = round(lluvia_modelos(h, i), 1)
+        temp = A.temperatura(model, d)
         segun_estacion = False
         # Primeras horas: la persistencia de la lluvia que mide ahora la
         # estación, si da más que los modelos.
@@ -142,7 +166,7 @@ def previsio(desde, h, e, ara, avisos):
             p, segun_estacion = 1.0, True
         filas.append({
             "hora": ini.strftime("%Y-%m-%dT%H:%M"), "fins": t,
-            "temperatura": valor("temperature_2m", i),
+            "temperatura": None if temp is None else round(temp, 1),
             "pluja_mm": round(mm, 1), "probabilitat": round(p, 2) if p is not None else None,
             "plou_ara": plou_ara, "segons_estacio": segun_estacion,
             "avisos": avisos_del_tramo(ini, fin, avisos),
@@ -151,25 +175,18 @@ def previsio(desde, h, e, ara, avisos):
     return filas
 
 
-def filas_registro(desde, h, e, mostradas):
+def filas_registro(desde, h, e, ara, mostradas):
     """Todo lo que los modelos daban para cada hora de la tabla, junto a lo que
     mostró la página: lo que hace falta para aprender de los fallos (ADR 0012)."""
     prob = prob_ensemble(e)
     indice = {t: i for i, t in enumerate(h["time"])}
     filas = []
     for f in mostradas:
-        i = indice[f["fins"]]
-        fin = dt.datetime.fromisoformat(f["fins"]).astimezone()
-        fila = {"fins": f["fins"], "antelacio_h": round((fin - desde).total_seconds() / 3600, 2),
-                "prob_ens": prob.get(f["fins"])}
-        for m in C.MODELOS_FINOS:
-            fila[f"pluja_{m}"] = h.get(f"precipitation_{m}", [None] * (i + 1))[i]
-        for campo in ("temperature_2m", "relative_humidity_2m", "cloud_cover",
-                      "wind_speed_10m", "wind_gusts_10m", "weather_code"):
-            fila[campo] = h.get(f"{campo}_meteofrance_seamless", [None] * (i + 1))[i]
-        fila["mostrat"] = {"pluja_mm": f["pluja_mm"], "probabilitat": f["probabilitat"],
-                           "temperatura": f["temperatura"], "segons_estacio": f["segons_estacio"]}
-        filas.append(fila)
+        d = variables_hora(desde, h, prob, indice[f["fins"]], ara)
+        d.pop("pluja_1h_emes")      # ya va en «ara», una vez por línea
+        d["mostrat"] = {"pluja_mm": f["pluja_mm"], "probabilitat": f["probabilitat"],
+                        "temperatura": f["temperatura"], "segons_estacio": f["segons_estacio"]}
+        filas.append(d)
     return filas
 
 
@@ -223,7 +240,9 @@ def recoger():
                                  C.INTERVALO_CASA_MIN, motivos)
     try:
         h, e = modelos(P.AHORA)
-        salida["hores"] = previsio(P.AHORA, h, e, ara, avisos)
+        model = A.carrega()
+        salida["aprenentatge"] = A.resum_pagina(model)
+        salida["hores"] = previsio(P.AHORA, h, e, ara, avisos, model)
         salida["models"] = comprobacion_modelos(P.AHORA, h, filas_estacion)
     except Exception as ex:
         salida["hores"] = salida["models"] = None
@@ -234,7 +253,7 @@ def recoger():
         try:
             R.apunta_montflorit(filas_estacion)
             if salida["hores"]:
-                R.apunta_casa(P.AHORA, ara, filas_registro(P.AHORA, h, e, salida["hores"]))
+                R.apunta_casa(P.AHORA, ara, filas_registro(P.AHORA, h, e, ara, salida["hores"]))
         except Exception as ex:
             print("No he podido apuntar en el registro:", ex, file=sys.stderr)
     return salida

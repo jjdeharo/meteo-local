@@ -9,7 +9,11 @@ lluvia de cada trayecto con sus motivos.
 Web: <https://jjdeharo.github.io/meteo-local/> (en catalán, para quien hace
 el trayecto). Al lado, [el tiempo en casa](https://jjdeharo.github.io/meteo-local/casa.html):
 lo que mide ahora la estación de Montflorit y la previsión hora a hora para
-las 24 horas siguientes, actualizada cada media hora (ADR 0007).
+las 24 horas siguientes, actualizada cada media hora (ADR 0007). La
+probabilidad de lluvia sale de una regresión logística ajustada con lo que
+llovió de verdad, y el NAS guarda cada hora lo previsto y lo medido para
+seguir aprendiendo (ADR 0012; explicación en
+[docs/estadistica.md](docs/estadistica.md)).
 
 ## Cómo funciona
 
@@ -87,12 +91,13 @@ al motivo de los modelos. Para repetirla: `python3 calibracio/descarrega.py
 | `config.py` | Coordenadas, horario, estaciones, zonas de aviso, modelos y umbrales |
 | `web/` | Las páginas: `index.html` y `app.js` (trayecto), `casa.html` y `casa.js` (casa), `comu.js` (lo común), `estil.css` y `fonts.html` (fuentes y créditos) |
 | `calibracio/` | Descarga del histórico, análisis, `informe.md` y `calibracio.json` (los datos, en `dades/`, no se suben) |
-| `tests/` | Pruebas de la regla de decisión, sin red |
+| `tests/` | Pruebas de la regla, del horario, de la web y del aprendizaje, sin red |
 | `casa.py` | Datos de la página de casa (`casa.json`) |
 | `publica.sh` | Calcula y publica en la rama `gh-pages` (lo usa el NAS) |
 | `nas/` | Contenedor del NAS: `compose.yml`, `Dockerfile` y `reloj.sh` |
 | `agent/` | Agente diario: instrucciones, imagen del radar, ejecución y validación |
 | `registre.py` | Registro en el NAS de cada actualización y del resultado de cada día (ADR 0006) |
+| `aprenentatge.py` | Aprendizaje de la página de casa: regresiones, comprobación y cambio de método (ADR 0012, `docs/estadistica.md`) |
 | `.github/workflows/previsio.yml` | Al subir a `main`: pruebas |
 | `docs/adr/` | Registro de decisiones |
 

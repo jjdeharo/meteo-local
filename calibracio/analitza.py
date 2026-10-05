@@ -25,6 +25,7 @@ import numpy as np
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import config as C  # noqa: E402
+from aprenentatge import ajustar, predecir  # noqa: E402,F401
 
 AQUI = os.path.dirname(os.path.abspath(__file__))
 DIR = os.path.join(AQUI, "dades")
@@ -167,27 +168,6 @@ def matriz(filas):
 
 NOMBRES = ["constante", "log1p(máximo modelos finos)", "log1p(AROME HD)",
            "log1p(ICON-EU)", "raíz(CAPE)/30", "sen(día del año)", "cos(día del año)"]
-
-
-def ajustar(x, y, l2=1.0, iteraciones=50):
-    """Regresión logística por Newton-Raphson con regularización L2 (sin
-    penalizar la constante)."""
-    w = np.zeros(x.shape[1])
-    pen = np.full(x.shape[1], l2)
-    pen[0] = 0
-    for _ in range(iteraciones):
-        p = 1 / (1 + np.exp(-x @ w))
-        g = x.T @ (p - y) + pen * w
-        h = x.T @ (x * (p * (1 - p))[:, None]) + np.diag(pen)
-        paso = np.linalg.solve(h, g)
-        w -= paso
-        if np.abs(paso).max() < 1e-8:
-            break
-    return w
-
-
-def predecir(w, x):
-    return 1 / (1 + np.exp(-x @ w))
 
 
 def validacion_cruzada(filas, pliegues=5):

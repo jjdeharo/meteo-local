@@ -134,7 +134,7 @@ function nomDia(iso) {
   return new Date(iso).toLocaleDateString('ca', { weekday: 'long', day: 'numeric', month: 'long' });
 }
 
-function taula(hores) {
+function taula(hores, aprenentatge) {
   const sec = element('section', 'previsio');
   sec.append(element('h2', 'perque', 'Pròximes 24 hores'));
   const contenidor = element('div', 'taula-contenidor');
@@ -197,7 +197,21 @@ function taula(hores) {
       + 'en casos semblants a Sabadell i Sant Cugat entre el 2024 i el 2026.'));
   }
   sec.append(element('p', 'nota', 'Vent en km/h: mitjana i, entre parèntesis, les ratxes.'));
+  const apres = textAprenentatge(aprenentatge);
+  if (apres) sec.append(element('p', 'nota', apres));
   return sec;
+}
+
+// Com s'ha après la probabilitat de pluja i, si cal, la correcció de la
+// temperatura (aprenentatge.py, ADR 0012).
+function textAprenentatge(a) {
+  if (!a || !a.pluja) return '';
+  const data = (iso) => new Date(iso + 'T12:00:00').toLocaleDateString('ca');
+  let t = a.pluja.origen === 'montflorit'
+    ? `Probabilitat de pluja apresa del que ha plogut de veritat a Montflorit des del ${data(a.pluja.des_de)}, quan els models deien el mateix.`
+    : `Probabilitat de pluja apresa del que va ploure de veritat a Sabadell i Sant Cugat des del ${new Date(a.pluja.des_de).getFullYear()}, quan els models deien el mateix.`;
+  if (a.temperatura) t += ` Temperatura corregida amb el que mesura Montflorit des del ${data(a.temperatura.des_de)}.`;
+  return t;
 }
 
 function pinta(dades) {
@@ -213,7 +227,7 @@ function pinta(dades) {
       + `han caigut ${coma(m.mesurada_mm)}\u00a0mm a Montflorit i en preveien ${coma(m.prevista_mm)}. `
       + 'Les primeres hores de la taula parteixen del que mesura l\u2019estació; per a la resta, fes més cas dels avisos.'));
   }
-  if (dades.hores) cont.append(taula(dades.hores));
+  if (dades.hores) cont.append(taula(dades.hores, dades.aprenentatge));
   pintaHorari(dades);
   posaVersio(dades.versio);
 }

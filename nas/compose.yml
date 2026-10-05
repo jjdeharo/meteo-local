@@ -11,7 +11,8 @@
 #   home/   la clave de despliegue (.ssh), que solo da acceso a este repositorio,
 #           y el aviso por Telegram (.local/bin/avisar-juanjo y su configuración)
 #   estat/  los últimos datos publicados, para mantener la decisión del día, y
-#           registre/: cada actualización y el resultado de cada día
+#           registre/: cada actualización y el resultado de cada día, y
+#           aprenentatge/: el modelo que usa la página de casa (ADR 0012)
 services:
   meteo-local:
     # La versión de Claude Code sale del archivo común del NAS
@@ -30,6 +31,7 @@ services:
       TZ: Europe/Madrid
       HOME: /home/jjdeharo
       REGISTRE_DIR: /estat/registre
+      APRENENTATGE_DIR: /estat/aprenentatge
       PATH: /home/jjdeharo/.local/bin:/usr/local/bin:/usr/bin:/bin
     cpus: 0.5
     # El token de Claude (claude setup-token), para todo el contenedor: así lo

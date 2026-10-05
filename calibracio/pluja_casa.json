@@ -1,0 +1,84 @@
+{
+ "origen": "arxiu",
+ "des_de": "2024-01-01",
+ "fins": "2026-10-05",
+ "rasgos": [
+  "constant",
+  "arome_hd",
+  "arome",
+  "icon_eu",
+  "antelacio",
+  "hora_sin",
+  "hora_cos",
+  "dia_sin",
+  "dia_cos"
+ ],
+ "w": [
+  -4.15884,
+  1.13063,
+  1.18458,
+  3.56861,
+  0.15263,
+  -0.06402,
+  0.06993,
+  0.30726,
+  0.60665
+ ],
+ "mostres": 94380,
+ "hores_pluja": 3622,
+ "validacio": {
+  "periode": [
+   "2026-07-06",
+   "2026-10-04"
+  ],
+  "mostres": 4368,
+  "hores_pluja": 95,
+  "error_frequencia": 0.02161,
+  "error_ensemble": 0.01867,
+  "error_logistica": 0.01221,
+  "fiabilitat": [
+   {
+    "de": 0,
+    "a": 0.05,
+    "hores": 4202,
+    "donada": 0.01,
+    "va_ploure": 0.006
+   },
+   {
+    "de": 0.05,
+    "a": 0.1,
+    "hores": 32,
+    "donada": 0.068,
+    "va_ploure": 0.094
+   },
+   {
+    "de": 0.1,
+    "a": 0.2,
+    "hores": 24,
+    "donada": 0.148,
+    "va_ploure": 0.208
+   },
+   {
+    "de": 0.2,
+    "a": 0.3,
+    "hores": 16,
+    "donada": 0.244,
+    "va_ploure": 0.25
+   },
+   {
+    "de": 0.3,
+    "a": 0.5,
+    "hores": 22,
+    "donada": 0.395,
+    "va_ploure": 0.318
+   },
+   {
+    "de": 0.5,
+    "a": 1,
+    "hores": 72,
+    "donada": 0.876,
+    "va_ploure": 0.708
+   }
+  ]
+ }
+}

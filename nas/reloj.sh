@@ -8,7 +8,8 @@
 # no pueden separarse. Si toca, pone
 # al día el repositorio, publica con publica.sh y apunta lo publicado en el
 # registro. Las demás horas en punto (HORARIO_CASA) solo rehace la página de
-# casa. A HORA_VERIFICACION comprueba la lluvia que cayó (registre.py). En
+# casa. A HORA_VERIFICACION comprueba la lluvia que cayó (registre.py) y la
+# página de casa aprende de sus aciertos (aprenentatge.py). En
 # AGENTE_HORAS ejecuta el agente diario y vuelve a publicar con su comentario.
 # Además, cada minuto mira si main tiene commits nuevos y, si los tiene,
 # publica enseguida: es el único que publica la web (ADR 0005).
@@ -55,6 +56,9 @@ verificacion() {
   prepara || return
   (cd "$REPO" && python3 registre.py verifica && python3 registre.py resum --avisa >/dev/null) \
     || registro "ha fallado la verificación del día"
+  # La página de casa aprende de lo que pasó (ADR 0012).
+  (cd "$REPO" && python3 aprenentatge.py diari >/dev/null) \
+    && registro "aprendizaje de casa hecho" || registro "ha fallado el aprendizaje de casa"
 }
 
 
