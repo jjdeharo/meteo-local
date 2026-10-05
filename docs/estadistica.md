@@ -33,9 +33,9 @@ pasó. Con eso se ajustan dos regresiones.
 Una fórmula que convierte varias señales $x_1, \dots, x_k$ en una
 probabilidad entre 0 y 1:
 
-$$
+```math
 p = \frac{1}{1 + e^{-(w_0 + w_1 x_1 + \dots + w_k x_k)}}
-$$
+```
 
 Cada señal $x_j$ tiene un peso $w_j$. **Los pesos se ajustan con los casos
 reales**: son los que hacen más verosímil lo que pasó en las $n$ horas
@@ -43,10 +43,10 @@ registradas, con una penalización pequeña que evita pesos exagerados cuando
 hay pocos datos. Si $y_i = 1$ cuando llovió en la hora $i$ y $y_i = 0$ cuando
 no, y $p_i$ es la probabilidad que da la fórmula, se minimiza
 
-$$
+```math
 -\sum_{i=1}^{n} \left[ y_i \ln p_i + (1 - y_i) \ln (1 - p_i) \right]
 + \frac{\lambda}{2} \sum_{j=1}^{k} w_j^2, \qquad \lambda = 1,
-$$
+```
 
 con el método de Newton-Raphson. La constante $w_0$ no se penaliza.
 
@@ -83,9 +83,9 @@ Son 94.380 muestras (una por hora y estación), con lluvia en 3.622, el 4 %.
 hasta ahora, la fracción del ensemble. Se mide con el error de Brier, la media
 del cuadrado de la diferencia entre la probabilidad dada y lo que pasó:
 
-$$
+```math
 B = \frac{1}{n} \sum_{i=1}^{n} (p_i - y_i)^2
-$$
+```
 
 Menos es mejor.
 
@@ -135,17 +135,17 @@ $\mathbf{z}$: la propia temperatura prevista, las nubes (de 0 a 1), el viento
 (en decenas de km/h), la humedad (de 0 a 1), la hora del día (seno y coseno) y
 la antelación. Los pesos $\mathbf{v}$ minimizan
 
-$$
+```math
 \sum_{i=1}^{n} \left( e_i - \mathbf{v}^\top \mathbf{z}_i \right)^2
 + \lambda \sum_{j \ge 1} v_j^2, \qquad \lambda = 1,
-$$
+```
 
 una regresión «ridge», con la misma penalización pequeña que en la lluvia. La
 temperatura que se muestra es la del modelo menos el error esperado:
 
-$$
+```math
 T_{\text{mostrada}} = T_{\text{modelo}} - \mathbf{v}^\top \mathbf{z}
-$$
+```
 
 Se mide con el error medio absoluto, $\frac{1}{n} \sum_i |T_i - T_{\text{medida},i}|$.
 
