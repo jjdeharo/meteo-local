@@ -28,6 +28,7 @@ import urllib.parse
 import aprenentatge as A
 import config as C
 import ecowitt as E
+import nowcast as N
 import prevision as P
 import registre as R
 import riscos as RS
@@ -177,7 +178,7 @@ def variables_hora(desde, h, prob, i, prever):
     return d
 
 
-def previsio(desde, h, e, ara, avisos, model=None, casa=None):
+def previsio(desde, h, e, ara, avisos, model=None, casa=None, nc=None):
     """Una fila por tramo de una hora («de 10 a 11»), de la hora actual a 24
     horas después. Open-Meteo da la lluvia acumulada en la hora anterior: el
     tramo de 10 a 11 se lee en la hora 11:00, y los demás valores también."""
@@ -214,6 +215,16 @@ def previsio(desde, h, e, ara, avisos, model=None, casa=None):
                 p, segun_estacion = dato["probabilitat"], True
             if dato["mediana_mm"] > mm:
                 mm, segun_estacion = dato["mediana_mm"], True
+        # Primeras dos horas: la lluvia del radar llevada hacia delante (ADR
+        # 0019), si da más. No rebaja nada: la lluvia que aún no ha nacido no
+        # se ve en el radar.
+        segun_radar = False
+        radar = N.en_tram(nc, "casa", max(ini, desde), fin, minim_min=30)
+        if radar:
+            if radar["prob"] > (p or 0) and radar["prob"] >= C.PROB_ATENCION:
+                p, segun_radar = radar["prob"], True
+            if radar["mm"] > mm and radar["mm"] >= C.UMBRAL_MM:
+                mm, segun_radar = radar["mm"], True
         plou_ara = n == 0 and llueve_ahora
         if plou_ara:
             p, segun_estacion = 1.0, True
@@ -222,6 +233,8 @@ def previsio(desde, h, e, ara, avisos, model=None, casa=None):
             "temperatura": None if temp is None else round(temp, 1),
             "pluja_mm": round(mm, 1), "probabilitat": round(p, 2) if p is not None else None,
             "plou_ara": plou_ara, "segons_estacio": segun_estacion,
+            "segons_radar": segun_radar and not plou_ara and not segun_estacion,
+            "radar": radar,
             "avisos": avisos_del_tramo(ini, fin, avisos),
             "nuvols": valor("cloud_cover", i), "codi": valor("weather_code", i),
             "vent": valor("wind_speed_10m", i), "ratxa": valor("wind_gusts_10m", i),
@@ -240,7 +253,11 @@ def filas_registro(desde, h, e, ara, mostradas, casa=None):
         d = variables_hora(desde, h, prob, indice[f["fins"]], prever)
         d.pop("pluja_1h_emes")      # ya va en «ara» y «ara_casa», una vez por línea
         d["mostrat"] = {"pluja_mm": f["pluja_mm"], "probabilitat": f["probabilitat"],
-                        "temperatura": f["temperatura"], "segons_estacio": f["segons_estacio"]}
+                        "temperatura": f["temperatura"], "segons_estacio": f["segons_estacio"],
+                        "segons_radar": f.get("segons_radar", False)}
+        # Lo que daba el radar llevado hacia delante, para aprender (ADR 0019).
+        d["radar_mm"] = (f.get("radar") or {}).get("mm")
+        d["radar_prob"] = (f.get("radar") or {}).get("prob")
         filas.append(d)
     return filas
 
@@ -413,13 +430,20 @@ def recoger(anterior=None):
     obs += [o for o in [E.observacio(casa, C.ESTACIO_CASA)] if o]
     motivos = P.motivos_modo_aviso(avisos, planes, obs, radar)
     # En modo aviso, todo el día: hasta las 23:50, no solo hasta las 23:00.
+    nc = (radar or {}).get("nowcast")
+    salida["radar"] = nc and {k: nc[k] for k in ("hora", "imatge", "moviment", "velocitat_kmh", "cap_a")}
+    if nc:
+        # Cuándo llegaría: probable (50 %) o, si no, posible (20 %).
+        for clau, prob in (("arriba", 0.5), ("possible", C.PROB_ATENCION)):
+            t = N.arribada(nc, "casa", prob)
+            salida["radar"][clau] = t and t.isoformat(timespec="minutes")
     salida["horari"] = P.horario([C.HORARIO_CASA_AVISO if motivos else C.HORARIO_CASA],
                                  C.INTERVALO_CASA_MIN, motivos)
     try:
         h, e = modelos(P.AHORA)
         model = A.carrega()
         salida["aprenentatge"] = A.resum_pagina(model)
-        salida["hores"] = previsio(P.AHORA, h, e, ara, avisos, model, casa)
+        salida["hores"] = previsio(P.AHORA, h, e, ara, avisos, model, casa, nc)
         salida["sortides"] = sortides(salida["hores"], planes)
         salida["sortida_per_defecte_h"] = C.SALIDA_VUELTA_POR_DEFECTO_H
         salida["models"] = comprobacion_modelos(P.AHORA, h, filas_estacion)

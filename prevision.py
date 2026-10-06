@@ -24,6 +24,7 @@ import urllib.parse
 import urllib.request
 
 import config as C
+import nowcast as N
 import ecowitt
 
 UA = {"User-Agent": "meteo-local/" + C.VERSION}
@@ -208,45 +209,38 @@ def observaciones():
 
 
 def radar():
-    """Lluvia apreciable más cercana y si crece, con RainViewer (zoom 7)."""
+    """Lluvia apreciable más cercana al trayecto, si crece, y la lluvia llevada
+    hacia delante hasta 2 horas (nowcast.py, ADR 0019): imagen de Meteocat
+    o, si se ha quedado atrás, de RainViewer."""
     import numpy as np
-    from PIL import Image
-    meta = json.loads(get("https://api.rainviewer.com/public/weather-maps.json"))
-    z = 7
-    n = 2 ** z
+    import nowcast as N
+    r = N.carrega(get)
+    im = N.imatge(r)
+    if im is None:
+        raise RuntimeError("; ".join(r["errors"]) or "sense imatges de radar")
+    hora, ara, origen = im
     lat = (C.CASA[0] + C.DESTINO[0]) / 2
     lon = (C.CASA[1] + C.DESTINO[1]) / 2
-    x = (lon + 180) / 360 * n
-    y = (1 - math.asinh(math.tan(math.radians(lat))) / math.pi) / 2 * n
-    tx, ty = int(x), int(y)
-    centro = (256 + int((y - ty) * 256), 256 + int((x - tx) * 256))
-
-    def mosaico(fotograma):
-        a = np.zeros((768, 768))
-        for dx in (-1, 0, 1):
-            for dy in (-1, 0, 1):
-                url = (f"{meta['host']}{fotograma['path']}/256/{z}/"
-                       f"{tx + dx}/{ty + dy}/2/0_0.png")
-                im = Image.open(io.BytesIO(get(url, True))).convert("RGBA")
-                a[(dy + 1) * 256:(dy + 2) * 256, (dx + 1) * 256:(dx + 2) * 256] = \
-                    np.array(im)[:, :, 3]
-        return a
-
-    fotogramas = meta["radar"]["past"]
-    antes, ahora = mosaico(fotogramas[-7]), mosaico(fotogramas[-1])
-    km_px = 360 / n / 256 * 111.32 * math.cos(math.radians(lat))
-    yy, xx = np.ogrid[:768, :768]
-    dist = np.hypot((yy - centro[0]) * km_px, (xx - centro[1]) * km_px)
-    # La opacidad del PNG crece con la intensidad: por encima de 100 es
-    # lluvia apreciable; por debajo, llovizna o ruido.
-    lluvia = ahora > 100
+    fila, col = N.pixel(lat, lon, r["tx"], r["ty"])
+    yy, xx = np.ogrid[:N.MIDA, :N.MIDA]
+    dist = np.hypot((yy - fila) * r["km_px"], (xx - col) * r["km_px"])
     cerca = dist <= 50
-    return {
-        "hora": dt.datetime.fromtimestamp(fotogramas[-1]["time"]).astimezone().isoformat(),
-        "km_lluvia": round(float(dist[lluvia].min()), 1) if lluvia.any() else None,
-        "km2_50km_antes": round(float(((antes > 100) & cerca).sum() * km_px ** 2)),
-        "km2_50km_ahora": round(float((lluvia & cerca).sum() * km_px ** 2)),
-    }
+    lluvia = ara >= RADAR_APRECIABLE_MMH
+    res = {"hora": hora.isoformat(), "imatge": origen,
+           "km_lluvia": round(float(dist[lluvia].min()), 1) if lluvia.any() else None,
+           "km2_50km_ahora": round(float((lluvia & cerca).sum() * r["km_px"] ** 2)),
+           "km2_50km_antes": None, "nowcast": N.resum(r)}
+    # Si crece: la misma comparación de siempre, con RainViewer (una hora antes).
+    rv = r.get("rainviewer")
+    if rv and len(rv["mm_h"]) >= 7:
+        res["km2_50km_antes"] = round(float(((rv["mm_h"][0] >= RADAR_APRECIABLE_MMH) & cerca).sum() * r["km_px"] ** 2))
+        res["km2_50km_ahora"] = round(float(((rv["mm_h"][-1] >= RADAR_APRECIABLE_MMH) & cerca).sum() * r["km_px"] ** 2))
+    return res
+
+
+# Lluvia apreciable en el radar: unos 6 dBZ, el umbral que se usaba con la
+# opacidad de RainViewer (por debajo, llovizna o ruido).
+RADAR_APRECIABLE_MMH = 0.08
 
 
 def modelos(dias):
@@ -359,6 +353,23 @@ def tiempo_ventana(dia, ventana, m):
     return None
 
 
+def motivo_nowcast(t, nc, ini, fin):
+    """Motivo del radar llevado hacia delante para una ventana: lluvia
+    probable (la mitad de los casos) y de 1 mm/h o más, riesgo alto; posible
+    (uno de cada cinco), moderado."""
+    horas = max((fin - max(ini, AHORA)).total_seconds() / 3600, 1 / 12)
+    mm_h = t["mm"] / horas
+    pct = round(t["prob"] * 100)
+    mov = f", que va cap {nc['cap_a']} a {nc['velocitat_kmh']} km/h" if nc.get("cap_a") else ""
+    if t["prob"] >= C.PROB_COCHE and mm_h >= C.UMBRAL_MM_COCHE:
+        return (0, "cotxe", f"El radar veu pluja{mov} que arribaria al trajecte a aquesta hora "
+                f"(probabilitat {pct} %).", "radar")
+    if t["prob"] >= C.PROB_ATENCION:
+        return (2, "compte", f"El radar veu pluja{mov} que podria arribar al trajecte a aquesta hora "
+                f"(probabilitat {pct} %).", "radar")
+    return (4, "moto", "Segons el radar, la pluja que hi ha ara no arribarà al trajecte a aquesta hora.", "radar")
+
+
 def decidir(dia, ventana, d):
     """Riesgo de lluvia en una ventana: moto (bajo), compte (moderado) o
     cotxe (alto), con los motivos en catalán."""
@@ -403,9 +414,20 @@ def decidir(dia, ventana, d):
     falta = (ini - AHORA).total_seconds() / 3600
     vigente = AHORA < fin
     r = d.get("radar")
-    if r and vigente and falta <= 3:
+    # 2a. La lluvia del radar llevada hacia delante (ADR 0019), si llega a la
+    # ventana: manda sobre la distancia, porque sabe hacia dónde va.
+    nc = (r or {}).get("nowcast")
+    radar_tram = None
+    if nc and vigente:
+        trams = [N.en_tram(nc, lloc, max(ini, AHORA), fin) for lloc in ("casa", "mig", "desti")]
+        trams = [t for t in trams if t]
+        if trams:
+            radar_tram = {"mm": max(t["mm"] for t in trams), "prob": max(t["prob"] for t in trams)}
+            senyals["radar_nowcast"] = radar_tram
+            motivos.append(motivo_nowcast(radar_tram, nc, ini, fin))
+    if r and vigente and falta <= 3 and radar_tram is None:
         km = r["km_lluvia"]
-        crece = r["km2_50km_ahora"] > 1.3 * max(r["km2_50km_antes"], 1)
+        crece = r["km2_50km_antes"] is not None and r["km2_50km_ahora"] > 1.3 * max(r["km2_50km_antes"], 1)
         tendencia = ", i la zona de pluja creix" if crece else ""
         senyals["radar"] = {"km": km, "creix": crece}
         if km is not None and km <= C.RADAR_COCHE_KM:
@@ -659,7 +681,10 @@ def motivos_modo_aviso(avisos_, planes, obs, radar_):
         res.append("pla de Protecció Civil")
     if any((o.get("mm_ultima_media_hora") or 0) > 0 or (o.get("intensitat") or 0) > 0 for o in obs or []):
         res.append("pluja a les estacions")
-    if radar_ and radar_.get("km_lluvia") is not None and radar_["km_lluvia"] <= C.RADAR_AVISO_KM:
+    nc = (radar_ or {}).get("nowcast")
+    propera = nc and N.en_tram(nc, "casa", AHORA, AHORA + dt.timedelta(hours=1))
+    if (radar_ and radar_.get("km_lluvia") is not None and radar_["km_lluvia"] <= C.RADAR_AVISO_KM
+            or propera and propera["prob"] >= C.PROB_ATENCION):
         res.append("pluja al radar")
     return res
 

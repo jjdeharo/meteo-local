@@ -1,0 +1,349 @@
+#!/usr/bin/env python3
+# SPDX-License-Identifier: AGPL-3.0-or-later
+"""La lluvia del radar llevada hacia delante, hasta 2 horas (ADR 0019).
+
+En las primeras horas, la lluvia que ya existe y cómo se mueve dicen más que
+los modelos: el 05-10-2026 los modelos daban 0,3 mm por hora mientras caían
+más de 20. Aquí:
+
+1. **La imagen**: la última del radar de Meteocat (composición de la XRAD
+   corregida, cada 6 minutos; el radar de Vallirana está a unos 20 km de
+   casa). Si se ha quedado atrás más de MARGE_MIN respecto a la de
+   RainViewer (composición de AEMET, cada 10 minutos), la de RainViewer. Los
+   colores se pasan a dBZ con la leyenda de cada uno y a mm/h con la
+   relación de Marshall-Palmer, Z = 200 R^1,6.
+2. **El movimiento**: el de la advección de Meteocat, que lo calcula con las
+   tres últimas imágenes y extrapola una hora; aquí se mide lo que desplaza
+   su primera imagen prevista hasta la última, en un cuadro de unos 300 km
+   alrededor del trayecto. Si no la hay, el de RainViewer (pares de imágenes
+   separados 30 minutos), solo si los pares coinciden.
+3. **Hacia delante**: para cada lugar y cada 5 minutos, la lluvia de ahora en
+   el punto de donde vendrá y en un círculo alrededor que crece con el tiempo
+   (3 km más 0,08 km por minuto): cada píxel del círculo es un caso posible.
+   De ahí salen la lluvia esperada (la media) y la probabilidad (la fracción
+   de casos con lluvia).
+
+La lluvia que nace o muere en ese tiempo no se ve: por eso solo 2 horas.
+
+Uso: python3 nowcast.py    resumen para casa, el trayecto y el destino
+"""
+import csv
+import datetime as dt
+import io
+import json
+import math
+import os
+
+import config as C
+
+Z = 7
+MIDA = 768                  # mosaico de 3x3 teselas de 256 píxeles
+FINESTRA = 320              # cuadro para el movimiento (unos 300 km)
+PAS_MIN = 5
+HORITZO_MIN = 120
+RADI_KM = (3.0, 0.08)       # radio del círculo: 3 km + 0,08 km por minuto
+PLOU_MMH = 0.5              # unos 18 dBZ: lluvia que llega al suelo
+VEL_MAX_KMH = 120           # más rápido es un error del cálculo
+DESACORD_KMH = 20           # pares de RainViewer que difieren más: sin movimiento
+MARGE_MIN = 15              # retraso de Meteocat respecto a RainViewer que se acepta
+ADVECCIO_MAX_MIN = 60       # advección más vieja: no se usa su movimiento
+METEOCAT = "https://static-m.meteo.cat/tiles"
+# Leyenda del radar de Meteocat (script de meteo.cat): cada color, una franja
+# de 3 dBZ que empieza en el valor indicado; se toma su centro.
+LLEGENDA_METEOCAT = [(9, "8000ff"), (12, "4000ff"), (15, "0000ff"), (18, "00ffff"),
+                     (21, "00ff80"), (24, "00ff00"), (27, "3fff00"), (30, "7fff00"),
+                     (33, "bfff00"), (36, "ffff00"), (39, "ffab00"), (42, "ff8100"),
+                     (45, "ff5700"), (48, "ff2d00"), (51, "ff0000"), (54, "ff003f"),
+                     (57, "ff007f"), (60, "ff00bf"), (63, "ff00ff"), (66, "f0f0f0")]
+COLORS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "calibracio",
+                      "rainviewer_colors.csv")
+
+
+def taula_dbz():
+    """Color RGBA (esquema 2, Universal Blue) → dBZ, solo la lluvia."""
+    res = {}
+    with open(COLORS, encoding="utf-8") as f:
+        files = list(csv.reader(f))[1:]
+    vistos = set()
+    for fila in files:
+        dbz = int(fila[0])
+        if dbz in vistos:           # la segunda tanda de la tabla es la nieve
+            break
+        vistos.add(dbz)
+        res.setdefault(fila[3].lower(), dbz)
+    return res
+
+
+def mm_h(dbz):
+    """Marshall-Palmer: Z = 200 R^1,6."""
+    import numpy as np
+    return np.where(dbz > 0, (10 ** (dbz / 10) / 200) ** (1 / 1.6), 0.0)
+
+
+def geometria(lat, lon):
+    n = 2 ** Z
+    x = (lon + 180) / 360 * n
+    y = (1 - math.asinh(math.tan(math.radians(lat))) / math.pi) / 2 * n
+    return int(x), int(y)
+
+
+def pixel(lat, lon, tx, ty):
+    """Fila y columna del lugar en el mosaico centrado en la tesela (tx, ty)."""
+    n = 2 ** Z
+    x = (lon + 180) / 360 * n
+    y = (1 - math.asinh(math.tan(math.radians(lat))) / math.pi) / 2 * n
+    return (y - ty + 1) * 256, (x - tx + 1) * 256
+
+
+def km_px(lat):
+    return 360 / 2 ** Z / 256 * 111.32 * math.cos(math.radians(lat))
+
+
+def a_mm_h(rgba, claus, valors):
+    """Píxeles RGBA → mm/h con una leyenda (claus: RGBA en entero, ordenadas)."""
+    import numpy as np
+    codi = (rgba[..., 0] << 24) | (rgba[..., 1] << 16) | (rgba[..., 2] << 8) | rgba[..., 3]
+    i = np.clip(np.searchsorted(claus, codi), 0, len(claus) - 1)
+    dbz = np.where((claus[i] == codi) & (rgba[..., 3] > 0), valors[i], -32.0)
+    return mm_h(dbz)
+
+
+def llegenda(parelles):
+    import numpy as np
+    parelles = list(parelles)
+    claus = np.array([k for k, _ in parelles], dtype=np.uint64)
+    valors = np.array([v for _, v in parelles], dtype=float)
+    o = np.argsort(claus)
+    return claus[o], valors[o]
+
+
+def mosaic(get, url, tx, ty, claus, valors):
+    """3x3 teselas alrededor de (tx, ty); url(x, y) da la dirección."""
+    import numpy as np
+    from PIL import Image
+    rgba = np.zeros((MIDA, MIDA, 4), dtype=np.uint64)
+    for dx in (-1, 0, 1):
+        for dy in (-1, 0, 1):
+            im = Image.open(io.BytesIO(get(url(tx + dx, ty + dy), True))).convert("RGBA")
+            rgba[(dy + 1) * 256:(dy + 2) * 256, (dx + 1) * 256:(dx + 2) * 256] = np.array(im, dtype=np.uint64)
+    return a_mm_h(rgba, claus, valors)
+
+
+def rainviewer(get, tx, ty, fotogrames=7):
+    """Los últimos fotogramas de RainViewer (por defecto, la última hora)."""
+    meta = json.loads(get("https://api.rainviewer.com/public/weather-maps.json"))
+    claus, valors = llegenda((int(k[1:], 16), v) for k, v in taula_dbz().items())
+    past = meta["radar"]["past"][-fotogrames:]
+    return {"hores": [dt.datetime.fromtimestamp(f["time"]).astimezone() for f in past],
+            "mm_h": [mosaic(get, lambda x, y, f=f: f"{meta['host']}{f['path']}/256/{Z}/{x}/{y}/2/0_0.png",
+                            tx, ty, claus, valors) for f in past]}
+
+
+def meteocat(get, tx, ty):
+    """La última imagen del radar de Meteocat y las dos de su advección (la
+    primera y la última prevista), con sus horas. Las teselas siguen el
+    esquema TMS (la y, contada desde el sur)."""
+    import re
+    pagina = get("https://www.meteo.cat/observacions/radar")
+    if isinstance(pagina, bytes):
+        pagina = pagina.decode("utf-8", "ignore")
+    radar = re.search(r"dataDarreraRadar:\s*'(\d\d)/(\d\d)/(\d{4}) (\d\d):(\d\d)Z'", pagina)
+    adv = re.search(r"dataDarreraAdveccio:\s*'([^']+)'", pagina)
+    claus, valors = llegenda((int(c + "ff", 16), d + 1.5) for d, c in LLEGENDA_METEOCAT)
+    tms = lambda y: 2 ** Z - 1 - y
+    res = {}
+    if radar:
+        mes, dia, any_, h, m = radar.groups()
+        t = dt.datetime(int(any_), int(mes), int(dia), int(h), int(m), tzinfo=dt.timezone.utc)
+        res["hora"] = t.astimezone()
+        res["mm_h"] = mosaic(get, lambda x, y: f"{METEOCAT}/radar/{t:%Y/%m/%d/%H/%M}/{Z:02d}/000/000/{x:03d}/000/000/{tms(y):03d}.png",
+                             tx, ty, claus, valors)
+    if adv:
+        b = dt.datetime.fromisoformat(adv.group(1)).astimezone(dt.timezone.utc)
+        prev = []
+        for minuts in (6, 60):
+            t = b + dt.timedelta(minutes=minuts)
+            url = (lambda x, y, t=t: f"{METEOCAT}/adveccio/{b:%Y/%m/%d}/{t:%Y/%m/%d}/{b:%H/%M}/{t:%H/%M}/"
+                   f"{Z:02d}/000/000/{x:03d}/000/000/{tms(y):03d}.png")
+            prev.append((t.astimezone(), mosaic(get, url, tx, ty, claus, valors)))
+        res["adveccio"] = {"base": b.astimezone(), "previsions": prev}
+    return res
+
+
+def carrega(get):
+    """Todo lo que hace falta: las imágenes de los dos radares, si están."""
+    lat = (C.CASA[0] + C.DESTINO[0]) / 2
+    lon = (C.CASA[1] + C.DESTINO[1]) / 2
+    tx, ty = geometria(lat, lon)
+    r = {"tx": tx, "ty": ty, "km_px": km_px(lat), "errors": []}
+    try:
+        r["rainviewer"] = rainviewer(get, tx, ty)
+    except Exception as ex:
+        r["errors"].append(f"RainViewer: {ex}")
+    try:
+        r["meteocat"] = meteocat(get, tx, ty)
+    except Exception as ex:
+        r["errors"].append(f"Meteocat: {ex}")
+    return r
+
+
+def desplacament(a, b):
+    """Desplazamiento (filas, columnas) de a a b con la correlación de fase,
+    en el cuadro central. None si casi no hay lluvia."""
+    import numpy as np
+    m = (MIDA - FINESTRA) // 2
+    fa = np.log1p(a[m:m + FINESTRA, m:m + FINESTRA])
+    fb = np.log1p(b[m:m + FINESTRA, m:m + FINESTRA])
+    if (fa > np.log1p(PLOU_MMH)).sum() < 50 or (fb > np.log1p(PLOU_MMH)).sum() < 50:
+        return None
+    finestra = np.outer(np.hanning(FINESTRA), np.hanning(FINESTRA))
+    A = np.fft.fft2((fa - fa.mean()) * finestra)
+    B = np.fft.fft2((fb - fb.mean()) * finestra)
+    r = B * np.conj(A)
+    r /= np.abs(r) + 1e-9
+    c = np.fft.ifft2(r).real
+    i, j = np.unravel_index(np.argmax(c), c.shape)
+    di = i if i < FINESTRA // 2 else i - FINESTRA
+    dj = j if j < FINESTRA // 2 else j - FINESTRA
+    # Ajuste subpíxel con una parábola en cada eje.
+    def fi(v0, v1, v2):
+        d = v0 - 2 * v1 + v2
+        return 0.0 if d == 0 else 0.5 * (v0 - v2) / d
+    di += fi(c[(i - 1) % FINESTRA, j], c[i, j], c[(i + 1) % FINESTRA, j])
+    dj += fi(c[i, (j - 1) % FINESTRA], c[i, j], c[i, (j + 1) % FINESTRA])
+    return float(di), float(dj)
+
+
+def moviment(r, ara=None):
+    """Velocidad (filas y columnas por minuto) y de dónde sale: la advección
+    de Meteocat si es reciente; si no, RainViewer si sus pares coinciden.
+    None si no hay forma fiable de saberlo."""
+    import numpy as np
+    ara = ara or dt.datetime.now().astimezone()
+    adv = (r.get("meteocat") or {}).get("adveccio")
+    if adv and ara - adv["base"] <= dt.timedelta(minutes=ADVECCIO_MAX_MIN):
+        (t0, a), (t1, b) = adv["previsions"]
+        d = desplacament(a, b)
+        if d is not None:
+            minuts = (t1 - t0).total_seconds() / 60
+            v = (d[0] / minuts, d[1] / minuts)
+            if math.hypot(*v) * r["km_px"] * 60 <= VEL_MAX_KMH:
+                return v, "meteocat"
+    rv = r.get("rainviewer")
+    if not rv:
+        return None
+    vs = []
+    for k in range(3, len(rv["mm_h"])):
+        d = desplacament(rv["mm_h"][k - 3], rv["mm_h"][k])
+        if d is not None:
+            minuts = (rv["hores"][k] - rv["hores"][k - 3]).total_seconds() / 60
+            vs.append((d[0] / minuts, d[1] / minuts))
+    if len(vs) < 2:
+        return None
+    vs = np.array(vs)
+    v = np.median(vs, axis=0)
+    dispersio = np.max(np.hypot(*(vs - v).T)) * r["km_px"] * 60
+    if dispersio > DESACORD_KMH or math.hypot(*v) * r["km_px"] * 60 > VEL_MAX_KMH:
+        return None
+    return (float(v[0]), float(v[1])), "rainviewer"
+
+
+def imatge(r):
+    """La imagen de la que se parte: la de Meteocat, salvo que RainViewer
+    tenga una MARGE_MIN más nueva. Devuelve (hora, mm/h, origen)."""
+    mc, rv = r.get("meteocat") or {}, r.get("rainviewer")
+    t_rv = rv["hores"][-1] if rv else None
+    if "mm_h" in mc and (t_rv is None or t_rv - mc["hora"] <= dt.timedelta(minutes=MARGE_MIN)):
+        return mc["hora"], mc["mm_h"], "meteocat"
+    if rv:
+        return t_rv, rv["mm_h"][-1], "rainviewer"
+    return None
+
+
+def serie(r, ara, v, lat, lon):
+    """Cada PAS_MIN minutos, de ahora a HORITZO_MIN: la lluvia esperada (mm/h,
+    la media del círculo) y la probabilidad de lluvia (fracción del círculo
+    con PLOU_MMH o más), para el lugar."""
+    import numpy as np
+    fila, col = pixel(lat, lon, r["tx"], r["ty"])
+    yy, xx = np.mgrid[:MIDA, :MIDA]
+    res = []
+    for t in range(0, HORITZO_MIN + 1, PAS_MIN):
+        f0, c0 = fila - v[0] * t, col - v[1] * t
+        radi = (RADI_KM[0] + RADI_KM[1] * t) / r["km_px"]
+        dins = (yy - f0) ** 2 + (xx - c0) ** 2 <= radi ** 2
+        if not dins.any():
+            break
+        valors = ara[dins]
+        res.append({"min": t, "mm_h": round(float(valors.mean()), 2),
+                    "prob": round(float((valors >= PLOU_MMH).mean()), 2)})
+    return res
+
+
+def resum(r, ahora=None):
+    """Lo que se guarda en los datos: de dónde salen la imagen y el
+    movimiento y la serie de casa, del punto medio del trayecto y del
+    destino. None si no hay ninguna imagen."""
+    im = imatge(r)
+    if im is None:
+        return None
+    hora, camp, origen = im
+    mov = moviment(r, ahora)
+    res = {"hora": hora.isoformat(timespec="minutes"), "imatge": origen,
+           "moviment": mov and mov[1], "velocitat_kmh": None, "cap_a": None, "llocs": {}}
+    v = mov[0] if mov else (0.0, 0.0)   # sin movimiento: la lluvia de ahora, quieta
+    if mov:
+        res["velocitat_kmh"] = round(math.hypot(*v) * r["km_px"] * 60)
+        res["cap_a"] = rumb(v)
+    mig = ((C.CASA[0] + C.DESTINO[0]) / 2, (C.CASA[1] + C.DESTINO[1]) / 2)
+    for nom, (lat, lon) in (("casa", C.CASA), ("mig", mig), ("desti", C.DESTINO)):
+        res["llocs"][nom] = serie(r, camp, v, lat, lon)
+    return res
+
+
+# Con la preposición, como se dice: «cap al nord», «cap a l'est».
+RUMBS = ["al nord", "al nord-est", "a l'est", "al sud-est", "al sud", "al sud-oest", "a l'oest", "al nord-oest"]
+
+
+def rumb(v):
+    """Hacia dónde va, con ocho rumbos (las filas crecen hacia el sur)."""
+    angle = math.degrees(math.atan2(v[1], -v[0])) % 360   # 0 = norte, 90 = este
+    return RUMBS[int((angle + 22.5) // 45) % 8]
+
+
+def en_tram(nc, lloc, ini, fin, minim_min=0):
+    """Lluvia esperada (mm) y probabilidad de lluvia entre ini y fin según la
+    serie del lugar, o None si el tramo queda fuera del horizonte o cubre
+    menos de minim_min minutos."""
+    if not nc or lloc not in (nc.get("llocs") or {}):
+        return None
+    t0 = dt.datetime.fromisoformat(nc["hora"])
+    passos = [p for p in nc["llocs"][lloc]
+              if ini <= t0 + dt.timedelta(minutes=p["min"]) < fin]
+    if not passos or len(passos) * PAS_MIN < minim_min:
+        return None
+    mm = sum(p["mm_h"] for p in passos) * PAS_MIN / 60
+    return {"mm": round(mm, 1), "prob": max(p["prob"] for p in passos), "minuts": len(passos) * PAS_MIN}
+
+
+def arribada(nc, lloc="casa", prob=0.5):
+    """Primer momento en que la probabilidad de lluvia llega a prob en el
+    lugar (por defecto, la mitad del círculo), o None."""
+    if not nc or lloc not in (nc.get("llocs") or {}):
+        return None
+    t0 = dt.datetime.fromisoformat(nc["hora"])
+    for p in nc["llocs"][lloc]:
+        if p["prob"] >= prob:
+            return t0 + dt.timedelta(minutes=p["min"])
+    return None
+
+
+if __name__ == "__main__":
+    import prevision as P
+    r = carrega(P.get)
+    print("Errors:", r["errors"])
+    nc = resum(r)
+    print("Imatge:", nc["imatge"], nc["hora"], "· moviment:", nc["moviment"], nc["velocitat_kmh"], "km/h cap", nc["cap_a"])
+    for lloc, s in nc["llocs"].items():
+        print(lloc, " ".join(f"{p['min']}:{p['mm_h']}/{p['prob']}" for p in s[::3]))
+    print("Arriba a casa:", arribada(nc))

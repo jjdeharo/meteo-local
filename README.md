@@ -17,7 +17,9 @@ aprendiendo (ADR 0012; explicación en [docs/estadistica.md](docs/estadistica.md
 Si lo que miden las estaciones o lo que prevé la página llega a los umbrales de
 aviso de AEMET para el Vallès (lluvia, rachas, calor, frío o nieve), la página
 lo marca como «Risc» y el NAS avisa a Juanjo por Telegram; los avisos de AEMET y
-de Protección Civil por sí solos no lo hacen (ADR 0018).
+de Protección Civil por sí solos no lo hacen (ADR 0018). Las dos primeras horas
+de la tabla y del trayecto tienen en cuenta hacia dónde va la lluvia del radar
+(ADR 0019).
 
 ## Cómo funciona
 
@@ -71,8 +73,11 @@ Fuentes, de la más a la menos decisiva:
    lluvia o tormenta a la hora del trayecto, riesgo alto. **Planes de Protección
    Civil** de inundaciones, viento o nieve en alerta o emergencia: riesgo alto
    (ADR 0008).
-2. **Radar** (RainViewer), solo para las 3 horas siguientes: lluvia a menos de
-   15 km y creciendo, riesgo alto; a menos de 40 km, moderado.
+2. **Radar** de Meteocat (o RainViewer, si Meteocat se retrasa). Hasta 2
+   horas, la lluvia de ahora se lleva hacia delante con el movimiento de la
+   advección de Meteocat (ADR 0019): probable (50 %) y de 1 mm/h, riesgo alto;
+   posible (20 %), moderado. Entre 2 y 3 horas, la distancia: lluvia a menos
+   de 15 km y creciendo, alto; a menos de 40 km, moderado.
 3. **Estaciones**: Montflorit, de meteocerdanyola.com, minuto a minuto; la de
    casa (Ecowitt), solo cuando marca lluvia (ADR 0017), y las de Meteocat en Sabadell y Sant Cugat (página de meteo.cat o, si falla,
    portal de datos abiertos de la Generalitat). Si llueve y falta menos de
@@ -108,6 +113,7 @@ al motivo de los modelos. Para repetirla: `python3 calibracio/descarrega.py
 | `agent/` | Agente diario: instrucciones, imagen del radar, ejecución y validación |
 | `ecowitt.py` | La estación de casa con la API oficial de Ecowitt; las claves, fuera del repositorio (ADR 0017) |
 | `pluviometre.py` | Comprueba una vez, tras limpiarlo, si el pluviómetro de casa marca la lluvia débil y avisa por Telegram (ADR 0017) |
+| `nowcast.py` | La lluvia del radar (Meteocat o RainViewer) llevada hacia delante hasta 2 horas (ADR 0019) |
 | `riscos.py` | Situaciones de peligro de la página de casa y aviso por Telegram (ADR 0018) |
 | `registre.py` | Registro en el NAS de cada actualización y del resultado de cada día (ADR 0006) |
 | `aprenentatge.py` | Aprendizaje de la página de casa: regresiones, comprobación y cambio de método (ADR 0012, `docs/estadistica.md`) |
@@ -146,7 +152,8 @@ de [Meteocat](https://www.meteo.cat/observacions/xema) y del
 [portal de datos abiertos de la Generalitat](https://analisi.transparenciacatalunya.cat/d/nzvn-apee), estación de Montflorit de
 [meteocerdanyola.com](https://meteocerdanyola.com/2026/sites/cerdanyola_montflorit/index.html),
 estación de casa con la [API de Ecowitt](https://doc.ecowitt.net/web/#/apiv3en?page_id=1),
-radar de [RainViewer](https://www.rainviewer.com/) y avisos de AEMET a través de
+radar y advección de [Meteocat](https://www.meteo.cat/observacions/radar) y,
+de reserva, de [RainViewer](https://www.rainviewer.com/), y avisos de AEMET a través de
 [Meteoalarm](https://meteoalarm.org/). Iconos de [Lucide](https://lucide.dev/)
 (ISC).
 

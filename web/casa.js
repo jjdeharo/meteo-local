@@ -6,21 +6,41 @@ function coma(x, decimals = 1) {
   return Number(x).toFixed(decimals).replace('.', ',');
 }
 
+// Altura del sol (graus) a casa en un moment donat, amb la fórmula
+// aproximada de la NOAA: n'hi ha prou per saber si és de dia o de nit.
+const CASA_COORD = [41.482, 2.135];
+function alturaSol(data) {
+  const rad = Math.PI / 180;
+  const dies = data.getTime() / 864e5 + 2440587.5 - 2451545;
+  const l = (280.46 + 0.9856474 * dies) % 360;
+  const g = ((357.528 + 0.9856003 * dies) % 360) * rad;
+  const lambda = (l + 1.915 * Math.sin(g) + 0.02 * Math.sin(2 * g)) * rad;
+  const eps = (23.439 - 0.0000004 * dies) * rad;
+  const dec = Math.asin(Math.sin(eps) * Math.sin(lambda));
+  const ar = Math.atan2(Math.cos(eps) * Math.sin(lambda), Math.cos(lambda));
+  const gmst = (18.697374558 + 24.06570982441908 * dies) % 24;
+  const angle = (gmst * 15 + CASA_COORD[1]) * rad - ar;
+  const lat = CASA_COORD[0] * rad;
+  return Math.asin(Math.sin(lat) * Math.sin(dec) + Math.cos(lat) * Math.cos(dec) * Math.cos(angle)) / rad;
+}
+
 // Descripció del cel feta amb les mateixes dades que la taula, perquè no
-// digui «serè» en una hora amb pluja.
+// digui «serè» en una hora amb pluja, i la icona que hi correspon. De nit, la
+// lluna en lloc del sol (a mitja hora del tram).
 function cel(f) {
-  if (f.codi >= 95) return 'Tempesta';
-  if (f.pluja_mm >= 4) return 'Pluja forta';
-  if (f.pluja_mm >= 1) return 'Pluja';
-  if (f.pluja_mm >= 0.2) return 'Pluja feble';
+  const nit = alturaSol(new Date(new Date(f.hora).getTime() + 18e5)) < 0;
+  if (f.codi >= 95) return ['Tempesta', 'i-cloud-lightning'];
+  if (f.pluja_mm >= 4) return ['Pluja forta', 'i-cloud-rain-wind'];
+  if (f.pluja_mm >= 1) return ['Pluja', 'i-cloud-rain'];
+  if (f.pluja_mm >= 0.2) return ['Pluja feble', 'i-cloud-drizzle'];
   // Sense pluja prevista però amb probabilitat clara: no pot dir «serè».
-  if (f.probabilitat >= 0.3) return 'Possible pluja';
-  if (f.codi === 45 || f.codi === 48) return 'Boira';
-  if (f.nuvols == null) return '';
-  if (f.nuvols < 20) return 'Serè';
-  if (f.nuvols < 50) return 'Poc núvol';
-  if (f.nuvols < 85) return 'Núvols';
-  return 'Cobert';
+  if (f.probabilitat >= 0.3) return ['Possible pluja', nit ? 'i-cloud-moon-rain' : 'i-cloud-sun-rain'];
+  if (f.codi === 45 || f.codi === 48) return ['Boira', 'i-cloud-fog'];
+  if (f.nuvols == null) return ['', null];
+  if (f.nuvols < 20) return ['Serè', nit ? 'i-moon-cel' : 'i-sun'];
+  if (f.nuvols < 50) return ['Poc núvol', nit ? 'i-cloud-moon' : 'i-cloud-sun'];
+  if (f.nuvols < 85) return ['Núvols', 'i-cloud'];
+  return ['Cobert', 'i-cloudy'];
 }
 
 // Com canvia la pressió en tres hores, amb els llindars habituals: menys d'1
@@ -45,7 +65,7 @@ function dada(id, text) {
   return li;
 }
 
-function blocAra(ara, casa) {
+function blocAra(ara, casa, radarDades) {
   const base = casa || ara;
   const sec = element('section', 'decisio targeta ara');
   sec.setAttribute('aria-label', casa ? 'El temps ara a casa' : 'El temps ara a Montflorit');
@@ -64,8 +84,26 @@ function blocAra(ara, casa) {
   llista.append(dada('i-droplets', `Humitat ${coma(base.humitat, 0)} %`));
   if (casa && casa.pressio != null) llista.append(dada('i-gauge', textPressio(casa)));
   if (ara && ara.vent != null) llista.append(dada('i-wind', `Vent ${coma(ara.vent, 0)} km/h`));
+  const radar = textRadar(radarDades, plou);
+  if (radar) llista.append(dada('i-radar', radar));
   sec.append(llista);
   return sec;
+}
+
+// La pluja del radar portada endavant (ADR 0019): quan arribaria a casa.
+function textRadar(r, plou) {
+  if (!r) return '';
+  const mov = r.cap_a ? `, va cap ${r.cap_a} a ${r.velocitat_kmh} km/h` : '';
+  const aviat = (t) => new Date(t) <= new Date(Date.now() + 5 * 60e3);
+  if (r.arriba) {
+    if (plou || aviat(r.arriba)) return `Radar: pluja a sobre${mov}`;
+    return `Radar: arribaria pluja cap a les ${horaCurta(r.arriba)}${mov}`;
+  }
+  if (r.possible) {
+    if (aviat(r.possible)) return `Radar: pluja a prop, pot arribar${mov}`;
+    return `Radar: pot arribar pluja cap a les ${horaCurta(r.possible)}${mov}`;
+  }
+  return 'Radar: no s\u2019acosta pluja en 2 hores';
 }
 
 // Situacions de perill segons el que mesuren les estacions i el que preveu
@@ -127,7 +165,12 @@ function taula(hores, aprenentatge) {
     const hora = element('th', 'hora', `${h0}–${(h0 + 1) % 24}`);
     hora.scope = 'row';
     tr.append(hora);
-    const celCel = element('td', 'cel', f.plou_ara ? 'Plou ara' : cel(f));
+    const [textCel, iconaCel] = f.plou_ara ? ['Plou ara', 'i-umbrella'] : cel(f);
+    const celCel = element('td', 'cel');
+    const linia = element('span', 'cel-text');
+    if (iconaCel) linia.append(icona(iconaCel));
+    linia.append(textCel);
+    celCel.append(linia);
     for (const a of f.avisos || []) {
       const marca = element('span', `marca-avis ${a.nivell}`, `Avís ${a.nivell}`);
       marca.title = `Avís ${a.nivell} de l\u2019AEMET per ${a.tipus.join(' i ')}`;
@@ -140,7 +183,7 @@ function taula(hores, aprenentatge) {
     const prob = element('td', 'num prob');
     if (f.probabilitat != null) {
       const pct = Math.round(f.probabilitat * 100);
-      prob.textContent = `${pct} %${f.segons_estacio ? '*' : ''}`;
+      prob.textContent = `${pct} %${f.segons_estacio ? '*' : f.segons_radar ? '\u2020' : ''}`;
       prob.style.setProperty('--prob', `${pct}%`);
     }
     tr.append(prob);
@@ -154,6 +197,10 @@ function taula(hores, aprenentatge) {
   if (hores.some((f) => f.segons_estacio)) {
     sec.append(element('p', 'nota', '* Segons la pluja que mesura ara l\u2019estació i el que va passar '
       + 'en casos semblants a Sabadell i Sant Cugat entre el 2024 i el 2026.'));
+  }
+  if (hores.some((f) => f.segons_radar)) {
+    sec.append(element('p', 'nota', '\u2020 Segons el radar: la pluja que hi ha ara, portada endavant '
+      + 'a la velocitat i en la direcció que porta.'));
   }
   sec.append(element('p', 'nota', 'Vent en km/h: mitjana i, entre parèntesis, les ratxes.'));
   const apres = textAprenentatge(aprenentatge);
@@ -195,7 +242,7 @@ function pinta(dades) {
       + `han caigut ${coma(m.mesurada_mm)}\u00a0mm a Montflorit i en preveien ${coma(m.prevista_mm)}. `
       + 'Les primeres hores de la taula parteixen del que mesura l\u2019estació; per a la resta, fes més cas dels avisos.'));
   }
-  if (dades.ara || dades.ara_casa) cont.append(blocAra(dades.ara, dades.ara_casa));
+  if (dades.ara || dades.ara_casa) cont.append(blocAra(dades.ara, dades.ara_casa, dades.radar));
   if (dades.hores) cont.append(taula(dades.hores, dades.aprenentatge));
   pintaHorari(dades);
   posaVersio(dades.versio);

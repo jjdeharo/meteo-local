@@ -19,11 +19,15 @@ Te indican tres archivos; léelos con la herramienta de lectura:
   `decisio` (el medio del día), `anada` y `tornada` (nivel de riesgo:
   `moto` bajo, `compte` moderado, `cotxe` alto, con sus `motius` y sus
   `senyals` en números), `avisos` (AEMET), `plans` (Protección Civil),
-  `radar` y `observacions` (estaciones).
+  `radar` y `observacions` (estaciones). En `radar.nowcast`, la lluvia del
+  radar llevada hacia delante hasta 2 horas en casa, el punto medio y el
+  destino (cada 5 minutos, lluvia esperada en mm/h y probabilidad), con la
+  velocidad y la dirección del movimiento.
 - `casa.json`: lo que mide ahora la estación de Montflorit (`ara`) y la de
   casa (`ara_casa`: temperatura, humedad, punto de rocío, presión y su cambio
   en tres horas), la previsión hora a hora (`hores`) y si los modelos han
-  fallado en las últimas horas (`models`). El pluviómetro de casa solo vale
+  fallado en las últimas horas (`models`); en `radar`, cuándo llegaría la
+  lluvia del radar a casa (`arriba`). El pluviómetro de casa solo vale
   cuando marca lluvia (`plou`): un cero no asegura que no llueva.
 - Una imagen PNG del radar: tres fotogramas (hace una hora, hace media hora y
   el último) de unos 180 km de lado; el círculo rojo es el trayecto. Azul,
