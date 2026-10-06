@@ -113,10 +113,12 @@ de Meteocat, que es el que él mira.
   distintos, se equivoca en las lejanas.
 - No ve la lluvia que nace ni la que crece o se deshace.
 - Las teselas de Meteocat no son una API documentada: si cambian, se usa
-  RainViewer. Su API oficial, con clave y cuotas mensuales, no tiene radar
-  según un cliente no oficial (`herrera-lu/meteocat-api-client`: XEMA, XDDE,
-  predicción, referencia y consumo); sin confirmar con la documentación
-  oficial, que no respondía el 06-10-2026.
+  RainViewer. Su API oficial, con clave y cuotas mensuales por plan, no
+  tiene radar: su documentación
+  (<https://apidocs.meteocat.gencat.cat/documentacio/>, leída entera el
+  06-10-2026) solo recoge XEMA, XDDE, predicción, referencia y consumo. Sus
+  cuotas (mensuales, y 1.000 peticiones por segundo) son de la API y no dicen
+  nada de las teselas de la web.
 
 ## Validación
 
