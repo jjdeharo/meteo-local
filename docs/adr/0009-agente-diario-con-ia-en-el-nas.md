@@ -83,7 +83,12 @@ las instrucciones que relea el texto, y no volvió a salir en dos pruebas más.
 - El texto lo escribe un modelo: puede contener errores. La decisión nunca
   queda por debajo de la regla, y el comentario lleva la etiqueta de IA.
 - El token caduca al año (octubre de 2027): habrá que repetir
-  `claude setup-token`.
+  `claude setup-token`. Desde el 06-10-2026 ese mismo archivo da acceso
+  también a los otros tres contenedores con agente del NAS (`vigilancia`,
+  `boletin-semanal` y `memoria-telegram`), el vigía avisa tres semanas antes de
+  que caduque y se renueva con `nas/renovar-token.sh` del repositorio
+  `vigilancia-nas` (su ADR 0008): el archivo no debe moverse ni reescribirse
+  sin cambiar el token, porque el aviso cuenta el año desde su fecha.
 
 ## Validación
 
