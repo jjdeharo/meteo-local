@@ -30,6 +30,7 @@ import config as C
 import ecowitt as E
 import nowcast as N
 import prevision as P
+import radar_fonts as RF
 import registre as R
 import riscos as RS
 
@@ -476,6 +477,11 @@ def recoger(anterior=None):
                               salida["ara_casa"])
         except Exception as ex:
             print("No he podido apuntar en el registro:", ex, file=sys.stderr)
+        # Lo que daba cada radar, para saber cuál acierta más (ADR 0026).
+        try:
+            RF.apunta(P.AHORA, nc, ara, salida["ara_casa"])
+        except Exception as ex:
+            print("No he podido apuntar los radares:", ex, file=sys.stderr)
     return salida
 
 

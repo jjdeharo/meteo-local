@@ -86,7 +86,8 @@ Fuentes, de la más a la menos decisiva:
    lluvia o tormenta a la hora del trayecto, riesgo alto. **Planes de Protección
    Civil** de inundaciones, viento o nieve en alerta o emergencia: riesgo alto
    (ADR 0008).
-2. **Radar** de Meteocat (o RainViewer, si Meteocat se retrasa). Hasta 2
+2. **Radar** de Meteocat o, si su imagen va 10 minutos por detrás, de
+   RainViewer; una comparación diaria decide cuál acierta más (ADR 0026). Hasta 2
    horas, la lluvia de ahora se lleva hacia delante con el movimiento de la
    advección de Meteocat, medido en la lluvia de cerca del trayecto (ADR 0019
    y 0023): probable (50 %) y de 1 mm/h, riesgo alto;
@@ -131,6 +132,7 @@ al motivo de los modelos. Para repetirla: `python3 calibracio/descarrega.py
 | `pluviometre.py` | Comprueba una vez, tras limpiarlo, si el pluviómetro de casa marca la lluvia débil y avisa por Telegram (ADR 0017) |
 | `nowcast.py` | La lluvia del radar (Meteocat o RainViewer) llevada hacia delante hasta 2 horas (ADR 0019 y 0023) |
 | `riscos.py` | Situaciones de peligro de la página de casa y aviso por Telegram (ADR 0018) |
+| `radar_fonts.py` | Apunta lo que daba cada radar en casa y, cada día, elige el que acierta más (ADR 0026) |
 | `pluja_arriba.py` | Aviso por Telegram unos 15 minutos antes de que llueva en casa, según el radar, y registro de sus aciertos (ADR 0022) |
 | `registre.py` | Registro en el NAS de cada actualización y del resultado de cada día (ADR 0006) |
 | `aprenentatge.py` | Aprendizaje de la página de casa: regresiones, comprobación y cambio de método (ADR 0012, `docs/estadistica.md`) |

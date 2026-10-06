@@ -405,6 +405,12 @@ def apunta_historial(avui, model, vp, vt):
 def diari(avui=None, avisa=True):
     avui = avui or dt.date.today().isoformat()
     os.makedirs(DIR, exist_ok=True)
+    # Qué radar acierta más en casa (radar_fonts.py, ADR 0026).
+    try:
+        import radar_fonts
+        radar_fonts.verifica(dt.date.fromisoformat(avui), avisa)
+    except Exception as ex:
+        print("No he pogut comparar els radars:", ex)
     arxiu, arxiu_t = modelo_arxiu(), modelo_arxiu_temperatura()
     en_us = carrega()
     # 1. Una propuesta de ayer que nadie ha parado: se aplica.

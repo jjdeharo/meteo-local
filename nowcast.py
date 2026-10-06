@@ -8,8 +8,10 @@ más de 20. Aquí:
 
 1. **La imagen**: la última del radar de Meteocat (composición de la XRAD
    corregida, cada 6 minutos; el radar de Vallirana está a unos 20 km de
-   casa). Si se ha quedado atrás más de MARGE_MIN respecto a la de
-   RainViewer (composición de AEMET, cada 10 minutos), la de RainViewer. Los
+   casa). Si la de RainViewer (composición de AEMET, cada 10 minutos) es
+   bastante más nueva, la de RainViewer: Meteocat publica cada imagen unos
+   15 minutos tarde. Cuánto más nueva lo decide la comparación diaria de las
+   dos (MARGES y radar_fonts.py, ADR 0026). Los
    colores se pasan a dBZ con la leyenda de cada uno y a mm/h con la
    relación de Marshall-Palmer, Z = 200 R^1,6.
 2. **El movimiento**: el de la advección de Meteocat, que lo calcula con las
@@ -49,7 +51,12 @@ RADI_KM = (3.0, 0.08)       # radio del círculo: 3 km + 0,08 km por minuto
 PLOU_MMH = 0.5              # unos 18 dBZ: lluvia que llega al suelo
 VEL_MAX_KMH = 120           # más rápido es un error del cálculo
 DESACORD_KMH = 20           # pares de RainViewer que difieren más: sin movimiento
-MARGE_MIN = 15              # retraso de Meteocat respecto a RainViewer que se acepta
+# Cuántos minutos más nueva ha de ser la imagen de RainViewer para usarla en
+# lugar de la de Meteocat, según qué fuente acierta más (ADR 0026). Las horas
+# de las dos son pares: 16 equivale a «más de 15», la regla de antes.
+MARGES = {"rainviewer": 10, "meteocat": 16}
+FONT_PER_DEFECTE = "rainviewer"
+FONT_PREFERIDA = os.path.join(os.environ.get("APRENENTATGE_DIR", "/estat/aprenentatge"), "radar-font.json")
 ADVECCIO_MAX_MIN = 60       # advección más vieja: no se usa su movimiento
 METEOCAT = "https://static-m.meteo.cat/tiles"
 # Leyenda del radar de Meteocat (script de meteo.cat): cada color, una franja
@@ -380,12 +387,25 @@ def moviment(r, ara=None):
     return (float(v[0]), float(v[1])), "rainviewer"
 
 
-def imatge(r):
-    """La imagen de la que se parte: la de Meteocat, salvo que RainViewer
-    tenga una MARGE_MIN más nueva. Devuelve (hora, mm/h, origen)."""
+def font_preferida():
+    """La fuente que ha acertado más según la comparación diaria (ADR 0026);
+    sin comparación, FONT_PER_DEFECTE."""
+    try:
+        with open(FONT_PREFERIDA, encoding="utf-8") as f:
+            font = json.load(f).get("preferida")
+    except (OSError, ValueError):
+        font = None
+    return font if font in MARGES else FONT_PER_DEFECTE
+
+
+def imatge(r, preferida=None):
+    """La imagen de la que se parte: la de Meteocat, salvo que la de
+    RainViewer sea MARGES[preferida] minutos más nueva o más. Devuelve
+    (hora, mm/h, origen)."""
     mc, rv = r.get("meteocat") or {}, r.get("rainviewer")
     t_rv = rv["hores"][-1] if rv else None
-    if "mm_h" in mc and (t_rv is None or t_rv - mc["hora"] <= dt.timedelta(minutes=MARGE_MIN)):
+    marge = dt.timedelta(minutes=MARGES[preferida or font_preferida()])
+    if "mm_h" in mc and (t_rv is None or t_rv - mc["hora"] < marge):
         return mc["hora"], mc["mm_h"], "meteocat"
     if rv:
         return t_rv, rv["mm_h"][-1], "rainviewer"
@@ -432,6 +452,21 @@ def resum(r, ahora=None):
     mig = ((C.CASA[0] + C.DESTINO[0]) / 2, (C.CASA[1] + C.DESTINO[1]) / 2)
     for nom, (lat, lon) in (("casa", C.CASA), ("mig", mig), ("desti", C.DESTINO)):
         res["llocs"][nom] = serie(r, camp, v, lat, lon)
+    res["fonts"] = fonts(r, v)
+    return res
+
+
+def fonts(r, v):
+    """Lo que daría en casa cada fuente con su última imagen y el mismo
+    movimiento, para compararlas (radar_fonts.py, ADR 0026): la hora de la
+    imagen y la probabilidad de cada PAS_MIN minutos desde ella."""
+    res = {}
+    mc, rv = r.get("meteocat") or {}, r.get("rainviewer")
+    for nom, hora, camp in (("meteocat", mc.get("hora"), mc.get("mm_h")),
+                            ("rainviewer", rv and rv["hores"][-1], rv and rv["mm_h"][-1])):
+        if camp is not None:
+            res[nom] = {"hora": hora.isoformat(timespec="minutes"),
+                        "prob": [p["prob"] for p in serie(r, camp, v, *C.CASA)]}
     return res
 
 

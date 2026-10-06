@@ -281,6 +281,25 @@ Cada día queda apuntado en `/estat/aprenentatge/historial.csv`: muestras,
 horas de lluvia y errores de cada método. `python3 aprenentatge.py estat`
 dice qué se usa y las últimas cifras.
 
+### Qué radar se usa
+
+El mismo día, `aprenentatge.py diari` compara también los dos radares
+(`radar_fonts.py`, ADR 0026). En cada pasada se apunta la probabilidad que
+daba cada uno para casa, $p_M$ (Meteocat) y $p_R$ (RainViewer), con su
+última imagen y el mismo movimiento, y si llovía en ese momento en
+Montflorit o en casa ($o = 1$ o $o = 0$). Para cada hora prevista entre 10 y
+60 minutos después de la pasada, con una observación a menos de 4 minutos,
+se calcula la puntuación de Brier de los últimos 30 días:
+
+$$B_M = \frac{1}{n}\sum_{i=1}^{n} (p_{M,i} - o_i)^2, \qquad
+B_R = \frac{1}{n}\sum_{i=1}^{n} (p_{R,i} - o_i)^2$$
+
+Cuanto más baja, mejor. Con al menos 30 casos con lluvia en 3 días
+distintos, se cambia de radar si el otro cumple la misma regla del 5 %:
+$B_{\text{otro}} < 0{,}95 \, B_{\text{actual}}$. Con RainViewer, su imagen
+se usa en cuanto es 10 minutos más nueva que la de Meteocat; con Meteocat,
+solo si lo es más de 15.
+
 ## 5. Lo que la estadística no cambia
 
 - **Lo medido manda sobre lo calculado.** Si ahora llueve en Montflorit o en

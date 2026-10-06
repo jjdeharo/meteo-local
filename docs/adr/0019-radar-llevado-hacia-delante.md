@@ -20,7 +20,8 @@ de Meteocat, que es el que él mira.
   radares (XRAD: Vallirana, a unos 20 km de casa, Puig d'Arques, Tivissa-
   Llaberia y La Panadella), cada 6 minutos. Si se queda más de 15 minutos por
   detrás de la de RainViewer (composición de AEMET, cada 10 minutos), se usa
-  la de RainViewer.
+  la de RainViewer. Desde el ADR 0026, con 10 minutos basta, y una
+  comparación diaria decide cuál de las dos acierta más.
 - **Movimiento**: el de la advección de Meteocat, su predicción a una hora,
   que calcula el campo de movimiento con las tres últimas imágenes. Se mide
   cuánto se desplaza su lluvia de la primera imagen prevista a la última, en
