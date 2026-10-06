@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 """Datos fijos del trayecto. Se cambian aquí, no en prevision.py."""
 
-VERSION = "2.7.2"
+VERSION = "2.8.0"
 
 # Coordenadas redondeadas a unos 500 m: para el tiempo da igual una calle u
 # otra, y el repositorio es público.
@@ -17,6 +17,14 @@ VUELTA = ("15:00", "15:30")   # salida a las 15:00
 ESTACIONES_LOCALES = {
     "cerdanyola_montflorit": "Cerdanyola (Montflorit)",
 }
+
+# La estación de casa (Ecowitt, API oficial; ADR 0017), a unos 300-400 m de
+# Montflorit. Temperatura, humedad, punto de rocío, presión y radiación son
+# fiables; el viento no se usa. El pluviómetro registró toda la lluvia hasta
+# PLUVIOMETRE_CASA_FIABLE_FINS; desde entonces a veces no marca la lluvia
+# débil, así que solo cuenta cuando marca lluvia.
+ESTACIO_CASA = "Casa"
+PLUVIOMETRE_CASA_FIABLE_FINS = "2026-08-31"
 
 # Estaciones automáticas de Meteocat más próximas (código: nombre).
 ESTACIONES = {

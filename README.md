@@ -8,12 +8,12 @@ lluvia de cada trayecto con sus motivos.
 
 Web: <https://jjdeharo.github.io/meteo-local/> (en catalán, para quien hace
 el trayecto). Al lado, [el tiempo en casa](https://jjdeharo.github.io/meteo-local/casa.html):
-lo que mide ahora la estación de Montflorit y la previsión hora a hora para
-las 24 horas siguientes, actualizada cada media hora (ADR 0007). La
-probabilidad de lluvia sale de una regresión logística ajustada con lo que
-llovió de verdad, y el NAS guarda cada hora lo previsto y lo medido para
-seguir aprendiendo (ADR 0012; explicación en
-[docs/estadistica.md](docs/estadistica.md)).
+lo que miden ahora la estación de casa y la de Montflorit y la previsión hora
+a hora para las 24 horas siguientes, actualizada cada media hora (ADR 0007).
+La probabilidad de lluvia sale de una regresión logística ajustada con lo que
+llovió de verdad; la temperatura se corrige con un año de la estación de casa
+(ADR 0017), y el NAS guarda cada hora lo previsto y lo medido para seguir
+aprendiendo (ADR 0012; explicación en [docs/estadistica.md](docs/estadistica.md)).
 
 ## Cómo funciona
 
@@ -69,8 +69,8 @@ Fuentes, de la más a la menos decisiva:
    (ADR 0008).
 2. **Radar** (RainViewer), solo para las 3 horas siguientes: lluvia a menos de
    15 km y creciendo, riesgo alto; a menos de 40 km, moderado.
-3. **Estaciones**: Montflorit, de meteocerdanyola.com, minuto a minuto, y las
-   de Meteocat en Sabadell y Sant Cugat (página de meteo.cat o, si falla,
+3. **Estaciones**: Montflorit, de meteocerdanyola.com, minuto a minuto; la de
+   casa (Ecowitt), solo cuando marca lluvia (ADR 0017), y las de Meteocat en Sabadell y Sant Cugat (página de meteo.cat o, si falla,
    portal de datos abiertos de la Generalitat). Si llueve y falta menos de
    hora y media, riesgo alto.
 4. **Modelos finos** (AROME HD, AROME e ICON-EU): 1 mm en una hora, alto;
@@ -102,6 +102,7 @@ al motivo de los modelos. Para repetirla: `python3 calibracio/descarrega.py
 | `publica.sh` | Calcula y publica en la rama `gh-pages` (lo usa el NAS) |
 | `nas/` | Contenedor del NAS: `compose.yml`, `Dockerfile` y `reloj.sh` |
 | `agent/` | Agente diario: instrucciones, imagen del radar, ejecución y validación |
+| `ecowitt.py` | La estación de casa con la API oficial de Ecowitt; las claves, fuera del repositorio (ADR 0017) |
 | `registre.py` | Registro en el NAS de cada actualización y del resultado de cada día (ADR 0006) |
 | `aprenentatge.py` | Aprendizaje de la página de casa: regresiones, comprobación y cambio de método (ADR 0012, `docs/estadistica.md`) |
 | `.github/workflows/previsio.yml` | Al subir a `main`: pruebas |
@@ -115,7 +116,12 @@ python3 prevision.py --json web/dades.json  # datos para ver la web en local
 python3 -m unittest discover -s tests       # pruebas
 ```
 
-Necesita Python 3 con `numpy` y `Pillow`. Tarda unos 15 s.
+Necesita Python 3 con `numpy` y `Pillow`. Tarda unos 15 s. La estación de
+casa se lee si están las variables `ECOWITT_APPLICATION_KEY`,
+`ECOWITT_API_KEY` y `ECOWITT_MAC` o el archivo
+`~/.config/meteo-local/ecowitt.env`; sin ellas, todo funciona con Montflorit.
+La corrección de la temperatura se rehace con `python3
+calibracio/estacio_casa.py --descarrega`.
 
 ## Comprobaciones tras cada cambio
 
@@ -133,6 +139,7 @@ Previsión de [Open-Meteo](https://open-meteo.com/) (CC BY 4.0), observaciones
 de [Meteocat](https://www.meteo.cat/observacions/xema) y del
 [portal de datos abiertos de la Generalitat](https://analisi.transparenciacatalunya.cat/d/nzvn-apee), estación de Montflorit de
 [meteocerdanyola.com](https://meteocerdanyola.com/2026/sites/cerdanyola_montflorit/index.html),
+estación de casa con la [API de Ecowitt](https://doc.ecowitt.net/web/#/apiv3en?page_id=1),
 radar de [RainViewer](https://www.rainviewer.com/) y avisos de AEMET a través de
 [Meteoalarm](https://meteoalarm.org/). Iconos de [Lucide](https://lucide.dev/)
 (ISC).

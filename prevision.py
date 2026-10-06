@@ -24,6 +24,7 @@ import urllib.parse
 import urllib.request
 
 import config as C
+import ecowitt
 
 UA = {"User-Agent": "meteo-local/" + C.VERSION}
 DIR = os.path.dirname(os.path.abspath(__file__))
@@ -174,8 +175,8 @@ def observaciones_meteocerdanyola(slug, nom):
 
 
 def observaciones():
-    """Primero la estación de Montflorit (minuto a minuto); después las de
-    Meteocat: su web, que va más al día, o si falla el portal de la
+    """Primero la estación de Montflorit (minuto a minuto) y la de casa si
+    marca lluvia; después las de Meteocat: su web, que va más al día, o si falla el portal de la
     Generalitat."""
     res = []
     for slug, nom in C.ESTACIONES_LOCALES.items():
@@ -185,6 +186,13 @@ def observaciones():
             dato = None
         if dato:
             res.append(dato)
+    # La estación de casa, solo si marca lluvia: su cero no es fiable (ADR 0017).
+    try:
+        dato = ecowitt.observacio(ecowitt.resum_ara(), C.ESTACIO_CASA) if ecowitt.disponible() else None
+    except Exception:
+        dato = None
+    if dato:
+        res.append(dato)
     for codi, nom in C.ESTACIONES.items():
         dato = None
         for fuente in (observaciones_web, observaciones_portal):

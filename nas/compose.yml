@@ -9,7 +9,8 @@
 # Fuera del contenedor, en /volume1/docker/meteo-local:
 #   repo/   copia del repositorio (el reloj la pone al día antes de cada pasada)
 #   home/   la clave de despliegue (.ssh), que solo da acceso a este repositorio,
-#           y el aviso por Telegram (.local/bin/avisar-juanjo y su configuración)
+#           el aviso por Telegram (.local/bin/avisar-juanjo y su configuración)
+#           y las claves de la estación de casa (.config/meteo-local/ecowitt.env)
 #   estat/  los últimos datos publicados, para mantener la decisión del día, y
 #           registre/: cada actualización y el resultado de cada día, y
 #           aprenentatge/: el modelo que usa la página de casa (ADR 0012)
@@ -37,8 +38,11 @@ services:
     # El token de Claude (claude setup-token), para todo el contenedor: así lo
     # usan el agente diario, el actualizador semanal y la comprobación diaria
     # de sesiones del vigía. No está en el repositorio.
+    # Y las claves de la estación de casa (Ecowitt, ADR 0017).
     env_file:
       - path: ./home/.config/meteo-local/claude.env
+        required: false
+      - path: ./home/.config/meteo-local/ecowitt.env
         required: false
     volumes:
       - ./repo:/proyecto

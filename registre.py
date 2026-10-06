@@ -11,10 +11,13 @@ Lo ejecuta el reloj del NAS, sin IA:
   python3 registre.py resum [--avisa]     resumen; con --avisa lo manda por
                                           Telegram una sola vez, cuando hay
                                           bastantes días
+  python3 registre.py estacio             rellena las horas que falten de la
+                                          estación de casa con su historial
 
 Además, casa.py apunta en cada pasada lo que mide Montflorit hora a hora
-(montflorit.csv) y, una vez por hora, lo que daban los modelos para las 24
-horas siguientes (casa-AAAA-MM.jsonl), para aprender de los fallos (ADR 0012).
+(montflorit.csv) y la estación de casa (estacio-casa.csv, ADR 0017) y, una vez
+por hora, lo que daban los modelos para las 24 horas siguientes
+(casa-AAAA-MM.jsonl), para aprender de los fallos (ADR 0012).
 
 Los datos van a REGISTRE_DIR (en el NAS, /estat/registre), no al repositorio.
 """
@@ -26,6 +29,7 @@ import subprocess
 import sys
 
 import config as C
+import ecowitt as E
 import prevision as P
 
 DIR = os.environ.get("REGISTRE_DIR", "/estat/registre")
@@ -108,7 +112,54 @@ def apunta_montflorit(filas):
     os.replace(MONTFLORIT + ".tmp", MONTFLORIT)
 
 
-def apunta_casa(emes, ara, hores):
+ESTACIO_CASA = os.path.join(DIR, "estacio-casa.csv")
+CAMPOS_ESTACIO_CASA = ["fins", "pluja_mm", "temperatura", "humitat", "rosada", "pressio", "solar"]
+# Cuánto se rellena hacia atrás como mucho: Ecowitt guarda 90 días cada 5 minutos.
+ESTACIO_CASA_DIES_MAX = 89
+
+
+def apunta_estacio_casa(nuevas):
+    """Horas completas de la estación de casa ({fin: valores}, ecowitt.hores)."""
+    nuevas = {fin: h for fin, h in nuevas.items() if h.get("temperatura") is not None
+              or h.get("pluja_mm") is not None}
+    if not nuevas:
+        return
+    os.makedirs(DIR, exist_ok=True)
+    guardadas = {}
+    if os.path.exists(ESTACIO_CASA):
+        with open(ESTACIO_CASA, encoding="utf-8") as f:
+            guardadas = {r["fins"]: r for r in csv.DictReader(f)}
+    for fin, h in nuevas.items():
+        clave = fin.strftime("%Y-%m-%dT%H:%M")
+        guardadas[clave] = {"fins": clave, **{k: h.get(k) for k in CAMPOS_ESTACIO_CASA[1:]}}
+    with open(ESTACIO_CASA + ".tmp", "w", newline="", encoding="utf-8") as f:
+        w = csv.DictWriter(f, fieldnames=CAMPOS_ESTACIO_CASA)
+        w.writeheader()
+        w.writerows(guardadas[k] for k in sorted(guardadas))
+    os.replace(ESTACIO_CASA + ".tmp", ESTACIO_CASA)
+
+
+def completa_estacio_casa(ahora=None):
+    """Rellena con el historial de Ecowitt las horas que falten desde la
+    última guardada (o desde el inicio del registro de casa), por si el NAS
+    ha estado apagado. Una consulta por día que falte."""
+    if not E.disponible():
+        print("Sin claves de Ecowitt: no se rellena la estación de casa.")
+        return
+    ahora = ahora or P.AHORA
+    desde = ahora - dt.timedelta(days=ESTACIO_CASA_DIES_MAX)
+    if os.path.exists(ESTACIO_CASA):
+        with open(ESTACIO_CASA, encoding="utf-8") as f:
+            horas = [r["fins"] for r in csv.DictReader(f) if r["temperatura"]]
+        if horas:
+            desde = max(desde, dt.datetime.fromisoformat(horas[-1]).astimezone() - dt.timedelta(hours=2))
+    else:
+        desde = max(desde, ahora - dt.timedelta(days=2))
+    apunta_estacio_casa(E.hores(E.historial(desde, ahora, "5min")))
+    print("Estació de casa completada des de", desde.isoformat(timespec="minutes"))
+
+
+def apunta_casa(emes, ara, hores, ara_casa=None):
     """Una línea por hora de reloj: la primera pasada de cada hora."""
     hora = emes.strftime("%Y-%m-%dT%H")
     if os.path.exists(CASA_DARRERA):
@@ -116,7 +167,7 @@ def apunta_casa(emes, ara, hores):
             if f.read().strip() == hora:
                 return
     os.makedirs(DIR, exist_ok=True)
-    linea = {"emes": emes.isoformat(timespec="minutes"), "ara": ara, "hores": hores}
+    linea = {"emes": emes.isoformat(timespec="minutes"), "ara": ara, "ara_casa": ara_casa, "hores": hores}
     with open(os.path.join(DIR, f"casa-{emes.strftime('%Y-%m')}.jsonl"), "a", encoding="utf-8") as f:
         f.write(json.dumps(linea, ensure_ascii=False) + "\n")
     with open(CASA_DARRERA, "w") as f:
@@ -150,6 +201,14 @@ def lluvia_montflorit(dia, ventanas):
     return res
 
 
+def lluvia_casa(dia, ventanas):
+    """mm en cada ventana en la estación de casa. Solo cuenta si marca
+    lluvia: su cero no es fiable."""
+    ini = min(a for a, _ in ventanas) - dt.timedelta(minutes=10)
+    filas = E.historial(ini, max(b for _, b in ventanas), "5min")
+    return [E.pluja_entre(filas, a, b) for a, b in ventanas]
+
+
 def lluvia_meteocat(codi, ventanas):
     filas = P.taula_meteocat(codi)
     return [round(sum(mm for t, mm in filas if ini <= t < fin), 1) for ini, fin in ventanas]
@@ -168,6 +227,8 @@ def verifica(dia=None):
     fuentes = [(C.ESTACIONES_LOCALES[s], lambda v: lluvia_montflorit(dia, v))
                for s in C.ESTACIONES_LOCALES]
     fuentes += [(nom, lambda v, c=codi: lluvia_meteocat(c, v)) for codi, nom in C.ESTACIONES.items()]
+    if E.disponible():
+        fuentes.append((C.ESTACIO_CASA, lambda v: lluvia_casa(dia, v)))
     for nom, funcion in fuentes:
         try:
             a, v = funcion(ventanas)
@@ -175,6 +236,9 @@ def verifica(dia=None):
             detalle[nom] = f"sense dades ({ex.__class__.__name__})"
             continue
         detalle[nom] = [a, v]
+        # Casa sin lluvia no demuestra nada: no cuenta como dato.
+        if nom == C.ESTACIO_CASA and max(a, v) < C.UMBRAL_MM:
+            continue
         ida.append(a)
         vuelta.append(v)
     if not ida:
@@ -252,5 +316,7 @@ if __name__ == "__main__":
         verifica(sys.argv[2] if len(sys.argv) > 2 else None)
     elif orden == "resum":
         resum("--avisa" in sys.argv)
+    elif orden == "estacio":
+        completa_estacio_casa()
     else:
         print(__doc__)

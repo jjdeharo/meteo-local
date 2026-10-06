@@ -15,17 +15,22 @@ aprendizaje automático también para casa.
 
 - **Registro** (`registre.py`, llamado desde `casa.py`, solo en el NAS): en
   cada pasada, las horas completas de Montflorit (`montflorit.csv`: lluvia,
-  temperatura y humedad en la hora en punto); una vez por hora, todo lo que
-  daban los modelos para las 24 horas siguientes y lo que mostró la página
-  (`casa-AAAA-MM.jsonl`).
+  temperatura y humedad en la hora en punto) y, desde el 06-10-2026, de la
+  estación de casa (`estacio-casa.csv`, ADR 0017); una vez por hora, todo lo
+  que daban los modelos para las 24 horas siguientes, lo que medían las
+  estaciones al prever y lo que mostró la página (`casa-AAAA-MM.jsonl`).
 - **Lluvia: regresión logística** (`aprenentatge.py`). Primer modelo ajustado
   con el archivo de 2024-2026 (`calibracio/pluja_casa.py`): lluvia de los tres
   modelos finos, antelación, hora y día del año, con la lluvia de Sabadell y
   Sant Cugat como verdad. Con 30 horas de lluvia propias, un modelo con
-  Montflorit como verdad y dos señales más: la fracción del ensemble y la
-  lluvia medida al prever.
-- **Temperatura: regresión lineal ridge** del error del modelo en Montflorit,
-  a partir de 14 días registrados.
+  Montflorit y casa (cuando marca lluvia) como verdad y tres señales más: la
+  fracción del ensemble, la lluvia medida al prever y la sequedad del aire en
+  casa al prever (ADR 0017).
+- **Temperatura: regresión lineal ridge** del error del modelo en la estación
+  de casa. Desde el 06-10-2026, el primer modelo se ajusta con un año de esa
+  estación (`calibracio/estacio_casa.py`, ADR 0017); con 14 días registrados,
+  se le compara cada día el ajustado con el registro propio. Al principio se
+  pensó en Montflorit como verdad y en no corregir hasta tener 14 días.
 - **Adopción** (`aprenentatge.py diari`, cada día tras la verificación de las
   16:00): validación cruzada en cuatro grupos de semanas; un método sustituye
   al que se usa solo si su error baja al menos un 5 %. Un cambio de método se
@@ -70,6 +75,7 @@ usa IA ni servicios de pago: numpy en el NAS, segundos al día.
 - El corto plazo del archivo une las primeras horas de cada pasada: es
   optimista para las horas lejanas de la tabla.
 - Si el NAS está apagado más de 24 horas, se pierden esas horas de Montflorit.
+  Las de la estación de casa se rellenan con su historial (ADR 0017).
 - La validación con pocas semanas tiene mucho margen de error; el 5 % de
   mejora mínima evita cambiar por ruido.
 

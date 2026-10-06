@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// Llegeix casa.json (el genera casa.py) i pinta el temps a casa: el que mesura
-// ara l'estació de Montflorit i la previsió hora a hora per a 24 hores.
+// Llegeix casa.json (el genera casa.py) i pinta el temps a casa: el que mesuren
+// ara l'estació de casa i la de Montflorit i la previsió hora a hora per a 24 hores.
 
 function coma(x, decimals = 1) {
   return Number(x).toFixed(decimals).replace('.', ',');
@@ -23,18 +23,35 @@ function cel(f) {
   return 'Cobert';
 }
 
-function blocAra(ara) {
+// Com canvia la pressió en tres hores, amb els llindars habituals: menys d'1
+// hPa és estable; 3,6 hPa o més, un canvi ràpid.
+function textPressio(casa) {
+  const p = `pressió ${coma(casa.pressio, 0)} hPa`;
+  const d = casa.pressio_3h;
+  if (d == null) return p;
+  if (Math.abs(d) < 1) return `${p}, estable`;
+  const sentit = d > 0 ? 'pujant' : 'baixant';
+  const rapid = Math.abs(d) >= 3.6 ? ' ràpid' : '';
+  return `${p}, ${sentit}${rapid} (${d > 0 ? '+' : '\u2212'}${coma(Math.abs(d))} en 3 h)`;
+}
+
+// Temperatura, humitat i pressió, de l'estació de casa; pluja i vent, de
+// Montflorit. Plou si qualsevol de les dues en marca (la de casa, només quan
+// en marca: el seu zero no és fiable). Si en falla una, l'altra.
+function blocAra(ara, casa) {
+  const base = casa || ara;
   const sec = element('section', 'decisio targeta ara');
-  sec.setAttribute('aria-label', 'El temps ara a Montflorit');
-  sec.append(element('h2', 'data', `Ara a Montflorit (${horaCurta(ara.hora)})`));
-  sec.append(element('p', 'veredicte', `${coma(ara.temperatura)} °C`));
-  const plou = (ara.intensitat || 0) > 0 || (ara.pluja_30min || 0) > 0;
-  const parts = [
-    plou ? `Plou: ${coma(ara.intensitat || 0)} mm/h` : 'No plou',
-    `${coma(ara.pluja_avui || 0)} mm avui`,
-    `humitat ${ara.humitat} %`,
-  ];
-  if (ara.vent != null) parts.push(`vent ${coma(ara.vent, 0)} km/h`);
+  sec.setAttribute('aria-label', casa ? 'El temps ara a casa' : 'El temps ara a Montflorit');
+  sec.append(element('h2', 'data', `Ara a ${casa ? 'casa' : 'Montflorit'} (${horaCurta(base.hora)})`));
+  sec.append(element('p', 'veredicte', `${coma(base.temperatura)} °C`));
+  const plouMont = !!ara && ((ara.intensitat || 0) > 0 || (ara.pluja_30min || 0) > 0);
+  const plou = plouMont || !!(casa && casa.plou);
+  const intensitat = Math.max((ara && ara.intensitat) || 0, (casa && casa.plou && casa.intensitat) || 0);
+  const parts = [plou ? `Plou: ${coma(intensitat)} mm/h` : 'No plou'];
+  if (ara) parts.push(`${coma(ara.pluja_avui || 0)} mm avui`);
+  parts.push(`humitat ${coma(base.humitat, 0)} %`);
+  if (casa && casa.pressio != null) parts.push(textPressio(casa));
+  if (ara && ara.vent != null) parts.push(`vent ${coma(ara.vent, 0)} km/h`);
   sec.append(element('p', 'frase', parts.join(' · ') + '.'));
   return sec;
 }
@@ -116,10 +133,14 @@ function taula(hores, aprenentatge) {
 function textAprenentatge(a) {
   if (!a || !a.pluja) return '';
   const data = (iso) => new Date(iso + 'T12:00:00').toLocaleDateString('ca');
-  let t = a.pluja.origen === 'montflorit'
-    ? `Probabilitat de pluja apresa del que ha plogut de veritat a Montflorit des del ${data(a.pluja.des_de)}, quan els models deien el mateix.`
+  let t = a.pluja.origen !== 'arxiu'
+    ? `Probabilitat de pluja apresa del que ha plogut de veritat a Montflorit i a casa des del ${data(a.pluja.des_de)}, quan els models deien el mateix.`
     : `Probabilitat de pluja apresa del que va ploure de veritat a Sabadell i Sant Cugat des del ${new Date(a.pluja.des_de).getFullYear()}, quan els models deien el mateix.`;
-  if (a.temperatura) t += ` Temperatura corregida amb el que mesura Montflorit des del ${data(a.temperatura.des_de)}.`;
+  if (a.temperatura) {
+    t += a.temperatura.origen === 'arxiu'
+      ? ` Temperatura corregida amb el que ha mesurat l\u2019estació de casa des del ${data(a.temperatura.des_de)}.`
+      : ` Temperatura corregida amb el registre propi de l\u2019estació de casa des del ${data(a.temperatura.des_de)}.`;
+  }
   return t;
 }
 
@@ -139,7 +160,7 @@ function pinta(dades) {
       + `han caigut ${coma(m.mesurada_mm)}\u00a0mm a Montflorit i en preveien ${coma(m.prevista_mm)}. `
       + 'Les primeres hores de la taula parteixen del que mesura l\u2019estació; per a la resta, fes més cas dels avisos.'));
   }
-  if (dades.ara) cont.append(blocAra(dades.ara));
+  if (dades.ara || dades.ara_casa) cont.append(blocAra(dades.ara, dades.ara_casa));
   if (dades.hores) cont.append(taula(dades.hores, dades.aprenentatge));
   pintaHorari(dades);
   posaVersio(dades.versio);

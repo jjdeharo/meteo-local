@@ -1,0 +1,139 @@
+{
+ "origen": "arxiu",
+ "des_de": "2025-10-08",
+ "fins": "2026-10-06",
+ "rasgos": [
+  "constant",
+  "temperatura",
+  "nuvols",
+  "humitat",
+  "hora_sin",
+  "hora_cos",
+  "antelacio",
+  "dia_sin",
+  "dia_cos",
+  "radiacio",
+  "error_ara_3h",
+  "error_ara_24h"
+ ],
+ "w": [
+  1.33576,
+  0.00915,
+  -0.00537,
+  -1.32582,
+  0.06536,
+  0.60261,
+  0.32297,
+  -0.1718,
+  0.28727,
+  -0.83763,
+  0.43635,
+  0.24215
+ ],
+ "validacio": {
+  "mostres": 43099,
+  "dies": 364,
+  "biaix_model": 0.81,
+  "error_model": 1.464,
+  "error_corregit": 1.031,
+  "per_antelacio": {
+   "1": {
+    "model": 1.44,
+    "corregit": 0.77
+   },
+   "2": {
+    "model": 1.44,
+    "corregit": 0.94
+   },
+   "3": {
+    "model": 1.45,
+    "corregit": 1.04
+   },
+   "6": {
+    "model": 1.45,
+    "corregit": 1.14
+   },
+   "24": {
+    "model": 1.54,
+    "corregit": 1.26
+   }
+  }
+ },
+ "rasgos_sense_estacio": [
+  "constant",
+  "temperatura",
+  "nuvols",
+  "humitat",
+  "hora_sin",
+  "hora_cos",
+  "antelacio",
+  "dia_sin",
+  "dia_cos",
+  "radiacio"
+ ],
+ "w_sense_estacio": [
+  2.35676,
+  0.00109,
+  -0.07155,
+  -1.73103,
+  0.13602,
+  0.54331,
+  -0.0055,
+  -0.28269,
+  0.24353,
+  -1.83581
+ ],
+ "validacio_sense_estacio": {
+  "mostres": 43240,
+  "dies": 364,
+  "biaix_model": 0.81,
+  "error_model": 1.465,
+  "error_corregit": 1.162,
+  "per_antelacio": {
+   "1": {
+    "model": 1.45,
+    "corregit": 1.13
+   },
+   "2": {
+    "model": 1.45,
+    "corregit": 1.13
+   },
+   "3": {
+    "model": 1.45,
+    "corregit": 1.13
+   },
+   "6": {
+    "model": 1.45,
+    "corregit": 1.13
+   },
+   "24": {
+    "model": 1.54,
+    "corregit": 1.29
+   }
+  }
+ },
+ "pluja": {
+  "periode": [
+   "2025-10-08",
+   "2026-08-31"
+  ],
+  "mostres": 38988,
+  "hores_pluja": 297,
+  "error_arxiu": {
+   "1": 0.0256,
+   "2": 0.02561,
+   "3": 0.02561,
+   "4": 0.0255,
+   "24": 0.02913,
+   "total": 0.02629
+  },
+  "error_arxiu_i_casa": {
+   "1": 0.02471,
+   "2": 0.02578,
+   "3": 0.02626,
+   "4": 0.0261,
+   "24": 0.03001,
+   "total": 0.02657
+  }
+ }
+}
