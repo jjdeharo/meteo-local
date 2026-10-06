@@ -41,7 +41,8 @@ de Meteocat, que es el que él mira.
 - **Página de casa**: en las dos primeras horas de la tabla, si el radar da
   más lluvia o más probabilidad que los modelos, se usa la del radar, marcada
   con †; nunca rebaja la previsión, porque la lluvia que aún no se ha formado
-  no está en el radar. Una hora debe quedar cubierta al menos 30 minutos. En
+  no está en el radar. La probabilidad cuenta aunque el radar cubra solo una
+  parte de la hora; los mm, solo si cubre 30 minutos o más. En
   «Ara a casa», una línea dice cuándo llegaría la lluvia, hacia dónde va y a
   qué velocidad. El riesgo propio (ADR 0018) lo recoge a través de la tabla.
 - **Registro**: cada hora de la tabla guarda lo que daba el radar

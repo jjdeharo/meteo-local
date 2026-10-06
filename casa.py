@@ -219,11 +219,14 @@ def previsio(desde, h, e, ara, avisos, model=None, casa=None, nc=None):
         # 0019), si da más. No rebaja nada: la lluvia que aún no ha nacido no
         # se ve en el radar.
         segun_radar = False
-        radar = N.en_tram(nc, "casa", max(ini, desde), fin, minim_min=30)
+        # La probabilidad vale aunque el radar cubra solo una parte de la hora
+        # (si llueve en ese rato, llueve en la hora); los mm, solo si cubre
+        # media hora o más.
+        radar = N.en_tram(nc, "casa", max(ini, desde), fin)
         if radar:
             if radar["prob"] > (p or 0) and radar["prob"] >= C.PROB_ATENCION:
                 p, segun_radar = radar["prob"], True
-            if radar["mm"] > mm and radar["mm"] >= C.UMBRAL_MM:
+            if radar["minuts"] >= 30 and radar["mm"] > mm and radar["mm"] >= C.UMBRAL_MM:
                 mm, segun_radar = radar["mm"], True
         plou_ara = n == 0 and llueve_ahora
         if plou_ara:
