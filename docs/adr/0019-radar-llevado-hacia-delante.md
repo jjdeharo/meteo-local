@@ -23,8 +23,9 @@ de Meteocat, que es el que él mira.
   la de RainViewer.
 - **Movimiento**: el de la advección de Meteocat, su predicción a una hora,
   que calcula el campo de movimiento con las tres últimas imágenes. Se mide
-  cuánto se desplaza su lluvia de la primera imagen prevista a la última en un
-  cuadro de unos 300 km. Si la advección tiene más de una hora, el de
+  cuánto se desplaza su lluvia de la primera imagen prevista a la última, en
+  la lluvia de cerca del trayecto y, si hay poca, en un cuadro de unos 300 km
+  (ADR 0023). Si la advección tiene más de una hora, el de
   RainViewer (pares a 30 minutos de la última hora), solo si los pares
   coinciden (menos de 20 km/h de diferencia). Si no, la lluvia se deja quieta.
 - **Hacia delante** (`nowcast.py`): cada 5 minutos y hasta 2 horas, la lluvia
@@ -109,8 +110,8 @@ de Meteocat, que es el que él mira.
 
 ## Riesgos y limitaciones
 
-- Un solo vector para toda la zona: si hay corrientes distintas en sitios
-  distintos, se equivoca en las lejanas.
+- Un solo vector para toda la zona, medido en la lluvia de cerca (ADR 0023):
+  si hay corrientes distintas en sitios distintos, se equivoca en las lejanas.
 - No ve la lluvia que nace ni la que crece o se deshace.
 - Las teselas de Meteocat no son una API documentada: si cambian, se usa
   RainViewer. Su API oficial, con clave y cuotas mensuales por plan, no

@@ -48,10 +48,41 @@ class Moviment(unittest.TestCase):
     def test_sense_pluja(self):
         self.assertIsNone(N.desplacament(np.zeros((N.MIDA, N.MIDA)), np.zeros((N.MIDA, N.MIDA))))
 
+    def test_moviment_de_la_pluja_de_prop(self):
+        # Cerca del trayecto, lluvia que va al este; lejos, una masa mayor que
+        # va al sur. Manda la de cerca (ADR 0023).
+        r = {"tx": 64, "ty": 47, "km_px": N.km_px(41.52)}
+        f, c = (int(x) for x in N.pixel(*C.CASA, 64, 47))
+        a = np.maximum(camp((f + 10, c - 20), radi=12), camp((f - 150, c - 150), radi=40))
+        b = np.maximum(camp((f + 10, c + 7), radi=12), camp((f - 120, c - 150), radi=40))
+        self.assertEqual(N.desplacament_local(a, b, r, 54), (0.0, 27.0))
+        adv = {"base": T0 - dt.timedelta(minutes=20),
+               "previsions": [(T0 - dt.timedelta(minutes=14), a), (T0 + dt.timedelta(minutes=40), b)]}
+        v, origen = N.moviment({**r, "meteocat": {"adveccio": adv}}, T0)
+        self.assertEqual(origen, "meteocat")
+        self.assertAlmostEqual(v[0], 0.0, delta=0.01)
+        self.assertAlmostEqual(v[1], 0.5, delta=0.01)
+
+    def test_poca_pluja_a_prop_es_mesura_tot_el_quadre(self):
+        r = {"tx": 64, "ty": 47, "km_px": N.km_px(41.52)}
+        f, c = (int(x) for x in N.pixel(*C.CASA, 64, 47))
+        # Solo lluvia a más de 100 km: cerca no hay nada que medir.
+        a, b = camp((f - 120, c - 120), radi=30), camp((f - 120, c - 93), radi=30)
+        self.assertIsNone(N.desplacament_local(a, b, r, 54))
+        adv = {"base": T0 - dt.timedelta(minutes=20),
+               "previsions": [(T0 - dt.timedelta(minutes=14), a), (T0 + dt.timedelta(minutes=40), b)]}
+        v, _ = N.moviment({**r, "meteocat": {"adveccio": adv}}, T0)
+        self.assertAlmostEqual(v[1], 0.5, delta=0.03)
+        # Lluvia tan rápida que se sale de la búsqueda (más de 60 km): tampoco.
+        self.assertIsNone(N.desplacament_local(camp((f, c - 40), radi=12), camp((f, c + 35), radi=12), r, 54))
+        # Dos manchas que no se parecen: tampoco.
+        self.assertIsNone(N.desplacament_local(camp((f, c), radi=6), camp((f, c), radi=40), r, 54))
+
     def test_rumb(self):
         self.assertEqual(N.rumb((-1, 0)), "al nord")
         self.assertEqual(N.rumb((0, 1)), "a l'est")
         self.assertEqual(N.rumb((1, -1)), "al sud-oest")
+        self.assertAlmostEqual(N.graus((-1, 1)), 45)
 
     def test_rainviewer_nomes_si_els_parells_coincideixen(self):
         hores = [T0 - dt.timedelta(minutes=10 * k) for k in range(6, -1, -1)]

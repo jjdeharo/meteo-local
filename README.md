@@ -82,7 +82,8 @@ Fuentes, de la más a la menos decisiva:
    (ADR 0008).
 2. **Radar** de Meteocat (o RainViewer, si Meteocat se retrasa). Hasta 2
    horas, la lluvia de ahora se lleva hacia delante con el movimiento de la
-   advección de Meteocat (ADR 0019): probable (50 %) y de 1 mm/h, riesgo alto;
+   advección de Meteocat, medido en la lluvia de cerca del trayecto (ADR 0019
+   y 0023): probable (50 %) y de 1 mm/h, riesgo alto;
    posible (20 %), moderado. Entre 2 y 3 horas, la distancia: lluvia a menos
    de 15 km y creciendo, alto; a menos de 40 km, moderado.
 3. **Estaciones**: Montflorit, de meteocerdanyola.com, minuto a minuto; la de
@@ -120,7 +121,7 @@ al motivo de los modelos. Para repetirla: `python3 calibracio/descarrega.py
 | `agent/` | Agente diario: instrucciones, imagen del radar, ejecución y validación |
 | `ecowitt.py` | La estación de casa con la API oficial de Ecowitt; las claves, fuera del repositorio (ADR 0017) |
 | `pluviometre.py` | Comprueba una vez, tras limpiarlo, si el pluviómetro de casa marca la lluvia débil y avisa por Telegram (ADR 0017) |
-| `nowcast.py` | La lluvia del radar (Meteocat o RainViewer) llevada hacia delante hasta 2 horas (ADR 0019) |
+| `nowcast.py` | La lluvia del radar (Meteocat o RainViewer) llevada hacia delante hasta 2 horas (ADR 0019 y 0023) |
 | `riscos.py` | Situaciones de peligro de la página de casa y aviso por Telegram (ADR 0018) |
 | `pluja_arriba.py` | Aviso por Telegram unos 15 minutos antes de que llueva en casa, según el radar, y registro de sus aciertos (ADR 0022) |
 | `registre.py` | Registro en el NAS de cada actualización y del resultado de cada día (ADR 0006) |

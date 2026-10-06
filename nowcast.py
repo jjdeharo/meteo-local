@@ -14,8 +14,10 @@ más de 20. Aquí:
    relación de Marshall-Palmer, Z = 200 R^1,6.
 2. **El movimiento**: el de la advección de Meteocat, que lo calcula con las
    tres últimas imágenes y extrapola una hora; aquí se mide lo que desplaza
-   su primera imagen prevista hasta la última, en un cuadro de unos 300 km
-   alrededor del trayecto. Si no la hay, el de RainViewer (pares de imágenes
+   su primera imagen prevista hasta la última, en la lluvia que hay a 60 km
+   o menos del trayecto (ADR 0023): la que puede llegar es esa, y la de más
+   lejos puede moverse de otra manera. Si cerca hay poca lluvia, en un cuadro
+   de unos 300 km. Si no hay advección, el de RainViewer (pares de imágenes
    separados 30 minutos), solo si los pares coinciden.
 3. **Hacia delante**: para cada lugar y cada 5 minutos, la lluvia de ahora en
    el punto de donde vendrá y en un círculo alrededor que crece con el tiempo
@@ -39,6 +41,8 @@ import config as C
 Z = 7
 MIDA = 768                  # mosaico de 3x3 teselas de 256 píxeles
 FINESTRA = 320              # cuadro para el movimiento (unos 300 km)
+RADI_MOV_KM = 60            # el movimiento se mide primero en la lluvia de cerca
+COINCIDENCIA_MIN = 0.3      # coincidencia mínima para fiarse del movimiento de cerca
 PAS_MIN = 5
 HORITZO_MIN = 120
 RADI_KM = (3.0, 0.08)       # radio del círculo: 3 km + 0,08 km por minuto
@@ -298,18 +302,62 @@ def desplacament(a, b):
     return float(di), float(dj)
 
 
+def desplacament_local(a, b, r, minuts):
+    """Desplazamiento (filas, columnas) de a a b de la lluvia que hay a
+    RADI_MOV_KM o menos del trayecto: la traslación con la que más coinciden
+    las dos manchas de lluvia (lo que comparten entre lo que ocupan las dos).
+    None si cerca hay poca lluvia en alguna de las dos imágenes, si no
+    coinciden lo bastante, si la lluvia va tan deprisa que se sale de la
+    búsqueda o si no se sabe dónde está el trayecto."""
+    import numpy as np
+    if "tx" not in r:
+        return None
+    fila, col = pixel((C.CASA[0] + C.DESTINO[0]) / 2, (C.CASA[1] + C.DESTINO[1]) / 2, r["tx"], r["ty"])
+    f, c = int(round(fila)), int(round(col))
+    radi = int(RADI_MOV_KM / r["km_px"]) + 1
+    # Solo saltos de hasta RADI_MOV_KM: más lejos ya se compararía con otra
+    # lluvia, y una tormenta lejana puede parecerse más que la de cerca.
+    salt = min(int(VEL_MAX_KMH / 60 * minuts / r["km_px"]), radi,
+               f - radi, c - radi, MIDA - f - radi, MIDA - c - radi)
+    if salt < 1:
+        return None
+    yy, xx = np.mgrid[-radi:radi, -radi:radi]
+    zona = yy ** 2 + xx ** 2 < radi ** 2
+    pa = a >= PLOU_MMH
+    pb = (b >= PLOU_MMH)[f - radi:f + radi, c - radi:c + radi][zona]
+    if pb.sum() < 50 or pa[f - radi:f + radi, c - radi:c + radi][zona].sum() < 50:
+        return None
+    millor = (-1.0, 0, 0)
+    # Primero de 3 en 3 píxeles; luego, píxel a píxel alrededor del mejor.
+    for pas, marge in ((3, salt), (1, 3)):
+        _, f0, c0 = millor
+        for df in range(max(-salt, f0 - marge), min(salt, f0 + marge) + 1, pas):
+            for dc in range(max(-salt, c0 - marge), min(salt, c0 + marge) + 1, pas):
+                if df * df + dc * dc > salt * salt:
+                    continue
+                p = pa[f - radi - df:f + radi - df, c - radi - dc:c + radi - dc][zona]
+                coincidencia = (p & pb).sum() / max(1, (p | pb).sum())
+                if coincidencia > millor[0]:
+                    millor = (coincidencia, df, dc)
+    # En el borde de la búsqueda no es un máximo: es que no lo ha encontrado.
+    if millor[0] < COINCIDENCIA_MIN or math.hypot(millor[1], millor[2]) >= salt - 1:
+        return None
+    return float(millor[1]), float(millor[2])
+
+
 def moviment(r, ara=None):
     """Velocidad (filas y columnas por minuto) y de dónde sale: la advección
-    de Meteocat si es reciente; si no, RainViewer si sus pares coinciden.
-    None si no hay forma fiable de saberlo."""
+    de Meteocat si es reciente (medida en la lluvia de cerca del trayecto y,
+    si hay poca, en todo el cuadro); si no, RainViewer si sus pares
+    coinciden. None si no hay forma fiable de saberlo."""
     import numpy as np
     ara = ara or dt.datetime.now().astimezone()
     adv = (r.get("meteocat") or {}).get("adveccio")
     if adv and ara - adv["base"] <= dt.timedelta(minutes=ADVECCIO_MAX_MIN):
         (t0, a), (t1, b) = adv["previsions"]
-        d = desplacament(a, b)
+        minuts = (t1 - t0).total_seconds() / 60
+        d = desplacament_local(a, b, r, minuts) or desplacament(a, b)
         if d is not None:
-            minuts = (t1 - t0).total_seconds() / 60
             v = (d[0] / minuts, d[1] / minuts)
             if math.hypot(*v) * r["km_px"] * 60 <= VEL_MAX_KMH:
                 return v, "meteocat"
@@ -374,11 +422,13 @@ def resum(r, ahora=None):
     hora, camp, origen = im
     mov = moviment(r, ahora)
     res = {"hora": hora.isoformat(timespec="minutes"), "imatge": origen,
-           "moviment": mov and mov[1], "velocitat_kmh": None, "cap_a": None, "llocs": {}}
+           "moviment": mov and mov[1], "velocitat_kmh": None, "cap_a": None, "graus": None,
+           "llocs": {}}
     v = mov[0] if mov else (0.0, 0.0)   # sin movimiento: la lluvia de ahora, quieta
     if mov:
         res["velocitat_kmh"] = round(math.hypot(*v) * r["km_px"] * 60)
         res["cap_a"] = rumb(v)
+        res["graus"] = round(graus(v))      # para comprobarlo con el registro
     mig = ((C.CASA[0] + C.DESTINO[0]) / 2, (C.CASA[1] + C.DESTINO[1]) / 2)
     for nom, (lat, lon) in (("casa", C.CASA), ("mig", mig), ("desti", C.DESTINO)):
         res["llocs"][nom] = serie(r, camp, v, lat, lon)
@@ -389,10 +439,15 @@ def resum(r, ahora=None):
 RUMBS = ["al nord", "al nord-est", "a l'est", "al sud-est", "al sud", "al sud-oest", "a l'oest", "al nord-oest"]
 
 
+def graus(v):
+    """Hacia dónde va, en grados (0 = norte, 90 = este; las filas crecen
+    hacia el sur)."""
+    return math.degrees(math.atan2(v[1], -v[0])) % 360
+
+
 def rumb(v):
-    """Hacia dónde va, con ocho rumbos (las filas crecen hacia el sur)."""
-    angle = math.degrees(math.atan2(v[1], -v[0])) % 360   # 0 = norte, 90 = este
-    return RUMBS[int((angle + 22.5) // 45) % 8]
+    """Hacia dónde va, con ocho rumbos."""
+    return RUMBS[int((graus(v) + 22.5) // 45) % 8]
 
 
 def en_tram(nc, lloc, ini, fin, minim_min=0):
