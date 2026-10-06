@@ -240,7 +240,7 @@ def radar():
     o, si se ha quedado atrás, de RainViewer."""
     import numpy as np
     import nowcast as N
-    r = N.carrega(get)
+    r = N.carrega(get, get_pagina=get_recent)
     im = N.imatge(r)
     if im is None:
         raise RuntimeError("; ".join(r["errors"]) or "sense imatges de radar")

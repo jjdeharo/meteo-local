@@ -178,12 +178,46 @@ def rainviewer(get, tx, ty, fotogrames=7):
                             tx, ty, claus, valors) for f in past]}
 
 
-def meteocat(get, tx, ty):
+PAUSA_MIN = 60     # si Meteocat rechaza las peticiones, se deja de pedir
+
+
+def fitxer_pausa():
+    return os.path.join(os.path.dirname(CACHE), "meteocat-pausa")
+
+
+def en_pausa(ara=None):
+    """Hora hasta la que Meteocat está en pausa, o None."""
+    try:
+        with open(fitxer_pausa(), encoding="utf-8") as f:
+            fins = dt.datetime.fromisoformat(f.read().strip())
+    except (OSError, ValueError):
+        return None
+    return fins if fins > (ara or dt.datetime.now().astimezone()) else None
+
+
+def posa_pausa(ara=None):
+    """Una hora sin pedir nada a Meteocat (solo en el NAS, con /estat)."""
+    if not os.path.isdir(os.path.dirname(CACHE)):
+        return None
+    fins = (ara or dt.datetime.now().astimezone()) + dt.timedelta(minutes=PAUSA_MIN)
+    with open(fitxer_pausa(), "w", encoding="utf-8") as f:
+        f.write(fins.isoformat(timespec="minutes"))
+    return fins
+
+
+def es_rebuig(ex):
+    """Un rechazo (403 o 429), no una caída: se respeta con una pausa."""
+    import urllib.error
+    return isinstance(ex, urllib.error.HTTPError) and ex.code in (403, 429)
+
+
+def meteocat(get, tx, ty, get_pagina=None):
     """La última imagen del radar de Meteocat y las dos de su advección (la
     primera y la última prevista), con sus horas. Las teselas siguen el
-    esquema TMS (la y, contada desde el sur)."""
+    esquema TMS (la y, contada desde el sur). La página, con get_pagina si se
+    da (para reutilizarla entre las dos páginas de una pasada)."""
     import re
-    pagina = get("https://www.meteo.cat/observacions/radar")
+    pagina = (get_pagina or get)("https://www.meteo.cat/observacions/radar")
     if isinstance(pagina, bytes):
         pagina = pagina.decode("utf-8", "ignore")
     radar = re.search(r"dataDarreraRadar:\s*'(\d\d)/(\d\d)/(\d{4}) (\d\d):(\d\d)Z'", pagina)
@@ -209,8 +243,10 @@ def meteocat(get, tx, ty):
     return res
 
 
-def carrega(get):
-    """Todo lo que hace falta: las imágenes de los dos radares, si están."""
+def carrega(get, get_pagina=None):
+    """Todo lo que hace falta: las imágenes de los dos radares, si están. Si
+    Meteocat falla, la misma pasada sigue con RainViewer; si lo que hace es
+    rechazar las peticiones, se deja en pausa una hora."""
     lat = (C.CASA[0] + C.DESTINO[0]) / 2
     lon = (C.CASA[1] + C.DESTINO[1]) / 2
     tx, ty = geometria(lat, lon)
@@ -220,10 +256,18 @@ def carrega(get):
         r["rainviewer"] = rainviewer(get, tx, ty)
     except Exception as ex:
         r["errors"].append(f"RainViewer: {ex}")
-    try:
-        r["meteocat"] = meteocat(get, tx, ty)
-    except Exception as ex:
-        r["errors"].append(f"Meteocat: {ex}")
+    pausa = en_pausa()
+    if pausa:
+        r["errors"].append(f"Meteocat: en pausa fins a les {pausa:%H:%M}")
+    else:
+        try:
+            r["meteocat"] = meteocat(get, tx, ty, get_pagina)
+        except Exception as ex:
+            r["errors"].append(f"Meteocat: {ex}")
+            if es_rebuig(ex):
+                fins = posa_pausa()
+                if fins:
+                    r["errors"].append(f"Meteocat: en pausa fins a les {fins:%H:%M}")
     return r
 
 

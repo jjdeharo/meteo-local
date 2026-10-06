@@ -115,8 +115,10 @@ function blocRadar(r, plou) {
   caixa.append(icona('i-radar'));
   const cos = element('div');
   cos.append(element('p', 'radar-text', text));
+  // La font i l'hora de la imatge, com demana Meteocat per reutilitzar-la.
+  const font = r.imatge === 'rainviewer' ? 'RainViewer' : 'Meteocat';
   const mov = r.cap_a ? ` \u00b7 va cap ${r.cap_a} a ${r.velocitat_kmh}\u00a0km/h` : '';
-  cos.append(element('p', 'radar-detall', `Radar${mov}`));
+  cos.append(element('p', 'radar-detall', `Radar de ${font} de les ${horaCurta(r.hora)}${mov}`));
   caixa.append(cos);
   return caixa;
 }

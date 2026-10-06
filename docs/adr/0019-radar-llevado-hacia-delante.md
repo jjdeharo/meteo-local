@@ -45,6 +45,16 @@ de Meteocat, que es el que él mira.
   parte de la hora; los mm, solo si cubre 30 minutos o más. En
   «Ara a casa», una línea dice cuándo llegaría la lluvia, hacia dónde va y a
   qué velocidad. El riesgo propio (ADR 0018) lo recoge a través de la tabla.
+- **Trato con Meteocat**: lo que se le pide equivale a tener abierta su
+  página del radar con la actualización automática (unas 27 teselas nuevas
+  cada 6 minutos y una vez su página por pasada, compartida entre las dos
+  páginas). Si rechaza las peticiones (errores 403 o 429), se deja de pedir
+  una hora (`/estat/meteocat-pausa`) y se usa RainViewer; si solo falla o
+  está caído, la misma pasada sigue con RainViewer y se vuelve a probar en la
+  siguiente. Su aviso legal permite reutilizar la información que ofrece
+  libremente sin alterarla, citando la fuente y la fecha de la última
+  actualización: por eso la franja del radar dice de quién es la imagen y de
+  qué hora («Radar de Meteocat de les 12:42»).
 - **Registro**: cada hora de la tabla guarda lo que daba el radar
   (`radar_mm`, `radar_prob`), y el trayecto, en sus señales
   (`radar_nowcast`), para comprobar con Montflorit si acierta y ajustarlo.
@@ -86,6 +96,10 @@ de Meteocat, que es el que él mira.
 - Misma imagen (12:00), cuadro de 300 km: con 0,5 mm/h o más, 4.485 km² en
   Meteocat y 7.040 en RainViewer; con 20 mm/h, 108 y 188 km²; máximo, 107 y 205
   mm/h. El 66 % de la lluvia de Meteocat coincide con la de RainViewer.
+- Aviso legal de Meteocat (<https://www.meteo.cat/wpweb/avis-legal/>),
+  apartado «Informació continguda a Meteocat»: reutilización según la Llei
+  37/2007 con cuatro condiciones (no alterar, no desnaturalizar, citar la
+  fuente e indicar la fecha de la última actualización).
 - Tabla de colores de RainViewer: <https://www.rainviewer.com/api/color-schemes.html>
   (`calibracio/rainviewer_colors.csv`); todos los píxeles de las teselas
   descargadas están en ella.
@@ -99,7 +113,10 @@ de Meteocat, que es el que él mira.
   distintos, se equivoca en las lejanas.
 - No ve la lluvia que nace ni la que crece o se deshace.
 - Las teselas de Meteocat no son una API documentada: si cambian, se usa
-  RainViewer.
+  RainViewer. Su API oficial, con clave y cuotas mensuales, no tiene radar
+  según un cliente no oficial (`herrera-lu/meteocat-api-client`: XEMA, XDDE,
+  predicción, referencia y consumo); sin confirmar con la documentación
+  oficial, que no respondía el 06-10-2026.
 
 ## Validación
 

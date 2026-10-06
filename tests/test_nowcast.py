@@ -95,6 +95,43 @@ class Cache(unittest.TestCase):
         self.assertEqual(N.tesela(lambda u, b: b"x", "https://x/2.png"), b"x")
 
 
+class Pausa(unittest.TestCase):
+    def setUp(self):
+        import tempfile
+        N.CACHE = os.path.join(tempfile.mkdtemp(), "radar-cache")
+        self.rv = N.rainviewer
+        N.rainviewer = lambda get, tx, ty: {"hores": [T0], "mm_h": [camp((380, 380))]}
+
+    def tearDown(self):
+        N.rainviewer = self.rv
+
+    def carrega(self, error):
+        demanades = []
+
+        def get(url, binari=False):
+            demanades.append(url)
+            raise error
+        r = N.carrega(get)
+        return r, demanades
+
+    def test_rebuig_posa_pausa_i_no_torna_a_demanar(self):
+        import urllib.error
+        rebuig = urllib.error.HTTPError("https://www.meteo.cat/", 429, "Too Many Requests", {}, None)
+        r, demanades = self.carrega(rebuig)
+        self.assertEqual(len(demanades), 1)
+        self.assertIsNotNone(N.en_pausa())
+        self.assertEqual(N.imatge(r)[2], "rainviewer")      # la mateixa passada, amb RainViewer
+        r, demanades = self.carrega(rebuig)
+        self.assertEqual(demanades, [])                      # en pausa: ni s'intenta
+        self.assertIn("en pausa", " ".join(r["errors"]))
+        self.assertIsNone(N.en_pausa(dt.datetime.now().astimezone() + dt.timedelta(minutes=61)))
+
+    def test_caiguda_no_posa_pausa(self):
+        r, demanades = self.carrega(TimeoutError("timed out"))
+        self.assertIsNone(N.en_pausa())
+        self.assertEqual(N.imatge(r)[2], "rainviewer")
+
+
 class Endavant(unittest.TestCase):
     def setUp(self):
         self.r = {"tx": 64, "ty": 47, "km_px": N.km_px(41.52)}
