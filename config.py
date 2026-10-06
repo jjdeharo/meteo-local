@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 """Datos fijos del trayecto. Se cambian aquí, no en prevision.py."""
 
-VERSION = "2.13.0"
+VERSION = "2.13.1"
 
 # Coordenadas redondeadas a unos 500 m: para el tiempo da igual una calle u
 # otra, y el repositorio es público.
@@ -128,11 +128,12 @@ RISC_FI_H = 3
 
 # Aviso de antes de llover en casa (pluja_arriba.py, ADR 0022): se manda
 # cuando el radar llevado hacia delante dice que faltan AVIS_PLUJA_MIN minutos
-# más una pasada del modo aviso (entre 10 y 16 minutos antes). Un episodio de
+# más una pasada del modo aviso (entre 15 y 21 minutos antes): lo que importa
+# es que llegue con margen, no el minuto exacto. Un episodio de
 # lluvia acaba tras AVIS_PLUJA_REPOS_MIN minutos sin lluvia medida ni
 # anunciada, y hay un aviso por episodio. El aviso cuenta como acierto si
 # empieza a llover en AVIS_PLUJA_VERIFICA_MIN minutos.
-AVIS_PLUJA_MIN = 10
+AVIS_PLUJA_MIN = 15
 AVIS_PLUJA_REPOS_MIN = 60
 AVIS_PLUJA_VERIFICA_MIN = 45
 

@@ -40,15 +40,15 @@ class Avis(unittest.TestCase):
                 files.append(fila)
         return textos, files, estat
 
-    def test_avisa_entre_10_i_16_minuts_abans(self):
-        # La lluvia llegaría a las 17:33. A falta de 30, 24 y 18 minutos, nada;
-        # a falta de 12, el aviso, y ya no se repite.
+    def test_avisa_entre_15_i_21_minuts_abans(self):
+        # La lluvia llegaría a las 17:33. A falta de 30 y 24 minutos, nada;
+        # a falta de 18, el aviso, y ya no se repite.
         textos, _, _ = self.passades([(0, 30, False), (6, 30, False), (12, 30, False),
                                       (18, 30, False), (24, 30, False)])
-        self.assertEqual([bool(t) for t in textos], [False, False, False, True, False])
-        self.assertIn("d'aquí a uns 12 minuts, cap a les 17:33", textos[3])
-        self.assertIn("Seria feble", textos[3])
-        self.assertIn("Radar de Meteocat de les 17:06", textos[3])
+        self.assertEqual([bool(t) for t in textos], [False, False, True, False, False])
+        self.assertIn("d'aquí a uns 18 minuts, cap a les 17:33", textos[2])
+        self.assertIn("Seria feble", textos[2])
+        self.assertIn("Radar de Meteocat de les 17:00", textos[2])
 
     def test_encert_i_registre(self):
         # Avisa a las 17:21, empieza a llover a las 17:33, para, y una hora
