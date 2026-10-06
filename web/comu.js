@@ -7,8 +7,32 @@ const MARGE_RETARD_MIN = 20;
 
 const $ = (id) => document.getElementById(id);
 
+// Idioma. La pàgina és en català; la pública en castellà (ADR 0025) carrega
+// abans es.js, que deixa a IDIOMA les traduccions. Cada text que es veu passa
+// per T, i cada paraula que ve a les dades (nivells, tipus d'avís, rumbs),
+// per TD. Sense traducció, surt el text tal com està escrit aquí.
+var IDIOMA = IDIOMA || { codi: 'ca', textos: {}, dades: {} };
+
+// T`Ara a ${lloc}` o T('No plou'): el text en l'idioma de la pàgina. La clau
+// és el text català amb {0}, {1}… on van els valors; la traducció pot ser un
+// text amb les mateixes marques o una funció que rep els valors.
+function T(parts, ...valors) {
+  const trossos = typeof parts === 'string' ? [parts] : parts;
+  const clau = trossos.reduce((acc, tros, i) => `${acc}{${i - 1}}${tros}`);
+  const traduccio = IDIOMA.textos[clau];
+  if (typeof traduccio === 'function') return traduccio(...valors);
+  return (traduccio === undefined ? clau : traduccio).replace(/\{(\d+)\}/g, (_, i) => valors[i]);
+}
+
+function TD(paraula) {
+  return IDIOMA.dades[paraula] || paraula;
+}
+
+// On són els fitxers comuns: la pàgina en castellà és en una subcarpeta.
+const ARREL = document.documentElement.dataset.arrel || '';
+
 function horaCurta(data) {
-  return new Date(data).toLocaleTimeString('ca', { hour: '2-digit', minute: '2-digit' });
+  return new Date(data).toLocaleTimeString(IDIOMA.codi, { hour: '2-digit', minute: '2-digit' });
 }
 
 function element(etiqueta, classe, text) {
@@ -56,14 +80,15 @@ function textHorari(horari) {
   // es repeteixen.
   if (horari.mode_avis && horari.mode_avis.length) {
     const trams = horari.trams.length === 1 && inici === '00:00' ? ''
-      : ` (${horari.trams.map(([a, b]) => `${a}\u2013${b}`).join(' i ')})`;
-    return `Mode avís: dades cada ${horari.cada_min} min${trams}.`;
+      : ` (${horari.trams.map(([a, b]) => `${a}\u2013${b}`).join(T(' i '))})`;
+    return T`Mode avís: dades cada ${horari.cada_min} min${trams}.`;
   }
   // Tot el dia: no cal dir de quina hora a quina.
   if (horari.trams.length === 1 && inici === '00:00') {
-    return `Dades en directe cada ${horari.cada_min} min.`;
+    return T`Dades en directe cada ${horari.cada_min} min.`;
   }
-  return `Dades en directe cada ${horari.cada_min} min (${horari.trams.map(([a, b]) => `${a}–${b}`).join(' i ')}).`;
+  const trams = horari.trams.map(([a, b]) => `${a}–${b}`).join(T(' i '));
+  return T`Dades en directe cada ${horari.cada_min} min (${trams}).`;
 }
 
 // «Dades en directe… Darrera: 07:07 · propera: 07:30.» i, si cal, l'avís de
@@ -75,19 +100,18 @@ function pintaHorari(dades) {
   const propera = hores.find((t) => t > ara);
   const darreraPrevista = hores.filter((t) => t <= ara).pop();
   // L'hora d'actualització, destacada, just després dels avisos.
-  const dia = generat.toDateString() === ara.toDateString() ? '' : ` del ${generat.toLocaleDateString('ca')}`;
-  $('horari').replaceChildren('Actualitzat a les ', element('strong', null, horaCurta(generat) + dia),
-    ' · propera: ', element('strong', null, propera ? horaCurta(propera) : 'demà a les ' + dades.horari.trams[0][0]),
+  const dia = generat.toDateString() === ara.toDateString() ? '' : T` del ${generat.toLocaleDateString(IDIOMA.codi)}`;
+  $('horari').replaceChildren(T('Actualitzat a les '), element('strong', null, horaCurta(generat) + dia),
+    T(' · propera: '), element('strong', null, propera ? horaCurta(propera) : T`demà a les ${dades.horari.trams[0][0]}`),
     '. ', element('span', 'mode', textHorari(dades.horari)));
   const avisos = [];
   if (darreraPrevista && generat < darreraPrevista - 5 * 60000
       && ara - darreraPrevista > MARGE_RETARD_MIN * 60000) {
-    avisos.push(`L’actualització de les ${horaCurta(darreraPrevista)} no s’ha fet: `
-      + `les dades són de les ${horaCurta(generat)}.`);
+    avisos.push(T`L’actualització de les ${horaCurta(darreraPrevista)} no s’ha fet: les dades són de les ${horaCurta(generat)}.`);
   }
   // La previsió que falla i s'ha substituït per l'anterior ja té el seu avís.
   if (dades.errors.some((e) => !(dades.previsio_de && e.startsWith('previsió')))) {
-    avisos.push('No s’han pogut llegir totes les fonts: la informació és menys segura.');
+    avisos.push(T('No s’han pogut llegir totes les fonts: la informació és menys segura.'));
   }
   $('avis-dades').textContent = avisos.join(' ');
   $('avis-dades').hidden = !avisos.length;
@@ -128,7 +152,7 @@ function baixa(url) {
 }
 
 function llegeixDades(nom) {
-  return baixa(DADES_URL + nom).catch(() => baixa(nom));
+  return baixa(DADES_URL + nom).catch(() => baixa(ARREL + nom));
 }
 
 function carrega(url, pinta, error) {
@@ -174,21 +198,20 @@ function carrega(url, pinta, error) {
 }
 
 // Avisos de l'AEMET al Vallès, amb el dia i la franja de cadascun.
-const NIVELL_AVIS = { groc: 'groc', taronja: 'taronja', vermell: 'vermell' };
 
 // «avui», «demà» o el dia de la setmana.
 function nomDiaCurt(data, ara) {
   const dies = Math.round((new Date(data).setHours(0, 0, 0, 0) - new Date(ara).setHours(0, 0, 0, 0)) / 864e5);
-  if (dies === 0) return 'avui';
-  if (dies === 1) return 'demà';
-  return new Date(data).toLocaleDateString('ca', { weekday: 'long' });
+  if (dies === 0) return T('avui');
+  if (dies === 1) return T('demà');
+  return new Date(data).toLocaleDateString(IDIOMA.codi, { weekday: 'long' });
 }
 
 // «a les 18:00», «a la 01:00» o «a mitjanit».
 function aLaHora(data) {
   const h = horaCurta(data);
-  if (h === '00:00') return 'a mitjanit';
-  return h.startsWith('01:') ? `a la ${h}` : `a les ${h}`;
+  if (h === '00:00') return T('a mitjanit');
+  return h.startsWith('01:') ? T`a la ${h}` : T`a les ${h}`;
 }
 
 // Franja d'un avís, amb el dia: «avui fins a les 20:00», «demà de 09:00 a
@@ -196,12 +219,14 @@ function aLaHora(data) {
 function textFranja(inici, fi, ara) {
   // Mitjanit és el final del dia de l'avís, no el començament del següent.
   const diaFi = nomDiaCurt(new Date(fi - 1), ara);
-  if (inici <= ara) return diaFi === 'avui' ? `avui fins ${aLaHora(fi)}` : `fins ${diaFi} ${aLaHora(fi)}`;
+  if (inici <= ara) return diaFi === T('avui') ? T`avui fins ${aLaHora(fi)}` : T`fins ${diaFi} ${aLaHora(fi)}`;
   const h = horaCurta(inici);
-  const de = /^(01|11):/.test(h) ? `d\u2019${h}` : `de ${h}`;
+  const de = /^(01|11):/.test(h) ? T`d\u2019${h}` : T`de ${h}`;
   const dia = nomDiaCurt(inici, ara);
-  if (diaFi !== dia) return `${dia} ${de} fins ${diaFi} ${aLaHora(fi)}`;
-  return `${dia} ${de} ${aLaHora(fi).replace(/^a (les |la )?/, 'a ')}`;
+  if (diaFi !== dia) return T`${dia} ${de} fins ${diaFi} ${aLaHora(fi)}`;
+  // «de 09:00 a 18:00», «de 22:00 a mitjanit».
+  const fins = horaCurta(fi) === '00:00' ? T('a mitjanit') : T`a ${horaCurta(fi)}`;
+  return `${dia} ${de} ${fins}`;
 }
 
 // Una frase per nivell i tipus d'avís, amb totes les franges i el dia de
@@ -238,7 +263,7 @@ function textAvisos(avisos, ara = new Date()) {
   const frases = {};
   for (const [k, tipus] of Object.entries(perFranja)) {
     const [nivell, inici, fi] = k.split('|');
-    const clau = `${nivell}|${[...tipus].sort().join(' i ')}`;
+    const clau = `${nivell}|${[...tipus].sort().map((x) => TD(x)).join(T(' i '))}`;
     (frases[clau] = frases[clau] || []).push([Number(inici), Number(fi)]);
   }
   const ordre = { vermell: 0, taronja: 1, groc: 2 };
@@ -260,8 +285,8 @@ function textAvisos(avisos, ara = new Date()) {
           dies.push({ dia, parts: [text] });
         }
       }
-      const quan = dies.map((d) => d.parts.join(' i ')).join('; ');
-      return `Avís ${NIVELL_AVIS[nivell] || nivell} de l’AEMET per ${tipus} al Vallès: ${quan}.`;
+      const quan = dies.map((d) => d.parts.join(T(' i '))).join('; ');
+      return T`Avís ${TD(nivell)} de l’AEMET per ${tipus} al Vallès: ${quan}.`;
     }).join(' ');
 }
 
@@ -269,8 +294,8 @@ function textAvisos(avisos, ara = new Date()) {
 function textPrevisioAnterior(dades) {
   if (!dades || !dades.previsio_de) return '';
   const de = new Date(dades.previsio_de);
-  const dia = de.toDateString() === new Date().toDateString() ? '' : ` del ${de.toLocaleDateString('ca')}`;
-  return `Open-Meteo, d\u2019on surten els models, ara no respon: la previsió és la de les ${horaCurta(de)}${dia}.`;
+  const dia = de.toDateString() === new Date().toDateString() ? '' : T` del ${de.toLocaleDateString(IDIOMA.codi)}`;
+  return T`Open-Meteo, d\u2019on surten els models, ara no respon: la previsió és la de les ${horaCurta(de)}${dia}.`;
 }
 
 // Plans de Protecció Civil activats (inundacions, vent, neu): avís destacat
@@ -280,15 +305,15 @@ const NOM_FASE = { prealerta: 'prealerta', alerta: 'alerta', 'emergència': 'eme
 function blocPlans(plans) {
   if (!plans || !plans.length) return null;
   const caixa = element('section', 'avis avis-pc');
-  caixa.setAttribute('aria-label', 'Avís de Protecció Civil');
+  caixa.setAttribute('aria-label', T('Avís de Protecció Civil'));
   for (const p of plans) {
     const par = element('p', null,
-      `Protecció Civil: pla ${p.nom} (${p.pla}) en fase d\u2019${NOM_FASE[p.fase] || p.fase}.`);
+      T`Protecció Civil: pla ${TD(p.nom)} (${p.pla}) en fase d\u2019${TD(NOM_FASE[p.fase] || p.fase)}.`);
     if (p.fase === 'emergència') {
-      par.append(' Eviteu els desplaçaments que no siguin necessaris.');
+      par.append(T(' Eviteu els desplaçaments que no siguin necessaris.'));
     }
     if (p.comunicat) {
-      const a = element('a', null, 'Comunicat (PDF)');
+      const a = element('a', null, T('Comunicat (PDF)'));
       a.href = p.comunicat;
       a.target = '_blank';
       a.rel = 'noopener';
@@ -300,7 +325,7 @@ function blocPlans(plans) {
 }
 
 function posaVersio(versio) {
-  $('versio').textContent = 'versió ' + versio;
+  $('versio').textContent = T`versió ${versio}`;
   // La pàgina pública enllaça el seu propi repositori (ADR 0024).
   $('versio').href = document.documentElement.dataset.notes
     || 'https://github.com/jjdeharo/meteo-local/releases/tag/v' + versio;
@@ -334,4 +359,4 @@ sistemaFosc.addEventListener('change', (e) => {
 });
 
 // Per poder instal·lar la web com a aplicació (sw.js).
-if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+if ('serviceWorker' in navigator) navigator.serviceWorker.register(ARREL + 'sw.js').catch(() => {});

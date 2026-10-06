@@ -33,6 +33,11 @@ Al cambiar algo:
   decir «casa» ni nada del trayecto. Si cambias un texto de `web/casa.html` o
   `web/fonts.html` que esté en sus listas de cambios, cámbialo también allí;
   las pruebas avisan. En ese repositorio no se edita nada a mano.
+- La web pública está también en castellano (ADR 0025). Todo texto visible de
+  `web/comu.js` y `web/casa.js` va con `T` (o `TD` si viene en los datos) y
+  tiene su traducción en `montflorit/es.js`; los textos fijos de
+  `web/casa.html` y `web/fonts.html`, en `i18n/es.json`. Si añades o cambias
+  uno, tradúcelo: las pruebas fallan si falta.
 - Las actualizaciones programadas las hace el NAS (`nas/`, ADR 0005). Si cambias
   `nas/`, copia los archivos a `/volume1/docker/meteo-local` y reconstruye
   (`docker compose up -d --build`). Ver el estado: `docker logs meteo-local`.

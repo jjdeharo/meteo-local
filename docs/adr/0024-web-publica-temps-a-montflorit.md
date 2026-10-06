@@ -38,7 +38,7 @@ clon con otro nombre y si se verían datos suyos o de su NAS.
 - **Los buscadores**: de momento la pública conserva el `noindex`
   (`INDEXABLE = False`), hasta que el responsable de meteocerdanyola.com
   responda sobre el uso de su estación (ADR 0004).
-- **Solo en catalán**, como esta.
+- **En catalán y, aparte, en castellano** (ADR 0025).
 
 ## Alternativas descartadas
 
