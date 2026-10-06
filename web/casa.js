@@ -84,26 +84,41 @@ function blocAra(ara, casa, radarDades) {
   llista.append(dada('i-droplets', `Humitat ${coma(base.humitat, 0)} %`));
   if (casa && casa.pressio != null) llista.append(dada('i-gauge', textPressio(casa)));
   if (ara && ara.vent != null) llista.append(dada('i-wind', `Vent ${coma(ara.vent, 0)} km/h`));
-  const radar = textRadar(radarDades, plou);
-  if (radar) llista.append(dada('i-radar', radar));
   sec.append(llista);
+  const radar = blocRadar(radarDades, plou);
+  if (radar) sec.append(radar);
   return sec;
 }
 
 // La pluja del radar portada endavant (ADR 0019): quan arribaria a casa.
 function textRadar(r, plou) {
-  if (!r) return '';
-  const mov = r.cap_a ? `, va cap ${r.cap_a} a ${r.velocitat_kmh} km/h` : '';
+  if (!r) return null;
   const aviat = (t) => new Date(t) <= new Date(Date.now() + 5 * 60e3);
   if (r.arriba) {
-    if (plou || aviat(r.arriba)) return `Radar: pluja a sobre${mov}`;
-    return `Radar: arribaria pluja cap a les ${horaCurta(r.arriba)}${mov}`;
+    if (plou || aviat(r.arriba)) return ['arriba', 'Pluja a sobre'];
+    return ['arriba', `Arribaria pluja cap a les\u00a0${horaCurta(r.arriba)}`];
   }
   if (r.possible) {
-    if (aviat(r.possible)) return `Radar: pluja a prop, pot arribar${mov}`;
-    return `Radar: pot arribar pluja cap a les ${horaCurta(r.possible)}${mov}`;
+    if (aviat(r.possible)) return ['possible', 'Pluja a prop: pot arribar'];
+    return ['possible', `Pot arribar pluja cap a les\u00a0${horaCurta(r.possible)}`];
   }
-  return 'Radar: no s\u2019acosta pluja en 2 hores';
+  return ['res', 'No s\u2019acosta pluja en 2 hores'];
+}
+
+// Franja pròpia dins «Ara a casa», amb el color del que diu: ambre si la
+// pluja arriba, blau si és possible, neutre si no se n'acosta.
+function blocRadar(r, plou) {
+  const t = textRadar(r, plou);
+  if (!t) return null;
+  const [estat, text] = t;
+  const caixa = element('div', `radar-ara ${estat}`);
+  caixa.append(icona('i-radar'));
+  const cos = element('div');
+  cos.append(element('p', 'radar-text', text));
+  const mov = r.cap_a ? ` \u00b7 va cap ${r.cap_a} a ${r.velocitat_kmh}\u00a0km/h` : '';
+  cos.append(element('p', 'radar-detall', `Radar${mov}`));
+  caixa.append(cos);
+  return caixa;
 }
 
 // Situacions de perill segons el que mesuren les estacions i el que preveu
@@ -131,6 +146,67 @@ function nomDia(iso) {
   return new Date(iso).toLocaleDateString('ca', { weekday: 'long', day: 'numeric', month: 'long' });
 }
 
+// Avisos de l'AEMET en trams d'hores seguides del mateix dia amb el mateix
+// avís: per a cada hora, el tram que hi comença ({nivell, tipus, hores}),
+// undefined si la cobreix un tram que ha començat abans, o null si no n'hi ha.
+const ORDRE_NIVELL = ['groc', 'taronja', 'vermell'];
+
+function avisHora(f) {
+  const avisos = f.avisos || [];
+  if (!avisos.length) return null;
+  const nivell = avisos.map((a) => a.nivell).sort((a, b) => ORDRE_NIVELL.indexOf(b) - ORDRE_NIVELL.indexOf(a))[0];
+  const tipus = [...new Set(avisos.flatMap((a) => a.tipus))].sort();
+  return { nivell, tipus, clau: `${nivell}|${tipus.join(',')}` };
+}
+
+function tramsAvis(hores) {
+  const res = [];
+  let obert = null;
+  let dia = null;
+  for (const f of hores) {
+    const a = avisHora(f);
+    const d = new Date(f.hora).toDateString();
+    if (a && obert && obert.clau === a.clau && d === dia) {
+      obert.hores += 1;
+      res.push(undefined);
+    } else {
+      obert = a && { ...a, hores: 1 };
+      res.push(obert);
+    }
+    dia = d;
+  }
+  return res;
+}
+
+// Barra vertical del color de l'avís al llarg de les hores que cobreix. El
+// text, tan llarg com hi càpiga; el complet, per als lectors de pantalla.
+function franjaAvis(tram) {
+  const td = element('td', `col-avis franja-avis ${tram.nivell}`);
+  td.rowSpan = tram.hores;
+  const complet = `Avís ${tram.nivell} de l\u2019AEMET per ${tram.tipus.join(' i ')}`;
+  td.title = complet;
+  const barra = element('span', 'barra-avis');
+  barra.append(element('span', 'text-avis'));
+  barra.dataset.textos = JSON.stringify([`Avís ${tram.nivell} · ${tram.tipus.join(' i ')}`,
+    `Avís ${tram.nivell}`, 'Avís', '']);
+  barra.setAttribute('aria-hidden', 'true');
+  td.append(barra, element('span', 'visualment-amagat', complet));
+  return td;
+}
+
+// El text més llarg que hi cap, mesurat ja a la pàgina (l'alçada de les
+// files canvia amb la pantalla).
+function ajustaFranges() {
+  for (const barra of document.querySelectorAll('.barra-avis')) {
+    const text = barra.querySelector('.text-avis');
+    for (const t of JSON.parse(barra.dataset.textos)) {
+      text.textContent = t;
+      if (text.offsetHeight <= barra.clientHeight - 6) break;
+    }
+  }
+}
+addEventListener('resize', ajustaFranges);
+
 function taula(hores, aprenentatge) {
   const sec = element('section', 'previsio');
   sec.append(element('h2', 'perque', 'Pròximes 24 hores'));
@@ -139,23 +215,26 @@ function taula(hores, aprenentatge) {
   const cap = element('thead');
   const fila = element('tr');
   // Les unitats van a la capçalera perquè la taula càpiga al mòbil.
-  for (const [text, classe] of [['Hora', ''], ['Cel', ''], ['°C', 'num'], ['Pluja (mm)', 'num'],
-    ['Prob.', 'num'], ['Vent', 'num']]) {
-    const th = element('th', classe, text);
+  for (const [text, classe] of [['Hora', ''], ['Avisos', 'col-avis'], ['Cel', ''], ['°C', 'num'],
+    ['Pluja (mm)', 'num'], ['Prob.', 'num'], ['Vent', 'num']]) {
+    const th = element('th', classe);
+    // La columna dels avisos no porta títol a la vista: la barra ja ho diu.
+    th.append(classe === 'col-avis' ? element('span', 'visualment-amagat', text) : text);
     th.scope = 'col';
     fila.append(th);
   }
   cap.append(fila);
   t.append(cap);
   const cos = element('tbody');
+  const trams = tramsAvis(hores);
   let diaAnterior = new Date().toDateString();
-  for (const f of hores) {
+  hores.forEach((f, i) => {
     const inici = new Date(f.hora);
     if (inici.toDateString() !== diaAnterior) {
       diaAnterior = inici.toDateString();
       const separador = element('tr', 'dia-nou');
       const td = element('th', '', nomDia(f.hora));
-      td.colSpan = 6;
+      td.colSpan = 7;
       td.scope = 'rowgroup';
       separador.append(td);
       cos.append(separador);
@@ -165,18 +244,15 @@ function taula(hores, aprenentatge) {
     const hora = element('th', 'hora', `${h0}–${(h0 + 1) % 24}`);
     hora.scope = 'row';
     tr.append(hora);
+    const tram = trams[i];
+    if (tram === null) tr.append(element('td', 'col-avis'));
+    else if (tram) tr.append(franjaAvis(tram));
     const [textCel, iconaCel] = f.plou_ara ? ['Plou ara', 'i-umbrella'] : cel(f);
     const celCel = element('td', 'cel');
     const linia = element('span', 'cel-text');
     if (iconaCel) linia.append(icona(iconaCel));
     linia.append(textCel);
     celCel.append(linia);
-    for (const a of f.avisos || []) {
-      const marca = element('span', `marca-avis ${a.nivell}`, `Avís ${a.nivell}`);
-      marca.title = `Avís ${a.nivell} de l\u2019AEMET per ${a.tipus.join(' i ')}`;
-      marca.append(element('span', 'visualment-amagat', ` per ${a.tipus.join(' i ')}`));
-      celCel.append(marca);
-    }
     tr.append(celCel);
     tr.append(element('td', 'num', f.temperatura == null ? '' : `${Math.round(f.temperatura)}`));
     tr.append(element('td', 'num', f.pluja_mm >= 0.1 ? coma(f.pluja_mm) : '\u2013'));
@@ -190,7 +266,7 @@ function taula(hores, aprenentatge) {
     tr.append(element('td', 'num', f.vent == null ? ''
       : `${Math.round(f.vent)}${f.ratxa ? ` (${Math.round(f.ratxa)})` : ''}`));
     cos.append(tr);
-  }
+  });
   t.append(cos);
   contenidor.append(t);
   sec.append(contenidor);
@@ -201,6 +277,10 @@ function taula(hores, aprenentatge) {
   if (hores.some((f) => f.segons_radar)) {
     sec.append(element('p', 'nota', '\u2020 Segons el radar: la pluja que hi ha ara, portada endavant '
       + 'a la velocitat i en la direcció que porta.'));
+  }
+  if (trams.some((t) => t)) {
+    sec.append(element('p', 'nota', 'La barra de color al costat de l\u2019hora marca les hores amb avís de l\u2019AEMET, '
+      + 'del color del nivell.'));
   }
   sec.append(element('p', 'nota', 'Vent en km/h: mitjana i, entre parèntesis, les ratxes.'));
   const apres = textAprenentatge(aprenentatge);
@@ -243,7 +323,10 @@ function pinta(dades) {
       + 'Les primeres hores de la taula parteixen del que mesura l\u2019estació; per a la resta, fes més cas dels avisos.'));
   }
   if (dades.ara || dades.ara_casa) cont.append(blocAra(dades.ara, dades.ara_casa, dades.radar));
-  if (dades.hores) cont.append(taula(dades.hores, dades.aprenentatge));
+  if (dades.hores) {
+    cont.append(taula(dades.hores, dades.aprenentatge));
+    ajustaFranges();
+  }
   pintaHorari(dades);
   posaVersio(dades.versio);
 }
