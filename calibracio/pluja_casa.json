@@ -11,74 +11,288 @@
   "hora_sin",
   "hora_cos",
   "dia_sin",
-  "dia_cos"
+  "dia_cos",
+  "plou_arome_hd",
+  "plou_arome",
+  "plou_icon_eu",
+  "dos_models",
+  "tres_models",
+  "arome_hd_antelacio",
+  "arome_antelacio",
+  "icon_eu_antelacio",
+  "algun_antelacio",
+  "tres_antelacio"
  ],
  "w": [
-  -4.15884,
-  1.13063,
-  1.18458,
-  3.56861,
-  0.15263,
-  -0.06402,
-  0.06993,
-  0.30726,
-  0.60665
+  -5.16375,
+  0.39224,
+  0.46038,
+  1.50392,
+  0.55031,
+  -0.02332,
+  0.1161,
+  0.21439,
+  0.45654,
+  2.42504,
+  2.48175,
+  2.7214,
+  -1.76709,
+  -2.01922,
+  0.07801,
+  -0.33918,
+  -0.21274,
+  -0.24817,
+  -0.26172
  ],
  "mostres": 94380,
  "hores_pluja": 3622,
  "validacio": {
-  "periode": [
-   "2026-07-06",
-   "2026-10-04"
-  ],
-  "mostres": 4368,
-  "hores_pluja": 95,
-  "error_frequencia": 0.02161,
-  "error_ensemble": 0.01867,
-  "error_logistica": 0.01221,
-  "fiabilitat": [
-   {
-    "de": 0,
-    "a": 0.05,
-    "hores": 4202,
-    "donada": 0.01,
-    "va_ploure": 0.006
-   },
-   {
-    "de": 0.05,
-    "a": 0.1,
-    "hores": 32,
-    "donada": 0.068,
-    "va_ploure": 0.094
-   },
-   {
-    "de": 0.1,
-    "a": 0.2,
-    "hores": 24,
-    "donada": 0.148,
-    "va_ploure": 0.208
-   },
-   {
-    "de": 0.2,
-    "a": 0.3,
-    "hores": 16,
-    "donada": 0.244,
-    "va_ploure": 0.25
-   },
-   {
-    "de": 0.3,
-    "a": 0.5,
-    "hores": 22,
-    "donada": 0.395,
-    "va_ploure": 0.318
-   },
-   {
-    "de": 0.5,
-    "a": 1,
-    "hores": 72,
-    "donada": 0.876,
-    "va_ploure": 0.708
-   }
-  ]
+  "metode": "validació creuada en 4 grups de setmanes, tot l'arxiu",
+  "curt_termini": {
+   "mostres": 47676,
+   "hores_pluja": 1825,
+   "error_frequencia": 0.03681,
+   "error_abans": 0.02506,
+   "error": 0.02253,
+   "fiabilitat": [
+    {
+     "de": 0,
+     "a": 0.05,
+     "hores": 42327,
+     "donada": 0.006,
+     "va_ploure": 0.006,
+     "part_pluja": 0.134
+    },
+    {
+     "de": 0.05,
+     "a": 0.1,
+     "hores": 1049,
+     "donada": 0.077,
+     "va_ploure": 0.082,
+     "part_pluja": 0.047
+    },
+    {
+     "de": 0.1,
+     "a": 0.2,
+     "hores": 1736,
+     "donada": 0.142,
+     "va_ploure": 0.153,
+     "part_pluja": 0.146
+    },
+    {
+     "de": 0.2,
+     "a": 0.3,
+     "hores": 713,
+     "donada": 0.244,
+     "va_ploure": 0.266,
+     "part_pluja": 0.104
+    },
+    {
+     "de": 0.3,
+     "a": 0.5,
+     "hores": 817,
+     "donada": 0.399,
+     "va_ploure": 0.382,
+     "part_pluja": 0.171
+    },
+    {
+     "de": 0.5,
+     "a": 0.7,
+     "hores": 538,
+     "donada": 0.593,
+     "va_ploure": 0.619,
+     "part_pluja": 0.182
+    },
+    {
+     "de": 0.7,
+     "a": 1,
+     "hores": 496,
+     "donada": 0.816,
+     "va_ploure": 0.792,
+     "part_pluja": 0.215
+    }
+   ],
+   "fiabilitat_abans": [
+    {
+     "de": 0,
+     "a": 0.05,
+     "hores": 44688,
+     "donada": 0.017,
+     "va_ploure": 0.011,
+     "part_pluja": 0.273
+    },
+    {
+     "de": 0.05,
+     "a": 0.1,
+     "hores": 847,
+     "donada": 0.07,
+     "va_ploure": 0.247,
+     "part_pluja": 0.115
+    },
+    {
+     "de": 0.1,
+     "a": 0.2,
+     "hores": 628,
+     "donada": 0.145,
+     "va_ploure": 0.33,
+     "part_pluja": 0.113
+    },
+    {
+     "de": 0.2,
+     "a": 0.3,
+     "hores": 343,
+     "donada": 0.243,
+     "va_ploure": 0.44,
+     "part_pluja": 0.083
+    },
+    {
+     "de": 0.3,
+     "a": 0.5,
+     "hores": 345,
+     "donada": 0.392,
+     "va_ploure": 0.501,
+     "part_pluja": 0.095
+    },
+    {
+     "de": 0.5,
+     "a": 0.7,
+     "hores": 234,
+     "donada": 0.587,
+     "va_ploure": 0.56,
+     "part_pluja": 0.072
+    },
+    {
+     "de": 0.7,
+     "a": 1,
+     "hores": 591,
+     "donada": 0.891,
+     "va_ploure": 0.77,
+     "part_pluja": 0.249
+    }
+   ]
+  },
+  "un_dia_abans": {
+   "mostres": 46704,
+   "hores_pluja": 1797,
+   "error_frequencia": 0.037,
+   "error_abans": 0.02958,
+   "error": 0.0271,
+   "fiabilitat": [
+    {
+     "de": 0,
+     "a": 0.05,
+     "hores": 41538,
+     "donada": 0.01,
+     "va_ploure": 0.01,
+     "part_pluja": 0.238
+    },
+    {
+     "de": 0.05,
+     "a": 0.1,
+     "hores": 642,
+     "donada": 0.082,
+     "va_ploure": 0.093,
+     "part_pluja": 0.033
+    },
+    {
+     "de": 0.1,
+     "a": 0.2,
+     "hores": 1983,
+     "donada": 0.148,
+     "va_ploure": 0.145,
+     "part_pluja": 0.16
+    },
+    {
+     "de": 0.2,
+     "a": 0.3,
+     "hores": 1012,
+     "donada": 0.245,
+     "va_ploure": 0.268,
+     "part_pluja": 0.151
+    },
+    {
+     "de": 0.3,
+     "a": 0.5,
+     "hores": 879,
+     "donada": 0.388,
+     "va_ploure": 0.374,
+     "part_pluja": 0.183
+    },
+    {
+     "de": 0.5,
+     "a": 0.7,
+     "hores": 456,
+     "donada": 0.588,
+     "va_ploure": 0.579,
+     "part_pluja": 0.147
+    },
+    {
+     "de": 0.7,
+     "a": 1,
+     "hores": 194,
+     "donada": 0.794,
+     "va_ploure": 0.814,
+     "part_pluja": 0.088
+    }
+   ],
+   "fiabilitat_abans": [
+    {
+     "de": 0,
+     "a": 0.05,
+     "hores": 43820,
+     "donada": 0.02,
+     "va_ploure": 0.016,
+     "part_pluja": 0.399
+    },
+    {
+     "de": 0.05,
+     "a": 0.1,
+     "hores": 953,
+     "donada": 0.07,
+     "va_ploure": 0.232,
+     "part_pluja": 0.123
+    },
+    {
+     "de": 0.1,
+     "a": 0.2,
+     "hores": 603,
+     "donada": 0.144,
+     "va_ploure": 0.345,
+     "part_pluja": 0.116
+    },
+    {
+     "de": 0.2,
+     "a": 0.3,
+     "hores": 251,
+     "donada": 0.24,
+     "va_ploure": 0.311,
+     "part_pluja": 0.043
+    },
+    {
+     "de": 0.3,
+     "a": 0.5,
+     "hores": 341,
+     "donada": 0.394,
+     "va_ploure": 0.387,
+     "part_pluja": 0.073
+    },
+    {
+     "de": 0.5,
+     "a": 0.7,
+     "hores": 282,
+     "donada": 0.59,
+     "va_ploure": 0.482,
+     "part_pluja": 0.076
+    },
+    {
+     "de": 0.7,
+     "a": 1,
+     "hores": 454,
+     "donada": 0.884,
+     "va_ploure": 0.672,
+     "part_pluja": 0.17
+    }
+   ]
+  }
  }
 }

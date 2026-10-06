@@ -37,6 +37,47 @@ class Rasgos(unittest.TestCase):
         self.assertEqual(lejos[A.RASGOS_PROPIS.index("sequedat")], 0.0)
         self.assertIsNone(A.rasgos({**d, "deficit_rosada_ara": None}, A.RASGOS_PROPIS))
 
+    def test_modelos_que_dan_lluvia_y_coinciden(self):
+        # ADR 0021: que un modelo dé algo de lluvia cuenta por sí mismo, y
+        # también cuántos coinciden.
+        d = hora("2026-10-05T18:00", antelacio=12)
+        d.update(pluja_meteofrance_arome_france_hd=0.0, pluja_meteofrance_arome_france=0.1,
+                 pluja_icon_eu=0.3)
+        x = dict(zip(A.RASGOS_ARXIU, A.rasgos(d, A.RASGOS_ARXIU)))
+        self.assertEqual([x["plou_arome_hd"], x["plou_arome"], x["plou_icon_eu"]], [0.0, 1.0, 1.0])
+        self.assertEqual([x["dos_models"], x["tres_models"]], [1.0, 0.0])
+        self.assertAlmostEqual(x["icon_eu_antelacio"], x["icon_eu"] * 0.5)
+        self.assertEqual([x["algun_antelacio"], x["tres_antelacio"]], [0.5, 0.0])
+
+    def test_un_solo_modelo_con_poca_lluvia_no_es_casi_cero(self):
+        # El caso del 06-10-2026: solo ICON-EU daba 0,2 mm y la página decía
+        # un 2 %; en el archivo, con solo ICON-EU dando 0,2 mm llovió una de
+        # cada diez horas (729 horas). Y cuantos más coinciden, más probabilidad.
+        m = {"pluja": A.modelo_arxiu()}
+
+        def prob(hd, arome, icon):
+            d = hora("2026-10-06T16:00", antelacio=3)
+            d.update(pluja_meteofrance_arome_france_hd=hd, pluja_meteofrance_arome_france=arome,
+                     pluja_icon_eu=icon)
+            return A.prob_pluja(m, d)
+        nada, uno, dos, tres = prob(0, 0, 0), prob(0, 0, 0.2), prob(0.2, 0, 0.2), prob(0.2, 0.2, 0.2)
+        self.assertLess(nada, 0.02)
+        self.assertGreater(uno, 0.06)
+        self.assertLess(uno, 0.15)
+        self.assertGreater(dos, uno)
+        self.assertGreater(tres, dos)
+
+    def test_fiabilidad_del_modelo_del_archivo(self):
+        # La comprobación guardada con el modelo: en cada tramo de
+        # probabilidad con bastantes horas, lo dado y lo que llovió no se
+        # separan más de 5 puntos, a corto plazo y un día antes.
+        v = A.modelo_arxiu()["validacio"]
+        for clave in ("curt_termini", "un_dia_abans"):
+            self.assertLess(v[clave]["error"], 0.95 * v[clave]["error_abans"])
+            for f in v[clave]["fiabilitat"]:
+                if f["hores"] >= 150:
+                    self.assertLess(abs(f["donada"] - f["va_ploure"]), 0.05, (clave, f))
+
     def test_error_al_prever_se_apaga_con_la_antelacion(self):
         i = A.RASGOS_TEMPERATURA.index("error_ara_3h")
         cerca = A.rasgos(hora("2026-10-05T18:00", antelacio=0, error_ara=2.0), A.RASGOS_TEMPERATURA)

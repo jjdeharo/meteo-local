@@ -11,7 +11,8 @@ el trayecto). Al lado, [el tiempo en casa](https://jjdeharo.github.io/meteo-loca
 lo que miden ahora la estación de casa y la de Montflorit y la previsión hora
 a hora para las 24 horas siguientes, actualizada cada media hora (ADR 0007).
 La probabilidad de lluvia sale de una regresión logística ajustada con lo que
-llovió de verdad; la temperatura se corrige con un año de la estación de casa
+llovió de verdad y comprobada con todo el archivo (ADR 0021), y de ella sale
+también el cielo de la tabla; la temperatura se corrige con un año de la estación de casa
 (ADR 0017), y el NAS guarda cada hora lo previsto y lo medido para seguir
 aprendiendo (ADR 0012; explicación en [docs/estadistica.md](docs/estadistica.md)).
 Si lo que miden las estaciones o lo que prevé la página llega a los umbrales de

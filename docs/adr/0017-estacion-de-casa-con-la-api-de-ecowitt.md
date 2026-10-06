@@ -126,10 +126,11 @@ coste.
   | Todas | 1,46 °C | 1,03 °C | 1,16 °C |
 
 - **Señales de casa para la lluvia** (mismo script, 08-10-2025 a 31-08-2026,
-  297 horas con lluvia en casa): error de Brier del modelo del archivo 0,02629;
-  con la lluvia de la última hora y la sequedad del aire al prever, 0,02657.
-  Solo mejora la primera hora (0,0256 → 0,0247); a partir de la segunda,
-  empeora. La presión no mejora en ninguna antelación (análisis exploratorio
+  297 horas con lluvia en casa): error de Brier del modelo del archivo 0,0236;
+  con la lluvia de la última hora y la sequedad del aire al prever, 0,0241.
+  Solo mejora la primera hora (0,0227 → 0,0223); a partir de la segunda,
+  empeora. Son las cifras con la fórmula del ADR 0021; con la anterior eran
+  0,02629 y 0,02657, con la misma conclusión. La presión no mejora en ninguna antelación (análisis exploratorio
   del 06-10-2026).
 
 ## Riesgos y limitaciones

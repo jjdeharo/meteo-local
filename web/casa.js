@@ -24,17 +24,34 @@ function alturaSol(data) {
   return Math.asin(Math.sin(lat) * Math.sin(dec) + Math.cos(lat) * Math.cos(dec) * Math.cos(angle)) / rad;
 }
 
-// Descripció del cel feta amb les mateixes dades que la taula, perquè no
-// digui «serè» en una hora amb pluja, i la icona que hi correspon. De nit, la
-// lluna en lloc del sol (a mitja hora del tram).
+// Si l'hora és de pluja, segons la probabilitat i no segons els mil·límetres
+// del model més plujós: «pluja» si és més probable que plogui que no (50 % o
+// més) i «possible» des del 20 %, els mateixos llindars que config.py. Sense
+// probabilitat, manen els mil·límetres.
+const PROB_PLUJA = 0.5;
+const PROB_POSSIBLE = 0.2;
+function plujaHora(f) {
+  const p = f.probabilitat;
+  if (f.plou_ara || (p == null ? f.pluja_mm >= 0.2 : p >= PROB_PLUJA)) return 'pluja';
+  return p != null && p >= PROB_POSSIBLE ? 'possible' : null;
+}
+
+// Descripció del cel i la icona que hi correspon. Els mil·límetres diuen com
+// seria la pluja, no si n'hi haurà: sense prou probabilitat, només els
+// núvols. De nit, la lluna en lloc del sol (a mitja hora del tram).
 function cel(f) {
   const nit = alturaSol(new Date(new Date(f.hora).getTime() + 18e5)) < 0;
-  if (f.codi >= 95) return ['Tempesta', 'i-cloud-lightning'];
-  if (f.pluja_mm >= 4) return ['Pluja forta', 'i-cloud-rain-wind'];
-  if (f.pluja_mm >= 1) return ['Pluja', 'i-cloud-rain'];
-  if (f.pluja_mm >= 0.2) return ['Pluja feble', 'i-cloud-drizzle'];
-  // Sense pluja prevista però amb probabilitat clara: no pot dir «serè».
-  if (f.probabilitat >= 0.3) return ['Possible pluja', nit ? 'i-cloud-moon-rain' : 'i-cloud-sun-rain'];
+  const pluja = plujaHora(f);
+  const tempesta = f.codi >= 95;
+  if (pluja === 'pluja') {
+    if (tempesta) return ['Tempesta', 'i-cloud-lightning'];
+    if (f.pluja_mm >= 4) return ['Pluja forta', 'i-cloud-rain-wind'];
+    if (f.pluja_mm >= 1) return ['Pluja', 'i-cloud-rain'];
+    return ['Pluja feble', 'i-cloud-drizzle'];
+  }
+  if (pluja === 'possible') {
+    return [tempesta ? 'Possible tempesta' : 'Possible pluja', nit ? 'i-cloud-moon-rain' : 'i-cloud-sun-rain'];
+  }
   if (f.codi === 45 || f.codi === 48) return ['Boira', 'i-cloud-fog'];
   if (f.nuvols == null) return ['', null];
   if (f.nuvols < 20) return ['Serè', nit ? 'i-moon-cel' : 'i-sun'];
@@ -241,7 +258,7 @@ function taula(hores, aprenentatge) {
       separador.append(td);
       cos.append(separador);
     }
-    const tr = element('tr', f.pluja_mm >= 0.2 ? 'amb-pluja' : '');
+    const tr = element('tr', { pluja: 'amb-pluja', possible: 'pluja-possible' }[plujaHora(f)] || '');
     const h0 = inici.getHours();
     const hora = element('th', 'hora', `${h0}–${(h0 + 1) % 24}`);
     hora.scope = 'row';

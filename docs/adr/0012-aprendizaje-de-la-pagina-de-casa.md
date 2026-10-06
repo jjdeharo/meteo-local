@@ -21,7 +21,8 @@ aprendizaje automático también para casa.
   estaciones al prever y lo que mostró la página (`casa-AAAA-MM.jsonl`).
 - **Lluvia: regresión logística** (`aprenentatge.py`). Primer modelo ajustado
   con el archivo de 2024-2026 (`calibracio/pluja_casa.py`): lluvia de los tres
-  modelos finos, antelación, hora y día del año, con la lluvia de Sabadell y
+  modelos finos (cuánta, si cada uno da alguna y cuántos coinciden, desde el
+  ADR 0021), antelación, hora y día del año, con la lluvia de Sabadell y
   Sant Cugat como verdad. Con 30 horas de lluvia propias, un modelo con
   Montflorit y casa (cuando marca lluvia) como verdad y tres señales más: la
   fracción del ensemble, la lluvia medida al prever y la sequedad del aire en
@@ -51,7 +52,7 @@ aprendizaje automático también para casa.
 - **Restar el error medio de la temperatura**: es la versión más pobre de la
   regresión; no distingue la noche del día ni el cielo despejado del cubierto.
 - **Esperar a tener datos de Montflorit para todo**: la lluvia es rara y
-  tardaría meses; el archivo ya mejora el ensemble.
+  tardaría meses, y el archivo ya mejora la frecuencia habitual.
 
 ## Consecuencias
 
@@ -62,12 +63,13 @@ usa IA ni servicios de pago: numpy en el NAS, segundos al día.
 
 - API de meteocerdanyola.com (05-10-2026): ignora todo parámetro de fechas
   (`range`, `from`, `to`, `from_ts`, `date`…) y devuelve siempre 24 horas.
-- Comprobación del modelo del archivo con los 90 días que no se usaron para
-  ajustarlo (06-07 a 04-10-2026, 4.368 horas-estación, 95 con lluvia): error
-  de Brier 0,0122, frente a 0,0187 del ensemble y 0,0216 de la frecuencia
-  habitual. Fiabilidad en `calibracio/pluja_casa.json`.
-- Con previsiones de un día antes, 0,0198 frente a 0,0216: la mejora a 24
-  horas es pequeña.
+- Comprobación del modelo del archivo: con todo el archivo, en semanas no
+  vistas (ADR 0021). La primera, con los últimos 90 días (95 horas de
+  lluvia), dio la probabilidad por fiable sin serlo entre el 5 y el 50 %, y
+  su comparación con el ensemble no valía: Open-Meteo solo conservaba
+  simulaciones de 96 de las 4.368 muestras.
+- Con previsiones de un día antes la mejora es menor que a corto plazo
+  (0,0271 frente a 0,0370 de la frecuencia habitual).
 
 ## Riesgos y limitaciones
 

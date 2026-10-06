@@ -272,6 +272,7 @@ h1 { margin: 0; font-size: 1.6rem; line-height: 1.2; }
 .taula-hores tr.dia-nou th { background: var(--fons); color: var(--suau); font-size: .85rem; text-transform: none; }
 .taula-hores tr.dia-nou th::first-letter { text-transform: uppercase; }
 .taula-hores tr.amb-pluja td.cel { color: var(--enllac); font-weight: 600; }
+.taula-hores tr.pluja-possible td.cel { color: var(--enllac); }
 /* La probabilitat porta una barra darrere del número; el número ja ho diu. */
 .taula-hores td.prob { background: linear-gradient(to left, color-mix(in srgb, var(--enllac) 22%, transparent) var(--prob, 0%), transparent var(--prob, 0%)); }
 @media (max-width: 380px) {
@@ -354,7 +355,7 @@ h1 { margin: 0; font-size: 1.6rem; line-height: 1.2; }
   stroke-linejoin: round;
   color: var(--suau);
 }
-.taula-hores tr.amb-pluja .cel-text svg { color: var(--enllac); }
+.taula-hores tr.amb-pluja .cel-text svg, .taula-hores tr.pluja-possible .cel-text svg { color: var(--enllac); }
 @media (max-width: 430px) {
   .taula-hores th, .taula-hores td { padding-left: .25rem; padding-right: .25rem; }
 }

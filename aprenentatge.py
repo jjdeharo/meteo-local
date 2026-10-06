@@ -5,9 +5,10 @@
 Dos regresiones, sin IA, ajustadas con numpy:
 
 - Lluvia: regresión logística. Da la probabilidad de que caigan 0,2 mm o
-  más en una hora a partir de la lluvia de los tres modelos finos, la
-  antelación, la hora y el día del año y, con datos propios, la fracción del
-  ensemble y la lluvia que medía Montflorit al hacer la previsión.
+  más en una hora a partir de la lluvia de los tres modelos finos (cuánta, si
+  cada uno da alguna y cuántos coinciden), la antelación, la hora y el día
+  del año (ADR 0021) y, con datos propios, la fracción del ensemble y la
+  lluvia que medía Montflorit al hacer la previsión.
 - Temperatura: regresión lineal (ridge) del error del modelo en la estación
   de casa según la propia temperatura, las nubes, la humedad, la radiación,
   la hora, el día del año, la antelación y el error que tenía el modelo al
@@ -60,8 +61,14 @@ PERSISTENCIA_H = 4          # horas en que cuenta lo medido al prever (lluvia, s
 # parte se pierde en unas horas, otra en un día (ADR 0017).
 ERROR_TEMP_H = (3, 24)
 
+# Un modelo «da lluvia» desde su décima de milímetro: que ponga algo ya dice
+# mucho más de lo que pesa su cantidad (ADR 0021).
+MM_MODEL_PLOU = 0.1
 RASGOS_ARXIU = ["constant", "arome_hd", "arome", "icon_eu", "antelacio",
-                "hora_sin", "hora_cos", "dia_sin", "dia_cos"]
+                "hora_sin", "hora_cos", "dia_sin", "dia_cos",
+                "plou_arome_hd", "plou_arome", "plou_icon_eu", "dos_models", "tres_models",
+                "arome_hd_antelacio", "arome_antelacio", "icon_eu_antelacio",
+                "algun_antelacio", "tres_antelacio"]
 RASGOS_PROPIS = RASGOS_ARXIU + ["ensemble", "persistencia", "sequedat"]
 # Sin la estación de casa (si falla al prever), la temperatura se corrige con
 # los mismos rasgos menos el error al prever.
@@ -107,10 +114,21 @@ def rasgos(d, noms):
         "error_ara_3h": None if error_ara is None else error_ara * math.exp(-antelacio / ERROR_TEMP_H[0]),
         "error_ara_24h": None if error_ara is None else error_ara * math.exp(-antelacio / ERROR_TEMP_H[1]),
     }
-    for m in ("arome_hd", "arome", "icon_eu"):
-        if valors[m] is not None:
-            valors[m] = math.log1p(max(valors[m], 0))
-    x = [valors[n] for n in noms]
+    # Si un modelo da lluvia, cuántos coinciden y cuánto vale todo eso según
+    # la antelación: la lluvia prevista para dentro de un día se cumple menos.
+    mm = [valors[m] for m in ("arome_hd", "arome", "icon_eu")]
+    if None not in mm:
+        plou = [float(v >= MM_MODEL_PLOU - 1e-9) for v in mm]
+        ant = valors["antelacio"]
+        for m, v, p in zip(("arome_hd", "arome", "icon_eu"), mm, plou):
+            valors[m] = math.log1p(max(v, 0))
+            valors[f"plou_{m}"] = p
+            valors[f"{m}_antelacio"] = valors[m] * ant
+        valors["dos_models"] = float(sum(plou) >= 2)
+        valors["tres_models"] = float(sum(plou) == 3)
+        valors["algun_antelacio"] = float(sum(plou) >= 1) * ant
+        valors["tres_antelacio"] = valors["tres_models"] * ant
+    x = [valors.get(n) for n in noms]
     return None if any(v is None for v in x) else x
 
 

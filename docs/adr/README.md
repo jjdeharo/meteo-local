@@ -22,5 +22,6 @@
 | [0018](0018-situaciones-de-peligro-y-aviso-por-telegram.md) | Situaciones de peligro y aviso por Telegram | aceptado |
 | [0019](0019-radar-llevado-hacia-delante.md) | Radar llevado hacia delante | aceptado |
 | [0020](0020-datos-en-ionos-y-actualizacion-mas-frecuente.md) | Datos en IONOS y actualización más frecuente | aceptado |
+| [0021](0021-probabilidad-de-lluvia-de-casa-comprobada-con-todo-el-archivo.md) | Probabilidad de lluvia de casa comprobada con todo el archivo | aceptado |
 
 Plantilla: [0000-plantilla.md](0000-plantilla.md). Para crear uno: `nuevo-adr "Título"`.

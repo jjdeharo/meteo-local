@@ -6,7 +6,9 @@ y no tiene coste. La decisión y su porqué están en el
 [ADR 0012](adr/0012-aprendizaje-de-la-pagina-de-casa.md).
 
 Estado a 06-10-2026: la página de casa calcula la probabilidad de lluvia con
-lo aprendido del archivo y corrige la temperatura con lo aprendido de un año
+lo aprendido del archivo, comprobado con el archivo entero
+([ADR 0021](adr/0021-probabilidad-de-lluvia-de-casa-comprobada-con-todo-el-archivo.md)),
+y corrige la temperatura con lo aprendido de un año
 de la estación de casa ([ADR 0017](adr/0017-estacion-de-casa-con-la-api-de-ecowitt.md)).
 Cada hora guarda lo necesario para aprender de Montflorit y de casa. La
 página del trayecto sigue con su regla; su aprendizaje es el paso siguiente
@@ -66,6 +68,9 @@ moja en moto (`UMBRAL_MM` de `config.py`).
 | Señal | Cómo entra | Por qué |
 |---|---|---|
 | Lluvia de AROME HD, AROME e ICON-EU | $\ln(1 + \text{mm})$, una por modelo | Cada modelo acierta de forma distinta; el logaritmo evita que un chubasco extremo pese demasiado |
+| Si cada modelo da lluvia | 1 si da 0,1 mm o más; si no, 0. Una por modelo | Que un modelo ponga algo de lluvia ya dice mucho, aunque sea poca: con solo ICON-EU dando 0,2 mm llovió una de cada diez horas |
+| Cuántos modelos coinciden | 1 si dan lluvia dos o más; otra, 1 si la dan los tres | La coincidencia no suma sin más: con un modelo solo llovió el 21-23 % de las horas; con los tres, el 66 % |
+| Lo anterior según la antelación | La cantidad de cada modelo, «alguno da lluvia» y «la dan los tres», multiplicados por la antelación | La lluvia prevista para dentro de un día se cumple menos que la de las próximas horas |
 | Antelación | $\min(t / 24, 1)$, con $t$ en horas | Una previsión a 24 horas es menos segura que una a 2 |
 | Hora del día | $\sin(2\pi h / 24)$ y $\cos(2\pi h / 24)$ | Las tormentas de tarde no se reparten igual que la lluvia de frente |
 | Día del año | $\sin(2\pi d / 365{,}25)$ y $\cos(2\pi d / 365{,}25)$ | La lluvia de otoño no es la de verano |
@@ -88,10 +93,12 @@ sí lo tiene (`calibracio/pluja_casa.py`):
 
 Son 94.380 muestras (una por hora y estación), con lluvia en 3.622, el 4 %.
 
-**Comprobación antes de usarlo.** Se ajustó sin los últimos 90 días
-(06-07 a 04-10-2026) y se comparó en esos días con lo que mostraba la página
-hasta ahora, la fracción del ensemble. Se mide con el error de Brier, la media
-del cuadrado de la diferencia entre la probabilidad dada y lo que pasó:
+**Comprobación antes de usarlo.** Se hace con todo el archivo, en semanas que
+el modelo no ha visto: los días se reparten en cuatro grupos por semanas y
+cada grupo se predice con un modelo ajustado con los otros tres
+(apartado 4). Se mira por separado el corto plazo y la previsión hecha un día
+antes. Se mide con el error de Brier, la media del cuadrado de la diferencia
+entre la probabilidad dada y lo que pasó:
 
 ```math
 B = \frac{1}{n} \sum_{i=1}^{n} (p_i - y_i)^2
@@ -99,31 +106,58 @@ B = \frac{1}{n} \sum_{i=1}^{n} (p_i - y_i)^2
 
 Menos es mejor.
 
-| Método | Error de Brier |
-|---|---|
-| Frecuencia habitual de lluvia (siempre la misma probabilidad) | 0,0216 |
-| Fracción del ensemble (lo que mostraba la página) | 0,0187 |
-| **Regresión logística** | **0,0122** |
+| Método | Corto plazo | Un día antes |
+|---|---|---|
+| Frecuencia habitual de lluvia (siempre la misma probabilidad) | 0,0368 | 0,0370 |
+| Regresión solo con la cantidad de lluvia de cada modelo (hasta la versión 2.11) | 0,0251 | 0,0296 |
+| **Regresión con las señales de la tabla** | **0,0225** | **0,0271** |
 
-La regresión tiene un 35 % menos de error que el ensemble. Además, sus
-probabilidades significan lo que dicen:
+Más que el error importa la **fiabilidad**: que cuando la página dice un
+15 % llueva el 15 % de las veces. A corto plazo (1.825 horas de lluvia):
 
-| Probabilidad dada | Horas | Media dada | Llovió |
-|---|---|---|---|
-| 0-5 % | 4.202 | 1 % | 1 % |
-| 5-10 % | 32 | 7 % | 9 % |
-| 10-20 % | 24 | 15 % | 21 % |
-| 20-30 % | 16 | 24 % | 25 % |
-| 30-50 % | 22 | 40 % | 32 % |
-| 50-100 % | 72 | 88 % | 71 % |
+| Probabilidad dada | Horas | Media dada | Llovió | Parte de toda la lluvia |
+|---|---|---|---|---|
+| 0-5 % | 42.327 | 0,6 % | 0,6 % | 13 % |
+| 5-10 % | 1.049 | 8 % | 8 % | 5 % |
+| 10-20 % | 1.736 | 14 % | 15 % | 15 % |
+| 20-30 % | 713 | 24 % | 27 % | 10 % |
+| 30-50 % | 817 | 40 % | 38 % | 17 % |
+| 50-70 % | 538 | 59 % | 62 % | 18 % |
+| 70-100 % | 496 | 82 % | 79 % | 22 % |
 
-Con el ensemble, en cambio, cuando daba entre el 30 y el 50 % llovió el 9 %
-de las veces.
+Con la previsión de un día antes (1.797 horas de lluvia):
 
-Después de comprobarlo, el modelo se ajustó con todos los datos. Sus pesos
-están en `calibracio/pluja_casa.json`. El de más peso es ICON-EU (3,6, frente
-a 1,1 y 1,2 de los AROME): cuando ICON-EU da lluvia en este punto, llueve con
-más frecuencia que cuando la dan los otros.
+| Probabilidad dada | Horas | Media dada | Llovió | Parte de toda la lluvia |
+|---|---|---|---|---|
+| 0-5 % | 41.538 | 1 % | 1 % | 24 % |
+| 5-10 % | 642 | 8 % | 9 % | 3 % |
+| 10-20 % | 1.983 | 15 % | 14 % | 16 % |
+| 20-30 % | 1.012 | 24 % | 27 % | 15 % |
+| 30-50 % | 879 | 39 % | 37 % | 18 % |
+| 50-70 % | 456 | 59 % | 58 % | 15 % |
+| 70-100 % | 194 | 79 % | 81 % | 9 % |
+
+La última columna dice dónde cae la lluvia de verdad: **el 13 % de las horas
+de lluvia a corto plazo, y el 24 % un día antes, llegan cuando la página daba
+menos de un 5 %**. Es lluvia que ninguno de los tres modelos veía, y ninguna
+fórmula hecha con ellos la recupera.
+
+**Por qué se cambió la fórmula (06-10-2026).** La primera solo usaba la
+cantidad de lluvia de cada modelo y se comprobó con los últimos 90 días, que
+tenían 95 horas de lluvia: parecía fiable. Con todo el archivo no lo era:
+cuando daba un 7 % llovió el 25 % de las horas; con un 14 %, el 33 %; con un
+24 %, el 44 %, y cuando daba un 89 %, el 77 %. El logaritmo de los
+milímetros casi no distingue 0 de 0,2 mm, y esa diferencia es la que más
+cuenta. La comparación de entonces con la fracción del ensemble tampoco
+valía: Open-Meteo solo conservaba simulaciones de 96 de las 4.368 muestras, y
+las demás se contaron como «0 %».
+
+Una prueba (`tests/test_aprenentatge.py`) falla si, al volver a ajustar, lo
+dado y lo que llovió se separan más de 5 puntos en algún tramo con 150 horas
+o más.
+
+Después de comprobarlo, el modelo se ajusta con todos los datos. Sus pesos y
+las dos tablas están en `calibracio/pluja_casa.json`.
 
 ### 2.2 Segundo modelo: los datos de Montflorit y de casa
 
@@ -143,11 +177,16 @@ prever falta la estación de casa, se usa el modelo del archivo.
 Con la lluvia de casa de octubre de 2025 a agosto de 2026, cuando el
 pluviómetro iba bien (297 horas con lluvia), se comprobó si las señales de
 casa mejoran el modelo del archivo (`calibracio/estacio_casa.py`). El error
-de Brier pasa de 0,02629 a 0,02657: solo mejora la primera hora
-(de 0,0256 a 0,0247) y empeora a partir de la segunda. La presión y su
+de Brier pasa de 0,0236 a 0,0241: solo mejora la primera hora
+(de 0,0227 a 0,0223) y empeora a partir de la segunda. La presión y su
 tendencia no mejoran en ninguna antelación. Por eso el modelo del archivo no
 cambia: las señales de casa solo entran en el modelo propio, que se adopta si
 demuestra que acierta más.
+
+Esta comprobación sirve además de contraste de la fórmula con una estación
+que no se usó para ajustarla: con la lluvia de casa como verdad, el error del
+modelo del archivo bajó de 0,0263 a 0,0236 al pasar a la fórmula del
+apartado 2.1.
 
 ## 3. Temperatura: regresión lineal
 
@@ -253,20 +292,31 @@ dice qué se usa y las últimas cifras.
   cual, encima de la tabla y en cada hora.
 - **La cantidad de lluvia** sigue siendo la mayor de los tres modelos: la
   regresión da la probabilidad, no los milímetros.
+- **El radar llevado hacia delante** puede subir la probabilidad de las dos
+  primeras horas, nunca bajarla (ADR 0019).
+
+Lo que sí sale de la probabilidad es **el cielo de la tabla**: «pluja» con
+el 50 % o más, «possible pluja» desde el 20 % y, por debajo, solo las nubes.
+Antes salía de los milímetros del modelo más lluvioso, y la tabla podía decir
+«Pluja feble» con un 2 %.
 
 ## 6. Límites
 
 - **La lluvia es rara**: un 4 % de las horas. Las cifras del archivo se
-  apoyan en unas 3.600 horas con lluvia, pero la comprobación de los últimos
-  90 días, en 95; tienen bastante margen de error.
+  apoyan en unas 3.600 horas con lluvia; los tramos de la tabla de fiabilidad
+  con pocos cientos de horas tienen un margen de unos 3 puntos.
+- **Una de cada ocho horas de lluvia a corto plazo, y una de cada cuatro un
+  día antes, llega con menos de un 5 %** (apartado 2.1): un porcentaje bajo
+  no es un cero.
 - **El archivo no es Montflorit**: Sabadell y Sant Cugat están a 5-6 km. Un
   chubasco puede caer en un sitio y no en otro. Por eso el modelo propio lo
   sustituirá cuando acierte más.
 - **El corto plazo del archivo es optimista**: une las primeras horas de
-  cada pasada del modelo. La comprobación con previsiones hechas un día antes
-  da un error de 0,0198, frente a 0,0216 de la frecuencia habitual: la
-  mejora a 24 horas es pequeña. Los datos propios, con la antelación real de
-  cada hora, lo medirán mejor.
+  cada pasada del modelo. Con previsiones hechas un día antes el error sube
+  de 0,0225 a 0,0271, y las probabilidades altas casi desaparecen (194 horas
+  por encima del 70 %, frente a 496). El archivo solo tiene esas dos
+  antelaciones: entre una y otra, la fórmula interpola. Los datos propios,
+  con la antelación real de cada hora, lo medirán mejor.
 - **La verdad de la temperatura es una estación de aficionado.** Coincide
   con Montflorit (casa da 0,4 °C menos de media en las primeras 36 horas
   comparadas),

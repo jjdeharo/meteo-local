@@ -90,6 +90,25 @@ class Web(unittest.TestCase):
             self.text("2026-10-05T16:41:00+02:00", avisos),
             "Avís groc de l’AEMET per pluja al Vallès: avui de 18:00 a 23:00.")
 
+    def test_el_cel_surt_de_la_probabilitat(self):
+        # ADR 0021: els mil·límetres del model més plujós no fan «pluja» si la
+        # probabilitat és baixa (el cas del 06-10-2026: «Pluja feble» amb un 2 %).
+        def cel(**f):
+            fila = {"hora": "2026-10-06T15:00", "codi": 3, "nuvols": 100, **f}
+            return self.avalua("2026-10-06T13:00:00+02:00", f"cel({json.dumps(fila)})[0]")
+        self.assertEqual(cel(pluja_mm=0.3, probabilitat=0.02), "Cobert")
+        self.assertEqual(cel(pluja_mm=0.3, probabilitat=0.2), "Possible pluja")
+        self.assertEqual(cel(pluja_mm=0.3, probabilitat=0.5), "Pluja feble")
+        self.assertEqual(cel(pluja_mm=1.3, probabilitat=0.6), "Pluja")
+        self.assertEqual(cel(pluja_mm=5, probabilitat=0.9), "Pluja forta")
+        self.assertEqual(cel(pluja_mm=5, probabilitat=0.9, codi=95), "Tempesta")
+        self.assertEqual(cel(pluja_mm=2, probabilitat=0.3, codi=95), "Possible tempesta")
+        self.assertEqual(cel(pluja_mm=2, probabilitat=0.05, codi=95), "Cobert")
+        # Sense probabilitat, manen els mil·límetres, com abans.
+        self.assertEqual(cel(pluja_mm=0.3, probabilitat=None), "Pluja feble")
+        self.assertEqual(self.avalua("2026-10-06T13:00:00+02:00",
+                                     "plujaHora({plou_ara: true, probabilitat: 1, pluja_mm: 0})"), "pluja")
+
     def test_propera_lectura(self):
         horari = {"trams": [["00:00", "23:50"]], "cada_min": 10, "desfase_min": 1}
         expr = f"properaActualitzacio({json.dumps(horari)}).toISOString()"

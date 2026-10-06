@@ -1,13 +1,17 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: AGPL-3.0-or-later
-"""Modelo de lluvia de la página de casa ajustado con el archivo (ADR 0012).
+"""Modelo de lluvia de la página de casa ajustado con el archivo (ADR 0012 y 0021).
 
 Regresión logística (aprenentatge.py) con las previsiones archivadas de
 Open-Meteo en casa (corto plazo y 24 h antes) y la lluvia medida en Sabadell y
-Sant Cugat, cada estación como una muestra. Antes de ajustar con todo, se
-comprueba con los últimos meses, que no se usan para ajustar, frente a la
-fracción del ensemble ICON-EU-EPS, que era lo que daba la página (su archivo
-solo llega a unos tres meses atrás).
+Sant Cugat, cada estación como una muestra.
+
+Antes de ajustar con todo, se comprueba con **todo el archivo** en semanas
+que el modelo no ha visto (validación cruzada por semanas, como hace
+aprenentatge.py): el error y, sobre todo, la fiabilidad, es decir, si cuando
+da un 10 % llueve el 10 % de las veces, en cada antelación. Se compara con la
+frecuencia habitual y con la fórmula anterior (solo la cantidad de lluvia de
+cada modelo), que se quedaba corta entre el 5 y el 50 %.
 
 Escribe calibracio/pluja_casa.json. Necesita los datos de descarrega.py.
 Uso: python3 calibracio/pluja_casa.py
@@ -16,8 +20,6 @@ import datetime as dt
 import json
 import os
 import sys
-import urllib.parse
-import urllib.request
 from zoneinfo import ZoneInfo
 
 import numpy as np
@@ -30,19 +32,11 @@ from calibracio.analitza import leer_obs, leer_prev  # noqa: E402
 LOCAL = ZoneInfo("Europe/Madrid")
 UTC = dt.timezone.utc
 SALIDA = os.path.join(os.path.dirname(os.path.abspath(__file__)), "pluja_casa.json")
-DIAS_PRUEBA = 90
-
-
-def ensemble(inicio, fin):
-    q = urllib.parse.urlencode({"latitude": C.CASA[0], "longitude": C.CASA[1],
-                                "hourly": "precipitation", "models": C.ENSEMBLE, "timezone": "UTC",
-                                "start_date": inicio.isoformat(), "end_date": fin.isoformat()})
-    with urllib.request.urlopen(f"https://ensemble-api.open-meteo.com/v1/ensemble?{q}", timeout=120) as r:
-        h = json.loads(r.read())["hourly"]
-    miembros = [k for k in h if k.startswith("precipitation")]
-    return {dt.datetime.fromisoformat(t).replace(tzinfo=UTC):
-            sum((h[k][i] or 0) >= C.UMBRAL_MM for k in miembros) / len(miembros)
-            for i, t in enumerate(h["time"])}
+# La fórmula anterior, para comparar: sin «el modelo da lluvia», sin cuántos
+# coinciden y sin su relación con la antelación.
+RASGOS_ABANS = ["constant", "arome_hd", "arome", "icon_eu", "antelacio",
+                "hora_sin", "hora_cos", "dia_sin", "dia_cos"]
+TRAMS = ((0, .05), (.05, .1), (.1, .2), (.2, .3), (.3, .5), (.5, .7), (.7, 1.01))
 
 
 def muestras():
@@ -66,48 +60,68 @@ def muestras():
     return res
 
 
+def creuada(x, y, grup):
+    """Probabilidad de cada muestra dada por un modelo ajustado sin su grupo
+    de semanas."""
+    p = np.zeros(len(y))
+    for g in set(grup):
+        ent = grup != g
+        p[~ent] = A.predecir(A.ajustar(x[ent], y[ent]), x[~ent])
+    return p
+
+
+def fiabilitat(p, y):
+    """Por tramos de probabilidad: cuántas horas, la media dada, lo que llovió
+    y qué parte de toda la lluvia cayó en el tramo."""
+    res = []
+    for a, b in TRAMS:
+        s = (p >= a) & (p < b)
+        if s.sum():
+            res.append({"de": a, "a": min(b, 1), "hores": int(s.sum()),
+                        "donada": round(float(p[s].mean()), 3),
+                        "va_ploure": round(float(y[s].mean()), 3),
+                        "part_pluja": round(float(y[s].sum() / y.sum()), 3)})
+    return res
+
+
 def main():
     ms = muestras()
-    final = max(t for t, *_ in ms)
-    corte = (final - dt.timedelta(days=DIAS_PRUEBA)).replace(hour=0)
     t = np.array([m[0] for m in ms])
     horas = np.array([m[1] for m in ms])
     x = np.array([m[2] for m in ms])
     y = np.array([m[3] for m in ms])
-    ent = t < corte
-    w = A.ajustar(x[ent], y[ent])
-    ens = ensemble(corte.date(), final.date())
-    prueba = (~ent) & (horas == 0) & np.array([ti in ens for ti in t])
-    yp = y[prueba]
-    p_log = A.predecir(w, x[prueba])
-    p_ens = np.array([ens[ti] for ti in t[prueba]])
+    columnes = [A.RASGOS_ARXIU.index(n) for n in RASGOS_ABANS]
+    grup = np.array([(ti.isocalendar()[0] * 53 + ti.isocalendar()[1]) % A.SETMANES_VALIDACIO for ti in t])
+    p_nou, p_abans = creuada(x, y, grup), creuada(x[:, columnes], y, grup)
 
-    def brier(p):
-        return round(float(np.mean((p - yp) ** 2)), 5)
+    def brier(p, s):
+        return round(float(np.mean((p[s] - y[s]) ** 2)), 5)
 
-    fiabilidad = []
-    for a, b in ((0, .05), (.05, .1), (.1, .2), (.2, .3), (.3, .5), (.5, 1.01)):
-        s = (p_log >= a) & (p_log < b)
-        if s.sum():
-            fiabilidad.append({"de": a, "a": min(b, 1), "hores": int(s.sum()),
-                               "donada": round(float(p_log[s].mean()), 3),
-                               "va_ploure": round(float(yp[s].mean()), 3)})
-    w_final = A.ajustar(x, y)
+    validacio = {"metode": f"validació creuada en {A.SETMANES_VALIDACIO} grups de setmanes, tot l'arxiu"}
+    for nom, h in (("curt_termini", 0), ("un_dia_abans", 24)):
+        s = horas == h
+        validacio[nom] = {
+            "mostres": int(s.sum()), "hores_pluja": int(y[s].sum()),
+            "error_frequencia": brier(np.full(len(y), y[s].mean()), s),
+            "error_abans": brier(p_abans, s), "error": brier(p_nou, s),
+            "fiabilitat": fiabilitat(p_nou[s], y[s]),
+            "fiabilitat_abans": fiabilitat(p_abans[s], y[s])}
     resultado = {
         "origen": "arxiu", "des_de": t.min().astimezone(LOCAL).date().isoformat(),
-        "fins": final.astimezone(LOCAL).date().isoformat(),
-        "rasgos": A.RASGOS_ARXIU, "w": [round(v, 5) for v in w_final.tolist()],
+        "fins": t.max().astimezone(LOCAL).date().isoformat(),
+        "rasgos": A.RASGOS_ARXIU, "w": [round(v, 5) for v in A.ajustar(x, y).tolist()],
         "mostres": int(len(y)), "hores_pluja": int(y.sum()),
-        "validacio": {
-            "periode": [corte.date().isoformat(), final.date().isoformat()],
-            "mostres": int(prueba.sum()), "hores_pluja": int(yp.sum()),
-            "error_frequencia": brier(np.full(len(yp), y[ent].mean())),
-            "error_ensemble": brier(p_ens), "error_logistica": brier(p_log),
-            "fiabilitat": fiabilidad},
+        "validacio": validacio,
     }
     with open(SALIDA, "w", encoding="utf-8") as f:
         json.dump(resultado, f, ensure_ascii=False, indent=1)
-    print(json.dumps(resultado["validacio"], ensure_ascii=False, indent=1))
+    for nom in ("curt_termini", "un_dia_abans"):
+        v = validacio[nom]
+        print(f"{nom}: {v['mostres']} mostres, {v['hores_pluja']} amb pluja. Error: freqüència "
+              f"{v['error_frequencia']}, abans {v['error_abans']}, ara {v['error']}")
+        for clau in ("fiabilitat_abans", "fiabilitat"):
+            print(" ", clau, " ".join(f"{100 * f['donada']:.0f}→{100 * f['va_ploure']:.0f} ({f['hores']})"
+                                      for f in v[clau]))
     print("Coeficientes:", dict(zip(A.RASGOS_ARXIU, resultado["w"])))
 
 
