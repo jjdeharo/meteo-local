@@ -279,6 +279,38 @@ h1 { margin: 0; font-size: 1.6rem; line-height: 1.2; }
   .taula-hores th, .taula-hores td { padding: .3rem .25rem; }
 }
 
+/* Dades d'ara, cadascuna amb la seva icona. */
+.dades-ara {
+  list-style: none;
+  margin: .3rem 0 .2rem;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: .35rem 1.2rem;
+  font-size: 1.05rem;
+}
+.dades-ara li { display: flex; align-items: center; gap: .4rem; }
+.dades-ara svg, .titol-risc svg {
+  width: 1.3em;
+  height: 1.3em;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.dades-ara svg { color: var(--enllac); }
+
+/* Risc previst, amb el color del nivell de l'AEMET. */
+.risc-previst { --nivell: #ca8a04; border-color: var(--nivell); border-left-width: .4rem; }
+.risc-previst.taronja { --nivell: #ea580c; }
+.risc-previst.vermell { --nivell: var(--cotxe); background: var(--cotxe-fons); }
+.titol-risc { display: flex; align-items: center; gap: .4rem; margin: 0; font-weight: 700; }
+.titol-risc svg { color: var(--nivell); }
+.risc-previst ul { margin: .3rem 0 0; padding-left: 1.3rem; }
+.risc-previst .detall { color: var(--suau); font-size: .9rem; }
+
 .avis-pc { border-color: var(--cotxe); background: var(--cotxe-fons); }
 .avis-pc p { margin: 0; }
 .avis-pc p + p { margin-top: .4rem; }

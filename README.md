@@ -14,6 +14,10 @@ La probabilidad de lluvia sale de una regresión logística ajustada con lo que
 llovió de verdad; la temperatura se corrige con un año de la estación de casa
 (ADR 0017), y el NAS guarda cada hora lo previsto y lo medido para seguir
 aprendiendo (ADR 0012; explicación en [docs/estadistica.md](docs/estadistica.md)).
+Si lo que miden las estaciones o lo que prevé la página llega a los umbrales de
+aviso de AEMET para el Vallès (lluvia, rachas, calor, frío o nieve), la página
+lo marca como «Risc» y el NAS avisa a Juanjo por Telegram; los avisos de AEMET y
+de Protección Civil por sí solos no lo hacen (ADR 0018).
 
 ## Cómo funciona
 
@@ -104,6 +108,7 @@ al motivo de los modelos. Para repetirla: `python3 calibracio/descarrega.py
 | `agent/` | Agente diario: instrucciones, imagen del radar, ejecución y validación |
 | `ecowitt.py` | La estación de casa con la API oficial de Ecowitt; las claves, fuera del repositorio (ADR 0017) |
 | `pluviometre.py` | Comprueba una vez, tras limpiarlo, si el pluviómetro de casa marca la lluvia débil y avisa por Telegram (ADR 0017) |
+| `riscos.py` | Situaciones de peligro de la página de casa y aviso por Telegram (ADR 0018) |
 | `registre.py` | Registro en el NAS de cada actualización y del resultado de cada día (ADR 0006) |
 | `aprenentatge.py` | Aprendizaje de la página de casa: regresiones, comprobación y cambio de método (ADR 0012, `docs/estadistica.md`) |
 | `.github/workflows/previsio.yml` | Al subir a `main`: pruebas |

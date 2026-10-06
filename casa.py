@@ -30,6 +30,7 @@ import config as C
 import ecowitt as E
 import prevision as P
 import registre as R
+import riscos as RS
 
 HORAS = 24
 HORAS_PERSISTENCIA = 4      # las que tiene la tabla de calibracio.json
@@ -60,6 +61,7 @@ def montflorit():
            "vent": u.get("VEL"), "pluja_avui": u.get("PREC"),
            "pluja_30min": lluvia_entre(filas, hora - dt.timedelta(minutes=30), hora),
            "pluja_1h": lluvia_entre(filas, hora - dt.timedelta(hours=1), hora),
+           "pluja_12h": lluvia_entre(filas, hora - dt.timedelta(hours=12), hora),
            "intensitat": u.get("PINT")}
     return filas, ara
 
@@ -69,7 +71,7 @@ def modelos(desde):
     q = urllib.parse.urlencode({
         "latitude": C.CASA[0], "longitude": C.CASA[1],
         "hourly": "temperature_2m,precipitation,weather_code,cloud_cover,"
-                  "wind_speed_10m,wind_gusts_10m,relative_humidity_2m,shortwave_radiation",
+                  "wind_speed_10m,wind_gusts_10m,relative_humidity_2m,shortwave_radiation,snowfall",
         "models": "meteofrance_seamless," + ",".join(C.MODELOS_FINOS),
         "timezone": P.TZ, "start_date": dias[0], "end_date": dias[1]})
     h = json.loads(P.get(f"https://api.open-meteo.com/v1/forecast?{q}"))["hourly"]
@@ -222,7 +224,8 @@ def previsio(desde, h, e, ara, avisos, model=None, casa=None):
             "plou_ara": plou_ara, "segons_estacio": segun_estacion,
             "avisos": avisos_del_tramo(ini, fin, avisos),
             "nuvols": valor("cloud_cover", i), "codi": valor("weather_code", i),
-            "vent": valor("wind_speed_10m", i), "ratxa": valor("wind_gusts_10m", i)})
+            "vent": valor("wind_speed_10m", i), "ratxa": valor("wind_gusts_10m", i),
+            "neu": valor("snowfall", i)})
     return filas
 
 
@@ -429,6 +432,8 @@ def recoger(anterior=None):
             salida.update(antes)
             salida["sortides"] = sortides(salida["hores"], planes)
             salida["sortida_per_defecte_h"] = C.SALIDA_VUELTA_POR_DEFECTO_H
+    # Situaciones de peligro según lo medido y lo previsto (ADR 0018).
+    salida["riscos"] = RS.detecta(salida, P.AHORA)
     # Registro para aprender (solo en el NAS, que tiene /estat): lo que medían
     # Montflorit y la estación de casa y, una vez por hora, lo que daban los
     # modelos.

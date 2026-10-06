@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 """Datos fijos del trayecto. Se cambian aquí, no en prevision.py."""
 
-VERSION = "2.8.0"
+VERSION = "2.9.0"
 
 # Coordenadas redondeadas a unos 500 m: para el tiempo da igual una calle u
 # otra, y el repositorio es público.
@@ -105,6 +105,24 @@ CASA_PREVISION_ANTERIOR_MAX_H = 6
 # estas horas, y cambio de temperatura que se avisa.
 SALIDA_VUELTA_POR_DEFECTO_H = 4
 SALIDA_CAMBIO_TEMPERATURA = 6
+
+# Situaciones de peligro en casa (riscos.py, ADR 0018): los umbrales de aviso
+# amarillo, naranja y rojo de AEMET para el Prelitoral de Barcelona (zona
+# 690803; Plan Meteoalerta, anexo 1, «Umbrales y niveles de aviso», versión del
+# 31-05-2022). Se comparan con lo que miden las estaciones y con la previsión
+# de la página de casa, no con los avisos de AEMET. Lluvia en mm, racha en
+# km/h, temperatura en °C y nieve en cm.
+RISC_LLINDARS = {
+    "pluja_1h": (20, 40, 90),
+    "pluja_12h": (60, 100, 180),
+    "ratxa": (70, 90, 130),
+    "calor": (36, 39, 42),
+    "fred": (-4, -8, -12),
+    "neu_24h": (2, 5, 20),
+}
+# Horas sin ver un riesgo para darlo por acabado: así el vaivén de los modelos
+# entre una pasada y otra no repite el aviso por Telegram.
+RISC_FI_H = 3
 
 # Umbrales de la decisión (mm en una hora; fracción de miembros; km).
 UMBRAL_MM = 0.2          # ya moja en moto

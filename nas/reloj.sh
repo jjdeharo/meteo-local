@@ -15,6 +15,9 @@
 # Mientras exista /estat/vigila-pluviometre.json, cada hora comprueba si el
 # pluviómetro de casa marca la lluvia débil; al tener resultado avisa y lo
 # borra (pluviometre.py, ADR 0017).
+# Tras cada publicación de la página de casa, si lo que miden las estaciones o
+# lo que prevé la página llega a un umbral de peligro, avisa por Telegram: al
+# aparecer o subir de nivel y cuando ya no queda ninguno (riscos.py, ADR 0018).
 # Además, cada minuto mira si main tiene commits nuevos y, si los tiene,
 # publica enseguida: es el único que publica la web (ADR 0005).
 #
@@ -40,11 +43,17 @@ prepara() {
   [ -s "$ESTAT" ] || curl -fsS "$WEB" -o "$ESTAT" || true
 }
 
+riscos() {
+  (cd "$REPO" && python3 riscos.py avisa /estat/casa.json >/dev/null) \
+    || registro "ha fallado el aviso de riesgos"
+}
+
 pasada() {
   prepara || return
   if ANTERIOR="$ESTAT" COMENTARI="$COMENTARI" DESTINO="$URL_REPO" bash "$REPO/publica.sh" >/dev/null; then
     registro "publicado"
     (cd "$REPO" && python3 registre.py apunta "$ESTAT") || registro "no he podido apuntar en el registro"
+    riscos
   else
     registro "ha fallado la publicación"
   fi
@@ -52,8 +61,12 @@ pasada() {
 
 pasada_casa() {
   prepara || return
-  SOLO_CASA=1 ANTERIOR="$ESTAT" DESTINO="$URL_REPO" bash "$REPO/publica.sh" >/dev/null \
-    && registro "publicada la página de casa" || registro "ha fallado la página de casa"
+  if SOLO_CASA=1 ANTERIOR="$ESTAT" DESTINO="$URL_REPO" bash "$REPO/publica.sh" >/dev/null; then
+    registro "publicada la página de casa"
+    riscos
+  else
+    registro "ha fallado la página de casa"
+  fi
 }
 
 verificacion() {

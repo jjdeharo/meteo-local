@@ -89,15 +89,6 @@ function veredicte(mitja) {
   return p;
 }
 
-function icona(id) {
-  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-  svg.setAttribute('aria-hidden', 'true');
-  const use = document.createElementNS('http://www.w3.org/2000/svg', 'use');
-  use.setAttribute('href', '#' + id);
-  svg.append(use);
-  return svg;
-}
-
 // La roba del dia, destacada: la peça (jaqueta o samarreta) i, si cal, el
 // paraigua (cotxe) o la pluja (impermeable a la moto). Només al matí, quan es
 // tria.

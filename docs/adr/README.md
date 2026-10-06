@@ -19,5 +19,6 @@
 | [0015](0015-instalable-como-aplicacion.md) | Instalable como aplicación | aceptado |
 | [0016](0016-prevision-de-reserva-si-falla-open-meteo.md) | Previsión de reserva si falla Open-Meteo | aceptado |
 | [0017](0017-estacion-de-casa-con-la-api-de-ecowitt.md) | Estación de casa con la API de Ecowitt | aceptado |
+| [0018](0018-situaciones-de-peligro-y-aviso-por-telegram.md) | Situaciones de peligro y aviso por Telegram | aceptado |
 
 Plantilla: [0000-plantilla.md](0000-plantilla.md). Para crear uno: `nuevo-adr "Título"`.

@@ -18,6 +18,16 @@ function element(etiqueta, classe, text) {
   return el;
 }
 
+// Icona del full de símbols de la pàgina (Lucide).
+function icona(id) {
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('aria-hidden', 'true');
+  const use = document.createElementNS('http://www.w3.org/2000/svg', 'use');
+  use.setAttribute('href', '#' + id);
+  svg.append(use);
+  return svg;
+}
+
 // Data d'avui (hora local) a l'hora «HH:MM».
 function avuiA(hhmm) {
   const [h, m] = hhmm.split(':').map(Number);

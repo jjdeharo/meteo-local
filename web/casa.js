@@ -26,7 +26,7 @@ function cel(f) {
 // Com canvia la pressió en tres hores, amb els llindars habituals: menys d'1
 // hPa és estable; 3,6 hPa o més, un canvi ràpid.
 function textPressio(casa) {
-  const p = `pressió ${coma(casa.pressio, 0)} hPa`;
+  const p = `Pressió ${coma(casa.pressio, 0)} hPa`;
   const d = casa.pressio_3h;
   if (d == null) return p;
   if (Math.abs(d) < 1) return `${p}, estable`;
@@ -37,23 +37,56 @@ function textPressio(casa) {
 
 // Temperatura, humitat i pressió, de l'estació de casa; pluja i vent, de
 // Montflorit. Plou si qualsevol de les dues en marca (la de casa, només quan
-// en marca: el seu zero no és fiable). Si en falla una, l'altra.
+// en marca: el seu zero no és fiable). Si en falla una, l'altra. Cada dada,
+// amb la seva icona, perquè es llegeixi d'una ullada.
+function dada(id, text) {
+  const li = element('li');
+  li.append(icona(id), document.createTextNode(text));
+  return li;
+}
+
 function blocAra(ara, casa) {
   const base = casa || ara;
   const sec = element('section', 'decisio targeta ara');
   sec.setAttribute('aria-label', casa ? 'El temps ara a casa' : 'El temps ara a Montflorit');
   sec.append(element('h2', 'data', `Ara a ${casa ? 'casa' : 'Montflorit'} (${horaCurta(base.hora)})`));
-  sec.append(element('p', 'veredicte', `${coma(base.temperatura)} °C`));
+  const temp = element('p', 'veredicte');
+  const termometre = icona('i-thermometer');
+  termometre.classList.add('vehicle');
+  temp.append(termometre, `${coma(base.temperatura)} °C`);
+  sec.append(temp);
   const plouMont = !!ara && ((ara.intensitat || 0) > 0 || (ara.pluja_30min || 0) > 0);
   const plou = plouMont || !!(casa && casa.plou);
   const intensitat = Math.max((ara && ara.intensitat) || 0, (casa && casa.plou && casa.intensitat) || 0);
-  const parts = [plou ? `Plou: ${coma(intensitat)} mm/h` : 'No plou'];
-  if (ara) parts.push(`${coma(ara.pluja_avui || 0)} mm avui`);
-  parts.push(`humitat ${coma(base.humitat, 0)} %`);
-  if (casa && casa.pressio != null) parts.push(textPressio(casa));
-  if (ara && ara.vent != null) parts.push(`vent ${coma(ara.vent, 0)} km/h`);
-  sec.append(element('p', 'frase', parts.join(' · ') + '.'));
+  const llista = element('ul', 'dades-ara');
+  llista.append(plou ? dada('i-umbrella', `Plou: ${coma(intensitat)} mm/h`) : dada('i-umbrella-off', 'No plou'));
+  if (ara) llista.append(dada('i-cloud-rain', `${coma(ara.pluja_avui || 0)} mm avui`));
+  llista.append(dada('i-droplets', `Humitat ${coma(base.humitat, 0)} %`));
+  if (casa && casa.pressio != null) llista.append(dada('i-gauge', textPressio(casa)));
+  if (ara && ara.vent != null) llista.append(dada('i-wind', `Vent ${coma(ara.vent, 0)} km/h`));
+  sec.append(llista);
   return sec;
+}
+
+// Situacions de perill segons el que mesuren les estacions i el que preveu
+// la pàgina (riscos.py, ADR 0018), amb el color del nivell de l'AEMET.
+function blocRiscos(riscos) {
+  if (!riscos || !riscos.length) return null;
+  const pitjor = riscos[0].nivell;
+  const caixa = element('section', `avis risc-previst ${pitjor}`);
+  caixa.setAttribute('aria-label', 'Risc previst');
+  const titol = element('p', 'titol-risc');
+  titol.append(icona('i-triangle-alert'), `Risc ${pitjor}`);
+  caixa.append(titol);
+  const llista = element('ul');
+  for (const r of riscos) {
+    const li = element('li', null, r.text);
+    li.append(' ', element('span', 'detall',
+      `(llindar ${r.nivell} de l\u2019AEMET: ${coma(r.llindar, 0).replace('-', '\u2212')} ${r.unitat})`));
+    llista.append(li);
+  }
+  caixa.append(llista);
+  return caixa;
 }
 
 function nomDia(iso) {
@@ -152,6 +185,8 @@ function pinta(dades) {
   avisos.replaceChildren();
   const plans = blocPlans(dades.plans);
   if (plans) avisos.append(plans);
+  const riscos = blocRiscos(dades.riscos);
+  if (riscos) avisos.append(riscos);
   if (dades.avisos && dades.avisos.length) avisos.append(element('p', 'avis', textAvisos(dades.avisos)));
   if (dades.previsio_de) avisos.append(element('p', 'avis', textPrevisioAnterior(dades)));
   if (dades.models && dades.models.no_encerten) {
