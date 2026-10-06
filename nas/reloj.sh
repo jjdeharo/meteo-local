@@ -12,6 +12,9 @@
 # rellena las horas que falten de la estación de casa y la página de casa
 # aprende de sus aciertos (aprenentatge.py). En
 # AGENTE_HORAS ejecuta el agente diario y vuelve a publicar con su comentario.
+# Mientras exista /estat/vigila-pluviometre.json, cada hora comprueba si el
+# pluviómetro de casa marca la lluvia débil; al tener resultado avisa y lo
+# borra (pluviometre.py, ADR 0017).
 # Además, cada minuto mira si main tiene commits nuevos y, si los tiene,
 # publica enseguida: es el único que publica la web (ADR 0005).
 #
@@ -116,5 +119,8 @@ while true; do
   fi
   if [ -d "$REPO/.git" ] && [ "$ahora" = "$(hora_verificacion)" ]; then
     verificacion
+  fi
+  if [ -d "$REPO/.git" ] && [ "${ahora#*:}" = "05" ] && [ -f /estat/vigila-pluviometre.json ]; then
+    (cd "$REPO" && python3 pluviometre.py vigila) || registro "ha fallado la vigilancia del pluviómetro"
   fi
 done

@@ -103,6 +103,7 @@ al motivo de los modelos. Para repetirla: `python3 calibracio/descarrega.py
 | `nas/` | Contenedor del NAS: `compose.yml`, `Dockerfile` y `reloj.sh` |
 | `agent/` | Agente diario: instrucciones, imagen del radar, ejecución y validación |
 | `ecowitt.py` | La estación de casa con la API oficial de Ecowitt; las claves, fuera del repositorio (ADR 0017) |
+| `pluviometre.py` | Comprueba una vez, tras limpiarlo, si el pluviómetro de casa marca la lluvia débil y avisa por Telegram (ADR 0017) |
 | `registre.py` | Registro en el NAS de cada actualización y del resultado de cada día (ADR 0006) |
 | `aprenentatge.py` | Aprendizaje de la página de casa: regresiones, comprobación y cambio de método (ADR 0012, `docs/estadistica.md`) |
 | `.github/workflows/previsio.yml` | Al subir a `main`: pruebas |

@@ -53,6 +53,19 @@ propio (ADR 0012).
   rápido desde 3,6 hPa), y la lluvia y el viento de Montflorit. Si falla una
   de las dos, la otra.
 
+- **Comprobación tras limpiar el pluviómetro** (`pluviometre.py`): Juanjo
+  lo limpia y pidió que el NAS lo vigile y le avise por Telegram. Mientras
+  exista `/estat/vigila-pluviometre.json`, el reloj compara cada hora la
+  lluvia de casa con la de Montflorit por episodios. Un episodio débil (de 0,6
+  a 4 mm en Montflorit, al menos dos vuelcos del cubo de 0,254 mm) cuenta como
+  detectado si casa marca algo en él o en la hora de antes o de después. Con
+  tres episodios débiles da resultado («funciona» si los marca todos, «falla»
+  si marca la mitad o menos; si no, espera a seis y pide el 80 %); a los 45
+  días, avisa con lo que haya. Si casa marca lluvia sin lluvia en Montflorit,
+  se toma como el movimiento de la limpieza y se cuenta desde ahí. Avisa una
+  vez y borra el archivo. Volver a fiarse del cero del pluviómetro lo decide
+  Juanjo con ese resultado.
+
 ## Alternativas descartadas
 
 - **Usar Montflorit como verdad de la temperatura**: no tiene historial y
@@ -64,6 +77,9 @@ propio (ADR 0012).
 - **La presión y su tendencia como señal de lluvia**: no mejora nada en la
   comprobación. Se muestra en la página porque es útil al leerla, no porque
   decida.
+- **Comprobar el pluviómetro con una jeringa**, como propone Ecowitt: el
+  sensor tiene mal acceso. Lo comprueba la lluvia de verdad, con Montflorit al
+  lado.
 - **Pedir el historial en cada actualización**: la API corta si se le pregunta
   muy seguido. Cada pasada hace dos consultas; el relleno, una por día que
   falte, con pausa.
@@ -137,6 +153,8 @@ coste.
 - `tests/test_estacio_casa.py`: horas de la estación, paso por medianoche,
   tendencia de la presión, lluvia solo en positivo (página, modo aviso y
   verificación), error del modelo al prever.
+- `tests/test_pluviometre.py`: episodios, limpieza, resultado y borrado tras
+  avisar.
 - `tests/test_aprenentatge.py`: rasgos nuevos, corrección con y sin la
   estación, modelo propio que recurre al del archivo sin la estación, lluvia
   observada de las dos estaciones, propuesta y aplicación de la corrección
