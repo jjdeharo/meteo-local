@@ -25,5 +25,6 @@
 | [0021](0021-probabilidad-de-lluvia-de-casa-comprobada-con-todo-el-archivo.md) | Probabilidad de lluvia de casa comprobada con todo el archivo | aceptado |
 | [0022](0022-aviso-por-telegram-antes-de-que-llueva-en-casa.md) | Aviso por Telegram antes de que llueva en casa | aceptado |
 | [0023](0023-movimiento-del-radar-medido-en-la-lluvia-de-cerca.md) | Movimiento del radar medido en la lluvia de cerca | aceptado |
+| [0024](0024-web-publica-temps-a-montflorit.md) | Web pública Temps a Montflorit | aceptado |
 
 Plantilla: [0000-plantilla.md](0000-plantilla.md). Para crear uno: `nuevo-adr "Título"`.

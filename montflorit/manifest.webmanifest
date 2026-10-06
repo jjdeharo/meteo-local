@@ -1,0 +1,17 @@
+{
+  "name": "Temps a Montflorit",
+  "short_name": "Montflorit",
+  "description": "El temps ara a Montflorit (Cerdanyola del Vallès) i la previsió hora a hora, que s'actualitza sola.",
+  "lang": "ca",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f6f7f9",
+  "theme_color": "#1d4ed8",
+  "icons": [
+    {"src": "icones/icona-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "icones/icona-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+    {"src": "icones/icona-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable"},
+    {"src": "icones/icona-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ]
+}

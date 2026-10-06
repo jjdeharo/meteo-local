@@ -28,6 +28,11 @@ Al cambiar algo:
   para IONOS solo puede dejar `.json` en esa carpeta (orden fija en el
   `authorized_keys` de IONOS); la carpeta tiene un `.htaccess` que permite leer
   los datos desde `jjdeharo.github.io`.
+- La página de casa se publica también como web pública, «Temps a Montflorit»
+  (`jjdeharo/meteo-montflorit`, ADR 0024): la genera `montflorit.py` y no puede
+  decir «casa» ni nada del trayecto. Si cambias un texto de `web/casa.html` o
+  `web/fonts.html` que esté en sus listas de cambios, cámbialo también allí;
+  las pruebas avisan. En ese repositorio no se edita nada a mano.
 - Las actualizaciones programadas las hace el NAS (`nas/`, ADR 0005). Si cambias
   `nas/`, copia los archivos a `/volume1/docker/meteo-local` y reconstruye
   (`docker compose up -d --build`). Ver el estado: `docker logs meteo-local`.

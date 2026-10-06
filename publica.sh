@@ -14,6 +14,8 @@
 #   SOLO_CASA   si vale 1, solo recalcula la página de casa y vuelve a
 #               publicar los datos del trayecto tal como estaban (ANTERIOR)
 #   COMENTARI   comentario del agente diario (agent/), si lo hay
+#   DESTINO_MONTFLORIT  adónde se empuja la web pública «Temps a Montflorit»
+#               (ADR 0024); vacío, no se publica
 #
 # En el NAS, los datos (dades.json y casa.json) se suben en cada pasada a
 # IONOS (bilateria.org/app/meteo-local/), de donde los lee la página, y la
@@ -21,14 +23,21 @@
 # minutos de la última vez o si IONOS falla: GitHub Pages admite unas 10
 # publicaciones por hora (ADR 0020). Fuera del NAS, sin la clave de IONOS,
 # todo va a GitHub como siempre.
+#
+# La web pública «Temps a Montflorit» (ADR 0024) sale de la misma pasada: sus
+# datos (montflorit.json: los de casa sin lo del trayecto) van a IONOS con los
+# demás, y la web, generada por montflorit.py, a su repositorio cuando se
+# publica esta. Si falla, esta se publica igual.
 set -euo pipefail
 cd "$(dirname "$0")"
 
 ANTERIOR=${ANTERIOR:-https://jjdeharo.github.io/meteo-local/dades.json}
 DESTINO=${DESTINO:-$(git remote get-url origin)}
+DESTINO_MONTFLORIT=${DESTINO_MONTFLORIT-git@github.com:jjdeharo/meteo-montflorit.git}
 
 sitio=$(mktemp -d)
-trap 'rm -rf "$sitio"' EXIT
+publica=$(mktemp -d)
+trap 'rm -rf "$sitio" "$publica"' EXIT
 cp -r web/. "$sitio/"
 rm -f "$sitio/dades.json"
 if [ "${SOLO_CASA:-0}" = 1 ]; then
@@ -52,6 +61,8 @@ if [ "${ANTERIOR#http}" = "$ANTERIOR" ]; then
 fi
 # Sin Jekyll: la web es HTML ya hecho.
 touch "$sitio/.nojekyll"
+# Los datos de la web pública: los de casa sin lo del trayecto.
+python3 montflorit.py dades "$sitio/casa.json" "$publica/montflorit.json"
 
 # Si ANTERIOR es un archivo, se guarda ahí lo publicado para la próxima vez.
 if [ "${SOLO_CASA:-0}" != 1 ] && [ "${ANTERIOR#http}" = "$ANTERIOR" ]; then
@@ -68,7 +79,7 @@ CONF_IONOS=${CONF_IONOS:-$HOME/.config/meteo-local/ionos.env}
 GH_CADA_MIN=${GH_CADA_MIN:-30}
 a_ionos=0
 if [ -f "$CLAU_IONOS" ] && [ -n "${IONOS:-}" ]; then
-  if tar -czf - -C "$sitio" dades.json casa.json \
+  if tar -czf - -C "$sitio" dades.json casa.json -C "$publica" montflorit.json \
       | ssh -i "$CLAU_IONOS" -o BatchMode=yes -o ConnectTimeout=20 "$IONOS" 2>/dev/null; then
     a_ionos=1
     echo "$(date '+%F %T')  dades a IONOS"
@@ -96,3 +107,22 @@ if [ "${ANTERIOR#http}" = "$ANTERIOR" ]; then
   echo "$(date +%s) $codi" > "$estat_gh"
 fi
 echo "$(date '+%F %T')  publicado a GitHub"
+
+# La web pública, a su repositorio, con su propia clave de despliegue si la
+# hay (en el NAS). Un fallo aquí no detiene nada: se reintenta en la próxima.
+if [ -n "$DESTINO_MONTFLORIT" ]; then
+  CLAU_MONTFLORIT=${CLAU_MONTFLORIT:-$HOME/.ssh/id_montflorit}
+  if (
+    python3 montflorit.py web "$publica"
+    [ ! -f "$CLAU_MONTFLORIT" ] || export GIT_SSH_COMMAND="ssh -i $CLAU_MONTFLORIT -o IdentitiesOnly=yes"
+    git -C "$publica" init -q -b gh-pages
+    git -C "$publica" add -A
+    git -C "$publica" -c user.name="Juan José de Haro" -c user.email="8707929+jjdeharo@users.noreply.github.com" \
+      commit -q -m "Previsió $(date '+%F %H:%M')"
+    git -C "$publica" push -q -f "$DESTINO_MONTFLORIT" gh-pages
+  ); then
+    echo "$(date '+%F %T')  publicada la web de Montflorit"
+  else
+    echo "$(date '+%F %T')  no s'ha pogut publicar la web de Montflorit" >&2
+  fi
+fi

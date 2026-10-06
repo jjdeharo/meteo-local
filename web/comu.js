@@ -301,7 +301,9 @@ function blocPlans(plans) {
 
 function posaVersio(versio) {
   $('versio').textContent = 'versió ' + versio;
-  $('versio').href = 'https://github.com/jjdeharo/meteo-local/releases/tag/v' + versio;
+  // La pàgina pública enllaça el seu propi repositori (ADR 0024).
+  $('versio').href = document.documentElement.dataset.notes
+    || 'https://github.com/jjdeharo/meteo-local/releases/tag/v' + versio;
 }
 
 // Tema: segueix el del dispositiu mentre no se'n triï un altre; si es tria

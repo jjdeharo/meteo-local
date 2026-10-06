@@ -2,6 +2,13 @@
 // Llegeix casa.json (el genera casa.py) i pinta el temps a casa: el que mesuren
 // ara l'estació de casa i la de Montflorit i la previsió hora a hora per a 24 hores.
 
+// La pàgina pública («Temps a Montflorit», ADR 0024) és aquesta mateixa amb
+// tres coses canviades a l'etiqueta <html>: el nom del lloc, com s'anomena
+// l'estació pròpia i el fitxer de dades.
+const LLOC = document.documentElement.dataset.lloc || 'casa';
+const ESTACIO_PROPIA = document.documentElement.dataset.estacio || 'l\u2019estació de casa';
+const FITXER_DADES = document.documentElement.dataset.dades || 'casa.json';
+
 function coma(x, decimals = 1) {
   return Number(x).toFixed(decimals).replace('.', ',');
 }
@@ -85,8 +92,8 @@ function dada(id, text) {
 function blocAra(ara, casa, radarDades) {
   const base = casa || ara;
   const sec = element('section', 'decisio targeta ara');
-  sec.setAttribute('aria-label', casa ? 'El temps ara a casa' : 'El temps ara a Montflorit');
-  sec.append(element('h2', 'data', `Ara a ${casa ? 'casa' : 'Montflorit'} (${horaCurta(base.hora)})`));
+  sec.setAttribute('aria-label', casa ? `El temps ara a ${LLOC}` : 'El temps ara a Montflorit');
+  sec.append(element('h2', 'data', `Ara a ${casa ? LLOC : 'Montflorit'} (${horaCurta(base.hora)})`));
   const temp = element('p', 'veredicte');
   const termometre = icona('i-thermometer');
   termometre.classList.add('vehicle');
@@ -313,12 +320,12 @@ function textAprenentatge(a) {
   if (!a || !a.pluja) return '';
   const data = (iso) => new Date(iso + 'T12:00:00').toLocaleDateString('ca');
   let t = a.pluja.origen !== 'arxiu'
-    ? `Probabilitat de pluja apresa del que ha plogut de veritat a Montflorit i a casa des del ${data(a.pluja.des_de)}, quan els models deien el mateix.`
+    ? `Probabilitat de pluja apresa del que ha plogut de veritat a ${LLOC === 'casa' ? 'Montflorit i a casa' : LLOC} des del ${data(a.pluja.des_de)}, quan els models deien el mateix.`
     : `Probabilitat de pluja apresa del que va ploure de veritat a Sabadell i Sant Cugat des del ${new Date(a.pluja.des_de).getFullYear()}, quan els models deien el mateix.`;
   if (a.temperatura) {
     t += a.temperatura.origen === 'arxiu'
-      ? ` Temperatura corregida amb el que ha mesurat l\u2019estació de casa des del ${data(a.temperatura.des_de)}.`
-      : ` Temperatura corregida amb el registre propi de l\u2019estació de casa des del ${data(a.temperatura.des_de)}.`;
+      ? ` Temperatura corregida amb el que ha mesurat ${ESTACIO_PROPIA} des del ${data(a.temperatura.des_de)}.`
+      : ` Temperatura corregida amb el registre propi de ${ESTACIO_PROPIA} des del ${data(a.temperatura.des_de)}.`;
   }
   return t;
 }
@@ -350,6 +357,6 @@ function pinta(dades) {
   posaVersio(dades.versio);
 }
 
-carrega('casa.json', pinta, () => {
+carrega(FITXER_DADES, pinta, () => {
   $('casa').replaceChildren(element('p', 'avis', 'No s’ha pogut carregar la previsió. Torna-ho a provar d’aquí a una estona.'));
 });

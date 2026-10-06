@@ -24,6 +24,10 @@ de la tabla y del trayecto tienen en cuenta hacia dónde va la lluvia del radar
 minutos, el NAS avisa a Juanjo por Telegram, una vez por episodio de lluvia
 (ADR 0022).
 
+La página de casa se publica además aparte, como web del tiempo del barrio:
+[Temps a Montflorit](https://jjdeharo.github.io/meteo-montflorit/), sin la
+página del trayecto, generada en cada publicación a partir de esta (ADR 0024).
+
 ## Cómo funciona
 
 Un contenedor en el NAS de casa (`nas/`) ejecuta `publica.sh` cada cuarto de
@@ -116,7 +120,8 @@ al motivo de los modelos. Para repetirla: `python3 calibracio/descarrega.py
 | `calibracio/` | Descarga del histórico, análisis, `informe.md` y `calibracio.json` (los datos, en `dades/`, no se suben) |
 | `tests/` | Pruebas de la regla, del horario, de la web y del aprendizaje, sin red |
 | `casa.py` | Datos de la página de casa (`casa.json`) |
-| `publica.sh` | Calcula y publica en la rama `gh-pages` (lo usa el NAS) |
+| `publica.sh` | Calcula y publica en la rama `gh-pages` (lo usa el NAS), y la web pública en su repositorio |
+| `montflorit.py`, `montflorit/` | Genera la web pública «Temps a Montflorit» a partir de la página de casa, y sus datos sin el trayecto; manifiesto, iconos y README propios (ADR 0024) |
 | `nas/` | Contenedor del NAS: `compose.yml`, `Dockerfile` y `reloj.sh` |
 | `agent/` | Agente diario: instrucciones, imagen del radar, ejecución y validación |
 | `ecowitt.py` | La estación de casa con la API oficial de Ecowitt; las claves, fuera del repositorio (ADR 0017) |

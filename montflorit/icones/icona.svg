@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- SPDX-License-Identifier: AGPL-3.0-or-later. Núvol amb pluja: Lucide (ISC). -->
+  <rect width="512" height="512" fill="#1d4ed8"/>
+  <g fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round" transform="translate(112 112) scale(12)" stroke-width="1.7">
+    <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/>
+    <path d="M16 14v6"/><path d="M8 14v6"/><path d="M12 16v6"/>
+  </g>
+</svg>
