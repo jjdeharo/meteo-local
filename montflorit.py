@@ -34,8 +34,9 @@ REPO = "https://github.com/jjdeharo/meteo-montflorit"
 DADES = "montflorit.json"
 # Lo que casa.json lleva para la página del trayecto.
 PRIVADES = ("sortides", "sortida_per_defecte_h")
-# Mientras sea False, la página pide a los buscadores que no la indexen.
-INDEXABLE = False
+# Con False, la página pide a los buscadores que no la indexen. Desde el
+# 06-10-2026, con el permiso de meteocerdanyola.com, sí (ADR 0024).
+INDEXABLE = True
 # Palabras que no pueden quedar en lo que se lee de la web pública.
 PROHIBIDES = ("casa", "cotxe", "moto", "trajecte", "meteo-local")
 

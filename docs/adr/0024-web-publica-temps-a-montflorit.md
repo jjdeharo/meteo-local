@@ -35,9 +35,10 @@ clon con otro nombre y si se verían datos suyos o de su NAS.
 - **Si la página de casa cambia** y un cambio deja de encajar, o queda una
   palabra del trayecto o «casa» en lo que se lee, `montflorit.py` falla: en
   las pruebas antes de publicar y, en el NAS, sin tocar la web pública.
-- **Los buscadores**: de momento la pública conserva el `noindex`
-  (`INDEXABLE = False`), hasta que el responsable de meteocerdanyola.com
-  responda sobre el uso de su estación (ADR 0004).
+- **Los buscadores**: la pública se publicó con `noindex` hasta que el
+  responsable de meteocerdanyola.com respondiera sobre el uso de su
+  estación (ADR 0004). Respondió el mismo día sin oponerse, y Juanjo lo dio
+  por permiso: desde entonces se puede indexar (`INDEXABLE = True`).
 - **En catalán y, aparte, en castellano** (ADR 0025).
 
 ## Alternativas descartadas
@@ -79,9 +80,9 @@ clon con otro nombre y si se verían datos suyos o de su NAS.
 
 ## Riesgos y limitaciones
 
-- El uso de la estación de Montflorit de meteocerdanyola.com no tiene
-  permiso expreso (ADR 0004). Si su responsable no lo quiere, la página
-  tendrá que funcionar sin ella.
+- El permiso de meteocerdanyola.com no es expreso, sino deducido de sus
+  mensajes (ADR 0004). Si su responsable cambia de idea, la página tendrá
+  que funcionar sin su estación.
 - El nombre puede hacer pensar que la web es de esa estación: la página dice
   de quién es cada dato en «D'on surt» y en «Fonts i crèdits».
 - Los cambios de texto dependen de frases exactas de `casa.html`: tocar una

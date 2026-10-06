@@ -52,7 +52,9 @@ da las últimas 24 horas.
 
 - Es una web particular sin API documentada: puede cambiar de formato o de
   dirección sin aviso. Si falla, se sigue con Meteocat.
-- Su responsable no ha dado permiso expreso. Si lo pide, se quita.
+- El 06-10-2026 Juanjo le pidió permiso para usarla también en la web
+  pública (ADR 0024). No se opuso («com tu vulguis»), aunque no lo dijo de
+  forma expresa, y Juanjo lo dio por permiso. Si lo pide, se quita.
 - Pluviómetro de aficionado: no tiene los controles de calidad de Meteocat.
 
 ## Validación
