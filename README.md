@@ -23,18 +23,22 @@ de la tabla y del trayecto tienen en cuenta hacia dónde va la lluvia del radar
 
 ## Cómo funciona
 
-Un contenedor en el NAS de casa (`nas/`) ejecuta `publica.sh` cada media
-hora de 5:00 a 7:30 y de 13:00 a 15:30, hora local (el horario está en
-`config.py` y la web lo muestra). `publica.sh` calcula la previsión con
-`prevision.py` y publica `web/` con `dades.json` en la rama `gh-pages`, de la
-que sirve GitHub Pages. Al subir cambios a `main`, una acción de GitHub pasa
-las pruebas, y el NAS, que mira cada minuto si hay código nuevo, publica.
-Solo publica el NAS.
+Un contenedor en el NAS de casa (`nas/`) ejecuta `publica.sh` cada cuarto de
+hora (la página del trayecto, de 5:00 a 7:30 y de 13:00 a 15:30; la de casa,
+todo el día; el horario está en `config.py` y la web lo muestra).
+`publica.sh` calcula los datos con `prevision.py` y `casa.py` y los sube a
+IONOS (`bilateria.org/app/meteo-local/`), de donde los lee la página. La web
+entera va a la rama `gh-pages`, de la que sirve GitHub Pages, solo cuando
+cambia el código, cada media hora como mucho o si IONOS falla: GitHub admite
+unas 10 publicaciones por hora, y esa copia es la reserva si IONOS no
+responde (ADR 0020). Al subir cambios a `main`, una acción de GitHub pasa las
+pruebas, y el NAS, que mira cada minuto si hay código nuevo, publica. Solo
+publica el NAS.
 
 **Modo aviso:** con aviso de AEMET, plan de Protección Civil activado, lluvia
 en las estaciones o en el radar a menos de 15 km, las dos páginas pasan a
-actualizarse cada 10 minutos, en el minuto 1 (:01, :11…), justo después de cada
-imagen nueva del radar (ADR 0010). El horario lo decide `que_toca.py` con el
+actualizarse cada 6 minutos (:03, :09…), justo después de cada imagen nueva
+del radar de Meteocat (ADR 0010). El horario lo decide `que_toca.py` con el
 mismo dato que muestra la web. En `main` no hay commits automáticos.
 
 A las 5:47 y a las 13:07, un agente con IA (Claude Sonnet 5.5) mira los datos y el

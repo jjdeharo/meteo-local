@@ -1,6 +1,7 @@
-# 10. Modo aviso: actualización cada 10 minutos
+# 10. Modo aviso: actualización al ritmo del radar
 
-Fecha: 2026-10-05 · Estado: aceptado
+Fecha: 2026-10-05 · Estado: aceptado · Actualizado el 06-10-2026 (ADR 0020):
+cada 6 minutos, al ritmo del radar de Meteocat
 
 ## Contexto
 
@@ -14,18 +15,23 @@ convendría actualizar más a menudo.
 - **Modo aviso** cuando se da cualquiera de estas cosas
   (`motivos_modo_aviso` en `prevision.py`): aviso de AEMET vigente en el
   Vallès, plan de Protección Civil en alerta o emergencia, lluvia en alguna
-  estación (Montflorit o Meteocat) o lluvia en el radar a menos de 15 km
-  (`RADAR_AVISO_KM`).
-- **En modo aviso, cada 10 minutos** (`MODO_AVISO_INTERVALO_MIN`): la página de
-  casa todo el día (hasta las 23:50) y la del trayecto dentro de sus franjas.
-  Más deprisa no sirve: el radar da una imagen cada 10 minutos.
-- **En el minuto 1** (:01, :11, :21…; `MODO_AVISO_DESFASE_MIN`), para coger
-  siempre la imagen nueva del radar. Propuesta de Juanjo («puedes actualizar
-  un minuto después de que se actualice»), en lugar de pasar a 11 minutos, que
-  habría ido desplazándose respecto a las imágenes.
+  estación (Montflorit o Meteocat), lluvia en el radar a menos de 15 km
+  (`RADAR_AVISO_KM`) o lluvia que el radar llevado hacia delante ve llegar a
+  casa en la próxima hora (ADR 0019).
+- **En modo aviso, cada 6 minutos** (`MODO_AVISO_INTERVALO_MIN`): la página de
+  casa todo el día y la del trayecto dentro de sus franjas. Es el ritmo del
+  radar de Meteocat, la imagen principal desde el ADR 0019; más deprisa no
+  sirve. Hasta el 06-10-2026 era cada 10 minutos, el ritmo de RainViewer, y
+  no se podía bajar porque GitHub Pages admite unas 10 publicaciones por hora;
+  ahora los datos van a IONOS (ADR 0020).
+- **Con 3 minutos de desfase** (:03, :09, :15…; `MODO_AVISO_DESFASE_MIN`), para
+  coger siempre la imagen nueva: Meteocat la saca a :00, :06, :12… y la publica
+  unos 13-14 minutos después. Es la misma idea que propuso Juanjo con
+  RainViewer («puedes actualizar un minuto después de que se actualice»), con
+  un intervalo fijo que no se desplaza respecto a las imágenes.
 - **El horario lo decide un solo sitio:** cada publicación escribe su horario
   en los datos (`horari`, con `cada_min`, `desfase_min` y `mode_avis`), la web
-  lo muestra («Mode avís: dades cada 10 min») y el reloj del NAS lo lee con
+  lo muestra («Mode avís: dades cada 6 min») y el reloj del NAS lo lee con
   `que_toca.py` para decidir qué hacer en cada minuto. Lo que dice la página y
   lo que se hace no pueden separarse.
 - **La decisión de la mañana** se sigue recalculando en la pasada de las 7:31:

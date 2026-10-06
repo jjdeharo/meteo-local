@@ -27,7 +27,7 @@ const ctx = vm.createContext({
   Date: FakeDate, Math, JSON, Number, Object, Set, console,
   document: { getElementById: el, createElement: el, addEventListener() {},
     documentElement: { dataset: {} } },
-  matchMedia: () => ({ matches: false, addEventListener() {} }), addEventListener() {},
+  matchMedia: () => ({ matches: false, addEventListener() {} }), addEventListener() {}, AbortController,
   localStorage: { getItem: () => null }, navigator: {},
   fetch: () => new Promise(() => {}), setTimeout: () => 0, clearTimeout() {},
 });

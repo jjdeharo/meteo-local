@@ -17,11 +17,13 @@ NAS para el agente diario.
   hora local es de actualización y, si toca, pone al día su copia del
   repositorio y ejecuta `publica.sh`.
 - **El horario está en un solo sitio**, `config.py` (`HORARIO`,
-  `INTERVALO_MIN`): de 5:00 a 7:30 y de 13:00 a 15:30, cada 30 minutos. El
-  reloj del NAS y la web lo leen de ahí.
+  `INTERVALO_MIN`): de 5:00 a 7:30 y de 13:00 a 15:30, cada 15 minutos (cada
+  30 hasta el 06-10-2026). El reloj del NAS y la web lo leen de ahí.
 - **Se publica en la rama `gh-pages`**, de la que sirve GitHub Pages, con un
   solo commit que se rehace cada vez. La rama `main` no recibe commits
-  automáticos.
+  automáticos. Desde el 06-10-2026 los datos que cambian van a IONOS en cada
+  pasada y la web a GitHub solo cada media hora o cuando cambia el código
+  (ADR 0020).
 - **GitHub Actions solo pasa las pruebas** en cada subida a `main`. **Publica
   únicamente el NAS**: cada minuto mira si `main` tiene commits nuevos
   (`git ls-remote`) y, si los hay, publica enseguida. Antes publicaba también

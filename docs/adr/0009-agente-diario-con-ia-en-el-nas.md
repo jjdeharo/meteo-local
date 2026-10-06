@@ -22,9 +22,12 @@ el gasto de suscripción es el mismo que en la nube (ADR 0005).
 - **Qué puede hacer:** solo leer archivos (`--allowedTools "Read"`), con
   `--max-turns 6`. Ni comandos ni internet: no puede hacer nada fuera de su
   papel, y lo que hay en los datos no son instrucciones para él.
-- **Qué devuelve:** un JSON con un comentario en catalán de una o dos frases
-  cortas (35 palabras como máximo, sin repetir avisos ni niveles que la página
-  ya muestra; simplificado el 05-10-2026 a petición de Juanjo),
+- **Qué devuelve:** un JSON con un comentario en catalán de dos o tres frases
+  cortas (50 palabras como máximo, sin repetir avisos ni niveles que la página
+  ya muestra; simplificado el 05-10-2026 a petición de Juanjo y, el
+  06-10-2026, «un poco más alegre y largo, pero no mucho más largo»: tono
+  cercano, con un punto de ánimo o de humor si el tiempo lo permite y serio
+  si hay riesgo, sin emoticonos y con un signo de exclamación como mucho),
   un nivel (`moto`, `compte`, `cotxe`) y su confianza. `agent/desa.py` lo
   valida y guarda en `/estat/comentari.json` con la hora y los niveles que daba
   el programa.

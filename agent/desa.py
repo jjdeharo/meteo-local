@@ -31,7 +31,7 @@ def main(modo, ruta_sortida, ruta_dades, ruta_comentari):
     with open(ruta_dades, encoding="utf-8") as f:
         dades = json.load(f)
     texto = " ".join(str(r.get("text", "")).split())
-    if not texto or len(texto) > 320:
+    if not texto or len(texto) > 450:
         raise ValueError(f"texto vacío o demasiado largo ({len(texto)} caracteres)")
     if r.get("mitja") not in NIVELES:
         raise ValueError(f"nivel desconocido: {r.get('mitja')}")

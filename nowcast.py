@@ -117,6 +117,45 @@ def llegenda(parelles):
     return claus[o], valors[o]
 
 
+CACHE = os.environ.get("RADAR_CACHE", "/estat/radar-cache")
+CACHE_HORES = 3
+
+
+def tesela(get, url):
+    """Una tesela, de la caché si ya se bajó: cada imagen de los dos radares
+    tiene su propia dirección y no cambia, así que solo se bajan las nuevas.
+    Sin carpeta de caché (fuera del NAS), siempre de la red."""
+    import hashlib
+    if not os.path.isdir(os.path.dirname(CACHE)):
+        return get(url, True)
+    os.makedirs(CACHE, exist_ok=True)
+    ruta = os.path.join(CACHE, hashlib.sha1(url.encode()).hexdigest() + ".png")
+    try:
+        with open(ruta, "rb") as f:
+            return f.read()
+    except OSError:
+        dades = get(url, True)
+        with open(ruta + ".tmp", "wb") as f:
+            f.write(dades)
+        os.replace(ruta + ".tmp", ruta)
+        return dades
+
+
+def neteja_cache():
+    """Borra las teselas de más de CACHE_HORES horas."""
+    import time
+    if not os.path.isdir(CACHE):
+        return
+    limit = time.time() - CACHE_HORES * 3600
+    for nom in os.listdir(CACHE):
+        ruta = os.path.join(CACHE, nom)
+        try:
+            if os.path.getmtime(ruta) < limit:
+                os.remove(ruta)
+        except OSError:
+            pass
+
+
 def mosaic(get, url, tx, ty, claus, valors):
     """3x3 teselas alrededor de (tx, ty); url(x, y) da la dirección."""
     import numpy as np
@@ -124,7 +163,7 @@ def mosaic(get, url, tx, ty, claus, valors):
     rgba = np.zeros((MIDA, MIDA, 4), dtype=np.uint64)
     for dx in (-1, 0, 1):
         for dy in (-1, 0, 1):
-            im = Image.open(io.BytesIO(get(url(tx + dx, ty + dy), True))).convert("RGBA")
+            im = Image.open(io.BytesIO(tesela(get, url(tx + dx, ty + dy)))).convert("RGBA")
             rgba[(dy + 1) * 256:(dy + 2) * 256, (dx + 1) * 256:(dx + 2) * 256] = np.array(im, dtype=np.uint64)
     return a_mm_h(rgba, claus, valors)
 
@@ -176,6 +215,7 @@ def carrega(get):
     lon = (C.CASA[1] + C.DESTINO[1]) / 2
     tx, ty = geometria(lat, lon)
     r = {"tx": tx, "ty": ty, "km_px": km_px(lat), "errors": []}
+    neteja_cache()
     try:
         r["rainviewer"] = rainviewer(get, tx, ty)
     except Exception as ex:

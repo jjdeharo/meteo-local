@@ -52,7 +52,7 @@ def lluvia_entre(filas, ini, fin):
 def montflorit():
     """Filas minuto a minuto de la estación y el resumen de ahora."""
     slug = next(iter(C.ESTACIONES_LOCALES))
-    filas = json.loads(P.get(P.METEOCERDANYOLA.format(slug))).get("rows", [])
+    filas = json.loads(P.get_recent(P.METEOCERDANYOLA.format(slug))).get("rows", [])
     filas = [f for f in filas if f.get("PREC") is not None]
     if not filas:
         return [], None

@@ -23,6 +23,11 @@ Al cambiar algo:
   decideix» de `web/index.html`, el README, las pruebas y el ADR.
 - Pasa las pruebas, `probar-web` y axe-core antes de publicar; sube `VERSION`
   en `config.py` y etiqueta la versión.
+- Los datos se publican en IONOS (`bilateria.org/app/meteo-local/`) y la web
+  en la rama `gh-pages` cada media hora como mucho (ADR 0020). La clave del NAS
+  para IONOS solo puede dejar `.json` en esa carpeta (orden fija en el
+  `authorized_keys` de IONOS); la carpeta tiene un `.htaccess` que permite leer
+  los datos desde `jjdeharo.github.io`.
 - Las actualizaciones programadas las hace el NAS (`nas/`, ADR 0005). Si cambias
   `nas/`, copia los archivos a `/volume1/docker/meteo-local` y reconstruye
   (`docker compose up -d --build`). Ver el estado: `docker logs meteo-local`.

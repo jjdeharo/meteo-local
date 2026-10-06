@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 """Datos fijos del trayecto. Se cambian aquí, no en prevision.py."""
 
-VERSION = "2.10.2"
+VERSION = "2.11.0"
 
 # Coordenadas redondeadas a unos 500 m: para el tiempo da igual una calle u
 # otra, y el repositorio es público.
@@ -32,17 +32,18 @@ ESTACIONES = {
     "XV": "Sant Cugat (CAR)",
 }
 
-# Horario de actualización con datos en directo (hora local), cada media
+# Horario de actualización con datos en directo (hora local), cada cuarto de
 # hora. Por la mañana, para decidir el medio; al mediodía, el tiempo de la
-# vuelta. La web lo muestra tal cual.
+# vuelta. La web lo muestra tal cual. Los datos van a IONOS en cada pasada y
+# la web a GitHub cada media hora como mucho (ADR 0020).
 HORARIO = [("05:00", "07:30"), ("13:00", "15:30")]
-INTERVALO_MIN = 30
+INTERVALO_MIN = 15
 
-# La página de casa (casa.html): previsión a 24 horas, actualizada cada media hora
-# todo el día.
-HORARIO_CASA = ("00:00", "23:30")
-HORARIO_CASA_AVISO = ("00:00", "23:50")
-INTERVALO_CASA_MIN = 30
+# La página de casa (casa.html): previsión a 24 horas, actualizada cada cuarto
+# de hora todo el día.
+HORARIO_CASA = ("00:00", "23:45")
+HORARIO_CASA_AVISO = ("00:00", "23:54")
+INTERVALO_CASA_MIN = 15
 
 # Agente diario (agent/): a qué hora y en qué modo se ejecuta, y con qué
 # modelo. Va después de la actualización de la hora en punto, para leer datos
@@ -52,12 +53,13 @@ AGENTE_MODELO = "claude-sonnet-5-5"   # fijo: el alias «sonnet» cambiaría sol
 
 # Modo aviso: con aviso de AEMET vigente, plan de Protección Civil en alerta o
 # emergencia, lluvia en Montflorit o lluvia en el radar a menos de
-# RADAR_AVISO_KM, las dos páginas se actualizan cada 10 minutos (la del
-# trayecto, dentro de sus franjas). El radar publica una imagen cada 10
-# minutos en punto, con unos minutos de retraso: se actualiza DESFASE minutos
-# después para coger siempre la imagen nueva.
-MODO_AVISO_INTERVALO_MIN = 10
-MODO_AVISO_DESFASE_MIN = 1   # el radar publica unos 20-50 s después de la hora
+# RADAR_AVISO_KM (o que llegará a casa en la próxima hora), las dos páginas se
+# actualizan cada 6 minutos (la del trayecto, dentro de sus franjas): el ritmo
+# del radar de Meteocat, que saca una imagen a :00, :06, :12… y la publica
+# unos 13-14 minutos después. Con el desfase de 3 minutos, cada pasada coge
+# la imagen nueva (la de las 10:06, publicada a las 10:19:43, a las 10:21).
+MODO_AVISO_INTERVALO_MIN = 6
+MODO_AVISO_DESFASE_MIN = 3
 RADAR_AVISO_KM = 15
 
 # Registro de aciertos (registre.py): a qué hora se comprueba la lluvia que

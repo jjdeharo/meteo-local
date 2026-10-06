@@ -75,6 +75,26 @@ class Moviment(unittest.TestCase):
                                      T0 + dt.timedelta(minutes=50)))
 
 
+class Cache(unittest.TestCase):
+    def test_nomes_baixa_un_cop_i_neteja(self):
+        import tempfile, time
+        base = tempfile.mkdtemp()
+        N.CACHE = os.path.join(base, "radar-cache")
+        baixades = []
+        get = lambda url, binari: baixades.append(url) or b"png"
+        self.assertEqual(N.tesela(get, "https://x/1.png"), b"png")
+        self.assertEqual(N.tesela(get, "https://x/1.png"), b"png")
+        self.assertEqual(baixades, ["https://x/1.png"])
+        vell = os.path.join(N.CACHE, os.listdir(N.CACHE)[0])
+        os.utime(vell, (time.time() - 4 * 3600,) * 2)
+        N.neteja_cache()
+        self.assertEqual(os.listdir(N.CACHE), [])
+
+    def test_sense_carpeta_no_desa(self):
+        N.CACHE = "/no/existeix/radar-cache"
+        self.assertEqual(N.tesela(lambda u, b: b"x", "https://x/2.png"), b"x")
+
+
 class Endavant(unittest.TestCase):
     def setUp(self):
         self.r = {"tx": 64, "ty": 47, "km_px": N.km_px(41.52)}

@@ -67,6 +67,32 @@ def get(url, binario=False):
     return datos if binario else datos.decode("utf-8", "replace")
 
 
+CACHE_WEB = os.environ.get("CACHE_WEB", "/estat/cache-web")
+
+
+def get_recent(url, segons=120):
+    """get() que reutiliza la respuesta si tiene menos de segons: las dos
+    páginas de una misma pasada leen Montflorit una sola vez (ADR 0020).
+    Fuera del NAS, sin /estat, siempre de la red."""
+    import hashlib
+    import time
+    if not os.path.isdir(os.path.dirname(CACHE_WEB)):
+        return get(url)
+    os.makedirs(CACHE_WEB, exist_ok=True)
+    ruta = os.path.join(CACHE_WEB, hashlib.sha1(url.encode()).hexdigest())
+    try:
+        if time.time() - os.path.getmtime(ruta) < segons:
+            with open(ruta, encoding="utf-8") as f:
+                return f.read()
+    except OSError:
+        pass
+    datos = get(url)
+    with open(ruta + ".tmp", "w", encoding="utf-8") as f:
+        f.write(datos)
+    os.replace(ruta + ".tmp", ruta)
+    return datos
+
+
 def momento(dia, hhmm):
     return dt.datetime.fromisoformat(f"{dia}T{hhmm}").astimezone()
 
@@ -171,7 +197,7 @@ def observaciones_meteocerdanyola(slug, nom):
     sus gráficas una vez por actualización (unos 380 KB, últimas 24 h): la
     carpeta /2026/data/ está cerrada a programas en su robots.txt, la API no.
     Juanjo decidió usarla (05-10-2026); ver el ADR 0004."""
-    datos = json.loads(get(METEOCERDANYOLA.format(slug)))
+    datos = json.loads(get_recent(METEOCERDANYOLA.format(slug)))
     return resumen_minutal(datos.get("rows", []), nom, "meteocerdanyola.com")
 
 

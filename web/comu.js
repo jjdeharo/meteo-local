@@ -110,6 +110,27 @@ function properaActualitzacio(horari, ara = new Date()) {
   return new Date(dema.getTime() + (horari.desfase_min || 0) * 60000);
 }
 
+// Les dades les puja el NAS a IONOS a cada actualització; la còpia de GitHub
+// (al costat de la pàgina) es renova cada mitja hora com a molt i és la
+// reserva si IONOS no respon (ADR 0020).
+const DADES_URL = 'https://bilateria.org/app/meteo-local/';
+const ESPERA_DADES_MS = 6000;
+
+function baixa(url) {
+  const control = new AbortController();
+  const temps = setTimeout(() => control.abort(), ESPERA_DADES_MS);
+  return fetch(`${url}?t=${Date.now()}`, { cache: 'no-store', signal: control.signal })
+    .then((r) => {
+      clearTimeout(temps);
+      if (!r.ok) throw new Error(r.status);
+      return r.json();
+    });
+}
+
+function llegeixDades(nom) {
+  return baixa(DADES_URL + nom).catch(() => baixa(nom));
+}
+
 function carrega(url, pinta, error) {
   let dades = null;
   let reintents = 0;
@@ -125,11 +146,7 @@ function carrega(url, pinta, error) {
 
   function llegeix() {
     clearTimeout(temporitzador);
-    fetch(`${url}?t=${Date.now()}`, { cache: 'no-store' })
-      .then((r) => {
-        if (!r.ok) throw new Error(r.status);
-        return r.json();
-      })
+    llegeixDades(url)
       .then((noves) => {
         // Les mateixes dades d'abans: la publicació encara no ha arribat.
         reintents = dades && noves.generat === dades.generat ? reintents + 1 : 0;

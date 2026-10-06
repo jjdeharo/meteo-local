@@ -11,7 +11,7 @@
 | [0007](0007-pagina-del-tiempo-en-casa.md) | Página del tiempo en casa | aceptado |
 | [0008](0008-planes-de-proteccion-civil.md) | Planes de Protección Civil | aceptado |
 | [0009](0009-agente-diario-con-ia-en-el-nas.md) | Agente diario con IA en el NAS | aceptado |
-| [0010](0010-modo-aviso-actualizacion-cada-10-minutos.md) | Modo aviso: actualización cada 10 minutos | aceptado |
+| [0010](0010-modo-aviso-actualizacion-cada-10-minutos.md) | Modo aviso: actualización al ritmo del radar | aceptado |
 | [0011](0011-paginas-que-se-ponen-al-dia-solas-y-trayecto-solo-en-franja.md) | Páginas que se ponen al día solas; el trayecto, solo en su franja | aceptado |
 | [0012](0012-aprendizaje-de-la-pagina-de-casa.md) | Aprendizaje de la página de casa | aceptado |
 | [0013](0013-ropa-segun-el-tiempo.md) | Ropa según el tiempo | aceptado |
@@ -21,5 +21,6 @@
 | [0017](0017-estacion-de-casa-con-la-api-de-ecowitt.md) | Estación de casa con la API de Ecowitt | aceptado |
 | [0018](0018-situaciones-de-peligro-y-aviso-por-telegram.md) | Situaciones de peligro y aviso por Telegram | aceptado |
 | [0019](0019-radar-llevado-hacia-delante.md) | Radar llevado hacia delante | aceptado |
+| [0020](0020-datos-en-ionos-y-actualizacion-mas-frecuente.md) | Datos en IONOS y actualización más frecuente | aceptado |
 
 Plantilla: [0000-plantilla.md](0000-plantilla.md). Para crear uno: `nuevo-adr "Título"`.
