@@ -422,6 +422,16 @@ def arribada(nc, lloc="casa", prob=0.5):
     return None
 
 
+def intensitat_arribada(nc, lloc="casa", prob=0.5, minuts=30):
+    """Lluvia esperada más alta (mm/h) en los minutos siguientes a la llegada,
+    o None si no llega."""
+    passos = (nc or {}).get("llocs", {}).get(lloc) or []
+    inici = next((p["min"] for p in passos if p["prob"] >= prob), None)
+    if inici is None:
+        return None
+    return max(p["mm_h"] for p in passos if inici <= p["min"] <= inici + minuts)
+
+
 if __name__ == "__main__":
     import prevision as P
     r = carrega(P.get)

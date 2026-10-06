@@ -20,7 +20,9 @@ aviso de AEMET para el Vallès (lluvia, rachas, calor, frío o nieve), la págin
 lo marca como «Risc» y el NAS avisa a Juanjo por Telegram; los avisos de AEMET y
 de Protección Civil por sí solos no lo hacen (ADR 0018). Las dos primeras horas
 de la tabla y del trayecto tienen en cuenta hacia dónde va la lluvia del radar
-(ADR 0019).
+(ADR 0019), y cuando ese radar dice que la lluvia llega a casa en unos 10
+minutos, el NAS avisa a Juanjo por Telegram, una vez por episodio de lluvia
+(ADR 0022).
 
 ## Cómo funciona
 
@@ -120,6 +122,7 @@ al motivo de los modelos. Para repetirla: `python3 calibracio/descarrega.py
 | `pluviometre.py` | Comprueba una vez, tras limpiarlo, si el pluviómetro de casa marca la lluvia débil y avisa por Telegram (ADR 0017) |
 | `nowcast.py` | La lluvia del radar (Meteocat o RainViewer) llevada hacia delante hasta 2 horas (ADR 0019) |
 | `riscos.py` | Situaciones de peligro de la página de casa y aviso por Telegram (ADR 0018) |
+| `pluja_arriba.py` | Aviso por Telegram unos 10 minutos antes de que llueva en casa, según el radar, y registro de sus aciertos (ADR 0022) |
 | `registre.py` | Registro en el NAS de cada actualización y del resultado de cada día (ADR 0006) |
 | `aprenentatge.py` | Aprendizaje de la página de casa: regresiones, comprobación y cambio de método (ADR 0012, `docs/estadistica.md`) |
 | `.github/workflows/previsio.yml` | Al subir a `main`: pruebas |

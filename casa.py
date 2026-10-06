@@ -440,6 +440,8 @@ def recoger(anterior=None):
         for clau, prob in (("arriba", 0.5), ("possible", C.PROB_ATENCION)):
             t = N.arribada(nc, "casa", prob)
             salida["radar"][clau] = t and t.isoformat(timespec="minutes")
+        # Cómo sería al llegar, para el aviso de antes de llover (ADR 0022).
+        salida["radar"]["arriba_mm_h"] = N.intensitat_arribada(nc, "casa")
     salida["horari"] = P.horario([C.HORARIO_CASA_AVISO if motivos else C.HORARIO_CASA],
                                  C.INTERVALO_CASA_MIN, motivos)
     try:
