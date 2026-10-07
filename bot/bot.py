@@ -52,13 +52,14 @@ T = {
     "ca": {
         "benvinguda": ("Aquest bot envia avisos del temps a Montflorit (Cerdanyola del Vallès), calculats "
                        "automàticament amb dades de Meteocat, l'AEMET, el radar, les estacions del barri, "
-                       "Renfe i FGC. Els de la riera són orientatius, no oficials: segueix sempre les "
-                       "indicacions de Protecció Civil i de l'Ajuntament.\n" + WEB),
-        "menu": ("Tria què vols rebre: toca un botó per activar-ho o desactivar-ho.\n\nNomés es desa el teu "
-                 "identificador de Telegram i el que triïs aquí. Amb /baixa s'esborra tot."),
-        "riera": "Riera de Sant Cugat", "perill": "Perill (pluja forta, vent, calor…)",
+                       "Renfe i FGC. Els de desbordament de la riera estan en proves i són orientatius, no "
+                       "oficials: segueix sempre les indicacions de Protecció Civil i de l'Ajuntament.\n" + WEB),
+        "menu": ("Tria què vols rebre: toca un botó per activar-ho o desactivar-ho. El resum és un sol missatge "
+                 "cada dia, a l'hora que triïs.\n\nNomés es desa el teu identificador de Telegram i el que triïs "
+                 "aquí. Amb /baixa s'esborra tot."),
+        "riera": "Desbordament de la riera de Sant Cugat (en proves)", "perill": "Perill (pluja forta, vent, calor…)",
         "pluja": "Pluja d'aquí a 15 minuts", "trens": "Trens de Cerdanyola",
-        "resum": "Resum diari:", "no": "No", "h": "{} h",
+        "resum": "Resum del temps, un cop al dia, a les:", "no": "Sense resum", "h": "{} h",
         "baixa": "Fet: s'han esborrat les teves dades i ja no rebràs res. Amb /start pots tornar-hi.",
         "ajuda": ("/avisos tria què reps · /resum el temps d'avui · /ara el temps ara · "
                   "/baixa deixa de rebre'n i esborra les teves dades"),
@@ -67,13 +68,14 @@ T = {
     "es": {
         "benvinguda": ("Este bot envía avisos del tiempo en Montflorit (Cerdanyola del Vallès), calculados "
                        "automáticamente con datos de Meteocat, la AEMET, el radar, las estaciones del barrio, "
-                       "Renfe y FGC. Los de la riera son orientativos, no oficiales: sigue siempre las "
-                       "indicaciones de Protección Civil y del Ayuntamiento.\n" + WEB),
-        "menu": ("Elige qué quieres recibir: toca un botón para activarlo o desactivarlo.\n\nSolo se guarda tu "
-                 "identificador de Telegram y lo que elijas aquí. Con /baixa se borra todo."),
-        "riera": "Riera de Sant Cugat", "perill": "Peligro (lluvia fuerte, viento, calor…)",
+                       "Renfe y FGC. Los de desbordamiento de la riera están en pruebas y son orientativos, "
+                       "no oficiales: sigue siempre las indicaciones de Protección Civil y del Ayuntamiento.\n" + WEB),
+        "menu": ("Elige qué quieres recibir: toca un botón para activarlo o desactivarlo. El resumen es un solo "
+                 "mensaje cada día, a la hora que elijas.\n\nSolo se guarda tu identificador de Telegram y lo que "
+                 "elijas aquí. Con /baixa se borra todo."),
+        "riera": "Desbordamiento de la riera de Sant Cugat (en pruebas)", "perill": "Peligro (lluvia fuerte, viento, calor…)",
         "pluja": "Lluvia dentro de 15 minutos", "trens": "Trenes de Cerdanyola",
-        "resum": "Resumen diario:", "no": "No", "h": "{} h",
+        "resum": "Resumen del tiempo, una vez al día, a las:", "no": "Sin resumen", "h": "{} h",
         "baixa": "Hecho: se han borrado tus datos y ya no recibirás nada. Con /start puedes volver.",
         "ajuda": ("/avisos elige qué recibes · /resum el tiempo de hoy · /ara el tiempo ahora · "
                   "/baixa deja de recibir y borra tus datos"),
@@ -135,8 +137,9 @@ def teclat(sub):
     marca = lambda actiu: "✓ " if actiu else "· "
     files = [[{"text": marca(x in sub["avisos"]) + t[x], "callback_data": f"t:{x}"}] for x in TIPUS]
     files.append([{"text": t["resum"], "callback_data": "-"}])
-    files.append([{"text": ("• " if sub.get("resum") == h else "") + (t["h"].format(h) if h else t["no"]),
-                   "callback_data": f"r:{h or 'no'}"} for h in (None,) + HORES_RESUM])
+    files.append([{"text": ("• " if sub.get("resum") == h else "") + t["h"].format(h), "callback_data": f"r:{h}"}
+                  for h in HORES_RESUM])
+    files.append([{"text": ("• " if not sub.get("resum") else "") + t["no"], "callback_data": "r:no"}])
     files.append([{"text": ("• " if sub["idioma"] == i else "") + n, "callback_data": f"i:{i}"}
                   for i, n in (("ca", "Català"), ("es", "Castellano"))])
     return files

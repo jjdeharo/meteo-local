@@ -32,12 +32,12 @@ TEXTOS = {
     "ca": ([("avisos", "Tria quins avisos reps"), ("resum", "El temps d'avui"), ("ara", "El temps ara"),
             ("baixa", "Deixa de rebre avisos i esborra les teves dades")],
            "Avisos del temps a Montflorit (Cerdanyola del Vallès): riera de Sant Cugat, perill per pluja o vent, "
-           "pluja d'aquí a 15 minuts, trens i resum del dia. Tu tries què reps. Orientatiu, no oficial.",
+           "pluja d'aquí a 15 minuts, trens i resum del dia. Tu tries què reps. Orientatiu, no oficial; la riera, en proves.",
            "Avisos del temps a Montflorit: riera, perill, pluja, trens i resum del dia."),
     "es": ([("avisos", "Elige qué avisos recibes"), ("resum", "El tiempo de hoy"), ("ara", "El tiempo ahora"),
             ("baixa", "Deja de recibir avisos y borra tus datos")],
            "Avisos del tiempo en Montflorit (Cerdanyola del Vallès): riera de Sant Cugat, peligro por lluvia o "
-           "viento, lluvia dentro de 15 minutos, trenes y resumen del día. Tú eliges qué recibes. Orientativo, no oficial.",
+           "viento, lluvia dentro de 15 minutos, trenes y resumen del día. Tú eliges qué recibes. Orientativo, no oficial; la riera, en pruebas.",
            "Avisos del tiempo en Montflorit: riera, peligro, lluvia, trenes y resumen del día."),
 }
 for idioma, (ordres, descripcio, curta) in TEXTOS.items():

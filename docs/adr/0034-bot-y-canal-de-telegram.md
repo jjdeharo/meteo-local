@@ -26,9 +26,10 @@ internet en casa, que suele llegar con las tormentas.
   cada publicación y en la reserva cuando la sustituye), con estado propio, y
   los deja en `avisos.json` junto a `montflorit.json`, en catalán y
   castellano, cada uno con un identificador: el bot no repite ninguno. Tipos:
-  - **riera**: atención y peligro (ADR 0027), siempre con «Avís orientatiu,
-    no oficial: segueix les indicacions de Protecció Civil i de
-    l'Ajuntament»;
+  - **riera**: atención y peligro (ADR 0027), siempre con «Avís en proves,
+    orientatiu i no oficial: segueix les indicacions de Protecció Civil i de
+    l'Ajuntament»; en el menú, «Desbordament de la riera de Sant Cugat (en
+    proves)» (Juanjo, 07-10-2026);
   - **perill**: los umbrales de aviso de AEMET con lo medido o previsto
     (ADR 0018);
   - **pluja**: lluvia en Montflorit en unos 15 minutos según el radar
@@ -38,7 +39,8 @@ internet en casa, que suele llegar con las tormentas.
   Un aviso que llega tarde no se manda (lluvia, a los 20 minutos; los demás, a
   las 3 horas).
 - **Cada persona elige** en un menú con botones: los cuatro tipos (por
-  defecto, riera y peligro), el resumen diario (no, 6, 7, 8 o 20 h) y el
+  defecto, riera y peligro), el resumen del tiempo, un mensaje al día a las 6,
+  7, 8 o 20 h, o «Sense resum» (el menú lo explica), y el
   idioma (catalán o castellano, al principio el de su Telegram). Órdenes:
   /avisos, /resum, /ara y /baixa, que borra sus datos. Solo se guardan su
   identificador de Telegram y lo que elige; si bloquea el bot, se le da de

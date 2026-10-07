@@ -35,8 +35,8 @@ ESTAT = os.path.join(os.path.dirname(os.environ.get("REGISTRE_DIR", "/estat/regi
 CONSERVA_H = 24          # avisos que se guardan en avisos.json
 WEB = "https://meteo-montflorit.github.io/"
 ORIENTATIU = {
-    "ca": "Avís orientatiu, no oficial: segueix les indicacions de Protecció Civil i de l'Ajuntament.",
-    "es": "Aviso orientativo, no oficial: sigue las indicaciones de Protección Civil y del Ayuntamiento.",
+    "ca": "Avís en proves, orientatiu i no oficial: segueix les indicacions de Protecció Civil i de l'Ajuntament.",
+    "es": "Aviso en pruebas, orientativo y no oficial: sigue las indicaciones de Protección Civil y del Ayuntamiento.",
 }
 NIVELLS_ES = {"groc": "amarillo", "taronja": "naranja", "vermell": "rojo"}
 RISCOS_ES = {

@@ -57,7 +57,7 @@ class Menu(unittest.TestCase):
         self.assertEqual((sub["resum"], sub["idioma"]), ("7", "es"))
         textos = [b["text"] for fila in B.teclat(sub) for b in fila]
         self.assertIn("✓ Lluvia dentro de 15 minutos", textos)
-        self.assertIn("· Riera de Sant Cugat", textos)
+        self.assertIn("· Desbordamiento de la riera de Sant Cugat (en pruebas)", textos)
         self.assertIn("• 7 h", textos)
 
     def test_start_i_baixa(self):
@@ -171,7 +171,7 @@ class AvisosPublics(unittest.TestCase):
         nous = AB.decideix(estat, {"riera": riera}, ARA)
         self.assertEqual(nous[0]["nivell"], "perill")
         self.assertIn("perill de desbordament", nous[0]["ca"])
-        self.assertIn("Aviso orientativo, no oficial", nous[0]["es"])
+        self.assertIn("Aviso en pruebas, orientativo y no oficial", nous[0]["es"])
         self.assertEqual(AB.decideix(estat, {"riera": riera}, ARA + dt.timedelta(minutes=15)), [])
 
     def test_perill_en_castella(self):
