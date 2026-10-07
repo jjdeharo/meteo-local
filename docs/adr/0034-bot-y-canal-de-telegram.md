@@ -61,6 +61,17 @@ internet en casa, que suele llegar con las tormentas.
   baja. Solo en chats privados.
 - **Canal**: los avisos de riera y peligro, y el resumen del día a las 7, en
   catalán y castellano en el mismo mensaje.
+- **Sin repetir el canal** (Juanjo, 07-10-2026): a quien sigue el canal, el
+  bot no le manda lo que el canal ya le da (avisos de riera y peligro, y la
+  previsión de las 7 si eligió esa hora); sí la lluvia, los trenes y la
+  previsión a otra hora. El bot, administrador del canal, lo pregunta a
+  Telegram (`getChatMember`) una vez por pasada y solo cuando hay algo que
+  repartir. Si el canal no ha recibido el aviso o la pregunta falla, el bot lo
+  manda igualmente: mejor repetido que perdido. Al marcar en el menú algo que
+  ya da el canal, un aviso breve de Telegram se lo dice («Ets al canal: això
+  ja t'hi arriba…»), en lugar de una línea fija en el menú, que solo
+  importaría a una parte. Antes, la página avisaba de que con los dos algunos
+  avisos podían llegar repetidos; Juanjo prefirió evitarlo.
 - **Altas**: cada alta nueva, una línea a Juanjo con el número total, sin
   nombres (Juanjo, 07-10-2026).
 - **Recuento**: los lunes a las 9, una línea a Juanjo (con su bot de avisos)
@@ -70,8 +81,8 @@ internet en casa, que suele llegar con las tormentas.
 - **En la web**: «Avisos a Telegram: com funciona» bajo el menú,
   y en los créditos, qué guarda el bot. «Com funciona» lleva a una página de
   ayuda breve (`web/telegram.html`, también en castellano). Dice que se puede
-  usar solo el canal, solo el bot o los dos, y que con los dos algunos avisos
-  podrían llegar dos veces (Juanjo, 07-10-2026). Tiene un bloque
+  usar solo el canal, solo el bot o los dos, y que con los dos el bot no repite
+  lo que ya da el canal. Tiene un bloque
   para el canal (igual para todos, como un tablón; azul) y otro para el bot
   (personal; verde, como su icono y su botón). Cada bloque lleva su
   descripción, su botón, el nombre con que se busca en Telegram
@@ -124,5 +135,6 @@ internet en casa, que suele llegar con las tormentas.
 elige cada uno, canal, una sola vez, aviso caducado, baja de quien bloquea,
 resumen a la hora de cada uno y del canal; avisos públicos de trenes (dos
 pasadas), riera con el aviso orientativo y peligro en castellano, con su
-titular en negrita. La página de ayuda pasa por las pruebas de la web pública
+titular en negrita; quien está en el canal no recibe repetido lo que el canal
+da (y sí lo recibe si el canal falla), y el aviso al marcarlo en el menú. La página de ayuda pasa por las pruebas de la web pública
 (traducción completa), `probar-web` y axe-core.

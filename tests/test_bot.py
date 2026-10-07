@@ -18,12 +18,17 @@ ARA = dt.datetime(2026, 10, 7, 7, 0).astimezone()
 
 class Api:
     """Telegram de mentira: apunta lo que se envía."""
-    def __init__(self, bloquejats=()):
-        self.enviats, self.bloquejats = [], set(bloquejats)
+    def __init__(self, bloquejats=(), al_canal=(), canal_falla=False):
+        self.enviats, self.bloquejats, self.al_canal = [], set(bloquejats), set(al_canal)
+        self.canal_falla = canal_falla
 
     def __call__(self, metode, temps=30, **p):
+        if metode == "getChatMember":       # preguntar no envía nada
+            return {"status": "member" if str(p["user_id"]) in self.al_canal else "left"}
         if metode == "sendMessage" and str(p["chat_id"]) in self.bloquejats:
             raise B.Bloquejat()
+        if metode == "sendMessage" and p["chat_id"] == B.CANAL and self.canal_falla:
+            raise RuntimeError("canal")
         self.enviats.append((metode, p))
         return {}
 
@@ -177,6 +182,40 @@ class Repartiment(unittest.TestCase):
         api.enviats.clear()
         B.reparteix(api, subs, estat, ARA + dt.timedelta(minutes=20))
         self.assertEqual(api.enviats, [])
+
+
+    def test_qui_es_al_canal_no_ho_rep_dos_cops(self):
+        hora = ARA.isoformat(timespec="minutes")
+        self.escriu([{"id": "riera:1", "tipus": "riera", "hora": hora, "ca": "R ca", "es": "R es"},
+                     {"id": "pluja:1", "tipus": "pluja", "hora": hora, "ca": "P ca", "es": "P es"}])
+        subs = {"1": {"idioma": "ca", "avisos": ["riera", "pluja"], "resum": "7"},
+                "2": {"idioma": "ca", "avisos": ["riera"], "resum": "7"}}
+        api = Api(al_canal=["1"])
+        B.reparteix(api, subs, {}, ARA)
+        enviats = [(str(p["chat_id"]), p["text"]) for _, p in api.enviats]
+        self.assertNotIn(("1", "R ca"), enviats)       # la riera ja li arriba pel canal
+        self.assertIn(("1", "P ca"), enviats)          # la pluja, el canal no la dona
+        self.assertIn(("2", "R ca"), enviats)          # no és al canal
+        destins = [d for d, _ in enviats]
+        self.assertEqual(destins.count("1"), 1)        # sense la previsió de les 7
+        self.assertEqual(destins.count("2"), 2)
+
+    def test_si_el_canal_falla_el_bot_ho_envia(self):
+        self.escriu([{"id": "riera:1", "tipus": "riera", "hora": ARA.isoformat(), "ca": "R ca", "es": "R es"}])
+        subs = {"1": {"idioma": "ca", "avisos": ["riera"], "resum": "7"}}
+        api = Api(al_canal=["1"], canal_falla=True)
+        B.reparteix(api, subs, {}, ARA)
+        self.assertEqual([(str(p["chat_id"]), p["text"][:4]) for _, p in api.enviats],
+                         [("1", "R ca"), ("1", "<b>E")])
+
+    def test_avis_en_triar_el_que_ja_dona_el_canal(self):
+        subs = {"1": {"idioma": "ca", "avisos": [], "resum": None}}
+        for dada, avis in (("t:riera", True), ("t:pluja", False), ("r:7", True), ("r:8", False)):
+            api = Api(al_canal=["1"])
+            B.atén(api, subs, {"callback_query": {"id": "q", "data": dada, "from": {},
+                                                  "message": {"chat": {"id": 1}, "message_id": 5}}})
+            resposta = [p for m, p in api.enviats if m == "answerCallbackQuery"][0]
+            self.assertEqual(resposta.get("text") is not None, avis, dada)
 
 
 class AvisosPublics(unittest.TestCase):

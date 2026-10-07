@@ -66,6 +66,7 @@ T = {
         "ajuda": ("/avisos tria què reps · /resum la previsió · /ara el temps ara · "
                   "/baixa deixa de rebre'n i esborra les teves dades"),
         "velles": "Les dades de Temps a Montflorit no s'actualitzen des de les {}: ara no puc donar la previsió.",
+        "ja_canal": "Ets al canal: això ja t'hi arriba, aquí no t'ho repetiré.",
     },
     "es": {
         "benvinguda": ("<b>Bot Temps a Montflorit</b>\nTe enviaré, solo a ti, los avisos del tiempo en Montflorit "
@@ -82,6 +83,7 @@ T = {
         "ajuda": ("/avisos elige qué recibes · /resum la previsión · /ara el tiempo ahora · "
                   "/baixa deja de recibir y borra tus datos"),
         "velles": "Los datos de Temps a Montflorit no se actualizan desde las {}: ahora no puedo dar la previsión.",
+        "ja_canal": "Estás en el canal: esto ya te llega por allí, aquí no te lo repetiré.",
     },
 }
 
@@ -329,10 +331,14 @@ def atén(api, subs, update):
         q = update["callback_query"]
         chat = str(q["message"]["chat"]["id"])
         sub = alta(subs, chat, q.get("from", {}))
-        if canvia(sub, q.get("data", "")):
+        dada = q.get("data", "")
+        avis = None
+        if canvia(sub, dada):
             api("editMessageText", chat_id=chat, message_id=q["message"]["message_id"],
                 text=T[sub["idioma"]]["menu"], reply_markup={"inline_keyboard": teclat(sub)})
-        api("answerCallbackQuery", callback_query_id=q["id"])
+            if dona_el_canal(sub, dada) and al_canal(api, chat, {}):
+                avis = T[sub["idioma"]]["ja_canal"]
+        api("answerCallbackQuery", callback_query_id=q["id"], text=avis)
         return
     m = update.get("message") or {}
     if m.get("chat", {}).get("type") != "private" or "text" not in m:
@@ -373,13 +379,44 @@ def a_repartir(avisos, enviats, moment):
     return res
 
 
+# Quien sigue el canal no recibe por el bot lo que el canal ya le da: avisos de
+# riera y peligro y la previsión de las 7 (Juanjo, 07-10-2026). El bot, como
+# administrador del canal, puede preguntar quién está; ante la duda o si el
+# canal no lo ha recibido, se manda: mejor un aviso repetido que uno perdido.
+DINS_CANAL = ("creator", "administrator", "member")
+
+
+def al_canal(api, chat, memoria):
+    if chat not in memoria:
+        try:
+            r = api("getChatMember", chat_id=CANAL, user_id=chat) or {}
+            memoria[chat] = r.get("status") in DINS_CANAL or bool(r.get("status") == "restricted" and r.get("is_member"))
+        except Exception:
+            memoria[chat] = False
+    return memoria[chat]
+
+
+def dona_el_canal(sub, dada):
+    """Si el botón que acaba de activar es algo que también da el canal."""
+    tipus = dada.removeprefix("t:")
+    return (dada.startswith("t:") and tipus in CANAL_TIPUS and tipus in sub["avisos"]) or dada == f"r:{CANAL_RESUM}"
+
+
 def reparteix(api, subs, estat, moment):
     enviats = estat.setdefault("enviats", {})
+    memoria = {}        # quién está en el canal, preguntado una vez por pasada
     avisos = llegeix(os.path.join(DADES, "avisos.json"), {}).get("avisos", [])
     for a in a_repartir(avisos, enviats, moment):
         enviats[a["id"]] = moment.isoformat(timespec="minutes")
+        al_canal_ok = False
+        if a["tipus"] in CANAL_TIPUS:
+            try:
+                envia(api, CANAL, f"{a['ca']}\n\n{a['es']}", html=True)
+                al_canal_ok = True
+            except Exception:
+                pass
         for chat, sub in list(subs.items()):
-            if a["tipus"] in sub["avisos"]:
+            if a["tipus"] in sub["avisos"] and not (al_canal_ok and al_canal(api, chat, memoria)):
                 try:
                     envia(api, chat, a[sub["idioma"]], html=True)
                 except Bloquejat:
@@ -387,38 +424,38 @@ def reparteix(api, subs, estat, moment):
                 except Exception:
                     pass
                 time.sleep(0.05)
-        if a["tipus"] in CANAL_TIPUS:
-            try:
-                envia(api, CANAL, f"{a['ca']}\n\n{a['es']}", html=True)
-            except Exception:
-                pass
     # Lo repartido hace más de 3 días ya no hace falta recordarlo.
     limit = moment - dt.timedelta(days=3)
     for k in [k for k, v in enviats.items() if dt.datetime.fromisoformat(v) < limit]:
         del enviats[k]
-    # El resumen diario, a la hora de cada uno (una vez al día).
+    # El resumen diario: primero el del canal, a las 7; luego el de cada uno, a su hora
+    # (una vez al día), salvo a quien ya le ha llegado por el canal.
     hora, avui = str(moment.hour), moment.date().isoformat()
-    resums = estat.setdefault("resums", {})
     dades = None
+    if hora == CANAL_RESUM and estat.get("canal_resum") != avui:
+        dades = llegeix(os.path.join(DADES, "montflorit.json"), {})
+        estat["canal_resum"] = avui
+        try:
+            # En el canal, en catalán y en castellano; el enlace, una vez al final.
+            envia(api, CANAL, resum(dades, "ca", moment).removesuffix("\n" + WEB) + "\n\n" + resum(dades, "es", moment),
+                  html=True)
+            estat["canal_resum_ok"] = avui
+        except Exception:
+            pass
+    canal_resum_ok = hora == CANAL_RESUM and estat.get("canal_resum_ok") == avui
+    resums = estat.setdefault("resums", {})
     for chat, sub in list(subs.items()):
         if sub.get("resum") == hora and resums.get(chat) != avui:
-            dades = dades or llegeix(os.path.join(DADES, "montflorit.json"), {})
             resums[chat] = avui
+            if canal_resum_ok and al_canal(api, chat, memoria):
+                continue
+            dades = dades or llegeix(os.path.join(DADES, "montflorit.json"), {})
             try:
                 envia(api, chat, resum(dades, sub["idioma"], moment), html=True)
             except Bloquejat:
                 subs.pop(chat, None)
             except Exception:
                 pass
-    if hora == CANAL_RESUM and estat.get("canal_resum") != avui:
-        dades = dades or llegeix(os.path.join(DADES, "montflorit.json"), {})
-        estat["canal_resum"] = avui
-        try:
-            # En el canal, en catalán y en castellano; el enlace, una vez al final.
-            envia(api, CANAL, resum(dades, "ca", moment).removesuffix("\n" + WEB) + "\n\n" + resum(dades, "es", moment),
-                  html=True)
-        except Exception:
-            pass
 
 
 def actualitza_repo(estat):
