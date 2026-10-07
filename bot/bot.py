@@ -24,6 +24,7 @@ Uso: bot.py           una vuelta (lo que hace el cron, cada minuto)
 import datetime as dt
 import fcntl
 import json
+import math
 import os
 import re
 import subprocess
@@ -232,6 +233,61 @@ def text_temperatura(tram, idioma, quan):
     return f"{quan}: entre {graus(min(temps))}{i}{graus(max(temps))}." if temps else None
 
 
+# La ropa para ir a pie, con los mismos tramos que «Si surts» (web/sortir.js,
+# ADR 0029): temperatura que se nota con el viento previsto, redondeada. Las
+# pruebas comprueban que las dos tablas dicen lo mismo.
+ROBA = ((0, "Abric, gorro, bufanda i guants", "Abrigo, gorro, bufanda y guantes"),
+        (5, "Abric, bufanda i guants", "Abrigo, bufanda y guantes"),
+        (10, "Abric", "Abrigo"),
+        (14, "Jaqueta", "Chaqueta"),
+        (17, "Jaqueta lleugera o jersei", "Chaqueta ligera o jersey"),
+        (20, "Màniga llarga o jersei fi", "Manga larga o jersey fino"),
+        (24, "Màniga curta o màniga llarga fina", "Manga corta o manga larga fina"),
+        (None, "Màniga curta", "Manga corta"))
+# Las horas en que se sale de casa: de 7 a 21 h.
+HORES_ROBA = range(7, 22)
+
+
+def es_nota(t, kmh):
+    """Índice de Environment Canada: solo con 10 °C o menos y viento."""
+    if t > 10 or kmh < 5:
+        return t
+    v = kmh ** 0.16
+    return 13.12 + 0.6215 * t - 11.37 * v + 0.3965 * t * v
+
+
+def peca(s, idioma):
+    for fins, ca, es in ROBA:
+        if fins is None or s <= fins:
+            return es if idioma == "es" else ca
+
+
+def text_roba(tram, idioma):
+    """La ropa para todo el día: si el momento más frío y el más caluroso
+    piden prendas distintas, las dos, por orden de hora."""
+    hores = []
+    for f in tram:
+        h = dt.datetime.fromisoformat(f["hora"])
+        if f.get("temperatura") is not None and h.hour in HORES_ROBA:
+            # Redondeo como Math.round de la web (round() de Python lleva 14,5 a 14).
+            s = math.floor(es_nota(f["temperatura"], f.get("vent") or 0) + 0.5)
+            hores.append((h, f["temperatura"], s))
+    if not hores:
+        return None
+    fred, calor = min(hores, key=lambda x: x[2]), max(hores, key=lambda x: x[2])
+    cap = "Ropa para ir a pie: " if idioma == "es" else "Roba per anar a peu: "
+    if peca(fred[2], idioma) == peca(calor[2], idioma):
+        return cap + peca(fred[2], idioma).lower() + "."
+
+    def moment(x):
+        h, t, s = x
+        nota = (f", se notan como {graus(s)}" if idioma == "es" else f", es noten com {graus(s)}") \
+            if s < math.floor(t + 0.5) else ""
+        a = "a las" if idioma == "es" else "a les"
+        return f"{peca(s, idioma).lower()} {a} {h.hour} h ({graus(t)}{nota})"
+    return cap + "; ".join(moment(x) for x in sorted((fred, calor))) + "."
+
+
 def text_avisos_aemet(dades, idioma, dia, moment):
     """Los avisos de AEMET de un día: hoy, «fins a les 20:00»; mañana, «de 10:00 a 20:00»."""
     avisos = [a for a in dades.get("avisos") or [] if dt.datetime.fromisoformat(a["fin"]) > moment
@@ -257,7 +313,8 @@ def text_avisos_aemet(dades, idioma, dia, moment):
 
 def resum(dades, idioma, moment):
     """La previsión en pocas líneas, con los datos públicos: hasta las 18 h,
-    el tiempo ahora y el resto del día; desde las 18 h, la de mañana."""
+    el tiempo ahora y el resto del día; desde las 18 h, la de mañana. Con la
+    ropa para ir a pie (text_roba)."""
     t = T[idioma]
     if not dades.get("generat"):
         return t["velles"].format("?")
@@ -278,6 +335,7 @@ def resum(dades, idioma, moment):
             linies.append(("Esta noche: " if idioma == "es" else "Aquesta nit: ")
                           + text_pluja(nit, idioma).split(": ", 1)[1])
         linies.append(text_temperatura(dia, idioma, "Temperatura"))
+        linies.append(text_roba(dia, idioma))
         linies.append(text_pluja(dia, idioma))
         linies += text_avisos_aemet(dades, idioma, dema, moment)
     else:
@@ -288,6 +346,7 @@ def resum(dades, idioma, moment):
                   else f"<b>El temps avui, {nom_dia}, a Montflorit</b>",
                   text_ara(dades, idioma),
                   text_temperatura(tram, idioma, "Temperatura de hoy" if idioma == "es" else "Temperatura d'avui"),
+                  text_roba(tram, idioma),
                   text_pluja(tram, idioma)]
         linies += text_avisos_aemet(dades, idioma, moment.date(), moment)
         linies.append(text_trens_resum(dades, idioma))

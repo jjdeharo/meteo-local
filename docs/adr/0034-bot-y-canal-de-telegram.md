@@ -63,6 +63,16 @@ internet en casa, que suele llegar con las tormentas.
   baja. Solo en chats privados.
 - **Canal**: los avisos de riera y peligro, y el resumen del día a las 7, en
   catalán y castellano en el mismo mensaje.
+- **Ropa en la previsión** (Juanjo, 07-10-2026: que la indique «para todo el
+  día», también en la de las 20 h para el día siguiente): la de ir a pie, con
+  los tramos de «Si surts» (ADR 0029) y el viento previsto, entre las 7 y las
+  21 h. Si el momento más frío y el más caluroso piden prendas distintas, se
+  dicen las dos por orden de hora («jaqueta a les 7 h (14 °C); màniga curta o
+  màniga llarga fina a les 15 h (23 °C)»); si no, una sola. La tabla está
+  repetida en `bot/bot.py`, porque el bot no usa el JavaScript de la web, y
+  una prueba comprueba grado a grado que las dos dicen lo mismo. El cambio
+  llega al bot con su `git pull` horario: las suscripciones están en
+  `~/.temps-bot/subscriptors.json`, fuera del repositorio, y no se tocan.
 - **Sin repetir el canal** (Juanjo, 07-10-2026): a quien sigue el canal, el
   bot no le manda lo que el canal ya le da (avisos de riera y peligro, y la
   previsión de las 7 si eligió esa hora); sí la lluvia, los trenes y la
@@ -137,6 +147,8 @@ internet en casa, que suele llegar con las tormentas.
 elige cada uno, canal, una sola vez, aviso caducado, baja de quien bloquea,
 resumen a la hora de cada uno y del canal; avisos públicos de trenes (dos
 pasadas), riera con el aviso orientativo y peligro en castellano, con su
-titular en negrita; quien está en el canal no recibe repetido lo que el canal
+titular en negrita; ropa del día en la previsión (dos prendas por orden de hora,
+viento, una sola prenda, fuera de 7 a 21 h) y tabla igual a la de la web
+(`tests/test_web.py`); quien está en el canal no recibe repetido lo que el canal
 da (y sí lo recibe si el canal falla), y el menú lo explica. La página de ayuda pasa por las pruebas de la web pública
 (traducción completa), `probar-web` y axe-core.

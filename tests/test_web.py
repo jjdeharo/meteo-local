@@ -6,6 +6,7 @@ import json
 import os
 import shutil
 import subprocess
+import sys
 import unittest
 
 WEB = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "web")
@@ -140,6 +141,15 @@ class Web(unittest.TestCase):
         self.assertEqual(self.roba("bici", (9, 22, 0), (11, 22, 0)), "Màniga curta.")
         self.assertEqual(self.roba("bici", (9, 19, 0), (11, 19, 0), pluja=True),
                          "Màniga llarga o una jaqueta molt lleugera. Impermeable.")
+
+    def test_la_roba_del_bot_es_la_de_la_web(self):
+        # El bot (Python, a IONOS) repeteix la taula de «Si surts»: han de dir el mateix.
+        sys.path.insert(0, os.path.join(os.path.dirname(WEB), "bot"))
+        import bot
+        graus = list(range(-5, 36))
+        web = self.avalua("2026-10-07T08:00:00+02:00",
+                          f"{json.dumps(graus)}.map((s) => peca('peu', s))", "sortir.js")
+        self.assertEqual(web, [bot.peca(s, "ca") + "." for s in graus])
 
     def test_propera_lectura(self):
         horari = {"trams": [["00:00", "23:50"]], "cada_min": 10, "desfase_min": 1}

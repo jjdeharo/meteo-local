@@ -120,6 +120,22 @@ class Resum(unittest.TestCase):
         self.assertNotIn("Aquesta nit", r)
         self.assertTrue(B.resum(d, "es", vespre).startswith("<b>Previsión para mañana, jueves, en Montflorit</b>"))
 
+    def test_roba_de_tot_el_dia(self):
+        # Les dades de prova van de 15 °C (7 h) a 24 °C (16 h): dues peces, per ordre d'hora.
+        self.assertIn("Roba per anar a peu: jaqueta lleugera o jersei a les 7 h (15 °C); "
+                      "màniga curta o màniga llarga fina a les 16 h (24 °C).", B.resum(dades(), "ca", ARA))
+        self.assertIn("Ropa para ir a pie: chaqueta ligera o jersey a las 7 h (15 °C); "
+                      "manga corta o manga larga fina a las 16 h (24 °C).", B.resum(dades(), "es", ARA))
+
+    def test_roba_amb_vent_i_una_sola_peca(self):
+        hora = lambda h, t, v=0: {"hora": f"2026-10-08T{h:02d}:00", "temperatura": t, "vent": v}
+        # 8 °C amb 30 km/h es noten com 4 °C; fora de les 7-21 h no compta.
+        self.assertEqual(B.text_roba([hora(5, -2), hora(9, 8, 30), hora(14, 9)], "ca"),
+                         "Roba per anar a peu: abric, bufanda i guants a les 9 h (8 °C, es noten com 4 °C); "
+                         "abric a les 14 h (9 °C).")
+        self.assertEqual(B.text_roba([hora(9, 26), hora(14, 30)], "es"), "Ropa para ir a pie: manga corta.")
+        self.assertIsNone(B.text_roba([hora(23, 12)], "ca"))
+
     def test_milimetres_sense_probabilitat_no_compten(self):
         d = dades()
         for f in d["hores"]:
