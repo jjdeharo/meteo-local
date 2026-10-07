@@ -280,5 +280,91 @@ class AvisosPublics(unittest.TestCase):
         self.assertTrue(nous[0]["es"].startswith("<b>Aviso de peligro (amarillo): viento muy fuerte</b>"))
 
 
+
+class RepartimentAmbReintents(unittest.TestCase):
+    """Un fallo pasajero de Telegram no pierde ningún aviso (ADR 0034)."""
+
+    class ApiQueFalla(Api):
+        def __init__(self, falla_chats=(), **kw):
+            super().__init__(**kw)
+            self.falla_chats = set(falla_chats)
+
+        def __call__(self, metode, temps=30, **p):
+            if metode == "sendMessage" and str(p["chat_id"]) in self.falla_chats:
+                self.falla_chats.discard(str(p["chat_id"]))      # falla una sola vez
+                raise RuntimeError("Telegram")
+            return super().__call__(metode, temps, **p)
+
+    def setUp(self):
+        self.dir = tempfile.TemporaryDirectory()
+        B.DADES = self.dir.name
+        with open(os.path.join(self.dir.name, "avisos.json"), "w") as f:
+            json.dump({"avisos": [{"id": "riera:1", "tipus": "riera", "hora": ARA.isoformat(timespec="minutes"),
+                                   "ca": "R ca", "es": "R es"}]}, f)
+        with open(os.path.join(self.dir.name, "montflorit.json"), "w") as f:
+            json.dump(dades(), f)
+
+    def tearDown(self):
+        self.dir.cleanup()
+
+    def test_un_chat_que_falla_ho_rep_al_minut_seguent(self):
+        subs = {"1": {"idioma": "ca", "avisos": ["riera"], "resum": None},
+                "2": {"idioma": "es", "avisos": ["riera"], "resum": None}}
+        api, estat = self.ApiQueFalla(falla_chats=["2"]), {}
+        B.reparteix(api, subs, estat, ARA + dt.timedelta(minutes=10))
+        enviats = [(str(p["chat_id"]), p["text"]) for _, p in api.enviats]
+        self.assertIn(("1", "R ca"), enviats)
+        self.assertNotIn(("2", "R es"), enviats)
+        self.assertEqual(estat["pendents"]["riera:1"]["chats"], ["2"])
+        api.enviats.clear()
+        B.reparteix(api, subs, estat, ARA + dt.timedelta(minutes=11))
+        self.assertEqual([(str(p["chat_id"]), p["text"]) for _, p in api.enviats], [("2", "R es")])
+        self.assertEqual(estat["pendents"], {})
+        api.enviats.clear()
+        B.reparteix(api, subs, estat, ARA + dt.timedelta(minutes=12))
+        self.assertEqual(api.enviats, [])
+
+    def test_el_canal_que_falla_es_reintenta_i_despres_es_deixa_estar(self):
+        subs = {"1": {"idioma": "ca", "avisos": ["riera"], "resum": None}}
+        api, estat = Api(canal_falla=True), {}
+        # Fora de les 7, perquè el resum del canal no es barregi amb l'avís.
+        ara = ARA.replace(hour=10)
+        with open(os.path.join(self.dir.name, "avisos.json"), "w") as f:
+            json.dump({"avisos": [{"id": "riera:1", "tipus": "riera", "hora": ara.isoformat(timespec="minutes"),
+                                   "ca": "R ca", "es": "R es"}]}, f)
+        B.reparteix(api, subs, estat, ara + dt.timedelta(minutes=10))
+        self.assertEqual([str(p["chat_id"]) for _, p in api.enviats], ["1"])   # el bot no espera el canal
+        self.assertTrue(estat["pendents"]["riera:1"]["canal"])
+        api.canal_falla = False
+        api.enviats.clear()
+        B.reparteix(api, subs, estat, ara + dt.timedelta(minutes=11))
+        self.assertEqual([(p["chat_id"], p["text"]) for _, p in api.enviats], [(B.CANAL, "R ca\n\nR es")])
+        self.assertEqual(estat["pendents"], {})
+        # Si el aviso caduca antes de que el canal responda, se deja de intentar.
+        api, estat = Api(canal_falla=True), {}
+        B.reparteix(api, subs, estat, ara + dt.timedelta(minutes=10))
+        B.reparteix(api, subs, estat, ara + dt.timedelta(days=1))
+        self.assertEqual(estat["pendents"], {})
+
+    def test_el_resum_del_canal_es_reintenta_dins_de_la_mateixa_hora(self):
+        subs = {}
+        api, estat = Api(canal_falla=True), {}
+        B.reparteix(api, subs, estat, ARA)
+        self.assertNotIn("canal_resum", estat)
+        api.canal_falla = False
+        B.reparteix(api, subs, estat, ARA + dt.timedelta(minutes=1))
+        self.assertEqual(estat["canal_resum"], ARA.date().isoformat())
+        api.enviats.clear()
+        B.reparteix(api, subs, estat, ARA + dt.timedelta(minutes=2))
+        self.assertEqual(api.enviats, [])
+
+    def test_trens_sense_dades_no_son_sense_incidencies(self):
+        d = dades()
+        d["trens"]["linies"] = [{"linia": "R4", "estat": "sense_dades"}, {"linia": "S2", "estat": "sense_dades"}]
+        self.assertIn("Trens de Cerdanyola: ara mateix no hi ha dades de Renfe ni d'FGC.", B.resum(d, "ca", ARA))
+        self.assertIn("ahora mismo no hay datos de Renfe ni de FGC.", B.resum(d, "es", ARA))
+        d["trens"]["linies"] = [{"linia": "R4", "estat": "sense_dades"}, {"linia": "S2", "estat": "circula"}]
+        self.assertIn("Trens de Cerdanyola: R4 sense dades.", B.resum(d, "ca", ARA))
+
 if __name__ == "__main__":
     unittest.main()

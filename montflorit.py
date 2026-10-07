@@ -63,8 +63,8 @@ CANVIS_INDEX = [
     ('<h1>Temps a casa</h1>\n      <p class="ruta">Montflorit, Cerdanyola del Vallès</p>',
      '<h1>Temps a Montflorit</h1>\n      <p class="ruta">Cerdanyola del Vallès'
      ' · <a href="es/" lang="es" hreflang="es">Castellano</a></p>'),
-    ("de l'estació de casa; la pluja i el vent, de l'estació de Montflorit de meteocerdanyola.com, a uns 300-400 m, minut a minut",
-     "d'una estació particular del barri; la pluja i el vent, de l'estació de Montflorit de meteocerdanyola.com, minut a minut"),
+    ("de l'estació de casa; la pluja, de l'estació de Montflorit de meteocerdanyola.com, a uns 300-400 m, minut a minut",
+     "d'una estació particular del barri; la pluja, de l'estació de Montflorit de meteocerdanyola.com, minut a minut"),
     ("amb el que ha mesurat l'estació de casa des de", "amb el que ha mesurat l'estació particular des de"),
     ("a Montflorit i a casa. Comprovada", "a Montflorit. Comprovada"),
     ('href="https://github.com/meteo-montflorit/meteo-local/releases"', f'href="{REPO}"'),
@@ -76,6 +76,10 @@ CANVIS_FONTS = [
      "<strong>Estació particular:</strong> una estació pròpia del mateix barri, llegida"),
     ("<p>És una recomanació calculada automàticament, no una previsió oficial.",
      "<p>És una previsió calculada automàticament, no una previsió oficial."),
+    ("<li>Icones del cotxe i del ciclomotor de <a href=\"https://tabler.io/icons\" target=\"_blank\" rel=\"noopener\">"
+     "Tabler Icons</a>, llicència MIT; la icona de l'aplicació els combina amb el núvol de Lucide.</li>",
+     "<li>La icona de la moto de «Si surts», de <a href=\"https://tabler.io/icons\" target=\"_blank\" rel=\"noopener\">"
+     "Tabler Icons</a>, llicència MIT.</li>"),
     # Los modelos globales solo los usa la página del trayecto.
     ("amb models de Météo-France (AROME), del servei meteorològic alemany (ICON-EU i les seves 40 variants), "
      "de l'ECMWF, del Met Office britànic i de la NOAA.",
@@ -103,12 +107,13 @@ CANVIS_TELEGRAM = [
 PROHIBIDES_SORTIR = ("casa", "trajecte", "meteo-local")
 # Los créditos y el README enlazan el código fuente y los ADR, que están en
 # meteo-montflorit/meteo-local (Juanjo, 07-10-2026); lo demás sigue sin nombrarlo.
-PROHIBIDES_FONTS = ("casa", "cotxe", "moto", "trajecte")
+# «moto» sí: el crédito del icono de la moto de «Si surts».
+PROHIBIDES_FONTS = ("casa", "cotxe", "trajecte")
 PROHIBIDES_README = ("casa", "trajecte")
 
-# Créditos de iconos que solo usa la página del trayecto.
-FORA_FONTS = [re.compile(r"\n      <li>Icones de roba i pluja de .*?</li>"),
-              re.compile(r"\n      <li>Icones del cotxe i del ciclomotor de .*?</li>")]
+# Créditos de iconos que solo usa la página del trayecto. El de Tabler se queda
+# por el icono de la moto de «Si surts» (CANVIS_FONTS).
+FORA_FONTS = [re.compile(r"\n      <li>Icones de roba i pluja de .*?</li>")]
 
 SW_PECES = re.compile(r"const PECES = \[.*?\];", re.S)
 PECES = ["./", "index.html", "sortir.html", "telegram.html", "fonts.html", "es/", "es/sortir.html",

@@ -236,7 +236,11 @@ function carrega(url, pinta, error) {
       })
       .catch(() => {
         if (!dades) {
+          // Sense cap dada encara (cobertura fluixa, per exemple): s'avisa i
+          // es torna a provar al cap d'un minut, sense que calgui recarregar.
           error();
+          previst = Date.now() + 60000;
+          temporitzador = setTimeout(llegeix, 60000);
           return;
         }
         reintents += 1;
@@ -245,9 +249,9 @@ function carrega(url, pinta, error) {
   }
 
   // Amb la pestanya amagada (sobretot al mòbil) els temporitzadors s'aturen:
-  // en tornar-hi, es mira si ja tocava.
+  // en tornar-hi, es mira si ja tocava (o si encara no hi ha dades).
   document.addEventListener('visibilitychange', () => {
-    if (!document.hidden && dades && Date.now() >= previst) llegeix();
+    if (!document.hidden && (!dades || Date.now() >= previst)) llegeix();
   });
   llegeix();
 }
@@ -383,13 +387,19 @@ function textPrevisioAnterior(dades) {
 // a dalt de la pàgina, amb l'enllaç al comunicat.
 const NOM_FASE = { prealerta: 'prealerta', alerta: 'alerta', 'emergència': 'emergència' };
 
+// «de prealerta», però «d’alerta» i «d’emergència»; en castellà, sempre «de».
+function deFase(fase) {
+  if (IDIOMA.codi.startsWith('es')) return `de ${fase}`;
+  return /^[aeiouàèéíòóúh]/i.test(fase) ? `d’${fase}` : `de ${fase}`;
+}
+
 function blocPlans(plans) {
   if (!plans || !plans.length) return null;
   const caixa = element('section', 'avis avis-pc');
   caixa.setAttribute('aria-label', T('Avís de Protecció Civil'));
   for (const p of plans) {
     const par = element('p', null,
-      T`Protecció Civil: pla ${TD(p.nom)} (${p.pla}) en fase d\u2019${TD(NOM_FASE[p.fase] || p.fase)}.`);
+      T`Protecció Civil: pla ${TD(p.nom)} (${p.pla}) en fase ${deFase(TD(NOM_FASE[p.fase] || p.fase))}.`);
     if (p.fase === 'emergència') {
       par.append(T(' Eviteu els desplaçaments que no siguin necessaris.'));
     }

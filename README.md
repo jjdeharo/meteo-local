@@ -72,8 +72,10 @@ automáticos.
 Fuentes de la previsión:
 
 1. **Estaciones**: Montflorit (meteocerdanyola.com), minuto a minuto; la
-   particular (Ecowitt), cuya lluvia solo cuenta cuando marca (ADR 0017), y las
-   de Meteocat en Sabadell y Sant Cugat.
+   particular (Ecowitt), cuya lluvia solo cuenta cuando marca (ADR 0017) y cuya
+   presión se reduce al nivel del mar (ADR 0037), y las de Meteocat en Sabadell
+   y Sant Cugat. El viento de ahora es el de Sant Cugat, por medias horas: el
+   anemómetro de Montflorit marca casi siempre 0 (ADR 0037).
 2. **Radar** de Meteocat o, si su imagen va 10 minutos por detrás, de
    RainViewer; una comparación diaria decide cuál acierta más (ADR 0026).
 3. **Modelos** de Open-Meteo (AROME HD, AROME e ICON-EU, y el ensemble

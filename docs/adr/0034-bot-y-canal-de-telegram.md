@@ -84,6 +84,15 @@ internet en casa, que suele llegar con las tormentas.
   el que ja t'arriba per allà…» (Juanjo pidió que el bot lo dijera claro; un
   aviso breve al marcar un botón no bastaba y se quitó). Antes, la página avisaba de que con los dos algunos
   avisos podían llegar repetidos; Juanjo prefirió evitarlo.
+- **Nada se da por enviado hasta que Telegram lo acepta** (revisión del
+  07-10-2026: antes, el aviso se apuntaba como repartido antes de enviarlo y
+  un fallo pasajero lo perdía). Lo que falla (el canal o un chat) queda en
+  `pendents` del estado y se reintenta cada minuto mientras el aviso esté
+  vigente; si el canal falla, los suscriptores lo reciben igualmente por el
+  bot y, cuando el canal lo acepte, quien está en él lo verá repetido. El
+  resumen diario del canal y el de cada persona se reintentan dentro de su
+  hora. Y si Renfe y FGC no dan datos, el resumen lo dice en vez de «sense
+  incidències».
 - **Altas**: cada alta nueva, una línea a Juanjo con el número total, sin
   nombres (Juanjo, 07-10-2026).
 - **Recuento**: los lunes a las 9, una línea a Juanjo (con su bot de avisos)

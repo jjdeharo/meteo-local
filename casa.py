@@ -61,8 +61,10 @@ def montflorit():
         return [], None
     u = filas[-1]
     hora = dt.datetime.fromisoformat(u["dt_local"]).astimezone()
+    # El viento de Montflorit no se publica: su anemómetro marca casi siempre
+    # 0 (config.VENT_ESTACIO, ADR 0037).
     ara = {"hora": hora.isoformat(), "temperatura": u.get("TEMP"), "humitat": u.get("HUM"),
-           "vent": u.get("VEL"), "pluja_avui": u.get("PREC"),
+           "vent": None, "pluja_avui": u.get("PREC"),
            "pluja_30min": lluvia_entre(filas, hora - dt.timedelta(minutes=30), hora),
            "pluja_1h": lluvia_entre(filas, hora - dt.timedelta(hours=1), hora),
            "pluja_12h": lluvia_entre(filas, hora - dt.timedelta(hours=12), hora),
@@ -352,6 +354,12 @@ def recoger(anterior=None):
     except Exception as ex:
         salida["errors"].append(f"estació de casa: {ex}")
     salida["ara_casa"] = casa and {k: v for k, v in casa.items() if k != "files"}
+    # El viento de ahora, de la estación de Meteocat más cercana (ADR 0037).
+    try:
+        salida["vent"] = P.vent_meteocat(C.VENT_ESTACIO)
+    except Exception as ex:
+        salida["vent"] = None
+        salida["errors"].append(f"vent: {ex}")
     avisos = planes = None
     try:
         avisos = [a for a in P.avisos() if a["zona"] == C.ZONA_TRAYECTO

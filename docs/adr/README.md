@@ -38,5 +38,6 @@
 | [0034](0034-bot-y-canal-de-telegram.md) | Bot y canal de Telegram | aceptado |
 | [0035](0035-repositorio-en-la-organizacion-meteo-montflorit.md) | El repositorio, en la organización meteo-montflorit | aceptado |
 | [0036](0036-temperatura-de-ahora-y-de-cada-tramo.md) | Temperatura de ahora y de cada tramo | aceptado |
+| [0037](0037-presion-al-nivel-del-mar-y-viento-de-sant-cugat.md) | Presión al nivel del mar y viento de Sant Cugat | aceptado |
 
 Plantilla: [0000-plantilla.md](0000-plantilla.md). Para crear uno: `nuevo-adr "Título"`.

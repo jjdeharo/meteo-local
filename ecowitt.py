@@ -19,11 +19,14 @@ Uso:
 import csv
 import datetime as dt
 import json
+import math
 import os
 import sys
 import time
 import urllib.parse
 import urllib.request
+
+import config as C
 
 API = "https://api.ecowitt.net/api/v3/device/"
 UNIDADES = {"temp_unitid": 1, "pressure_unitid": 3, "rainfall_unitid": 12,
@@ -82,15 +85,31 @@ def _valor(d, grupo, campo):
     return _num(((d.get(grupo) or {}).get(campo) or {}).get("value"))
 
 
+def pressio_mar(p_estacio, temperatura, altitud=None):
+    """Presión reducida al nivel del mar (hPa) a partir de la medida a la
+    altura de la estación, con la fórmula hipsométrica y la temperatura del
+    aire (a falta de ella, 15 °C). La «relativa» de Ecowitt no está calibrada
+    y sale igual que la absoluta (ADR 0037)."""
+    if p_estacio is None:
+        return None
+    h = C.ALTITUD_CASA_M if altitud is None else altitud
+    t = 15.0 if temperatura is None else temperatura
+    # Temperatura media de la columna, en K: la de la estación más la mitad
+    # del gradiente estándar (0,0065 K/m).
+    tm = t + 273.15 + 0.0065 * h / 2
+    return round(p_estacio * math.exp(9.80665 * h / (287.05 * tm)), 1)
+
+
 def ara():
     """Lo que mide ahora, con la hora de la lectura."""
     d = consulta("real_time", call_back=CAMPOS)
     t = int(d["outdoor"]["temperature"]["time"])
+    temperatura = _valor(d, "outdoor", "temperature")
     return {"hora": dt.datetime.fromtimestamp(t).astimezone().isoformat(timespec="minutes"),
-            "temperatura": _valor(d, "outdoor", "temperature"),
+            "temperatura": temperatura,
             "humitat": _valor(d, "outdoor", "humidity"),
             "rosada": _valor(d, "outdoor", "dew_point"),
-            "pressio": _valor(d, "pressure", "relative"),
+            "pressio": pressio_mar(_valor(d, "pressure", "absolute"), temperatura),
             "solar": _valor(d, "solar_and_uvi", "solar"),
             "intensitat": _valor(d, "rainfall", "rain_rate"),
             "pluja_1h": _valor(d, "rainfall", "1_hour"),
@@ -99,13 +118,16 @@ def ara():
 
 def _filas(d):
     series = {"temperatura": ("outdoor", "temperature"), "humitat": ("outdoor", "humidity"),
-              "rosada": ("outdoor", "dew_point"), "pressio": ("pressure", "relative"),
+              "rosada": ("outdoor", "dew_point"), "pressio": ("pressure", "absolute"),
               "solar": ("solar_and_uvi", "solar"), "intensitat": ("rainfall", "rain_rate"),
               "pluja_avui": ("rainfall", "daily")}
     filas = {}
     for nombre, (g, c) in series.items():
         for t, v in (((d.get(g) or {}).get(c) or {}).get("list") or {}).items():
             filas.setdefault(int(t), {})[nombre] = _num(v)
+    for f in filas.values():
+        if "pressio" in f:
+            f["pressio"] = pressio_mar(f["pressio"], f.get("temperatura"))
     return [{"t": dt.datetime.fromtimestamp(t).astimezone(), **filas[t]} for t in sorted(filas)]
 
 
@@ -123,7 +145,7 @@ def historial(inici, fi, cicle="5min"):
                 d = consulta("history", start_date=a.strftime("%Y-%m-%d %H:%M:%S"),
                              end_date=b.strftime("%Y-%m-%d %H:%M:%S"), cycle_type=cicle,
                              call_back="outdoor.temperature,outdoor.humidity,outdoor.dew_point,"
-                                       "pressure.relative,solar_and_uvi.solar,rainfall.rain_rate,"
+                                       "pressure.absolute,solar_and_uvi.solar,rainfall.rain_rate,"
                                        "rainfall.daily")
                 break
             except RuntimeError as ex:

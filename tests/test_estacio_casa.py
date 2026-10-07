@@ -99,5 +99,16 @@ class Registre(unittest.TestCase):
             leer.assert_not_called()
 
 
+
+class PressioNivellMar(unittest.TestCase):
+    def test_reduccio(self):
+        # 07-10-2026, 18:30: la estación marcaba 1002,1 hPa a 23 °C; Open-Meteo
+        # daba 1010,2 al nivel del mar y el METAR de Sabadell, QNH 1011.
+        self.assertEqual(E.pressio_mar(1002.1, 23.0, 70), 1010.2)
+        self.assertEqual(E.pressio_mar(1002.1, 23.0), 1010.2)      # config.ALTITUD_CASA_M
+        self.assertEqual(E.pressio_mar(1002.1, None, 70), 1010.4)  # sin temperatura, 15 °C
+        self.assertIsNone(E.pressio_mar(None, 20.0))
+        self.assertEqual(E.pressio_mar(1000.0, 20.0, 0), 1000.0)
+
 if __name__ == "__main__":
     unittest.main()

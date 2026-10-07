@@ -116,14 +116,17 @@ def hm(t):
 PORTAL = "https://analisi.transparenciacatalunya.cat/resource/nzvn-apee.json"
 
 
-def taula_meteocat(codi, dia_utc=None, lector=None):
-    """Lluvia semihoraria de un día (por defecto, hoy) en la página de
-    meteo.cat: lista de (inicio de la media hora en UTC, mm). La tabla va en
-    hora UTC y el día también es el de UTC."""
+def files_meteocat(codi, dia_utc=None, lector=None):
+    """Filas semihorarias de un día (por defecto, hoy) en la página de
+    meteo.cat: lista de (inicio de la media hora en UTC, {columna: texto}).
+    La tabla va en hora UTC y el día también es el de UTC. Las columnas se
+    llaman como en la cabecera: «PPTmm», «VVM (10 m)km/h», «VVX (10 m)km/h»…
+    La misma página la leen la lluvia, el viento y la riera: se guarda dos
+    minutos."""
     url = f"https://www.meteo.cat/observacions/xema/dades?codi={codi}"
     if dia_utc:
         url += f"&dia={dia_utc.isoformat()}T00:00Z"
-    s = (lector or get)(url)
+    s = (lector or get_recent)(url)
     t = re.search(r"<table[^>]*tblperiode.*?</table>", s, re.S)
     cab, res = None, []
     dia_utc = dia_utc or AHORA.astimezone(dt.timezone.utc).date()
@@ -132,13 +135,46 @@ def taula_meteocat(codi, dia_utc=None, lector=None):
                   for c in re.findall(r"<t[hd][^>]*>(.*?)</t[hd]>", f, re.S)]
         if celdas and celdas[0].startswith("Període"):
             cab = celdas
-        elif cab and len(celdas) > 1 and "(s/d)" not in celdas[1]:
+        elif cab and len(celdas) > 1:
             fila = dict(zip(cab, celdas))
-            col = next(k for k in cab if k.startswith("PPT"))
             ini = fila[cab[0]].split("-")[0].strip()
-            res.append((dt.datetime.combine(dia_utc, dt.time.fromisoformat(ini), dt.timezone.utc),
-                        float(fila[col])))
+            res.append((dt.datetime.combine(dia_utc, dt.time.fromisoformat(ini), dt.timezone.utc), fila))
     return res
+
+
+def _columna(fila, prefix):
+    """El valor numérico de la columna que empieza por prefix, o None si
+    falta o es «(s/d)»."""
+    for k, v in fila.items():
+        if k.startswith(prefix):
+            try:
+                return float(v)
+            except ValueError:
+                return None
+    return None
+
+
+def taula_meteocat(codi, dia_utc=None, lector=None):
+    """Lluvia semihoraria de un día: lista de (inicio de la media hora en
+    UTC, mm), sin las medias horas sin dato."""
+    res = []
+    for ini, fila in files_meteocat(codi, dia_utc, lector):
+        mm = _columna(fila, "PPT")
+        if mm is not None:
+            res.append((ini, mm))
+    return res
+
+
+def vent_meteocat(codi, lector=None):
+    """El viento de la última media hora con dato en una estación de
+    Meteocat: media y racha en km/h y hasta cuándo vale (ADR 0037)."""
+    for ini, fila in reversed(files_meteocat(codi, lector=lector)):
+        mitja, ratxa = _columna(fila, "VVM"), _columna(fila, "VVX")
+        if mitja is not None:
+            nom = C.ESTACIONES.get(codi, codi)
+            return {"estacio": nom.split(" (")[0], "mitja": mitja, "ratxa": ratxa,
+                    "fins": (ini + dt.timedelta(minutes=30)).astimezone().isoformat(timespec="minutes")}
+    return None
 
 
 def observaciones_web(codi, nom):

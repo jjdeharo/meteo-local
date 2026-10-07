@@ -25,6 +25,18 @@ ESTACIONES_LOCALES = {
 # débil, así que solo cuenta cuando marca lluvia.
 ESTACIO_CASA = "Casa"
 PLUVIOMETRE_CASA_FIABLE_FINS = "2026-08-31"
+# La estación da la presión medida a su altura (la «relativa» de Ecowitt no
+# está calibrada: el 07-10-2026 marcaba 1002 hPa con 1011 de QNH en Sabadell).
+# Se reduce al nivel del mar con esta altitud (modelo digital del terreno de
+# Open-Meteo para las coordenadas redondeadas), que es lo que publican las
+# demás estaciones y los mapas (ADR 0037).
+ALTITUD_CASA_M = 70
+
+# El viento de ahora: el anemómetro de Montflorit marca casi siempre 0 (el
+# 07-10-2026, 0 en 1.072 de 1.094 minutos con 13 km/h en Open-Meteo), así que
+# se muestra el de la estación de Meteocat más cercana, por medias horas
+# (ADR 0037).
+VENT_ESTACIO = "XV"
 
 # Estaciones automáticas de Meteocat más próximas (código: nombre).
 ESTACIONES = {

@@ -91,6 +91,13 @@ class Web(unittest.TestCase):
             self.text("2026-10-05T16:41:00+02:00", avisos),
             "Avís groc de l’AEMET per pluja al Vallès: avui de 18:00 a 23:00.")
 
+    def test_fase_de_proteccio_civil_amb_apostrof(self):
+        # «d’alerta» i «d’emergència», però «de prealerta» (abans sortia «d’prealerta»).
+        ara = "2026-10-07T13:00:00+02:00"
+        self.assertEqual(self.avalua(ara, "deFase('prealerta')"), "de prealerta")
+        self.assertEqual(self.avalua(ara, "deFase('alerta')"), "d’alerta")
+        self.assertEqual(self.avalua(ara, "deFase('emergència')"), "d’emergència")
+
     def test_el_cel_surt_de_la_probabilitat(self):
         # ADR 0021: els mil·límetres del model més plujós no fan «pluja» si la
         # probabilitat és baixa (el cas del 06-10-2026: «Pluja feble» amb un 2 %).
@@ -105,6 +112,12 @@ class Web(unittest.TestCase):
         self.assertEqual(cel(pluja_mm=5, probabilitat=0.9, codi=95), "Tempesta")
         self.assertEqual(cel(pluja_mm=2, probabilitat=0.3, codi=95), "Possible tempesta")
         self.assertEqual(cel(pluja_mm=2, probabilitat=0.05, codi=95), "Cobert")
+        # Amb pluja d'algun model (0,2 mm o més), mai «Serè»: com a mínim núvols
+        # (el cas del 07-10-2026: «Serè» amb 0,4 mm i un 13 %).
+        self.assertEqual(cel(pluja_mm=0.4, probabilitat=0.13, nuvols=0), "Núvols")
+        self.assertEqual(cel(pluja_mm=0.4, probabilitat=0.13, nuvols=90), "Cobert")
+        self.assertEqual(cel(pluja_mm=0.1, probabilitat=0.05, nuvols=0), "Serè")
+        self.assertEqual(cel(pluja_mm=0, probabilitat=0.01, nuvols=10), "Serè")
         # Sense probabilitat, manen els mil·límetres, com abans.
         self.assertEqual(cel(pluja_mm=0.3, probabilitat=None), "Pluja feble")
         self.assertEqual(self.avalua("2026-10-06T13:00:00+02:00",

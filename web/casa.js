@@ -39,9 +39,12 @@ function cel(f) {
   }
   if (f.codi === 45 || f.codi === 48) return [T('Boira'), 'i-cloud-fog'];
   if (f.nuvols == null) return ['', null];
-  if (f.nuvols < 20) return [T('Serè'), nit ? 'i-moon-cel' : 'i-sun'];
-  if (f.nuvols < 50) return [T('Poc núvol'), nit ? 'i-cloud-moon' : 'i-cloud-sun'];
-  if (f.nuvols < 85) return [T('Núvols'), 'i-cloud'];
+  // Si algun model hi posa pluja (0,2 mm o més, el que ja mulla), el cel no
+  // pot sortir serè encara que la probabilitat sigui baixa: com a mínim, núvols.
+  const nuvols = (f.pluja_mm || 0) >= 0.2 ? Math.max(f.nuvols, 50) : f.nuvols;
+  if (nuvols < 20) return [T('Serè'), nit ? 'i-moon-cel' : 'i-sun'];
+  if (nuvols < 50) return [T('Poc núvol'), nit ? 'i-cloud-moon' : 'i-cloud-sun'];
+  if (nuvols < 85) return [T('Núvols'), 'i-cloud'];
   return [T('Cobert'), 'i-cloudy'];
 }
 
@@ -68,7 +71,7 @@ function dada(id, text) {
   return li;
 }
 
-function blocAra(ara, casa, radarDades) {
+function blocAra(ara, casa, radarDades, vent) {
   const base = casa || ara;
   const sec = element('section', 'decisio targeta ara');
   const lloc = casa ? LLOC : 'Montflorit';
@@ -87,7 +90,11 @@ function blocAra(ara, casa, radarDades) {
   if (ara) llista.append(dada('i-cloud-rain', T`${coma(ara.pluja_avui || 0)} mm avui`));
   llista.append(dada('i-droplets', T`Humitat ${coma(base.humitat, 0)} %`));
   if (casa && casa.pressio != null) llista.append(dada('i-gauge', textPressio(casa)));
-  if (ara && ara.vent != null) llista.append(dada('i-wind', T`Vent ${coma(ara.vent, 0)} km/h`));
+  // El vent, de l'estació de Meteocat més propera, per mitges hores (ADR 0037).
+  if (vent && vent.mitja != null) {
+    const ratxa = vent.ratxa != null ? T` (ratxes de ${coma(vent.ratxa, 0)})` : '';
+    llista.append(dada('i-wind', T`Vent ${coma(vent.mitja, 0)} km/h${ratxa}, ${vent.estacio} ${horaCurta(vent.fins)}`));
+  }
   sec.append(llista);
   const radar = blocRadar(radarDades, plou);
   if (radar) sec.append(radar);
@@ -335,7 +342,7 @@ function pinta(dades) {
     const m = dades.models;
     avisos.append(element('p', 'avis', T`Avui els models no veuen aquesta pluja: en les darreres ${m.hores} hores han caigut ${coma(m.mesurada_mm)}\u00a0mm a Montflorit i en preveien ${coma(m.prevista_mm)}. Les primeres hores de la taula parteixen del que mesura l\u2019estació; per a la resta, fes més cas dels avisos.`));
   }
-  if (dades.ara || dades.ara_casa) cont.append(blocAra(dades.ara, dades.ara_casa, dades.radar));
+  if (dades.ara || dades.ara_casa) cont.append(blocAra(dades.ara, dades.ara_casa, dades.radar, dades.vent));
   if (dades.hores) {
     cont.append(taula(dades.hores, dades.aprenentatge));
     ajustaFranges();

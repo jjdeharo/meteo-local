@@ -362,8 +362,14 @@ def text_trens_resum(dades, idioma):
     linies = ((dades.get("trens") or {}).get("linies")) or []
     if not linies:
         return None
-    no = {"ca": {"sense_trens": "sense trens", "bus": "per carretera", "incidencies": "amb incidències"},
-          "es": {"sense_trens": "sin trenes", "bus": "por carretera", "incidencies": "con incidencias"}}[idioma]
+    no = {"ca": {"sense_trens": "sense trens", "bus": "per carretera", "incidencies": "amb incidències",
+                 "sense_dades": "sense dades"},
+          "es": {"sense_trens": "sin trenes", "bus": "por carretera", "incidencies": "con incidencias",
+                 "sense_dades": "sin datos"}}[idioma]
+    # Sense dades de cap línia (Renfe i FGC caiguts), no es pot dir que vagin bé.
+    if all(l["estat"] == "sense_dades" for l in linies):
+        return ("Trenes de Cerdanyola: ahora mismo no hay datos de Renfe ni de FGC." if idioma == "es"
+                else "Trens de Cerdanyola: ara mateix no hi ha dades de Renfe ni d'FGC.")
     mal = [f"{l['linia']} {no[l['estat']]}" for l in linies if l["estat"] in no]
     if not mal:
         return None if all(l["estat"] == "fora_horari" for l in linies) else \
@@ -463,55 +469,76 @@ def al_canal(api, chat, memoria):
 
 
 def reparteix(api, subs, estat, moment):
+    """Reparte los avisos nuevos y vuelve a intentar, cada minuto mientras el
+    aviso esté vigente, lo que Telegram no aceptó (el canal o algún chat):
+    un fallo pasajero no puede perder un aviso de riera o de peligro (ADR
+    0034). Si el canal falla, los suscriptores lo reciben igualmente por el
+    bot; cuando el canal lo acepte, quien está en él lo verá repetido."""
     enviats = estat.setdefault("enviats", {})
+    pendents = estat.setdefault("pendents", {})     # id: {"avis", "canal", "chats"}
     memoria = {}        # quién está en el canal, preguntado una vez por pasada
     avisos = llegeix(os.path.join(DADES, "avisos.json"), {}).get("avisos", [])
     for a in a_repartir(avisos, enviats, moment):
         enviats[a["id"]] = moment.isoformat(timespec="minutes")
-        al_canal_ok = False
-        if a["tipus"] in CANAL_TIPUS:
+        pendents[a["id"]] = {"avis": a, "canal": a["tipus"] in CANAL_TIPUS,
+                             "chats": [c for c, s in subs.items() if a["tipus"] in s["avisos"]]}
+    for clau, p in list(pendents.items()):
+        a = p["avis"]
+        if not a_repartir([a], {}, moment):     # ya no está vigente: se deja estar
+            del pendents[clau]
+            continue
+        if p["canal"]:
             try:
                 envia(api, CANAL, f"{a['ca']}\n\n{a['es']}", html=True)
-                al_canal_ok = True
+                p["canal"] = False
             except Exception:
                 pass
-        for chat, sub in list(subs.items()):
-            if a["tipus"] in sub["avisos"] and not (al_canal_ok and al_canal(api, chat, memoria)):
-                try:
-                    envia(api, chat, a[sub["idioma"]], html=True)
-                except Bloquejat:
-                    subs.pop(chat, None)
-                except Exception:
-                    pass
-                time.sleep(0.05)
+        al_canal_ok = a["tipus"] in CANAL_TIPUS and not p["canal"]
+        queden = []
+        for chat in p["chats"]:
+            sub = subs.get(chat)
+            if not sub or (al_canal_ok and al_canal(api, chat, memoria)):
+                continue
+            try:
+                envia(api, chat, a[sub["idioma"]], html=True)
+            except Bloquejat:
+                subs.pop(chat, None)
+            except Exception:
+                queden.append(chat)
+            time.sleep(0.05)
+        p["chats"] = queden
+        if not p["canal"] and not queden:
+            del pendents[clau]
     # Lo repartido hace más de 3 días ya no hace falta recordarlo.
     limit = moment - dt.timedelta(days=3)
     for k in [k for k, v in enviats.items() if dt.datetime.fromisoformat(v) < limit]:
         del enviats[k]
     # El resumen diario: primero el del canal, a las 7; luego el de cada uno, a su hora
-    # (una vez al día), salvo a quien ya le ha llegado por el canal.
+    # (una vez al día), salvo a quien ya le ha llegado por el canal. Se apunta
+    # como hecho solo cuando Telegram lo acepta: si falla, se reintenta al
+    # minuto siguiente mientras dure esa hora.
     hora, avui = str(moment.hour), moment.date().isoformat()
     dades = None
     if hora == CANAL_RESUM and estat.get("canal_resum") != avui:
         dades = llegeix(os.path.join(DADES, "montflorit.json"), {})
-        estat["canal_resum"] = avui
         try:
             # En el canal, en catalán y en castellano; el enlace, una vez al final.
             envia(api, CANAL, resum(dades, "ca", moment).removesuffix("\n" + WEB) + "\n\n" + resum(dades, "es", moment),
                   html=True)
-            estat["canal_resum_ok"] = avui
+            estat["canal_resum"] = avui
         except Exception:
             pass
-    canal_resum_ok = hora == CANAL_RESUM and estat.get("canal_resum_ok") == avui
+    canal_resum_ok = hora == CANAL_RESUM and estat.get("canal_resum") == avui
     resums = estat.setdefault("resums", {})
     for chat, sub in list(subs.items()):
         if sub.get("resum") == hora and resums.get(chat) != avui:
-            resums[chat] = avui
             if canal_resum_ok and al_canal(api, chat, memoria):
+                resums[chat] = avui
                 continue
             dades = dades or llegeix(os.path.join(DADES, "montflorit.json"), {})
             try:
                 envia(api, chat, resum(dades, sub["idioma"], moment), html=True)
+                resums[chat] = avui
             except Bloquejat:
                 subs.pop(chat, None)
             except Exception:

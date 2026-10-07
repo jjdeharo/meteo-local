@@ -90,6 +90,9 @@ class Web(unittest.TestCase):
         # Los créditos y el README enlazan el código fuente y los ADR (meteo-montflorit/meteo-local).
         M.comprova("fonts.html", self.llegeix("fonts.html"), M.PROHIBIDES_FONTS)
         self.assertIn("https://github.com/meteo-montflorit/meteo-local/tree/main/docs/adr", self.llegeix("fonts.html"))
+        # «Si surts» usa la icona de la moto de Tabler: el crèdit s'hi queda; els de la pàgina retirada, no.
+        self.assertIn("La icona de la moto de «Si surts», de <a href=\"https://tabler.io/icons\"", self.llegeix("fonts.html"))
+        self.assertNotIn("MingCute", self.llegeix("fonts.html"))
         M.comprova("README.md", self.llegeix("README.md"), M.PROHIBIDES_README)
         self.assertIn("docs/adr", self.llegeix("README.md"))
         # «Si surts» habla de motos y coches, pero no de casa ni del trayecto.
@@ -129,6 +132,7 @@ class Web(unittest.TestCase):
         # El diccionario, antes que el programa de la página.
         self.assertLess(index.index('src="../es.js"'), index.index('src="../comu.js"'))
         self.assertIn("traducida con IA", fonts)
+        self.assertIn("El icono de la moto de «Si sales»", fonts)
         # Cada versión enlaza la otra.
         self.assertIn('<a href="../" lang="ca" hreflang="ca">Català</a>', index)
         self.assertIn('<a href="es/" lang="es" hreflang="es">Castellano</a>', self.llegeix("index.html"))
@@ -177,6 +181,9 @@ class Castella(unittest.TestCase):
         self.assertEqual(js("IDIOMA.codi"), "es")
         self.assertEqual(js("T`Ara a ${'Montflorit'} (${'10:00'})`"), "Ahora en Montflorit (10:00)")
         self.assertEqual(js("T('Un text que no hi és')"), "Un text que no hi és")
+        # En castellà, la fase sempre amb «de».
+        self.assertEqual(js("deFase(TD('emergència'))"), "de emergencia")
+        self.assertEqual(js("deFase(TD('alerta'))"), "de alerta")
 
     def test_avisos(self):
         avisos = [{"inicio": "2026-10-06T08:00:00+02:00", "fin": "2026-10-06T19:59:59+02:00", "tipo": "pluja", "nivel": "groc"},
