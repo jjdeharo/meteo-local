@@ -30,7 +30,7 @@ import shutil
 import sys
 
 ARREL = os.path.dirname(os.path.abspath(__file__))
-REPO = "https://github.com/jjdeharo/meteo-montflorit"
+REPO = "https://github.com/meteo-montflorit/meteo-montflorit.github.io"
 DADES = "montflorit.json"
 # Lo que casa.json lleva para la página del trayecto, y el estado de la
 # riera, que solo sirve para el aviso por Telegram (ADR 0027).

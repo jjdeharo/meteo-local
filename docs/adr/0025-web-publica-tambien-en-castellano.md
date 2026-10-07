@@ -14,7 +14,7 @@ de casa, sin una segunda copia que mantener.
 
 ## Decisión
 
-- **Dónde**: <https://jjdeharo.github.io/meteo-montflorit/es/>, con su
+- **Dónde**: <https://meteo-montflorit.github.io/es/>, con su
   página de fuentes en `es/fonts.html`. La de la raíz sigue en catalán. Cada
   una enlaza la otra junto al nombre del municipio («Castellano», «Català»).
 - **Los textos del programa** (`web/comu.js` y `web/casa.js`) pasan por una

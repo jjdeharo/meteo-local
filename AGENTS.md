@@ -27,10 +27,11 @@ Al cambiar algo:
   en la rama `gh-pages` cada media hora como mucho (ADR 0020). La clave del NAS
   para IONOS solo puede dejar `.json` en esa carpeta (orden fija en el
   `authorized_keys` de IONOS); la carpeta tiene un `.htaccess` que permite leer
-  los datos desde `jjdeharo.github.io`.
+  los datos desde `jjdeharo.github.io` y `meteo-montflorit.github.io`.
 - La página de casa se publica también como web pública, «Temps a Montflorit»
-  (`jjdeharo/meteo-montflorit`, ADR 0024): la genera `montflorit.py` y no puede
-  decir «casa» ni nada del trayecto. Si cambias un texto de `web/casa.html` o
+  (repositorio `meteo-montflorit/meteo-montflorit.github.io`, en
+  <https://meteo-montflorit.github.io/>; ADR 0024 y 0028): la genera
+  `montflorit.py` y no puede decir «casa» ni nada del trayecto. Si cambias un texto de `web/casa.html` o
   `web/fonts.html` que esté en sus listas de cambios, cámbialo también allí;
   las pruebas avisan. En ese repositorio no se edita nada a mano.
 - La web pública está también en castellano (ADR 0025). Todo texto visible de

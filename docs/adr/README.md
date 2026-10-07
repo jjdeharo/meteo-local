@@ -29,5 +29,6 @@
 | [0025](0025-web-publica-tambien-en-castellano.md) | Web pública también en castellano | aceptado |
 | [0026](0026-radar-de-meteocat-o-de-rainviewer-segun-cual-acierta-mas.md) | Radar de Meteocat o de RainViewer según cuál acierta más | aceptado |
 | [0027](0027-aviso-de-desbordamiento-de-la-riera-de-sant-cugat.md) | Aviso de desbordamiento de la riera de Sant Cugat | aceptado |
+| [0028](0028-web-publica-en-su-propia-organizacion.md) | Web pública en su propia organización | aceptado |
 
 Plantilla: [0000-plantilla.md](0000-plantilla.md). Para crear uno: `nuevo-adr "Título"`.

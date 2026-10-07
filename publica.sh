@@ -33,7 +33,7 @@ cd "$(dirname "$0")"
 
 ANTERIOR=${ANTERIOR:-https://jjdeharo.github.io/meteo-local/dades.json}
 DESTINO=${DESTINO:-$(git remote get-url origin)}
-DESTINO_MONTFLORIT=${DESTINO_MONTFLORIT-git@github.com:jjdeharo/meteo-montflorit.git}
+DESTINO_MONTFLORIT=${DESTINO_MONTFLORIT-git@github.com:meteo-montflorit/meteo-montflorit.github.io.git}
 
 sitio=$(mktemp -d)
 publica=$(mktemp -d)

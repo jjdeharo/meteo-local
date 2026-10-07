@@ -25,9 +25,9 @@ minutos, el NAS avisa a Juanjo por Telegram, una vez por episodio de lluvia
 (ADR 0022).
 
 La página de casa se publica además aparte, como web del tiempo del barrio:
-[Temps a Montflorit](https://jjdeharo.github.io/meteo-montflorit/), sin la
+[Temps a Montflorit](https://meteo-montflorit.github.io/), sin la
 página del trayecto, generada en cada publicación a partir de esta (ADR 0024),
-en catalán y en [castellano](https://jjdeharo.github.io/meteo-montflorit/es/)
+en catalán y en [castellano](https://meteo-montflorit.github.io/es/)
 (ADR 0025).
 
 ## Cómo funciona

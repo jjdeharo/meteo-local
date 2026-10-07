@@ -1,9 +1,9 @@
 # Temps a Montflorit
 
 El temps ara a Montflorit (Cerdanyola del Vallès) i la previsió hora a hora
-per a les pròximes 24 hores: <https://jjdeharo.github.io/meteo-montflorit/>
+per a les pròximes 24 hores: <https://meteo-montflorit.github.io/>
 
-També en castellà: <https://jjdeharo.github.io/meteo-montflorit/es/>
+També en castellà: <https://meteo-montflorit.github.io/es/>
 
 - **Ara:** temperatura, humitat i pressió d'una estació particular del barri;
   pluja i vent de l'estació de Montflorit de
@@ -16,7 +16,7 @@ També en castellà: <https://jjdeharo.github.io/meteo-montflorit/es/>
 - **Avisos:** els de l'AEMET per al Vallès i els plans de Protecció Civil.
 
 La pàgina explica com es calcula cada cosa a «D'on surt», i totes les fonts
-són a [Fonts i crèdits](https://jjdeharo.github.io/meteo-montflorit/fonts.html).
+són a [Fonts i crèdits](https://meteo-montflorit.github.io/fonts.html).
 És una previsió calculada automàticament, no una previsió oficial.
 
 Aquest repositori conté la pàgina tal com es publica. Es genera sola: un

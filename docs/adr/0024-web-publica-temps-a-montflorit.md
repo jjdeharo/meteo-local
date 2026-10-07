@@ -12,8 +12,9 @@ clon con otro nombre y si se verían datos suyos o de su NAS.
 ## Decisión
 
 - **Una sola pasada de cálculo y dos webs.** La pública es la página de casa
-  publicada aparte, en el repositorio `jjdeharo/meteo-montflorit`
-  (<https://jjdeharo.github.io/meteo-montflorit/>). No se mantiene a mano:
+  publicada aparte, en el repositorio `meteo-montflorit/meteo-montflorit.github.io`
+  (<https://meteo-montflorit.github.io/>; hasta el 07-10-2026 estuvo en
+  `jjdeharo/meteo-montflorit`, que ahora redirige: ADR 0028). No se mantiene a mano:
   `montflorit.py` la genera a partir de `web/` en cada publicación.
 - **Qué cambia en la pública** (`CANVIS_INDEX` y `CANVIS_FONTS`): se llama
   «Temps a Montflorit»; no tiene el menú de páginas ni nada del trayecto;
