@@ -36,6 +36,13 @@ function mulla(f) {
   return (f.probabilitat || 0) >= PROB_RISC || (f.pluja_mm || 0) >= MM_RISC || f.plou_ara || avisPluja(f);
 }
 
+// Una hora amb risc de pluja només per l'avís de l'AEMET: ni la probabilitat
+// (que ja porta el radar), ni els models, ni les estacions hi veuen pluja. Es
+// manté el que diu l'avís, però es diu clar (ADR 0008 i 0029).
+function senseDades(f) {
+  return (f.probabilitat || 0) < PROB_RISC && (f.pluja_mm || 0) < MM_RISC && !f.plou_ara;
+}
+
 function plouClar(f) {
   return (f.probabilitat || 0) >= PROB_PLUJA || (f.pluja_mm || 0) >= MM_PLUJA || f.plou_ara || avisPluja(f);
 }
@@ -80,9 +87,13 @@ function avalua(mitja, tram, trens) {
   const temps = viatge.map((f) => f.temperatura).filter((t) => t != null);
   const tMin = temps.length ? Math.min(...temps) : null;
 
+  const nomesAvis = (cond) => viatge.filter(cond).every(senseDades);
   if (mitja === 'bici' || mitja === 'moto') {
-    if (viatge.some(plouClar)) puja('no', T`Pluja probable ${quan(anada, tornada, plouClar)}.`);
-    else if (viatge.some(mulla)) {
+    if (viatge.some(plouClar)) {
+      puja('no', nomesAvis(plouClar)
+        ? T`Avís de l’AEMET per pluja ${quan(anada, tornada, plouClar)}: ni el radar, ni les estacions, ni els models hi veuen pluja.`
+        : T`Pluja probable ${quan(anada, tornada, plouClar)}.`);
+    } else if (viatge.some(mulla)) {
       puja('compte', mitja === 'moto' ? T`Pot ploure ${quan(anada, tornada, mulla)}: porta l’impermeable.`
         : T`Pot ploure ${quan(anada, tornada, mulla)}.`);
     }
@@ -91,7 +102,11 @@ function avalua(mitja, tram, trens) {
   else if (ll.ratxa[0] != null && ratxa >= ll.ratxa[0]) puja('compte', T`Ratxes de vent de fins a ${Math.round(ratxa)} km/h.`);
   if (tMin != null && ll.fred[1] != null && tMin <= ll.fred[1]) puja('no', T`${graus(tMin)}: hi pot haver gel.`);
   else if (tMin != null && ll.fred[0] != null && tMin <= ll.fred[0]) puja('compte', T`${graus(tMin)}: compte amb el gel a primera hora.`);
-  if (mitja === 'peu' && tram.some(mulla)) puja('compte', T('Pot ploure mentre ets fora: porta paraigua.'));
+  if (mitja === 'peu' && tram.some(mulla)) {
+    puja('compte', tram.filter(mulla).every(senseDades)
+      ? T('Avís de l’AEMET per pluja mentre ets fora: ni el radar, ni les estacions, ni els models hi veuen pluja. Per si de cas, porta paraigua.')
+      : T('Pot ploure mentre ets fora: porta paraigua.'));
+  }
   if (mitja === 'public') return avaluaPublic(trens);
   if (!res.motius.length) res.motius.push(T('Sense pluja ni vent fort.'));
   return res;
@@ -174,11 +189,14 @@ const NIVELL_UV = [[11, 'extrem'], [8, 'molt alt'], [6, 'alt'], [3, 'moderat']];
 function consells(tram, ara) {
   const res = [];
   const mullat = tram.map(mulla);
+  const avis = tram.filter(mulla).every(senseDades);
   if (!mullat[0] && mullat.some(Boolean)) {
     const f = tram[mullat.indexOf(true)];
-    res.push(T`A partir de les ${hora(f)} h, risc de pluja.`);
+    res.push(avis ? T`A partir de les ${hora(f)} h, avís de l’AEMET per pluja.`
+      : T`A partir de les ${hora(f)} h, risc de pluja.`);
   } else if (mullat[0] && !mullat.every(Boolean)) {
-    res.push(T`Cap a les ${hora(tram[mullat.indexOf(false)])} h s’acaba el risc de pluja.`);
+    const h = hora(tram[mullat.indexOf(false)]);
+    res.push(avis ? T`Cap a les ${h} h s’acaba l’avís de l’AEMET.` : T`Cap a les ${h} h s’acaba el risc de pluja.`);
   }
   const amb = tram.filter((f) => f.temperatura != null);
   if (amb.length) {

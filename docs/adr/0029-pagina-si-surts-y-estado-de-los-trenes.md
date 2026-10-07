@@ -28,6 +28,15 @@ y otros transportes.
   Umbrales en `web/sortir.js`: los de lluvia son los del trayecto, comprobados
   con datos; los de viento y frío de bici y moto, una primera propuesta que la
   página declara sin comprobar.
+- **Avisos de AEMET por lluvia o tormentas**: cuentan como lluvia probable,
+  como en el trayecto. Si son lo único que la ve (probabilidad, que ya lleva el
+  radar, por debajo del 20 %, menos de 0,2 mm en los modelos y ninguna
+  estación con lluvia), el veredicto se mantiene, pero el motivo lo dice: «Avís
+  de l'AEMET per pluja a l'anada (18 h): ni el radar, ni les estacions, ni els
+  models hi veuen pluja», y los consejos hablan del aviso y no del riesgo de
+  lluvia. Es el criterio del ADR 0008 para los planes de Protección Civil. Lo
+  pidió Juanjo el 07-10-2026, con un aviso amarillo hasta las 20 h, el cielo
+  despejado y un 1 %: la página decía «Pluja probable».
 - **Transporte público según los trenes**: «Bé» si circulan todos, «Amb
   incidències» si alguno no circula, va por carretera o tiene avisos, «Sense
   trens» si no circula ninguno; con un enlace al bloque «Trens ara» de debajo,
@@ -120,7 +129,7 @@ y otros transportes.
 
 ## Validación
 
-`tests/test_web.py` (tramos de ropa, viento a pie, otra prenda a la vuelta, una
+`tests/test_web.py` (lluvia que solo ve el aviso de AEMET, tramos de ropa, viento a pie, otra prenda a la vuelta, una
 sola chaqueta en moto, bici), `tests/test_trens.py` (protobuf, idiomas, trenes parados, lejos de la estación,
 vistos hace poco, estados y orden de los avisos) y `tests/test_montflorit.py`
 (menú, página pública, palabras permitidas, castellano). La página, probada en

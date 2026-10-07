@@ -151,6 +151,27 @@ class Web(unittest.TestCase):
                           f"{json.dumps(graus)}.map((s) => peca('peu', s))", "sortir.js")
         self.assertEqual(web, [bot.peca(s, "ca") + "." for s in graus])
 
+    def test_pluja_nomes_per_l_avis_de_l_aemet(self):
+        # El cas del 07-10-2026 a les 18 h: avís groc fins a les 20 h, cel serè i un 1 %.
+        # Es manté el que diu l'avís, però es diu que cap altra dada hi veu pluja (ADR 0008 i 0029).
+        avis = [{"nivell": "groc", "tipus": ["pluja", "tempestes"]}]
+        def tram(prob):
+            return [{"hora": f"2026-10-07T{h:02d}:00", "probabilitat": prob, "pluja_mm": 0,
+                     "temperatura": 22, "avisos": avis if h < 20 else []} for h in (18, 19, 20, 21)]
+        def avalua(mitja, prob):
+            return self.avalua("2026-10-07T18:10:00+02:00",
+                               f"avalua({json.dumps(mitja)}, {json.dumps(tram(prob))}, [])", "sortir.js")
+        bici = avalua("bici", 0.01)
+        self.assertEqual(bici["nivell"], "no")
+        self.assertEqual(bici["motius"], ["Avís de l’AEMET per pluja a l’anada (18\u00a0h): ni el radar, "
+                                          "ni les estacions, ni els models hi veuen pluja."])
+        self.assertTrue(avalua("peu", 0.01)["motius"][0].startswith("Avís de l’AEMET per pluja mentre ets fora"))
+        # Si els models també hi veuen pluja, com sempre.
+        self.assertEqual(avalua("bici", 0.6)["motius"], ["Pluja probable a l’anada i a la tornada."])
+        consells = self.avalua("2026-10-07T18:10:00+02:00",
+                               f"consells({json.dumps(tram(0.01))}, new Date())", "sortir.js")
+        self.assertIn("Cap a les 20\u00a0h s’acaba l’avís de l’AEMET.", consells)
+
     def test_propera_lectura(self):
         horari = {"trams": [["00:00", "23:50"]], "cada_min": 10, "desfase_min": 1}
         expr = f"properaActualitzacio({json.dumps(horari)}).toISOString()"
