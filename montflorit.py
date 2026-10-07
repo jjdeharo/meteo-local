@@ -91,6 +91,15 @@ CANVIS_SORTIR = [
      ' · <a href="es/sortir.html" lang="es" hreflang="es">Castellano</a></p>'),
     ('href="https://github.com/jjdeharo/meteo-local/releases"', f'href="{REPO}"'),
 ]
+CANVIS_TELEGRAM = [
+    ('<html lang="ca" data-theme="light">',
+     f'<html lang="ca" data-theme="light" data-dades="{DADES}" data-notes="{REPO}">'),
+    ("<title>Avisos a Telegram</title>", "<title>Avisos a Telegram · Temps a Montflorit</title>"),
+    ('<p class="ruta">Montflorit, Cerdanyola del Vallès</p>',
+     '<p class="ruta">Montflorit, Cerdanyola del Vallès'
+     ' · <a href="es/telegram.html" lang="es" hreflang="es">Castellano</a></p>'),
+    ('href="https://github.com/jjdeharo/meteo-local/releases"', f'href="{REPO}"'),
+]
 # En «Si surts» se habla de medios de transporte: ahí sí van «moto» y «cotxe».
 PROHIBIDES_SORTIR = ("casa", "trajecte", "meteo-local")
 
@@ -99,13 +108,14 @@ FORA_FONTS = [re.compile(r"\n      <li>Icones de roba i pluja de .*?</li>"),
               re.compile(r"\n      <li>Icones del cotxe i del ciclomotor de .*?</li>")]
 
 SW_PECES = re.compile(r"const PECES = \[.*?\];", re.S)
-PECES = ["./", "index.html", "sortir.html", "fonts.html", "es/", "es/sortir.html", "es/fonts.html", "estil.css",
+PECES = ["./", "index.html", "sortir.html", "telegram.html", "fonts.html", "es/", "es/sortir.html",
+         "es/telegram.html", "es/fonts.html", "estil.css",
          "comu.js", "casa.js", "sortir.js", "es.js", "manifest.webmanifest", "icones/icona-192.png"]
 
 # --- En castellano (ADR 0025) ---
 TRADUCCIONS = os.path.join(ARREL, "i18n", "es.json")
 BLOC = re.compile(r"<(title|h1|h2|p|li|summary)\b([^>]*)>(.*?)</\1>", re.S)
-ATRIBUT = re.compile(r'(\b(?:title|aria-label)="|<meta name="description" content=")([^"]*)"')
+ATRIBUT = re.compile(r'(\b(?:title|aria-label|alt)="|<meta name="description" content=")([^"]*)"')
 # Lo que cambia además del texto: idioma, cómo se llama la estación propia y
 # dónde están los archivos comunes, que quedan una carpeta más arriba.
 CANVIS_ES = [
@@ -118,6 +128,10 @@ CANVIS_ES_INDEX = [
     ('data-estacio="l’estació particular"', 'data-estacio="la estación particular" data-arrel="../"'),
     ('<script src="comu.js"></script>', '<script src="../es.js"></script>\n  <script src="../comu.js"></script>'),
     ('<script src="casa.js"></script>', '<script src="../casa.js"></script>'),
+]
+CANVIS_ES_TELEGRAM = [
+    (f'data-dades="{DADES}"', f'data-dades="{DADES}" data-arrel="../"'),
+    ('<script src="comu.js"></script>', '<script src="../es.js"></script>\n  <script src="../comu.js"></script>'),
 ]
 CANVIS_ES_SORTIR = [
     (f'data-dades="{DADES}"', f'data-dades="{DADES}" data-arrel="../"'),
@@ -165,8 +179,11 @@ def castella(html, nom, taula=None):
             taula = json.load(f)
     t = canvia(tradueix(html, taula, nom), CANVIS_ES, nom)
     t = canvia(t, {"index.html": CANVIS_ES_INDEX + CANVIS_ES_NAV, "sortir.html": CANVIS_ES_SORTIR + CANVIS_ES_NAV,
+                   "telegram.html": CANVIS_ES_TELEGRAM + CANVIS_ES_NAV,
                    "fonts.html": [CREDIT_TRADUCCIO]}[nom], nom)
-    comprova("es/" + nom, t, PROHIBIDES_SORTIR if nom == "sortir.html" else PROHIBIDES)
+    if nom == "telegram.html":     # les captures, les de Telegram en castellà
+        t = t.replace('img/telegram/ca/', 'img/telegram/es/').replace('="img/', '="../img/')
+    comprova("es/" + nom, t, PROHIBIDES_SORTIR if nom in ("sortir.html", "telegram.html") else PROHIBIDES)
     return t
 
 
@@ -224,6 +241,14 @@ def sortir(sortir_html):
     return t
 
 
+def telegram(html):
+    t = menu(canvia(html, CANVIS_TELEGRAM, "telegram.html"), "telegram.html", "telegram.html")
+    if INDEXABLE:
+        t = canvia(t, [(ROBOTS, "")], "telegram.html")
+    comprova("telegram.html", t, PROHIBIDES_SORTIR)
+    return t
+
+
 def fonts(fonts_html):
     t = canvia(fonts_html, CANVIS_FONTS, "fonts.html")
     for patro in FORA_FONTS:
@@ -260,7 +285,7 @@ def construeix(desti, web=None):
     os.makedirs(desti, exist_ok=True)
     escriu = lambda nom, text: escriu_fitxer(os.path.join(desti, nom), text)
     pagines = {"index.html": index(llegeix("casa.html")), "sortir.html": sortir(llegeix("sortir.html")),
-               "fonts.html": fonts(llegeix("fonts.html"))}
+               "telegram.html": telegram(llegeix("telegram.html")), "fonts.html": fonts(llegeix("fonts.html"))}
     os.makedirs(os.path.join(desti, "es"), exist_ok=True)
     for nom, html in pagines.items():
         escriu(nom, html)
@@ -269,6 +294,7 @@ def construeix(desti, web=None):
     for nom in ("estil.css", "comu.js", "casa.js", "sortir.js"):
         shutil.copy(os.path.join(web, nom), desti)
     shutil.copytree(propi, desti, dirs_exist_ok=True)
+    shutil.copytree(os.path.join(web, "img"), os.path.join(desti, "img"), dirs_exist_ok=True)
     for nom in ("LICENSE", "LICENSE-CONTINGUTS.md"):
         shutil.copy(os.path.join(ARREL, nom), desti)
     open(os.path.join(desti, ".nojekyll"), "w").close()

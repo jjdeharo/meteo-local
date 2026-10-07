@@ -56,7 +56,7 @@ class Menu(unittest.TestCase):
         self.assertFalse(B.canvia(sub, "-"))
         self.assertEqual((sub["resum"], sub["idioma"]), ("7", "es"))
         textos = [b["text"] for fila in B.teclat(sub) for b in fila]
-        self.assertIn("✓ Lluvia dentro de 15 minutos", textos)
+        self.assertIn("✓ Lluvia a punto de empezar (15 min antes)", textos)
         self.assertIn("Desbordamiento de la riera de Sant Cugat (en pruebas)", textos)
         self.assertIn("✓ 7 h", textos)
         self.assertIn("20 h (para mañana)", textos)
@@ -94,10 +94,10 @@ class Menu(unittest.TestCase):
 class Resum(unittest.TestCase):
     def test_resum(self):
         r = B.resum(dades(), "ca", ARA)
-        self.assertIn("Ara a Montflorit: 16 °C, no plou.", r)
-        self.assertIn("Pluja: possible de 12 a 15 h (fins al 40 %).", r)
+        self.assertIn("Ara mateix: 16 °C, no plou.", r)
+        self.assertIn("Pluja: possible de 12 a 15 h (probabilitat fins al 40 %).", r)
         self.assertIn("Avís groc de l'AEMET per tempestes fins a les 20:00.", r)
-        self.assertIn("Trens: R4 sense trens.", r)
+        self.assertIn("Trens de Cerdanyola: R4 sense trens.", r)
         self.assertIn("Lluvia: posible de 12 a 15 h", B.resum(dades(), "es", ARA))
 
     def test_a_les_20_la_de_dema(self):
@@ -106,14 +106,14 @@ class Resum(unittest.TestCase):
         d["avisos"].append({"inicio": "2026-10-08T10:00:00+02:00", "fin": "2026-10-08T19:59:59+02:00",
                             "nivel": "groc", "tipo": "pluja", "zona": "Prelitoral de Barcelona"})
         r = B.resum(d, "ca", vespre)
-        self.assertTrue(r.startswith("Previsió per a demà, dijous:"))
-        self.assertIn("Demà: de ", r)
-        self.assertIn("Pluja: possible de 12 a 15 h (fins al 40 %).", r)
+        self.assertTrue(r.startswith("<b>Previsió per a demà, dijous, a Montflorit</b>"))
+        self.assertIn("Temperatura: entre ", r)
+        self.assertIn("Pluja: possible de 12 a 15 h (probabilitat fins al 40 %).", r)
         self.assertIn("Avís groc de l'AEMET per pluja de 10:00 a 20:00.", r)
-        self.assertNotIn("Ara a Montflorit", r)
+        self.assertNotIn("Ara mateix", r)
         self.assertNotIn("Trens", r)
         self.assertNotIn("Aquesta nit", r)
-        self.assertTrue(B.resum(d, "es", vespre).startswith("Previsión para mañana, jueves:"))
+        self.assertTrue(B.resum(d, "es", vespre).startswith("<b>Previsión para mañana, jueves, en Montflorit</b>"))
 
     def test_milimetres_sense_probabilitat_no_compten(self):
         d = dades()
@@ -185,12 +185,12 @@ class AvisosPublics(unittest.TestCase):
         linia = {"linies": [{"linia": "R7", "estacio": "Cerdanyola Universitat", "estat": "sense_trens"}]}
         self.assertEqual(AB.decideix(estat, {"trens": linia}, ARA), [])
         nous = AB.decideix(estat, {"trens": linia}, ARA + dt.timedelta(minutes=15))
-        self.assertEqual(nous[0]["ca"], "R7 (Cerdanyola Universitat): sense trens.")
+        self.assertEqual(nous[0]["ca"], "<b>Trens: l'R7 no circula a Cerdanyola Universitat</b>")
         self.assertEqual(AB.decideix(estat, {"trens": linia}, ARA + dt.timedelta(minutes=30)), [])
         torna = {"linies": [dict(linia["linies"][0], estat="circula")]}
         AB.decideix(estat, {"trens": torna}, ARA + dt.timedelta(minutes=45))
         nous = AB.decideix(estat, {"trens": torna}, ARA + dt.timedelta(minutes=60))
-        self.assertEqual(nous[0]["es"], "R7 (Cerdanyola Universitat): vuelve a circular.")
+        self.assertEqual(nous[0]["es"], "<b>Trenes: la R7 vuelve a circular en Cerdanyola Universitat</b>")
 
     def test_riera_amb_avis_orientatiu(self):
         estat = {}
@@ -198,7 +198,7 @@ class AvisosPublics(unittest.TestCase):
                  "capcalera": None, "montflorit_3h": None}
         nous = AB.decideix(estat, {"riera": riera}, ARA)
         self.assertEqual(nous[0]["nivell"], "perill")
-        self.assertIn("perill de desbordament", nous[0]["ca"])
+        self.assertTrue(nous[0]["ca"].startswith("<b>Perill de desbordament de la riera de Sant Cugat a Montflorit</b>"))
         self.assertIn("Aviso en pruebas, orientativo y no oficial", nous[0]["es"])
         self.assertEqual(AB.decideix(estat, {"riera": riera}, ARA + dt.timedelta(minutes=15)), [])
 
@@ -208,6 +208,7 @@ class AvisosPublics(unittest.TestCase):
              "text": "Vent molt fort previst: ratxes de fins a 75 km/h, avui de 15 a 16 h."}
         nous = AB.decideix({}, {"riscos": [r]}, ARA)
         self.assertIn("Viento muy fuerte previsto: rachas de hasta 75 km/h, hoy de 15 a 16 h.", nous[0]["es"])
+        self.assertTrue(nous[0]["es"].startswith("<b>Aviso de peligro (amarillo): viento muy fuerte</b>"))
 
 
 if __name__ == "__main__":

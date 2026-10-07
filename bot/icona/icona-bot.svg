@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- SPDX-License-Identifier: AGPL-3.0-or-later. El bot de Telegram (ADR 0034): el núvol de la web
+       sobre fons verd i un robot petit, perquè no es confongui amb el canal. Icones de Lucide (ISC). -->
+  <rect width="512" height="512" fill="#15803d"/>
+  <g fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round" transform="translate(78 80) scale(11)" stroke-width="1.7">
+    <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/>
+    <path d="M16 14v6"/><path d="M8 14v6"/><path d="M12 16v6"/>
+  </g>
+  <circle cx="352" cy="352" r="78" fill="#fff"/>
+  <g fill="none" stroke="#15803d" stroke-linecap="round" stroke-linejoin="round" transform="translate(304 304) scale(4)" stroke-width="2.2">
+    <path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2M20 14h2M15 13v2M9 13v2"/>
+  </g>
+</svg>

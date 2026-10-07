@@ -22,6 +22,7 @@ Tipos:
 Uso: python3 avisos_bot.py CASA.json AVISOS.json
 """
 import datetime as dt
+import html
 import json
 import os
 import sys
@@ -59,21 +60,31 @@ def coma(x):
 
 # --- Textos ------------------------------------------------------------------
 
+# Cada aviso empieza por lo que pasa, en negrita (HTML de Telegram), y lo explica
+# en palabras llanas para quien no conoce la web (Juanjo, 07-10-2026).
+def negreta(text):
+    return f"<b>{html.escape(text, quote=False)}</b>"
+
+
 def text_pluja(salida, ahora):
     r = salida["radar"]
     falta = round(PA.falta_min(salida, ahora))
     mm = r.get("arriba_mm_h")
     forca = {"ca": "", "es": ""}
     if mm is not None:
-        forca = ({"ca": " Seria forta.", "es": " Sería fuerte."} if mm >= 4 else
-                 {"ca": " Seria moderada.", "es": " Sería moderada."} if mm >= 1 else
-                 {"ca": " Seria feble.", "es": " Sería débil."})
+        forca = ({"ca": " Pot ser forta.", "es": " Puede ser fuerte."} if mm >= 4 else
+                 {"ca": " Serà moderada.", "es": " Será moderada."} if mm >= 1 else
+                 {"ca": " Serà feble.", "es": " Será débil."})
     if falta <= 2:
-        return {"ca": "El radar ja veu pluja a sobre de Montflorit: pot començar en qualsevol moment." + forca["ca"],
-                "es": "El radar ya ve lluvia encima de Montflorit: puede empezar en cualquier momento." + forca["es"]}
+        return {"ca": negreta("Pluja imminent a Montflorit") + "\nEl radar ja veu pluja a sobre del barri: pot "
+                      "començar en qualsevol moment." + forca["ca"],
+                "es": negreta("Lluvia inminente en Montflorit") + "\nEl radar ya ve lluvia encima del barrio: puede "
+                      "empezar en cualquier momento." + forca["es"]}
     hora = dt.datetime.fromisoformat(r["arriba"]).strftime("%H:%M")
-    return {"ca": f"Plourà a Montflorit d'aquí a uns {falta} minuts, cap a les {hora}." + forca["ca"],
-            "es": f"Lloverá en Montflorit dentro de unos {falta} minutos, hacia las {hora}." + forca["es"]}
+    return {"ca": negreta(f"Pluja d'aquí a uns {falta} minuts") + f"\nSegons el radar, començarà a ploure a "
+                  f"Montflorit cap a les {hora}." + forca["ca"],
+            "es": negreta(f"Lluvia dentro de unos {falta} minutos") + f"\nSegún el radar, empezará a llover en "
+                  f"Montflorit hacia las {hora}." + forca["es"]}
 
 
 def quan_es(r, ahora):
@@ -83,45 +94,63 @@ def quan_es(r, ahora):
     return f"{dia} de {ini.hour} a {fin.hour} h"
 
 
+QUE_CA = {"pluja_1h": "pluja molt forta", "pluja_12h": "molta pluja", "ratxa": "vent molt fort",
+          "calor": "calor extrema", "fred": "fred intens", "neu_24h": "neu"}
+QUE_ES = {"pluja_1h": "lluvia muy fuerte", "pluja_12h": "mucha lluvia", "ratxa": "viento muy fuerte",
+          "calor": "calor extremo", "fred": "frío intenso", "neu_24h": "nieve"}
+
+
 def text_perill(nous, ahora):
     pitjor = max(nous, key=lambda r: RS.NIVELLS.index(r["nivell"]))["nivell"]
-    ca = [f"Temps a Montflorit: risc {pitjor}."] + [r["text"] for r in nous]
-    es = [f"Tiempo en Montflorit: riesgo {NIVELLS_ES[pitjor]}."]
+    tipus = list(dict.fromkeys(r["tipus"] for r in nous))
+    ca = [negreta(f"Avís de perill ({pitjor}): " + " i ".join(QUE_CA[t] for t in tipus))]
+    ca += [html.escape(r["text"], quote=False) for r in nous]
+    ca.append("Ho calcula Temps a Montflorit amb els llindars de l'AEMET: no és un avís oficial.")
+    es = [negreta(f"Aviso de peligro ({NIVELLS_ES[pitjor]}): " + " y ".join(QUE_ES[t] for t in tipus))]
     for r in nous:
         previst, mesura = RISCOS_ES[r["tipus"]]
         plantilla = previst if r["origen"] == "previsio" else mesura
-        es.append(plantilla.format(v=RS.num(r["valor"]),
-                                   q=quan_es(r, ahora) if r.get("des_de") else "") if plantilla else r["text"])
+        es.append(html.escape(plantilla.format(v=RS.num(r["valor"]),
+                                               q=quan_es(r, ahora) if r.get("des_de") else "")
+                              if plantilla else r["text"], quote=False))
+    es.append("Lo calcula Temps a Montflorit con los umbrales de la AEMET: no es un aviso oficial.")
     return {"ca": "\n".join(ca), "es": "\n".join(es)}, pitjor
 
 
 def text_riera(riera, nivell):
     hora = dt.datetime.fromisoformat(riera["fins"]).strftime("%H:%M")
     mm3, mm6 = coma(riera["mm_3h"]), coma(riera["mm_6h"])
-    if nivell == "perill":
-        ca = (f"Riera de Sant Cugat: perill de desbordament a Montflorit. A Sant Cugat han caigut {mm3} mm "
-              f"en 3 hores i {mm6} en 6 (fins a les {hora}).")
-        es = (f"Riera de Sant Cugat: peligro de desbordamiento en Montflorit. En Sant Cugat han caído {mm3} mm "
-              f"en 3 horas y {mm6} en 6 (hasta las {hora}).")
-    else:
-        ca = (f"Riera de Sant Cugat: atenció, plou fort a la conca. A Sant Cugat han caigut {mm3} mm "
-              f"en 3 hores (fins a les {hora}).")
-        es = (f"Riera de Sant Cugat: atención, llueve fuerte en la cuenca. En Sant Cugat han caído {mm3} mm "
-              f"en 3 horas (hasta las {hora}).")
     radar = riera.get("radar_1h")
-    if radar and radar >= 1:
-        ca += f" El radar en preveu uns {coma(radar)} més en la pròxima hora."
-        es += f" El radar prevé unos {coma(radar)} más en la próxima hora."
+    mes_ca = f", i el radar en preveu uns {coma(radar)} mm més en la pròxima hora" if radar and radar >= 1 else ""
+    mes_es = f", y el radar prevé unos {coma(radar)} mm más en la próxima hora" if radar and radar >= 1 else ""
+    if nivell == "perill":
+        ca = (negreta("Perill de desbordament de la riera de Sant Cugat a Montflorit") +
+              f"\nHa plogut molt a Sant Cugat, d'on baixa l'aigua de la riera: {mm3} mm en 3 hores i {mm6} en 6 "
+              f"(fins a les {hora}){mes_ca}. Amb aquesta pluja, la riera ja s'ha desbordat altres vegades. "
+              "No t'acostis a la riera.")
+        es = (negreta("Peligro de desbordamiento de la riera de Sant Cugat en Montflorit") +
+              f"\nHa llovido mucho en Sant Cugat, de donde baja el agua de la riera: {mm3} mm en 3 horas y {mm6} "
+              f"en 6 (hasta las {hora}){mes_es}. Con esta lluvia, la riera ya se ha desbordado otras veces. "
+              "No te acerques a la riera.")
+    else:
+        ca = (negreta("Atenció: possible desbordament de la riera de Sant Cugat") +
+              f"\nPlou fort a Sant Cugat, d'on baixa l'aigua de la riera: {mm3} mm en 3 hores (fins a les {hora})"
+              f"{mes_ca}. Si continua, la riera es pot desbordar a Montflorit. No t'acostis a la riera.")
+        es = (negreta("Atención: posible desbordamiento de la riera de Sant Cugat") +
+              f"\nLlueve fuerte en Sant Cugat, de donde baja el agua de la riera: {mm3} mm en 3 horas (hasta las "
+              f"{hora}){mes_es}. Si continúa, la riera se puede desbordar en Montflorit. No te acerques a la riera.")
     return {"ca": f"{ca}\n{ORIENTATIU['ca']}", "es": f"{es}\n{ORIENTATIU['es']}"}
 
 
 def text_trens(linia, estacio, estat):
     if estat == "bus":
-        return {"ca": f"{linia} ({estacio}): servei per carretera, sense trens.",
-                "es": f"{linia} ({estacio}): servicio por carretera, sin trenes."}
+        return {"ca": negreta(f"Trens: l'{linia} no circula a {estacio}") + "\nHi ha servei per carretera.",
+                "es": negreta(f"Trenes: la {linia} no circula en {estacio}") + "\nHay servicio por carretera."}
     if estat == "sense_trens":
-        return {"ca": f"{linia} ({estacio}): sense trens.", "es": f"{linia} ({estacio}): sin trenes."}
-    return {"ca": f"{linia} ({estacio}): torna a circular.", "es": f"{linia} ({estacio}): vuelve a circular."}
+        return {"ca": negreta(f"Trens: l'{linia} no circula a {estacio}"),
+                "es": negreta(f"Trenes: la {linia} no circula en {estacio}")}
+    return {"ca": negreta(f"Trens: l'{linia} torna a circular a {estacio}"),
+            "es": negreta(f"Trenes: la {linia} vuelve a circular en {estacio}")}
 
 
 # --- Decidir -----------------------------------------------------------------

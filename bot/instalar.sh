@@ -28,17 +28,21 @@ def crida(metode, **p):
     dades = urllib.parse.urlencode({k: json.dumps(v) if isinstance(v, list) else v for k, v in p.items()}).encode()
     with urllib.request.urlopen(api + metode, dades, timeout=30) as r:
         assert json.load(r)["ok"], metode
+# El bot porta un nom diferent del canal, perquè no es confonguin (Juanjo, 07-10-2026).
+NOM = "Bot Temps a Montflorit"
 TEXTOS = {
     "ca": ([("avisos", "Tria quins avisos reps"), ("resum", "La previsió (a partir de les 18 h, la de demà)"), ("ara", "El temps ara"),
             ("baixa", "Deixa de rebre avisos i esborra les teves dades")],
-           "Avisos del temps a Montflorit (Cerdanyola del Vallès): riera de Sant Cugat, perill per pluja o vent, "
-           "pluja d'aquí a 15 minuts, trens i resum del dia. Tu tries què reps. Orientatiu, no oficial; la riera, en proves.",
-           "Avisos del temps a Montflorit: riera, perill, pluja, trens i resum del dia."),
+           "Bot personal: tu tries quins avisos del temps a Montflorit (Cerdanyola del Vallès) vols rebre: "
+           "riera de Sant Cugat (en proves), perill per pluja o vent, pluja a punt de començar, trens i la previsió "
+           "diària. Orientatiu, no oficial. Si no vols triar res, hi ha el Canal Temps a Montflorit: @TempsMontflorit.",
+           "Bot personal: tria quins avisos del temps a Montflorit vols rebre."),
     "es": ([("avisos", "Elige qué avisos recibes"), ("resum", "La previsión (desde las 18 h, la de mañana)"), ("ara", "El tiempo ahora"),
             ("baixa", "Deja de recibir avisos y borra tus datos")],
-           "Avisos del tiempo en Montflorit (Cerdanyola del Vallès): riera de Sant Cugat, peligro por lluvia o "
-           "viento, lluvia dentro de 15 minutos, trenes y resumen del día. Tú eliges qué recibes. Orientativo, no oficial; la riera, en pruebas.",
-           "Avisos del tiempo en Montflorit: riera, peligro, lluvia, trenes y resumen del día."),
+           "Bot personal: tú eliges qué avisos del tiempo en Montflorit (Cerdanyola del Vallès) quieres recibir: "
+           "riera de Sant Cugat (en pruebas), peligro por lluvia o viento, lluvia a punto de empezar, trenes y la "
+           "previsión diaria. Orientativo, no oficial. Si no quieres elegir nada, está el Canal Temps a Montflorit: @TempsMontflorit.",
+           "Bot personal: elige qué avisos del tiempo en Montflorit quieres recibir."),
 }
 for idioma, (ordres, descripcio, curta) in TEXTOS.items():
     for codi in ([idioma, ""] if idioma == "ca" else [idioma]):
@@ -46,6 +50,7 @@ for idioma, (ordres, descripcio, curta) in TEXTOS.items():
         crida("setMyCommands", commands=[{"command": c, "description": d} for c, d in ordres], **extra)
         crida("setMyDescription", description=descripcio, **extra)
         crida("setMyShortDescription", short_description=curta, **extra)
+        crida("setMyName", name=NOM, **extra)
 print("fet")
 PY
 

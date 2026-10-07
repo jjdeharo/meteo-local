@@ -51,15 +51,15 @@ DADES_VELLES_H = 2
 
 T = {
     "ca": {
-        "benvinguda": ("Aquest bot envia avisos del temps a Montflorit (Cerdanyola del Vallès), calculats "
-                       "automàticament amb dades de Meteocat, l'AEMET, el radar, les estacions del barri, "
-                       "Renfe i FGC. Els de desbordament de la riera estan en proves i són orientatius, no "
-                       "oficials: segueix sempre les indicacions de Protecció Civil i de l'Ajuntament.\n" + WEB),
-        "menu": ("Tria què vols rebre: ✓ vol dir que sí; toca un botó per canviar-ho. La previsió és un sol "
-                 "missatge cada dia, a l'hora que triïs; la de les 20 h és per a l'endemà.\n\nNomés es desa el teu "
-                 "identificador de Telegram i el que triïs aquí. Amb /baixa s'esborra tot."),
+        "benvinguda": ("<b>Bot Temps a Montflorit</b>\nT'enviaré, només a tu, els avisos del temps a Montflorit "
+                       "(Cerdanyola del Vallès) que triïs a continuació. Els calcula un programa amb dades públiques: "
+                       "són orientatius, no oficials. Segueix sempre les indicacions de Protecció Civil i de "
+                       "l'Ajuntament.\n" + WEB),
+        "menu": ("Toca el que vulguis rebre. ✓ vol dir que sí; si el tornes a tocar, es treu.\n"
+                 "La previsió arriba un cop al dia, a l'hora que triïs.\n\n"
+                 "Només es desa el teu identificador de Telegram i el que triïs aquí. Amb /baixa s'esborra tot."),
         "riera": "Desbordament de la riera de Sant Cugat (en proves)", "perill": "Perill (pluja forta, vent, calor…)",
-        "pluja": "Pluja d'aquí a 15 minuts", "trens": "Trens de Cerdanyola",
+        "pluja": "Pluja a punt de començar (15 min abans)", "trens": "Trens de Cerdanyola (si no circulen)",
         "resum": "Previsió, un cop al dia, a les:", "no": "No vull rebre la previsió", "h": "{} h", "dema": "{} h (per a demà)",
         "baixa": "Fet: s'han esborrat les teves dades i ja no rebràs res. Amb /start pots tornar-hi.",
         "ajuda": ("/avisos tria què reps · /resum la previsió · /ara el temps ara · "
@@ -67,15 +67,15 @@ T = {
         "velles": "Les dades de Temps a Montflorit no s'actualitzen des de les {}: ara no puc donar la previsió.",
     },
     "es": {
-        "benvinguda": ("Este bot envía avisos del tiempo en Montflorit (Cerdanyola del Vallès), calculados "
-                       "automáticamente con datos de Meteocat, la AEMET, el radar, las estaciones del barrio, "
-                       "Renfe y FGC. Los de desbordamiento de la riera están en pruebas y son orientativos, "
-                       "no oficiales: sigue siempre las indicaciones de Protección Civil y del Ayuntamiento.\n" + WEB),
-        "menu": ("Elige qué quieres recibir: ✓ quiere decir que sí; toca un botón para cambiarlo. La previsión es un solo "
-                 "mensaje cada día, a la hora que elijas; la de las 20 h es para el día siguiente.\n\nSolo se guarda "
-                 "tu identificador de Telegram y lo que elijas aquí. Con /baixa se borra todo."),
+        "benvinguda": ("<b>Bot Temps a Montflorit</b>\nTe enviaré, solo a ti, los avisos del tiempo en Montflorit "
+                       "(Cerdanyola del Vallès) que elijas a continuación. Los calcula un programa con datos públicos: "
+                       "son orientativos, no oficiales. Sigue siempre las indicaciones de Protección Civil y del "
+                       "Ayuntamiento.\n" + WEB),
+        "menu": ("Toca lo que quieras recibir. ✓ quiere decir que sí; si lo vuelves a tocar, se quita.\n"
+                 "La previsión llega una vez al día, a la hora que elijas.\n\n"
+                 "Solo se guarda tu identificador de Telegram y lo que elijas aquí. Con /baixa se borra todo."),
         "riera": "Desbordamiento de la riera de Sant Cugat (en pruebas)", "perill": "Peligro (lluvia fuerte, viento, calor…)",
-        "pluja": "Lluvia dentro de 15 minutos", "trens": "Trenes de Cerdanyola",
+        "pluja": "Lluvia a punto de empezar (15 min antes)", "trens": "Trenes de Cerdanyola (si no circulan)",
         "resum": "Previsión, una vez al día, a las:", "no": "No quiero recibir la previsión", "h": "{} h", "dema": "{} h (para mañana)",
         "baixa": "Hecho: se han borrado tus datos y ya no recibirás nada. Con /start puedes volver.",
         "ajuda": ("/avisos elige qué recibes · /resum la previsión · /ara el tiempo ahora · "
@@ -126,8 +126,9 @@ class Bloquejat(Exception):
     pass
 
 
-def envia(api, chat, text, teclat=None):
+def envia(api, chat, text, teclat=None, html=False):
     return api("sendMessage", chat_id=chat, text=text, disable_web_page_preview=True,
+               parse_mode="HTML" if html else None,
                reply_markup={"inline_keyboard": teclat} if teclat else None)
 
 
@@ -189,14 +190,14 @@ def franges(hores):
     return res
 
 
-def text_ara(dades, idioma):
+def text_ara(dades, idioma, lloc=""):
     a = dades.get("ara") or {}
     if a.get("temperatura") is None:
         return None
     plou = (a.get("intensitat") or 0) > 0 or (a.get("pluja_30min") or 0) > 0
     if idioma == "es":
-        return f"Ahora en Montflorit: {graus(a['temperatura'])}, {'llueve' if plou else 'no llueve'}."
-    return f"Ara a Montflorit: {graus(a['temperatura'])}, {'plou' if plou else 'no plou'}."
+        return f"Ahora mismo{lloc and ' en ' + lloc}: {graus(a['temperatura'])}, {'llueve' if plou else 'no llueve'}."
+    return f"Ara mateix{lloc and ' a ' + lloc}: {graus(a['temperatura'])}, {'plou' if plou else 'no plou'}."
 
 
 DIES = {"ca": ("dilluns", "dimarts", "dimecres", "dijous", "divendres", "dissabte", "diumenge"),
@@ -208,15 +209,16 @@ HORA_DEMA = 18
 def text_pluja(tram, idioma):
     pluges = franges(tram)
     if idioma == "es":
-        return ("Lluvia: " + "; ".join(f"posible de {a.hour} a {b.hour} h (hasta {round(p * 100)} %)"
+        return ("Lluvia: " + "; ".join(f"posible de {a.hour} a {b.hour} h (probabilidad hasta el {round(p * 100)} %)"
                                        for a, b, p in pluges) + ".") if pluges else "Sin lluvia prevista."
-    return ("Pluja: " + "; ".join(f"possible de {a.hour} a {b.hour} h (fins al {round(p * 100)} %)"
+    return ("Pluja: " + "; ".join(f"possible de {a.hour} a {b.hour} h (probabilitat fins al {round(p * 100)} %)"
                                   for a, b, p in pluges) + ".") if pluges else "Sense pluja prevista."
 
 
 def text_temperatura(tram, idioma, quan):
     temps = [f["temperatura"] for f in tram if f.get("temperatura") is not None]
-    return f"{quan}: de {graus(min(temps))} a {graus(max(temps))}." if temps else None
+    i = " y " if idioma == "es" else " i "
+    return f"{quan}: entre {graus(min(temps))}{i}{graus(max(temps))}." if temps else None
 
 
 def text_avisos_aemet(dades, idioma, dia, moment):
@@ -259,18 +261,22 @@ def resum(dades, idioma, moment):
         nit = [f for f in hores if hora(f) < dt.datetime.combine(dema, dt.time(6))]
         dia = [f for f in hores if hora(f).date() == dema and hora(f).hour >= 6]
         nom_dia = DIES[idioma][dema.weekday()]
-        linies = [f"Previsión para mañana, {nom_dia}:" if idioma == "es" else f"Previsió per a demà, {nom_dia}:"]
+        linies = [f"<b>Previsión para mañana, {nom_dia}, en Montflorit</b>" if idioma == "es"
+                  else f"<b>Previsió per a demà, {nom_dia}, a Montflorit</b>"]
         if franges(nit):    # la noche, solo si se espera lluvia
             linies.append(("Esta noche: " if idioma == "es" else "Aquesta nit: ")
                           + text_pluja(nit, idioma).split(": ", 1)[1])
-        linies.append(text_temperatura(dia, idioma, "Mañana" if idioma == "es" else "Demà"))
+        linies.append(text_temperatura(dia, idioma, "Temperatura"))
         linies.append(text_pluja(dia, idioma))
         linies += text_avisos_aemet(dades, idioma, dema, moment)
     else:
         fi_dia = ara_n.replace(hour=23, minute=59)
         tram = [f for f in hores if hora(f) < fi_dia]
-        linies = [text_ara(dades, idioma),
-                  text_temperatura(tram, idioma, "Hoy" if idioma == "es" else "Avui"),
+        nom_dia = DIES[idioma][moment.weekday()]
+        linies = [f"<b>El tiempo hoy, {nom_dia}, en Montflorit</b>" if idioma == "es"
+                  else f"<b>El temps avui, {nom_dia}, a Montflorit</b>",
+                  text_ara(dades, idioma),
+                  text_temperatura(tram, idioma, "Temperatura de hoy" if idioma == "es" else "Temperatura d'avui"),
                   text_pluja(tram, idioma)]
         linies += text_avisos_aemet(dades, idioma, moment.date(), moment)
         linies.append(text_trens_resum(dades, idioma))
@@ -288,7 +294,7 @@ def text_trens_resum(dades, idioma):
     if not mal:
         return None if all(l["estat"] == "fora_horari" for l in linies) else \
             ("Trenes de Cerdanyola sin incidencias." if idioma == "es" else "Trens de Cerdanyola sense incidències.")
-    return ("Trenes: " if idioma == "es" else "Trens: ") + ", ".join(mal) + "."
+    return ("Trenes de Cerdanyola: " if idioma == "es" else "Trens de Cerdanyola: ") + ", ".join(mal) + "."
 
 
 # --- Mensajes recibidos -------------------------------------------------------------
@@ -335,15 +341,15 @@ def atén(api, subs, update):
     sub = alta(subs, chat, m.get("from", {}))
     t = T[sub["idioma"]]
     if ordre == "/start":
-        envia(api, chat, t["benvinguda"])
+        envia(api, chat, t["benvinguda"], html=True)
         envia(api, chat, t["menu"], teclat(sub))
     elif ordre in ("/avisos", "/menu"):
         envia(api, chat, t["menu"], teclat(sub))
     elif ordre == "/resum":
-        envia(api, chat, resum(llegeix(os.path.join(DADES, "montflorit.json"), {}), sub["idioma"], ara()))
+        envia(api, chat, resum(llegeix(os.path.join(DADES, "montflorit.json"), {}), sub["idioma"], ara()), html=True)
     elif ordre == "/ara":
         dades = llegeix(os.path.join(DADES, "montflorit.json"), {})
-        envia(api, chat, (text_ara(dades, sub["idioma"]) or t["ajuda"]) + "\n" + WEB)
+        envia(api, chat, (text_ara(dades, sub["idioma"], "Montflorit") or t["ajuda"]) + "\n" + WEB)
     else:
         envia(api, chat, t["ajuda"])
 
@@ -370,7 +376,7 @@ def reparteix(api, subs, estat, moment):
         for chat, sub in list(subs.items()):
             if a["tipus"] in sub["avisos"]:
                 try:
-                    envia(api, chat, a[sub["idioma"]])
+                    envia(api, chat, a[sub["idioma"]], html=True)
                 except Bloquejat:
                     subs.pop(chat, None)
                 except Exception:
@@ -378,7 +384,7 @@ def reparteix(api, subs, estat, moment):
                 time.sleep(0.05)
         if a["tipus"] in CANAL_TIPUS:
             try:
-                envia(api, CANAL, f"{a['ca']}\n\n{a['es']}")
+                envia(api, CANAL, f"{a['ca']}\n\n{a['es']}", html=True)
             except Exception:
                 pass
     # Lo repartido hace más de 3 días ya no hace falta recordarlo.
@@ -394,7 +400,7 @@ def reparteix(api, subs, estat, moment):
             dades = dades or llegeix(os.path.join(DADES, "montflorit.json"), {})
             resums[chat] = avui
             try:
-                envia(api, chat, resum(dades, sub["idioma"], moment))
+                envia(api, chat, resum(dades, sub["idioma"], moment), html=True)
             except Bloquejat:
                 subs.pop(chat, None)
             except Exception:
@@ -404,7 +410,8 @@ def reparteix(api, subs, estat, moment):
         estat["canal_resum"] = avui
         try:
             # En el canal, en catalán y en castellano; el enlace, una vez al final.
-            envia(api, CANAL, resum(dades, "ca", moment).removesuffix("\n" + WEB) + "\n\n" + resum(dades, "es", moment))
+            envia(api, CANAL, resum(dades, "ca", moment).removesuffix("\n" + WEB) + "\n\n" + resum(dades, "es", moment),
+                  html=True)
         except Exception:
             pass
 
