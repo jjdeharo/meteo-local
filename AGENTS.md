@@ -19,8 +19,11 @@ Al cambiar algo:
 - Si cambia un umbral, actualiza `config.py`, el texto «Com es decideix» de
   `web/sortir.html` (o «D'on surt» de `web/casa.html`), el README, las pruebas
   y el ADR.
-- Pasa las pruebas, `probar-web` y axe-core antes de publicar; sube `VERSION`
-  en `config.py` y etiqueta la versión.
+- Pasa las pruebas y `probar-web` antes de publicar; sube `VERSION` en
+  `config.py` y etiqueta la versión. Pasa también axe-core si cambia el HTML,
+  el CSS o el JavaScript que crea o modifica elementos de la página; no hace
+  falta si el cambio es solo de cálculo, de datos, del bot o de textos dentro
+  de elementos que ya existen.
 - Los datos públicos (`montflorit.json`) se publican en IONOS
   (`bilateria.org/app/meteo-local/`) y la web, cada media hora como mucho
   (ADR 0020). Este repositorio no publica ninguna web: las direcciones

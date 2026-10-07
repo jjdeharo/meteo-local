@@ -139,7 +139,8 @@ leer los datos de IONOS y usa la copia de su carpeta).
 - Pasan las pruebas.
 - La web carga en Firefox, Chromium y WebKit, en móvil y escritorio, en tema
   claro y oscuro, sin desbordamiento horizontal (`probar-web`).
-- axe-core no encuentra incidencias.
+- Si cambia el HTML, el CSS o el JavaScript que crea o modifica elementos de
+  la página, axe-core no encuentra incidencias.
 - Con una fuente caída, la web lo avisa y sigue mostrando lo demás.
 - Con datos de más de 2 horas, la web solo muestra el aviso y enlaces
   oficiales (ADR 0031); si los datos de IONOS llevan más de una hora sin
