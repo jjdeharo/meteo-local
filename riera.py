@@ -18,10 +18,12 @@ esas 3 horas en la estación de Meteocat de Sant Cugat (29-04-2024) y con 67
 - **El índice**: la lluvia de 3 horas más alta que se alcanzará en la hora
   siguiente, juntando las dos: lo medido en las últimas 3 horas, en las
   últimas 2,5 más la media hora prevista o en las últimas 2 más la hora
-  prevista.
+  prevista. Lo mismo con 6 horas.
 
-Con RIERA_ATENCIO_MM avisa por Telegram y con RIERA_PERILL_MM otra vez, una
-sola vez cada nivel por episodio. Un episodio empieza con RIERA_REGISTRE_MM
+Con RIERA_ATENCIO_MM en 3 horas avisa por Telegram, y con RIERA_PERILL_MM en
+3 horas y RIERA_PERILL_6H_MM en 6, otra vez: el 13-09-2025 cayeron 52 mm en
+3 horas sobre suelo seco, sin más lluvia antes, y no se desbordó. Una sola vez
+cada nivel por episodio. Un episodio empieza con RIERA_REGISTRE_MM
 y acaba tras RIERA_FI_H horas por debajo; al acabar se apunta en el registro
 (riera.csv) con sus máximos, para ajustar los umbrales con lo que pase.
 
@@ -88,12 +90,25 @@ def previst(nc, desde, minuts):
     return round(mm + (tram["mm"] if tram else 0.0), 1)
 
 
-def nivell(index):
-    for nom, llindar in (("perill", C.RIERA_PERILL_MM), ("atencio", C.RIERA_ATENCIO_MM),
-                         ("registre", C.RIERA_REGISTRE_MM)):
+def nivell(index, index_6h):
+    """Peligro con la lluvia de 3 y de 6 horas; atención y registro, con la
+    de 3."""
+    if index >= C.RIERA_PERILL_MM and index_6h >= C.RIERA_PERILL_6H_MM:
+        return "perill"
+    for nom, llindar in (("atencio", C.RIERA_ATENCIO_MM), ("registre", C.RIERA_REGISTRE_MM)):
         if index >= llindar:
             return nom
     return None
+
+
+def maxim_amb_radar(filas, fins, hores, nc):
+    """La lluvia de hores horas más alta que se alcanzará en la hora
+    siguiente, y dentro de cuántos minutos."""
+    opcions = []
+    for minuts in (0, 30, 60):
+        mm = acumulat(filas, fins, hores - minuts / 60) + previst(nc, fins, minuts)
+        opcions.append((round(mm, 1), minuts))
+    return max(opcions)
 
 
 def calcula(ahora, nc, lector=None, montflorit_3h=None):
@@ -113,13 +128,9 @@ def calcula(ahora, nc, lector=None, montflorit_3h=None):
            "mm_3h": acumulat(filas, fins, h), "mm_6h": acumulat(filas, fins, 6),
            "radar_1h": previst(nc, fins, 60) if nc else None,
            "capcalera": None, "montflorit_3h": montflorit_3h}
-    # La lluvia de 3 horas más alta que se alcanzará en la hora siguiente.
-    opcions = []
-    for minuts in (0, 30, 60):
-        mm = acumulat(filas, fins, h - minuts / 60) + previst(nc, fins, minuts)
-        opcions.append((round(mm, 1), minuts))
-    res["index"], res["index_d_aqui_a_min"] = max(opcions)
-    res["nivell"] = nivell(res["index"])
+    res["index"], res["index_d_aqui_a_min"] = maxim_amb_radar(filas, fins, h, nc)
+    res["index_6h"] = maxim_amb_radar(filas, fins, 6, nc)[0]
+    res["nivell"] = nivell(res["index"], res["index_6h"])
     try:
         codi, nom = C.RIERA_CAPCALERA
         cap = files(codi, ahora, 6, lector)
@@ -140,7 +151,7 @@ def missatge(riera, nom):
     hora = dt.datetime.fromisoformat(riera["fins"]).strftime("%H:%M")
     if nom == "perill":
         cap = ("Riera de Sant Cugat, perill de desbordament a Montflorit: a Sant Cugat han caigut "
-               f"{coma(riera['mm_3h'])} mm en 3 hores (fins a les {hora})")
+               f"{coma(riera['mm_3h'])} mm en 3 hores i {coma(riera['mm_6h'])} en 6 (fins a les {hora})")
     else:
         cap = ("Riera de Sant Cugat, atenció: a Sant Cugat han caigut "
                f"{coma(riera['mm_3h'])} mm en 3 hores (fins a les {hora})")
@@ -156,10 +167,11 @@ def missatge(riera, nom):
     if altres:
         cap += " En 3 hores, " + " i ".join(altres) + "."
     if nom == "perill":
-        cap += (" Els desbordaments del 2024 i el 2026 van arribar amb 53 a 67 mm en 3 hores, "
-                "en acabar la pluja més forta.")
+        cap += (" Els desbordaments del 2024 i el 2026 van arribar amb 53 a 67 mm en 3 hores i més de 65 "
+                "en 6, en acabar la pluja més forta.")
     else:
-        cap += f" Amb {C.RIERA_PERILL_MM} mm o més en 3 hores s'ha desbordat."
+        cap += (f" S'ha desbordat amb {C.RIERA_PERILL_MM} mm o més en 3 hores i "
+                f"{C.RIERA_PERILL_6H_MM} en 6.")
     return cap
 
 
@@ -197,13 +209,11 @@ def compara(estat, riera, ahora):
             ep["capcalera_3h_max"] = max(ep["capcalera_3h_max"], riera["capcalera"]["mm_3h"])
         if riera.get("montflorit_3h") is not None:
             ep["montflorit_3h_max"] = max(ep.get("montflorit_3h_max", 0), riera["montflorit_3h"])
-        for nom, llindar in (("perill", C.RIERA_PERILL_MM), ("atencio", C.RIERA_ATENCIO_MM)):
-            if riera["index"] >= llindar:
-                if not ep["avisos"].get(nom):
-                    text = missatge(riera, nom)
-                    ep["avisos"][nom] = ara
-                    ep["avisos"].setdefault("atencio", ara)
-                break
+        nom = nivell(riera["index"], riera.get("index_6h", riera["mm_6h"]))
+        if nom in ("perill", "atencio") and not ep["avisos"].get(nom):
+            text = missatge(riera, nom)
+            ep["avisos"][nom] = ara
+            ep["avisos"].setdefault("atencio", ara)
     estat["episodi"] = ep
     return text, fila
 

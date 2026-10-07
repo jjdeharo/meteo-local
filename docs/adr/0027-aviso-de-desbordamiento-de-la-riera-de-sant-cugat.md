@@ -24,8 +24,11 @@ en Montcada, aguas abajo. Solo queda la lluvia.
   meteo.cat, y la que el radar ve y lleva hacia delante sobre el centro de la
   cuenca (nowcast.py, ADR 0019; lugar «conca»). El radar cubre también la
   media hora que la estación va por detrás.
-- **Umbrales** (`config.py`): desde 20 mm se abre un episodio y se apunta;
-  con 35 mm, aviso de **atención** por Telegram, y con 50 mm, de **peligro**.
+- **Umbrales** (`config.py`): desde 20 mm en 3 horas se abre un episodio y
+  se apunta; con 35 mm, aviso de **atención** por Telegram, y con 50 mm en 3
+  horas y 60 en 6 (el mismo índice, con 6 horas), de **peligro**. La
+  condición de 6 horas se añadió el mismo día (versión 2.19.0) al saber que
+  el 13-09-2025, con 52 mm en 3 horas y nada antes, la riera no se desbordó.
   Hay un aviso por nivel y episodio. El episodio acaba tras 3 horas por debajo
   de 20 mm, y entonces se apunta en `/estat/registre/riera.csv` con sus
   máximos y una columna `desbordament` que se rellena a mano con lo que pasó.
@@ -45,6 +48,11 @@ en Montcada, aguas abajo. Solo queda la lluvia.
 - **Lluvia de la cuenca como media de Sant Cugat y el Fabra**: el 29-04-2024
   llovió sobre todo en Sant Cugat (53 mm frente a 22 en el Fabra) y la media
   no llegaba al umbral; Sant Cugat solo marca los tres casos.
+- **Peligro solo con la lluvia de 3 horas** (versión 2.18.0): habría avisado
+  en falso el 13-09-2025.
+- **Peligro con la lluvia de 24 horas o del Fabra**: también separan los
+  cuatro casos, pero el 29-09-2026 casi toda la lluvia cayó en 2 horas; la de
+  6 horas es la que menos retrasa el aviso.
 - **Que Montflorit decida**: es la única estación sin retraso, pero recoge la
   lluvia de la parte baja y no hay historial para saber qué umbral le toca. El
   29-09-2026 la estación de casa marcó unos 120 mm en dos horas, frente a 67
@@ -71,6 +79,13 @@ Generalitat (conjunto `nzvn-apee`), 2013-2026, por medias horas.
 | 29-04-2024 | El agua llegó a la puerta de las casas (vídeo de Juanjo, 20:30) | 53 | 75 | 22 | 20:30 |
 | 29-09-2026 | Entró en las casas; el Ayuntamiento cita el desbordamiento en Canaletes | 67 | 67 | 76 | 12:30 |
 | 04-10-2026 | Entró en las casas a la 1-2; el Ayuntamiento lo cita en Montflorit | 67 | 104 | 43 | 02:00 |
+| 13-09-2025 | **No se desbordó**: una foto de Juanjo del día 14 muestra que llovió, sin rastro de desbordamiento | 52 | 52 | 17 | 17:30 |
+
+Lo que separa el 13-09-2025 de los desbordamientos es la lluvia de antes: fue
+un chaparrón de 3 horas sobre suelo seco, con poca lluvia en Collserola (18 mm
+en 24 horas en el Fabra, frente a 64 o más). Los tres desbordamientos tenían
+67 mm o más en 6 horas. Del 11-05-2025 (48 mm en 3 horas) y del 06-11-2025
+(38) no hay fotos; con la regla, ninguno de los dos daría peligro.
 
 En los tres, el desbordamiento coincide con el final de las 3 horas más
 lluviosas: la cuenca responde enseguida.
@@ -78,10 +93,10 @@ lluviosas: la cuenca responde enseguida.
 **Simulación con lo medido** (cada media hora desde 2013, con los 30 minutos
 de retraso de la tabla de meteo.cat, sin radar porque no hay archivo):
 
-- 51 episodios de 20 mm o más; 13 con atención y 7 con peligro en 13 años. Los
-  de peligro: 28-09-2014, 15-11-2018, 23-10-2019, 29-04-2024, 13-09-2025,
-  29-09-2026 y 04-10-2026. De cuatro de ellos no se sabe si hubo
-  desbordamiento.
+- 51 episodios de 20 mm o más; 13 con atención y 5 con peligro en 13 años
+  (con solo la condición de 3 horas eran 7). Los de peligro: 28-09-2014,
+  15-11-2018, 29-04-2024, 29-09-2026 y 04-10-2026. De los dos primeros no se
+  sabe si hubo desbordamiento.
 - Margen en los tres casos: la atención habría llegado a las 20:00 (30 minutos
   antes del vídeo), a las 12:00 (con el desbordamiento ya en marcha) y a las
   0:30 (de 30 a 90 minutos antes). El peligro, siempre después.
@@ -95,9 +110,9 @@ y del [04-10-2026](https://www.cerdanyola.cat/node/20295).
 
 ## Riesgos y limitaciones
 
-- **Tres casos**: los umbrales son una hipótesis. No se sabe cuántos de los
-  episodios de la simulación no desbordaron, que es lo que diría si el umbral
-  avisa de más.
+- **Cuatro casos** (tres desbordamientos y uno sin desbordamiento): los
+  umbrales son una hipótesis. No se sabe qué pasó en la mayoría de los
+  episodios de la simulación.
 - El margen depende del radar: la lluvia que nace encima de la cuenca no se
   ve venir, y la relación de Marshall-Palmer suele quedarse corta con los
   chaparrones fuertes.
@@ -109,7 +124,9 @@ y del [04-10-2026](https://www.cerdanyola.cat/node/20295).
 ## Validación
 
 `tests/test_riera.py`: acumulados por medias horas enteras con datos del
-04-10-2026, índice sin radar, el radar que adelanta el peligro, el hueco entre
+04-10-2026, índice sin radar, el radar que adelanta el peligro, los niveles
+de los cuatro casos conocidos, el chaparrón sobre suelo seco que solo da
+atención, el hueco entre
 estación e imagen, estación atrasada, un aviso por nivel, peligro sin
 atención previa, cierre y registro del episodio, lluvia débil, y que la web
 pública no lleve la riera. Prueba real el 07-10-2026 sin lluvia: índice 0.

@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 """Datos fijos del trayecto. Se cambian aquí, no en prevision.py."""
 
-VERSION = "2.18.0"
+VERSION = "2.19.0"
 
 # Coordenadas redondeadas a unos 500 m: para el tiempo da igual una calle u
 # otra, y el repositorio es público.
@@ -152,8 +152,10 @@ RADAR_ATENCION_KM = 40
 # lluvia de las últimas 3 horas en la estación de Meteocat de Sant Cugat más
 # la que el radar lleva hacia delante sobre la cuenca en la hora siguiente.
 # Desde RIERA_REGISTRE_MM se apunta el episodio; desde ATENCIO, aviso por
-# Telegram (en los tres casos se pasó entre 45 y 90 minutos antes); desde
-# PERILL, otro. Son una hipótesis con tres casos: se ajustan con el registro.
+# Telegram; con PERILL en 3 horas y PERILL_6H en 6, otro: el 13-09-2025
+# cayeron 52 mm en 3 horas sin lluvia antes (52 en 6) y no se desbordó, y los
+# tres desbordamientos tenían 67 o más en 6 horas. Son una hipótesis con
+# cuatro casos: se ajustan con el registro.
 RIERA_ESTACIO = "XV"                # Sant Cugat (CAR), en medio de la cuenca
 RIERA_CAPCALERA = ("D5", "Observatori Fabra")   # cresta de Collserola, junto a Les Planes
 CONCA_RIERA = (41.46, 2.10)         # centro aproximado de la cuenca, para el radar
@@ -161,4 +163,5 @@ RIERA_HORES = 3
 RIERA_REGISTRE_MM = 20
 RIERA_ATENCIO_MM = 35
 RIERA_PERILL_MM = 50
+RIERA_PERILL_6H_MM = 60
 RIERA_FI_H = 3                      # horas por debajo del registro para cerrar el episodio

@@ -59,8 +59,10 @@ con que se escribió (`agent/`, ADR 0009).
 **Riera de Sant Cugat.** En cada pasada de la página de casa se calcula la
 lluvia de 3 horas en Sant Cugat (Meteocat) más la que el radar trae sobre la
 cuenca en la hora siguiente. Con 35 mm llega un aviso de atención por
-Telegram, y con 50, de peligro: la riera se desbordó en Montflorit con 53 mm
-(29-04-2024) y con 67 (29-09-2026 y 04-10-2026). Cada episodio se apunta con
+Telegram, y con 50 en 3 horas y 60 en 6, de peligro: la riera se desbordó en
+Montflorit con 53 mm en 3 horas y 75 en 6 (29-04-2024) y con 67 en 3 horas
+(29-09-2026 y 04-10-2026), y no con 52 en 3 y 6 horas sobre suelo seco
+(13-09-2025). Cada episodio se apunta con
 lo que midieron Sant Cugat, el Fabra (Collserola) y Montflorit, para ajustar
 los umbrales (`riera.py`, ADR 0027).
 

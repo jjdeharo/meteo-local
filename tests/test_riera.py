@@ -47,6 +47,7 @@ class Index(unittest.TestCase):
         r = self.calcula(ara, fins, None)
         self.assertEqual(r["mm_3h"], 40.7)
         self.assertEqual(r["index"], 40.7)
+        self.assertEqual(r["index_6h"], 48.7)
         self.assertEqual(r["nivell"], "atencio")
         self.assertIsNone(r["radar_1h"])
 
@@ -58,6 +59,7 @@ class Index(unittest.TestCase):
         r = self.calcula(ara, fins, nowcast(ara - dt.timedelta(minutes=15), 20))
         self.assertEqual(r["nivell"], "perill")
         self.assertGreaterEqual(r["index"], C.RIERA_PERILL_MM)
+        self.assertGreaterEqual(r["index_6h"], C.RIERA_PERILL_6H_MM)
         self.assertEqual(r["index_d_aqui_a_min"], 60)
 
     def test_forat_entre_estacio_i_radar(self):
@@ -87,15 +89,17 @@ class Index(unittest.TestCase):
 class Avisos(unittest.TestCase):
     T0 = dt.datetime(2026, 10, 3, 22, 0).astimezone()
 
-    def riera(self, index, mm_3h=None):
-        return {"fins": self.T0.isoformat(timespec="minutes"), "mm_3h": mm_3h or index, "mm_6h": index,
-                "radar_1h": 4.0, "index": index, "capcalera": {"mm_3h": 30.0}, "montflorit_3h": 41.0}
+    def riera(self, index, index_6h=None):
+        index_6h = index + 20 if index_6h is None else index_6h
+        return {"fins": self.T0.isoformat(timespec="minutes"), "mm_3h": index, "mm_6h": index_6h,
+                "radar_1h": 4.0, "index": index, "index_6h": index_6h, "capcalera": {"mm_3h": 30.0},
+                "montflorit_3h": 41.0}
 
-    def passades(self, indexs, cada=30):
+    def passades(self, indexs, cada=30, index_6h=None):
         estat, textos, files = {"episodi": None}, [], []
         for i, index in enumerate(indexs):
             ara = self.T0 + dt.timedelta(minutes=cada * i)
-            text, fila = RI.compara(estat, self.riera(index) if index is not None else None, ara)
+            text, fila = RI.compara(estat, self.riera(index, index_6h) if index is not None else None, ara)
             textos.append(text)
             if fila:
                 files.append(fila)
@@ -108,6 +112,21 @@ class Avisos(unittest.TestCase):
         self.assertIn("perill de desbordament", textos[4])
         self.assertIn("al Fabra (Collserola), 30 mm i a Montflorit, 41 mm", textos[2])
         self.assertIn("el radar en preveu uns 4,0 més", textos[2])
+
+    def test_xafec_sobre_sol_sec_nomes_atencio(self):
+        # 13-09-2025: 52 mm en 3 horas y nada antes (52 en 6); no se desbordó.
+        textos, _, estat = self.passades([40, 52, 52], index_6h=52)
+        self.assertEqual(sum(bool(t) for t in textos), 1)
+        self.assertIn("atenció", textos[0])
+        self.assertIn("S'ha desbordat amb 50 mm o més en 3 hores i 60 en 6", textos[0])
+        self.assertNotIn("perill", estat["episodi"]["avisos"])
+
+    def test_nivells(self):
+        self.assertEqual(RI.nivell(53, 75), "perill")      # 29-04-2024
+        self.assertEqual(RI.nivell(67, 67), "perill")      # 29-09-2026
+        self.assertEqual(RI.nivell(52, 52), "atencio")     # 13-09-2025
+        self.assertEqual(RI.nivell(25, 90), "registre")
+        self.assertIsNone(RI.nivell(10, 70))
 
     def test_perill_de_cop_no_envia_tambe_atencio(self):
         textos, _, estat = self.passades([55, 60])
