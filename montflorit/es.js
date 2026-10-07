@@ -15,6 +15,7 @@ var IDIOMA = {
   textos: {
     "Les dades són de les {0}: fa més de {1} hores que no s\u2019actualitzen. La previsió i l\u2019estat dels trens no es mostren fins que tornin.": "Los datos son de las {0}: hace más de {1} horas que no se actualizan. La previsión y el estado de los trenes no se muestran hasta que vuelvan.",
     "Mentrestant: ": "Mientras tanto: ",
+    "Dades del servidor de reserva.": "Datos del servidor de reserva.",
     "previsió de Meteocat": "previsión de Meteocat",
     "radar": "radar",
     "Mode avís: dades cada {0} min{1}.": "Modo aviso: datos cada {0} min{1}.",

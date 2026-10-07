@@ -48,6 +48,12 @@ publicaciones por hora, y esa copia es la reserva si IONOS no responde. La
 rama `gh-pages` de este repositorio solo tiene las páginas que redirigen a la
 web pública (`redireccions/`).
 
+**Reserva en IONOS** (`reserva/`, ADR 0032): si el NAS lleva más de 35
+minutos sin subir datos, el hosting de IONOS los calcula con el mismo programa,
+los publica marcados como «reserva» y manda los avisos por Telegram en su
+lugar; cuando el NAS vuelve, se aparta. Lo monta `reserva/instalar.sh`, y una
+prueba diaria avisa si deja de funcionar.
+
 Al subir cambios a `main`, una acción de GitHub pasa las pruebas, y el NAS, que
 mira cada minuto si hay código nuevo, publica. Solo publica el NAS.
 
@@ -83,6 +89,7 @@ Umbrales y lugares, en `config.py`. El porqué, en los ADR.
 | `i18n/` | `es.json`, la traducción de los textos fijos, y `claus.js`, que saca del programa los textos por traducir (ADR 0025) |
 | `redireccions/` | Las páginas de la dirección antigua (`jjdeharo.github.io/meteo-local/`), que llevan a la web pública (ADR 0030) |
 | `publica.sh` | Calcula y publica (lo usa el NAS) |
+| `reserva/` | Servidor de reserva en IONOS: `reserva.py` (vigila, calcula y avisa si el NAS no publica), `avisar-juanjo` e `instalar.sh` (ADR 0032) |
 | `que_toca.py` | Si toca actualizar en este minuto, según el horario publicado |
 | `nas/` | Contenedor del NAS: `compose.yml`, `Dockerfile` y `reloj.sh` |
 | `trens.py` | Estado de las líneas de tren de Cerdanyola con los datos en tiempo real de Renfe y FGC (ADR 0029) |

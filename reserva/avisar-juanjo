@@ -1,0 +1,19 @@
+#!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# El «avisar-juanjo» del servidor de reserva (ADR 0032): el mismo bot de
+# Telegram que en el NAS, con las credenciales que el vigía ya tiene en IONOS.
+# Acepta la forma del NAS: avisar-juanjo [--asunto ASUNTO] TEXTO
+set -u
+CONFIG="${AVISAR_CONFIG:-$HOME/.vigilancia-nas/config.json}"
+asunto=""
+[ "${1:-}" = "--asunto" ] && { asunto="$2"; shift 2; }
+texto="$*"
+leer() {
+  sed -n 's/.*"'"$1"'"[[:space:]]*:[[:space:]]*"\{0,1\}\([^",}]*\)"\{0,1\}.*/\1/p' "$CONFIG" 2>/dev/null | head -1
+}
+token=$(leer token); chat=$(leer chat_id)
+[ -n "$token" ] && [ -n "$chat" ] || { echo "sense credencials del bot" >&2; exit 1; }
+curl -s -m 30 -o /dev/null \
+  --data-urlencode "chat_id=$chat" \
+  --data-urlencode "text=${asunto:+[$asunto, reserva] }$texto" \
+  "https://api.telegram.org/bot$token/sendMessage"

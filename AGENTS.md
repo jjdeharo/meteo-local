@@ -42,6 +42,10 @@ Al cambiar algo:
 - Las actualizaciones programadas las hace el NAS (`nas/`, ADR 0005). Si cambias
   `nas/`, copia los archivos a `/volume1/docker/meteo-local` y reconstruye
   (`docker compose up -d --build`). Ver el estado: `docker logs meteo-local`.
+- Si el NAS no publica, lo hace la reserva de IONOS (`reserva/`, ADR 0032).
+  Estado: `ssh ionos-webspace '.meteo-reserva/v/bin/python
+  .meteo-reserva/repo/reserva/reserva.py estat'`; tras cambiar `reserva/`,
+  `reserva/instalar.sh` (se pone al día sola cada hora con `git pull`).
 - Los automatismos de este proyecto figuran en el inventario del NAS
   (`vigilancia-nas/config/automatismos.json`, ficha «Automatismos» de
   bilateria.org/nas). Si se añade, cambia o retira uno, se actualiza allí.

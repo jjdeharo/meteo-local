@@ -1,0 +1,10 @@
+# Esta carpeta no es una página web: guarda el servidor de reserva de Temps a
+# Montflorit (meteo-local, ADR 0032), su estado y su registro. Nada de aquí
+# debe servirse.
+<IfModule mod_authz_core.c>
+  Require all denied
+</IfModule>
+<IfModule !mod_authz_core.c>
+  Order allow,deny
+  Deny from all
+</IfModule>

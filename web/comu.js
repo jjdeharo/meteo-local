@@ -157,6 +157,8 @@ function pintaHorari(dades) {
   $('horari').replaceChildren(T('Actualitzat a les '), element('strong', null, horaCurta(generat) + dia),
     T(' · propera: '), element('strong', null, propera ? horaCurta(propera) : T`demà a les ${dades.horari.trams[0][0]}`),
     '. ', element('span', 'mode', textHorari(dades.horari)));
+  // Calculades fora de casa perquè el servidor habitual no publica (ADR 0032).
+  if (dades.reserva) $('horari').append(' ', element('span', 'mode', T('Dades del servidor de reserva.')));
   const avisos = [];
   if (darreraPrevista && generat < darreraPrevista - 5 * 60000
       && ara - darreraPrevista > MARGE_RETARD_MIN * 60000) {
