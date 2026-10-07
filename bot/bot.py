@@ -336,8 +336,11 @@ def resum(dades, idioma, moment):
         nit = [f for f in hores if hora(f) < dt.datetime.combine(dema, dt.time(6))]
         dia = [f for f in hores if hora(f).date() == dema and hora(f).hour >= 6]
         nom_dia = DIES[idioma][dema.weekday()]
-        linies = [f"<b>Previsión para mañana, {nom_dia}, en Montflorit</b>" if idioma == "es"
-                  else f"<b>Previsió per a demà, {nom_dia}, a Montflorit</b>"]
+        # Les dades arriben a 24 hores: de nit, demà només fins a la tarda, i es diu.
+        fi = dt.datetime.fromisoformat(dia[-1]["fins"]).hour if dia else 0
+        fins = (f" (hasta las {fi} h)" if idioma == "es" else f" (fins a les {fi} h)") if 0 < fi < 24 else ""
+        linies = [(f"<b>Previsión para mañana, {nom_dia}, en Montflorit</b>" if idioma == "es"
+                   else f"<b>Previsió per a demà, {nom_dia}, a Montflorit</b>") + fins]
         if franges(nit):    # la noche, solo si se espera lluvia
             linies.append(("Esta noche: " if idioma == "es" else "Aquesta nit: ")
                           + text_pluja(nit, idioma).split(": ", 1)[1])

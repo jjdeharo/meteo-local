@@ -120,14 +120,14 @@ class Resum(unittest.TestCase):
         d["avisos"].append({"inicio": "2026-10-08T10:00:00+02:00", "fin": "2026-10-08T19:59:59+02:00",
                             "nivel": "groc", "tipo": "pluja", "zona": "Prelitoral de Barcelona"})
         r = B.resum(d, "ca", vespre)
-        self.assertTrue(r.startswith("<b>Previsió per a demà, dijous, a Montflorit</b>"))
+        self.assertTrue(r.startswith("<b>Previsió per a demà, dijous, a Montflorit</b> (fins a les 20 h)"))
         self.assertIn("Temperatura: entre ", r)
         self.assertIn("Pluja: possible de 12 a 15 h (probabilitat fins al 40 %).", r)
         self.assertIn("Avís groc de l'AEMET per pluja de 10:00 a 20:00.", r)
         self.assertNotIn("Ara mateix", r)
         self.assertNotIn("Trens", r)
         self.assertNotIn("Aquesta nit", r)
-        self.assertTrue(B.resum(d, "es", vespre).startswith("<b>Previsión para mañana, jueves, en Montflorit</b>"))
+        self.assertTrue(B.resum(d, "es", vespre).startswith("<b>Previsión para mañana, jueves, en Montflorit</b> (hasta las 20 h)"))
 
     def test_roba_de_tot_el_dia(self):
         # Les dades de prova van de 15 °C (7 h) a 24 °C (16 h): dues peces, per ordre d'hora.
