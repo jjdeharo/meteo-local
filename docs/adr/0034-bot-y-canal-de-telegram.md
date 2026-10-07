@@ -13,11 +13,16 @@ internet en casa, que suele llegar con las tormentas.
 
 ## Decisión
 
-- **Bot `@TempsMontfloritBot`** («Temps a Montflorit»), creado con @BotFather
+- **Bot `@TempsMontfloritBot`** («Bot Temps a Montflorit»), creado con @BotFather
   desde la cuenta de Juanjo; su clave, en
   `~/.config/credenciales/temps-montflorit-bot.json` y en IONOS
-  (`~/.temps-bot/config.json`, 600). **Canal `@TempsMontflorit`**, de Juanjo,
-  con el bot como administrador para publicar.
+  (`~/.temps-bot/config.json`, 600). **Canal `@TempsMontflorit`** («Canal
+  Temps a Montflorit»), de Juanjo, con el bot como administrador para publicar.
+- **Que no se confundan**: nombres distintos (los dos se llamaban igual y
+  Juanjo lo corrigió, 07-10-2026) e iconos distintos: el canal, el de la web
+  (nube azul); el bot, la misma nube sobre verde con un robot pequeño de
+  Lucide (`bot/icona/`; Juanjo pidió el robot). La descripción del bot dice
+  que es personal y remite al canal para quien no quiera elegir.
 - **El bot vive en IONOS** (`bot/bot.py`, solo biblioteca estándar): el cron lo
   arranca cada minuto y, durante unos 50 segundos, espera mensajes de Telegram
   (responde en uno o dos segundos) y reparte. Un candado evita dos a la vez.
@@ -25,7 +30,12 @@ internet en casa, que suele llegar con las tormentas.
 - **Quien calcula decide los avisos públicos** (`avisos_bot.py`, en el NAS en
   cada publicación y en la reserva cuando la sustituye), con estado propio, y
   los deja en `avisos.json` junto a `montflorit.json`, en catalán y
-  castellano, cada uno con un identificador: el bot no repite ninguno. Tipos:
+  castellano, cada uno con un identificador: el bot no repite ninguno. Cada
+  aviso empieza por lo que pasa en negrita («Atenció: possible desbordament de
+  la riera de Sant Cugat») y lo explica sin dar nada por sabido (de dónde baja
+  el agua, qué hacer), porque lo lee gente que no conoce la web (Juanjo,
+  07-10-2026). El de peligro dice que lo calcula el programa y no es oficial.
+  Tipos:
   - **riera**: atención y peligro (ADR 0027), siempre con «Avís en proves,
     orientatiu i no oficial: segueix les indicacions de Protecció Civil i de
     l'Ajuntament»; en el menú, «Desbordament de la riera de Sant Cugat (en
@@ -38,7 +48,9 @@ internet en casa, que suele llegar con las tormentas.
     se repite en dos pasadas (ADR 0029).
   Un aviso que llega tarde no se manda (lluvia, a los 20 minutos; los demás, a
   las 3 horas).
-- **Cada persona elige** en un menú con botones: los cuatro tipos (por
+- **Cada persona elige** en un menú con botones, con una sola marca: ✓ es
+  «sí»; sin marca, «no» (Juanjo, 07-10-2026: con «·» para el no, «el check
+  siempre es afirmación»). Los cuatro tipos (por
   defecto, riera y peligro), la previsión, un mensaje al día a las 6, 7 u
   8 h (el tiempo ahora y el resto del día) o a las 20 h (la de mañana: la
   noche solo si se espera lluvia, temperaturas, lluvia y avisos de AEMET de
@@ -55,8 +67,15 @@ internet en casa, que suele llegar con las tormentas.
   con los suscriptores del bot, qué eligen y los miembros del canal
   (`bot.py informe`). El canal tiene fijado un mensaje de presentación, solo en
   catalán (Juanjo, 07-10-2026).
-- **En la web**: «Avisos a Telegram: bot · canal» bajo el menú, y en los
-  créditos, qué guarda el bot.
+- **En la web**: «Avisos a Telegram: com funciona · canal · bot» bajo el menú,
+  y en los créditos, qué guarda el bot. «Com funciona» lleva a una página de
+  ayuda breve (`web/telegram.html`, también en castellano): primero la
+  diferencia entre el canal (igual para todos, como un tablón) y el bot
+  (personal), y luego los pasos con capturas reales, marcadas en rojo donde
+  hay que tocar. Juanjo pidió que se entienda sin saber Telegram y que sea
+  breve, porque «la gente no lee». Las capturas se hicieron con Telegram Web en
+  un perfil de navegador temporal, con el bot parado y la suscripción de Juanjo
+  guardada y restaurada después.
 - Los avisos personales de Juanjo siguen como estaban.
 
 ## Alternativas descartadas
@@ -92,4 +111,6 @@ internet en casa, que suele llegar con las tormentas.
 /baixa, grupos ignorados, resumen (y con datos viejos), reparto según lo que
 elige cada uno, canal, una sola vez, aviso caducado, baja de quien bloquea,
 resumen a la hora de cada uno y del canal; avisos públicos de trenes (dos
-pasadas), riera con el aviso orientativo y peligro en castellano.
+pasadas), riera con el aviso orientativo y peligro en castellano, con su
+titular en negrita. La página de ayuda pasa por las pruebas de la web pública
+(traducción completa), `probar-web` y axe-core.

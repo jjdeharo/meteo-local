@@ -19,11 +19,13 @@ hora lo previsto y lo medido para seguir aprendiendo (ADR 0012; explicación en
 [docs/estadistica.md](docs/estadistica.md)). Las dos primeras horas tienen en
 cuenta hacia dónde va la lluvia del radar (ADR 0019).
 
-Los vecinos pueden recibir avisos por Telegram: el bot
-[@TempsMontfloritBot](https://t.me/TempsMontfloritBot), donde cada uno elige
-riera de Sant Cugat, peligro, lluvia en unos minutos, trenes y el resumen del
-día, y el canal [@TempsMontflorit](https://t.me/TempsMontflorit), con la riera,
-el peligro y el resumen de las 7. El bot vive en IONOS (ADR 0034).
+Los vecinos pueden recibir avisos por Telegram: el «Bot Temps a Montflorit»
+([@TempsMontfloritBot](https://t.me/TempsMontfloritBot)), donde cada uno elige
+riera de Sant Cugat, peligro, lluvia en unos minutos, trenes y la previsión
+del día, y el «Canal Temps a Montflorit»
+([@TempsMontflorit](https://t.me/TempsMontflorit)), igual para todos, con la
+riera, el peligro y la previsión de las 7. La web tiene una página de ayuda
+con capturas, «Avisos a Telegram». El bot vive en IONOS (ADR 0034).
 
 Además, solo para Juanjo, el NAS avisa por Telegram si lo medido o lo previsto
 llega a los umbrales de aviso de AEMET (ADR 0018), unos 15 minutos antes de que

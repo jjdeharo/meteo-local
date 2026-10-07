@@ -25,6 +25,7 @@ import datetime as dt
 import fcntl
 import json
 import os
+import re
 import subprocess
 import sys
 import time
@@ -126,8 +127,12 @@ class Bloquejat(Exception):
     pass
 
 
+# Las unidades no se separan de su número al partir la línea.
+UNITATS = re.compile(r"(\d) (°C|mm|km/h|cm)\b")
+
+
 def envia(api, chat, text, teclat=None, html=False):
-    return api("sendMessage", chat_id=chat, text=text, disable_web_page_preview=True,
+    return api("sendMessage", chat_id=chat, text=UNITATS.sub("\\1\u00a0\\2", text), disable_web_page_preview=True,
                parse_mode="HTML" if html else None,
                reply_markup={"inline_keyboard": teclat} if teclat else None)
 
