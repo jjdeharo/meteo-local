@@ -496,3 +496,4 @@ h1 { margin: 0; font-size: 1.6rem; line-height: 1.2; }
 
 /* El text dels avisos de l'AEMET, citat tal com el publica (ADR 0033). */
 .avis q { quotes: "«" "»"; font-style: italic; }
+.avisos-telegram { margin: .5rem 0 0; }

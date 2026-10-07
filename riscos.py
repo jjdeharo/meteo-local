@@ -30,7 +30,7 @@ import config as C
 NIVELLS = ("groc", "taronja", "vermell")
 DIR = os.environ.get("REGISTRE_DIR", "/estat/registre")
 ESTADO = os.path.join(os.path.dirname(DIR), "riscos.json")
-WEB = "https://jjdeharo.github.io/meteo-local/casa.html"
+WEB = "https://meteo-montflorit.github.io/"
 
 UNITATS = {"pluja_1h": "mm", "pluja_12h": "mm", "ratxa": "km/h", "calor": "°C", "fred": "°C",
            "neu_24h": "cm"}

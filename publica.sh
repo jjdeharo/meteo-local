@@ -45,6 +45,12 @@ python3 casa.py --json "$dades/casa.json" --anterior "$CASA_ANTERIOR" >/dev/null
 [ -z "$ESTAT_DIR" ] || cp "$dades/casa.json" "$ESTAT_DIR/casa.json"
 # Los datos de la web pública: los de casa sin lo privado.
 python3 montflorit.py dades "$dades/casa.json" "$publica/montflorit.json"
+# Los avisos para el bot y el canal de Telegram, que los reparte desde IONOS
+# (ADR 0034). Llevan estado: solo en el NAS.
+if [ -n "$ESTAT_DIR" ]; then
+  python3 avisos_bot.py "$dades/casa.json" "$dades/avisos.json" >/dev/null \
+    || echo "$(date '+%F %T')  han fallat els avisos del bot" >&2
+fi
 
 # Los datos, a IONOS: una conexión con una clave que solo puede dejar .json
 # en su carpeta (la orden la fija IONOS en authorized_keys).
@@ -56,7 +62,7 @@ CONF_IONOS=${CONF_IONOS:-$HOME/.config/meteo-local/ionos.env}
 GH_CADA_MIN=${GH_CADA_MIN:-30}
 a_ionos=0
 if [ -f "$CLAU_IONOS" ] && [ -n "${IONOS:-}" ]; then
-  if tar -czf - -C "$publica" montflorit.json \
+  if tar -czf - -C "$publica" montflorit.json $([ -f "$dades/avisos.json" ] && echo "-C $dades avisos.json") \
       | ssh -i "$CLAU_IONOS" -o BatchMode=yes -o ConnectTimeout=20 "$IONOS" 2>/dev/null; then
     a_ionos=1
     echo "$(date '+%F %T')  dades a IONOS"

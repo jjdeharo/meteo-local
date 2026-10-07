@@ -19,6 +19,12 @@ hora lo previsto y lo medido para seguir aprendiendo (ADR 0012; explicación en
 [docs/estadistica.md](docs/estadistica.md)). Las dos primeras horas tienen en
 cuenta hacia dónde va la lluvia del radar (ADR 0019).
 
+Los vecinos pueden recibir avisos por Telegram: el bot
+[@TempsMontfloritBot](https://t.me/TempsMontfloritBot), donde cada uno elige
+riera de Sant Cugat, peligro, lluvia en unos minutos, trenes y el resumen del
+día, y el canal [@TempsMontflorit](https://t.me/TempsMontflorit), con la riera,
+el peligro y el resumen de las 7. El bot vive en IONOS (ADR 0034).
+
 Además, solo para Juanjo, el NAS avisa por Telegram si lo medido o lo previsto
 llega a los umbrales de aviso de AEMET (ADR 0018), unos 15 minutos antes de que
 llueva en casa (ADR 0022) y si la lluvia en la cuenca de la riera de Sant Cugat
@@ -89,6 +95,8 @@ Umbrales y lugares, en `config.py`. El porqué, en los ADR.
 | `i18n/` | `es.json`, la traducción de los textos fijos, y `claus.js`, que saca del programa los textos por traducir (ADR 0025) |
 | `redireccions/` | Las páginas de la dirección antigua (`jjdeharo.github.io/meteo-local/`), que llevan a la web pública (ADR 0030) |
 | `publica.sh` | Calcula y publica (lo usa el NAS) |
+| `avisos_bot.py` | Decide los avisos públicos para el bot y el canal y los deja en `avisos.json` (ADR 0034) |
+| `bot/` | El bot de Telegram, que vive en IONOS: `bot.py` (menú, suscripciones, reparto y resumen) e `instalar.sh` (ADR 0034) |
 | `reserva/` | Servidor de reserva en IONOS: `reserva.py` (vigila, calcula y avisa si el NAS no publica), `avisar-juanjo` e `instalar.sh` (ADR 0032) |
 | `que_toca.py` | Si toca actualizar en este minuto, según el horario publicado |
 | `nas/` | Contenedor del NAS: `compose.yml`, `Dockerfile` y `reloj.sh` |

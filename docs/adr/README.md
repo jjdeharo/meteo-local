@@ -35,5 +35,6 @@
 | [0031](0031-datos-viejos-y-vigilancia-externa.md) | Datos viejos y vigilancia externa | aceptado |
 | [0032](0032-servidor-de-reserva-en-ionos.md) | Servidor de reserva en IONOS | aceptado |
 | [0033](0033-texto-de-los-avisos-de-aemet.md) | Texto de los avisos de AEMET | aceptado |
+| [0034](0034-bot-y-canal-de-telegram.md) | Bot y canal de Telegram | aceptado |
 
 Plantilla: [0000-plantilla.md](0000-plantilla.md). Para crear uno: `nuevo-adr "Título"`.

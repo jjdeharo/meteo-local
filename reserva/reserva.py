@@ -168,6 +168,12 @@ def vigila():
               " (sense l'estació de casa).")
     desa_estat(estat)
     apunta("publicat")
+    # Els avisos per al bot i el canal (ADR 0034), al costat de les dades.
+    nou = DADES.replace("montflorit.json", "avisos.json.reserva")
+    if subprocess.run([PYTHON, "avisos_bot.py", os.path.join(ESTAT, "casa.json"), nou], cwd=REPO, env=ENTORN,
+                      check=False, timeout=120, stdout=subprocess.DEVNULL).returncode == 0:
+        os.chmod(nou, 0o604)
+        os.replace(nou, DADES.replace("montflorit.json", "avisos.json"))
     # Els avisos per Telegram, en lloc del NAS.
     for programa in ("riscos.py", "pluja_arriba.py", "riera.py"):
         subprocess.run([PYTHON, programa, "avisa", os.path.join(ESTAT, "casa.json")], cwd=REPO, env=ENTORN,
