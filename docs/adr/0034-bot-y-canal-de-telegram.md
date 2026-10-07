@@ -69,10 +69,15 @@ internet en casa, que suele llegar con las tormentas.
   catalán (Juanjo, 07-10-2026).
 - **En la web**: «Avisos a Telegram: com funciona · canal · bot» bajo el menú,
   y en los créditos, qué guarda el bot. «Com funciona» lleva a una página de
-  ayuda breve (`web/telegram.html`, también en castellano): primero la
-  diferencia entre el canal (igual para todos, como un tablón) y el bot
-  (personal), y luego los pasos con capturas reales, marcadas en rojo donde
-  hay que tocar. Juanjo pidió que se entienda sin saber Telegram y que sea
+  ayuda breve (`web/telegram.html`, también en castellano), con un bloque
+  para el canal (igual para todos, como un tablón; azul) y otro para el bot
+  (personal; verde, como su icono y su botón). Cada bloque lleva su
+  descripción, su botón, el nombre con que se busca en Telegram
+  (@TempsMontflorit, @TempsMontfloritBot) y sus pasos con capturas reales,
+  marcadas en rojo donde hay que tocar. En el ordenador, los pasos van en fila
+  y los dos bloques comparten columnas; en el móvil, uno debajo de otro
+  (Juanjo, 07-10-2026: «lo vertical puede estar bien para móvil, pero no para
+  web»). Juanjo pidió que se entienda sin saber Telegram y que sea
   breve, porque «la gente no lee». Las capturas se hicieron con Telegram Web en
   un perfil de navegador temporal, con el bot parado y la suscripción de Juanjo
   guardada y restaurada después.

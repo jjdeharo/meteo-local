@@ -500,18 +500,32 @@ h1 { margin: 0; font-size: 1.6rem; line-height: 1.2; }
 .avis q { quotes: "«" "»"; font-style: italic; }
 .avisos-telegram { margin: .5rem 0 0; }
 
-/* Pàgina «Avisos a Telegram» (ADR 0034) */
+/* Pàgina «Avisos a Telegram» (ADR 0034): un bloc per al canal i un per al bot,
+   cadascun amb el seu color i els seus passos; a l'ordinador, els passos en fila. */
 .ajuda .entrada { font-size: 1.1rem; }
-.ajuda .dues { display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: .8rem; margin: .8rem 0; }
-.ajuda .opcio { border: 1px solid var(--vora); border-radius: .6rem; padding: .8rem 1rem; background: var(--superficie); }
+.ajuda .opcio { display: grid; gap: 1rem; margin: 1rem 0; padding: .9rem 1rem; border: 1px solid var(--vora);
+  border-top: 5px solid var(--enllac); border-radius: .6rem; background: var(--superficie); }
+.ajuda .opcio.bot { border-top-color: var(--bot); }
 .ajuda .opcio h2 { margin: 0 0 .3rem; display: flex; align-items: center; gap: .6rem; font-size: 1.15rem; }
 .ajuda .opcio h2 img { width: 2.6rem; height: 2.6rem; border-radius: 50%; flex: none; }
-.ajuda .opcio p { margin: .3rem 0; }
+.ajuda .info p { margin: .3rem 0; }
+.ajuda .cerca { color: var(--suau); font-size: .92rem; }
+.ajuda .nom { white-space: nowrap; font-weight: 600; color: var(--text); }
 .ajuda .boto { display: inline-block; padding: .5rem 1rem; border-radius: 999px; background: var(--enllac); color: var(--fons); text-decoration: none; font-weight: 600; }
 .ajuda .boto.bot { background: var(--bot); }
-.ajuda .passos { display: grid; gap: 1rem; }
-.ajuda .pas { display: grid; grid-template-columns: 2rem 1fr; gap: .2rem .6rem; align-items: start; }
+.ajuda .pas { display: grid; grid-template-columns: 2rem 1fr; gap: .2rem .6rem; align-items: start; align-content: start; }
 .ajuda .pas .num { width: 2rem; height: 2rem; border-radius: 50%; background: var(--enllac); color: var(--fons); display: grid; place-items: center; font-weight: 700; }
+.ajuda .bot .pas .num { background: var(--bot); }
 .ajuda .pas p { margin: .25rem 0 0; }
 .ajuda .pas a { grid-column: 2; }
 .ajuda .pas img { width: 100%; max-width: 260px; height: auto; border: 1px solid var(--vora); border-radius: .6rem; }
+@media (min-width: 900px) {
+  /* la mateixa reixa als dos blocs: els passos del canal cauen sobre els dos últims del bot */
+  .ajuda .opcio { grid-template-columns: minmax(0, 1fr) repeat(4, 8.4rem); column-gap: .9rem; }
+  .ajuda .opcio.canal .info { grid-column: span 3; }
+  /* el text a dalt i la captura a baix, totes a la mateixa altura */
+  .ajuda .pas { grid-template-columns: 1.6rem 1fr; grid-template-rows: 1fr auto; }
+  .ajuda .pas .num { width: 1.6rem; height: 1.6rem; font-size: .9rem; }
+  .ajuda .pas p { margin: 0 0 .4rem; font-size: .92rem; line-height: 1.35; }
+  .ajuda .pas a { grid-column: 1 / -1; }
+}

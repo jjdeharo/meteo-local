@@ -69,14 +69,11 @@
  "<img src=\"img/telegram/bot.webp\" width=\"56\" height=\"56\" alt=\"\"> Bot Temps a Montflorit": "<img src=\"img/telegram/bot.webp\" width=\"56\" height=\"56\" alt=\"\"> Bot Temps a Montflorit",
  "Només per a tu. Tries quins avisos vols (també quan està a punt de ploure i si els trens no circulen) i a quina hora reps la previsió.": "Solo para ti. Eliges qué avisos quieres (también cuando está a punto de llover y si los trenes no circulan) y a qué hora recibes la previsión.",
  "Primer cal tenir Telegram al mòbil. És gratuït: <a href=\"https://telegram.org/apps\" target=\"_blank\" rel=\"noopener\">telegram.org</a>.": "Primero hay que tener Telegram en el móvil. Es gratuito: <a href=\"https://telegram.org/apps\" target=\"_blank\" rel=\"noopener\">telegram.org</a>.",
- "El canal, pas a pas": "El canal, paso a paso",
  "Toca «Obre el canal» i, a la pàgina que s'obre, el botó blau.": "Toca «Abre el canal» y, en la página que se abre, el botón azul.",
  "A Telegram, toca el botó de baix per unir-t'hi. Ja està.": "En Telegram, toca el botón de abajo para unirte. Ya está.",
- "El bot, pas a pas": "El bot, paso a paso",
  "Toca «Obre el bot» i, a Telegram, «Inicia».": "Toca «Abre el bot» y, en Telegram, «Iniciar».",
  "Toca el que vulguis rebre: <strong>✓ vol dir que sí</strong>. Tria també l'hora de la previsió.": "Toca lo que quieras recibir: <strong>✓ quiere decir que sí</strong>. Elige también la hora de la previsión.",
  "Ja està. Els avisos t'arribaran així.": "Ya está. Los avisos te llegarán así.",
- "Per canviar-ho, toca el botó de menú de baix a l'esquerra i tria /avisos. Per deixar-ho, /baixa.": "Para cambiarlo, toca el botón de menú de abajo a la izquierda y elige /avisos. Para dejarlo, /baixa.",
  "Els avisos els calcula un programa i són orientatius, no oficials; els de la riera, a més, estan en proves. Segueix sempre Protecció Civil i l'Ajuntament. El bot només desa el teu identificador de Telegram i el que tries.": "Los avisos los calcula un programa y son orientativos, no oficiales; los de la riera, además, están en pruebas. Sigue siempre a Protección Civil y al Ayuntamiento. El bot solo guarda tu identificador de Telegram y lo que eliges.",
  "Com rebre a Telegram els avisos del temps a Montflorit (Cerdanyola del Vallès): el canal, igual per a tothom, o el bot, on tries tu què reps.": "Cómo recibir en Telegram los avisos del tiempo en Montflorit (Cerdanyola del Vallès): el canal, igual para todo el mundo, o el bot, donde eliges tú qué recibes.",
  "Pàgina del canal amb el botó blau marcat": "Página del canal con el botón azul marcado",
@@ -84,5 +81,10 @@
  "Menú del bot amb la pluja i les 7 h marcades": "Menú del bot con la lluvia y las 7 h marcadas",
  "Exemples d'avís de pluja, de la riera i de la previsió": "Ejemplos de aviso de lluvia, de la riera y de la previsión",
  "Menú d'ordres del bot obert": "Menú de órdenes del bot abierto",
- "<a class=\"boto bot\" href=\"https://t.me/TempsMontfloritBot\" target=\"_blank\" rel=\"noopener\">Obre el bot</a>": "<a class=\"boto bot\" href=\"https://t.me/TempsMontfloritBot\" target=\"_blank\" rel=\"noopener\">Abre el bot</a>"
+ "<a class=\"boto bot\" href=\"https://t.me/TempsMontfloritBot\" target=\"_blank\" rel=\"noopener\">Obre el bot</a>": "<a class=\"boto bot\" href=\"https://t.me/TempsMontfloritBot\" target=\"_blank\" rel=\"noopener\">Abre el bot</a>",
+ "Canal Temps a Montflorit": "Canal Temps a Montflorit",
+ "Bot Temps a Montflorit": "Bot Temps a Montflorit",
+ "Per canviar-ho, toca el botó de menú de baix a l'esquerra i tria <span class=\"nom\">/avisos</span>. Per deixar-ho, <span class=\"nom\">/baixa</span>.": "Para cambiarlo, toca el botón de menú de abajo a la izquierda y elige <span class=\"nom\">/avisos</span>. Para dejarlo, <span class=\"nom\">/baixa</span>.",
+ "O busca'l a Telegram: <span class=\"nom\">@TempsMontflorit</span>": "O búscalo en Telegram: <span class=\"nom\">@TempsMontflorit</span>",
+ "O busca'l a Telegram: <span class=\"nom\">@TempsMontfloritBot</span>": "O búscalo en Telegram: <span class=\"nom\">@TempsMontfloritBot</span>"
 }
