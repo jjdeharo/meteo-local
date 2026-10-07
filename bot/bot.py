@@ -293,11 +293,31 @@ def text_trens_resum(dades, idioma):
 
 # --- Mensajes recibidos -------------------------------------------------------------
 
+def avisa_juanjo(text):
+    """A Juanjo, con su bot de avisos (el del vigía de IONOS). Sin nombres de
+    nadie: el bot promete guardar solo el identificador."""
+    propi = llegeix(os.environ.get("AVISAR_CONFIG", os.path.expanduser("~/.vigilancia-nas/config.json")), {})
+    if propi.get("token") and propi.get("chat_id"):
+        try:
+            Api(propi["token"])("sendMessage", chat_id=propi["chat_id"], text=text)
+        except Exception:
+            pass
+
+
+def alta(subs, chat, usuari):
+    """El suscriptor de este chat; si es nuevo, se le da de alta y se avisa a
+    Juanjo con el número total."""
+    if chat not in subs:
+        subs[chat] = nou_subscriptor(usuari)
+        avisa_juanjo(f"Temps a Montflorit: alta nova al bot (ja en són {len(subs)}).")
+    return subs[chat]
+
+
 def atén(api, subs, update):
     if "callback_query" in update:
         q = update["callback_query"]
         chat = str(q["message"]["chat"]["id"])
-        sub = subs.setdefault(chat, nou_subscriptor(q.get("from", {})))
+        sub = alta(subs, chat, q.get("from", {}))
         if canvia(sub, q.get("data", "")):
             api("editMessageText", chat_id=chat, message_id=q["message"]["message_id"],
                 text=T[sub["idioma"]]["menu"], reply_markup={"inline_keyboard": teclat(sub)})
@@ -312,7 +332,7 @@ def atén(api, subs, update):
         idioma = (subs.pop(chat, None) or nou_subscriptor(m.get("from", {})))["idioma"]
         envia(api, chat, T[idioma]["baixa"])
         return
-    sub = subs.setdefault(chat, nou_subscriptor(m.get("from", {})))
+    sub = alta(subs, chat, m.get("from", {}))
     t = T[sub["idioma"]]
     if ordre == "/start":
         envia(api, chat, t["benvinguda"])

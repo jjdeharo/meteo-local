@@ -49,6 +49,8 @@ internet en casa, que suele llegar con las tormentas.
   baja. Solo en chats privados.
 - **Canal**: los avisos de riera y peligro, y el resumen del día a las 7, en
   catalán y castellano en el mismo mensaje.
+- **Altas**: cada alta nueva, una línea a Juanjo con el número total, sin
+  nombres (Juanjo, 07-10-2026).
 - **Recuento**: los lunes a las 9, una línea a Juanjo (con su bot de avisos)
   con los suscriptores del bot, qué eligen y los miembros del canal
   (`bot.py informe`). El canal tiene fijado un mensaje de presentación, solo en

@@ -73,6 +73,18 @@ class Menu(unittest.TestCase):
         B.atén(api, subs, {"message": {"chat": {"id": 5, "type": "private"}, "from": {}, "text": "/baixa"}})
         self.assertNotIn("5", subs)
 
+    def test_alta_avisa_a_juanjo_sense_nom(self):
+        avisos, original = [], B.avisa_juanjo
+        B.avisa_juanjo = avisos.append
+        try:
+            subs = {}
+            for _ in range(2):
+                B.atén(Api(), subs, {"message": {"chat": {"id": 7, "type": "private"},
+                                                 "from": {"first_name": "Maria"}, "text": "/start"}})
+        finally:
+            B.avisa_juanjo = original
+        self.assertEqual(avisos, ["Temps a Montflorit: alta nova al bot (ja en són 1)."])
+
     def test_grups_no(self):
         api, subs = Api(), {}
         B.atén(api, subs, {"message": {"chat": {"id": -9, "type": "group"}, "text": "/start"}})
