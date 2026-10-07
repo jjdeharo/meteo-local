@@ -432,6 +432,7 @@ h1 { margin: 0; font-size: 1.6rem; line-height: 1.2; }
 /* En pantalla ampla, les fitxes en columnes: la pàgina no creix tant. */
 .mitjans { grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); }
 .triats { display: flex; flex-wrap: wrap; gap: .4rem; margin: .8rem 0 0; padding: 0; border: 0; }
+.hores-sortida[hidden], .triats[hidden] { display: none; }
 .xip {
   display: inline-flex;
   align-items: center;

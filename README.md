@@ -125,6 +125,9 @@ leer los datos de IONOS y usa la copia de su carpeta).
   claro y oscuro, sin desbordamiento horizontal (`probar-web`).
 - axe-core no encuentra incidencias.
 - Con una fuente caída, la web lo avisa y sigue mostrando lo demás.
+- Con datos de más de 2 horas, la web solo muestra el aviso y enlaces
+  oficiales (ADR 0031); si los datos de IONOS llevan más de una hora sin
+  renovarse, el vigía de IONOS avisa a Juanjo.
 
 ## Fuentes y licencias
 

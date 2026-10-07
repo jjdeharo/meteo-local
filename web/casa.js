@@ -314,6 +314,14 @@ function textAprenentatge(a) {
 function pinta(dades) {
   const cont = $('casa');
   cont.replaceChildren();
+  // Dades de fa massa: només l'avís i on mirar (ADR 0031).
+  if (dadesVelles(dades)) {
+    $('avisos').replaceChildren();
+    cont.append(blocDadesVelles(dades));
+    pintaHorari(dades);
+    posaVersio(dades.versio);
+    return;
+  }
   // Tots els avisos junts, a dalt; després, l'hora d'actualització.
   const avisos = $('avisos');
   avisos.replaceChildren();

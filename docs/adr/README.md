@@ -32,5 +32,6 @@
 | [0028](0028-web-publica-en-su-propia-organizacion.md) | Web pública en su propia organización | aceptado |
 | [0029](0029-pagina-si-surts-y-estado-de-los-trenes.md) | Página «Si surts» y estado de los trenes | aceptado |
 | [0030](0030-retirada-de-la-pagina-del-trayecto.md) | Retirada de la página del trayecto | aceptado |
+| [0031](0031-datos-viejos-y-vigilancia-externa.md) | Datos viejos y vigilancia externa | aceptado |
 
 Plantilla: [0000-plantilla.md](0000-plantilla.md). Para crear uno: `nuevo-adr "Título"`.

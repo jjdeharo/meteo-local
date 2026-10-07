@@ -377,6 +377,20 @@ function pintaTrens(trens) {
 
 function pinta(dades) {
   DADES = dades;
+  // Dades de fa massa: només l'avís i on mirar (ADR 0031).
+  const velles = dadesVelles(dades);
+  for (const id of ['hores', 'triats']) $(id).hidden = velles;
+  const explica = document.querySelector('.explica-triats');
+  if (velles) {
+    if (explica) explica.hidden = true;
+    $('avisos').replaceChildren();
+    $('trens').hidden = true;
+    $('sortida').replaceChildren(blocDadesVelles(dades));
+    pintaHorari(dades);
+    posaVersio(dades.versio);
+    return;
+  }
+  if (explica) explica.hidden = explicat() || amagats().size > 0;
   const avisos = $('avisos');
   avisos.replaceChildren();
   const plans = blocPlans(dades.plans);

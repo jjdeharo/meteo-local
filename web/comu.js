@@ -74,6 +74,37 @@ function alturaSol(data) {
   return Math.asin(Math.sin(lat) * Math.sin(dec) + Math.cos(lat) * Math.cos(dec) * Math.cos(angle)) / rad;
 }
 
+// Amb dades de més de DADES_VELLES_H hores, la previsió, els veredictes i els
+// trens ja no es mostren: algú que no llegeixi l'avís s'hi podria fiar
+// (ADR 0031). Es diu de quan són i on mirar mentrestant.
+const DADES_VELLES_H = 2;
+
+function dadesVelles(dades, ara = new Date()) {
+  return ara - new Date(dades.generat) > DADES_VELLES_H * 3600000;
+}
+
+function blocDadesVelles(dades) {
+  const generat = new Date(dades.generat);
+  const dia = generat.toDateString() === new Date().toDateString() ? ''
+    : T` del ${generat.toLocaleDateString(IDIOMA.codi)}`;
+  const caixa = element('section', 'avis avis-velles');
+  caixa.append(element('p', null,
+    T`Les dades són de les ${horaCurta(generat) + dia}: fa més de ${DADES_VELLES_H} hores que no s’actualitzen. La previsió i l’estat dels trens no es mostren fins que tornin.`));
+  const p = element('p', null, T('Mentrestant: '));
+  [[T('previsió de Meteocat'), 'https://www.meteo.cat/prediccio/municipal/082665'],
+    [T('radar'), 'https://www.meteo.cat/observacions/radar'],
+    ['Rodalies', `https://rodalies.gencat.cat/${IDIOMA.codi === 'es' ? 'es' : 'ca'}/inici/`],
+    ['FGC', 'https://x.com/fgc']].forEach(([text, href], n) => {
+    const a = element('a', null, text);
+    a.href = href;
+    a.target = '_blank';
+    a.rel = 'noopener';
+    p.append(...(n ? [' · ', a] : [a]));
+  });
+  caixa.append(p);
+  return caixa;
+}
+
 // Data d'avui (hora local) a l'hora «HH:MM».
 function avuiA(hhmm) {
   const [h, m] = hhmm.split(':').map(Number);

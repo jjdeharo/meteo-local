@@ -119,6 +119,12 @@ class Web(unittest.TestCase):
         expr = f"properaActualitzacio({json.dumps(trajecte)}).toISOString()"
         self.assertEqual(self.avalua("2026-10-05T09:00:00+02:00", expr), "2026-10-05T11:00:00.000Z")
 
+    def test_dades_velles(self):
+        # Amb més de 2 hores, la previsió ja no es mostra (ADR 0031).
+        expr = ("[dadesVelles({generat: '2026-10-07T06:50:00+02:00'}), "
+                "dadesVelles({generat: '2026-10-07T07:10:00+02:00'})]")
+        self.assertEqual(self.avalua("2026-10-07T09:00:00+02:00", expr), [True, False])
+
 
 if __name__ == "__main__":
     unittest.main()
