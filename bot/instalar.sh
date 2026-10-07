@@ -50,10 +50,11 @@ print("fet")
 PY
 
 if [ "${1:-}" != "--sin-cron" ]; then
-  echo "Cron: cada minuto…"
+  echo "Cron: cada minuto, y el recuento los lunes a las 9…"
   ssh "$IONOS" "
     ( crontab -l 2>/dev/null | grep -v 'repo/bot/bot.py' ;
-      echo '* * * * * python3 \$HOME/.meteo-reserva/repo/bot/bot.py >>\$HOME/$DIR/cron.log 2>&1' ) | crontab -
+      echo '* * * * * python3 \$HOME/.meteo-reserva/repo/bot/bot.py >>\$HOME/$DIR/cron.log 2>&1' ;
+      echo '0 9 * * 1 python3 \$HOME/.meteo-reserva/repo/bot/bot.py informe >>\$HOME/$DIR/cron.log 2>&1' ) | crontab -
     crontab -l | grep bot.py"
 fi
 echo "Hecho. Estado: ssh $IONOS 'python3 .meteo-reserva/repo/bot/bot.py estat'"

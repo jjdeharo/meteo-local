@@ -17,8 +17,9 @@ lluvia en unos minutos, trenes), la hora del resumen y el idioma. Solo se
 guarda su identificador de Telegram y lo que elige; /baixa lo borra. Sin
 dependencias: solo la biblioteca estándar.
 
-Uso: bot.py         una vuelta (lo que hace el cron)
-     bot.py estat   suscriptores y último aviso repartido
+Uso: bot.py           una vuelta (lo que hace el cron, cada minuto)
+     bot.py estat     suscriptores y avisos repartidos
+     bot.py informe   el recuento, a Juanjo por Telegram (el cron, los lunes)
 """
 import datetime as dt
 import fcntl
@@ -442,5 +443,23 @@ def mostra_estat():
     print(f"Avisos repartits (3 dies): {len(estat.get('enviats', {}))}")
 
 
+def informe():
+    """Los lunes, a Juanjo, con su bot de avisos (el del vigía de IONOS):
+    cuántos suscriptores hay y qué eligen, y cuántos miembros tiene el canal."""
+    subs = llegeix(SUBS, {})
+    n = lambda x: sum(x in s["avisos"] for s in subs.values())
+    try:
+        canal = Api(llegeix(os.path.join(BASE, "config.json"), {})["token"])("getChatMemberCount", chat_id=CANAL)
+    except Exception:
+        canal = "?"
+    text = (f"Temps a Montflorit: {len(subs)} suscriptores en el bot (riera {n('riera')}, peligro {n('perill')}, "
+            f"lluvia {n('pluja')}, trenes {n('trens')}, previsión diaria "
+            f"{sum(bool(s.get('resum')) for s in subs.values())}) y {canal} miembros en el canal.")
+    propi = llegeix(os.environ.get("AVISAR_CONFIG", os.path.expanduser("~/.vigilancia-nas/config.json")), {})
+    if propi.get("token") and propi.get("chat_id"):
+        Api(propi["token"])("sendMessage", chat_id=propi["chat_id"], text=text)
+    print(text)
+
+
 if __name__ == "__main__":
-    mostra_estat() if sys.argv[1:] == ["estat"] else volta()
+    {"estat": mostra_estat, "informe": informe}.get(sys.argv[1] if sys.argv[1:] else "", volta)()
