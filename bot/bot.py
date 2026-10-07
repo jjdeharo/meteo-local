@@ -55,7 +55,7 @@ T = {
                        "automàticament amb dades de Meteocat, l'AEMET, el radar, les estacions del barri, "
                        "Renfe i FGC. Els de desbordament de la riera estan en proves i són orientatius, no "
                        "oficials: segueix sempre les indicacions de Protecció Civil i de l'Ajuntament.\n" + WEB),
-        "menu": ("Tria què vols rebre: toca un botó per activar-ho o desactivar-ho. La previsió és un sol "
+        "menu": ("Tria què vols rebre: ✓ vol dir que sí; toca un botó per canviar-ho. La previsió és un sol "
                  "missatge cada dia, a l'hora que triïs; la de les 20 h és per a l'endemà.\n\nNomés es desa el teu "
                  "identificador de Telegram i el que triïs aquí. Amb /baixa s'esborra tot."),
         "riera": "Desbordament de la riera de Sant Cugat (en proves)", "perill": "Perill (pluja forta, vent, calor…)",
@@ -71,7 +71,7 @@ T = {
                        "automáticamente con datos de Meteocat, la AEMET, el radar, las estaciones del barrio, "
                        "Renfe y FGC. Los de desbordamiento de la riera están en pruebas y son orientativos, "
                        "no oficiales: sigue siempre las indicaciones de Protección Civil y del Ayuntamiento.\n" + WEB),
-        "menu": ("Elige qué quieres recibir: toca un botón para activarlo o desactivarlo. La previsión es un solo "
+        "menu": ("Elige qué quieres recibir: ✓ quiere decir que sí; toca un botón para cambiarlo. La previsión es un solo "
                  "mensaje cada día, a la hora que elijas; la de las 20 h es para el día siguiente.\n\nSolo se guarda "
                  "tu identificador de Telegram y lo que elijas aquí. Con /baixa se borra todo."),
         "riera": "Desbordamiento de la riera de Sant Cugat (en pruebas)", "perill": "Peligro (lluvia fuerte, viento, calor…)",
@@ -135,14 +135,14 @@ def envia(api, chat, text, teclat=None):
 
 def teclat(sub):
     t = T[sub["idioma"]]
-    marca = lambda actiu: "✓ " if actiu else "· "
+    # Una sola marca: ✓ vol dir sí o triat; sense marca, no (Juanjo, 07-10-2026).
+    marca = lambda si: "✓ " if si else ""
     files = [[{"text": marca(x in sub["avisos"]) + t[x], "callback_data": f"t:{x}"}] for x in TIPUS]
     files.append([{"text": t["resum"], "callback_data": "-"}])
-    files.append([{"text": ("• " if sub.get("resum") == h else "")
-                   + t["dema" if int(h) >= HORA_DEMA else "h"].format(h), "callback_data": f"r:{h}"}
-                  for h in HORES_RESUM])
-    files.append([{"text": ("• " if not sub.get("resum") else "") + t["no"], "callback_data": "r:no"}])
-    files.append([{"text": ("• " if sub["idioma"] == i else "") + n, "callback_data": f"i:{i}"}
+    files.append([{"text": marca(sub.get("resum") == h) + t["dema" if int(h) >= HORA_DEMA else "h"].format(h),
+                   "callback_data": f"r:{h}"} for h in HORES_RESUM])
+    files.append([{"text": marca(not sub.get("resum")) + t["no"], "callback_data": "r:no"}])
+    files.append([{"text": marca(sub["idioma"] == i) + n, "callback_data": f"i:{i}"}
                   for i, n in (("ca", "Català"), ("es", "Castellano"))])
     return files
 

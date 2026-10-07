@@ -57,8 +57,8 @@ class Menu(unittest.TestCase):
         self.assertEqual((sub["resum"], sub["idioma"]), ("7", "es"))
         textos = [b["text"] for fila in B.teclat(sub) for b in fila]
         self.assertIn("✓ Lluvia dentro de 15 minutos", textos)
-        self.assertIn("· Desbordamiento de la riera de Sant Cugat (en pruebas)", textos)
-        self.assertIn("• 7 h", textos)
+        self.assertIn("Desbordamiento de la riera de Sant Cugat (en pruebas)", textos)
+        self.assertIn("✓ 7 h", textos)
         self.assertIn("20 h (para mañana)", textos)
 
     def test_start_i_baixa(self):
