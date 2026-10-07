@@ -32,6 +32,7 @@ import nowcast as N
 import prevision as P
 import radar_fonts as RF
 import registre as R
+import riera as RI
 import riscos as RS
 
 HORAS = 24
@@ -443,6 +444,17 @@ def recoger(anterior=None):
             salida["radar"][clau] = t and t.isoformat(timespec="minutes")
         # Cómo sería al llegar, para el aviso de antes de llover (ADR 0022).
         salida["radar"]["arriba_mm_h"] = N.intensitat_arribada(nc, "casa")
+    # La riera de Sant Cugat: lo que ha llovido en la cuenca y lo que trae el
+    # radar, para el aviso por Telegram (ADR 0027).
+    try:
+        m3 = None
+        if ara:
+            hora = dt.datetime.fromisoformat(ara["hora"])
+            m3 = lluvia_entre(filas_estacion, hora - dt.timedelta(hours=C.RIERA_HORES), hora)
+        salida["riera"] = RI.calcula(P.AHORA, nc, montflorit_3h=m3)
+    except Exception as ex:
+        salida["riera"] = None
+        salida["errors"].append(f"riera: {ex}")
     salida["horari"] = P.horario([C.HORARIO_CASA_AVISO if motivos else C.HORARIO_CASA],
                                  C.INTERVALO_CASA_MIN, motivos)
     try:

@@ -28,5 +28,6 @@
 | [0024](0024-web-publica-temps-a-montflorit.md) | Web pública Temps a Montflorit | aceptado |
 | [0025](0025-web-publica-tambien-en-castellano.md) | Web pública también en castellano | aceptado |
 | [0026](0026-radar-de-meteocat-o-de-rainviewer-segun-cual-acierta-mas.md) | Radar de Meteocat o de RainViewer según cuál acierta más | aceptado |
+| [0027](0027-aviso-de-desbordamiento-de-la-riera-de-sant-cugat.md) | Aviso de desbordamiento de la riera de Sant Cugat | aceptado |
 
 Plantilla: [0000-plantilla.md](0000-plantilla.md). Para crear uno: `nuevo-adr "Título"`.

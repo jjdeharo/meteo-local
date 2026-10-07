@@ -116,13 +116,17 @@ def hm(t):
 PORTAL = "https://analisi.transparenciacatalunya.cat/resource/nzvn-apee.json"
 
 
-def taula_meteocat(codi):
-    """Lluvia semihoraria de hoy en la página de meteo.cat: lista de
-    (inicio de la media hora en UTC, mm). La tabla va en hora UTC."""
-    s = get(f"https://www.meteo.cat/observacions/xema/dades?codi={codi}")
+def taula_meteocat(codi, dia_utc=None, lector=None):
+    """Lluvia semihoraria de un día (por defecto, hoy) en la página de
+    meteo.cat: lista de (inicio de la media hora en UTC, mm). La tabla va en
+    hora UTC y el día también es el de UTC."""
+    url = f"https://www.meteo.cat/observacions/xema/dades?codi={codi}"
+    if dia_utc:
+        url += f"&dia={dia_utc.isoformat()}T00:00Z"
+    s = (lector or get)(url)
     t = re.search(r"<table[^>]*tblperiode.*?</table>", s, re.S)
     cab, res = None, []
-    dia_utc = AHORA.astimezone(dt.timezone.utc).date()
+    dia_utc = dia_utc or AHORA.astimezone(dt.timezone.utc).date()
     for f in re.findall(r"<tr.*?</tr>", t.group(0), re.S) if t else []:
         celdas = [html.unescape(re.sub("<[^>]+>", "", c)).strip()
                   for c in re.findall(r"<t[hd][^>]*>(.*?)</t[hd]>", f, re.S)]

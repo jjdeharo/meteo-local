@@ -32,8 +32,9 @@ import sys
 ARREL = os.path.dirname(os.path.abspath(__file__))
 REPO = "https://github.com/jjdeharo/meteo-montflorit"
 DADES = "montflorit.json"
-# Lo que casa.json lleva para la página del trayecto.
-PRIVADES = ("sortides", "sortida_per_defecte_h")
+# Lo que casa.json lleva para la página del trayecto, y el estado de la
+# riera, que solo sirve para el aviso por Telegram (ADR 0027).
+PRIVADES = ("sortides", "sortida_per_defecte_h", "riera")
 # Con False, la página pide a los buscadores que no la indexen. Desde el
 # 06-10-2026, con el permiso de meteocerdanyola.com, sí (ADR 0024).
 INDEXABLE = True

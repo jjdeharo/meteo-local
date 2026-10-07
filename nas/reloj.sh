@@ -19,7 +19,9 @@
 # lo que prevé la página llega a un umbral de peligro, avisa por Telegram: al
 # aparecer o subir de nivel y cuando ya no queda ninguno (riscos.py, ADR 0018).
 # Y si el radar dice que la lluvia llega a casa en unos minutos, avisa una
-# vez por episodio de lluvia (pluja_arriba.py, ADR 0022).
+# vez por episodio de lluvia (pluja_arriba.py, ADR 0022). Y si la lluvia en la
+# cuenca de la riera de Sant Cugat llega al umbral de atención o de peligro,
+# avisa una vez cada nivel por episodio (riera.py, ADR 0027).
 # Además, cada minuto mira si main tiene commits nuevos y, si los tiene,
 # publica enseguida: es el único que publica la web (ADR 0005).
 #
@@ -51,6 +53,9 @@ riscos() {
   aviso=$(cd "$REPO" && python3 pluja_arriba.py avisa /estat/casa.json) \
     || registro "ha fallado el aviso de antes de llover"
   [ -z "${aviso:-}" ] || registro "aviso de lluvia: $aviso"
+  aviso=$(cd "$REPO" && python3 riera.py avisa /estat/casa.json) \
+    || registro "ha fallado el aviso de la riera"
+  [ -z "${aviso:-}" ] || registro "aviso de la riera: $aviso"
 }
 
 pasada() {

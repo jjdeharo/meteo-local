@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 """Datos fijos del trayecto. Se cambian aquí, no en prevision.py."""
 
-VERSION = "2.17.0"
+VERSION = "2.18.0"
 
 # Coordenadas redondeadas a unos 500 m: para el tiempo da igual una calle u
 # otra, y el repositorio es público.
@@ -144,3 +144,21 @@ PROB_ATENCION = 0.2
 PROB_COCHE = 0.5
 RADAR_COCHE_KM = 15
 RADAR_ATENCION_KM = 40
+
+# Riera de Sant Cugat (riera.py, ADR 0027): nace en Collserola y pasa por
+# Montflorit. Se desbordó con 53 mm en 3 horas en Sant Cugat (29-04-2024, el
+# agua llegó a la puerta de las casas) y con 67 (29-09-2026 y 04-10-2026,
+# entró en ellas), justo al acabar las 3 horas más lluviosas. Cuenta la
+# lluvia de las últimas 3 horas en la estación de Meteocat de Sant Cugat más
+# la que el radar lleva hacia delante sobre la cuenca en la hora siguiente.
+# Desde RIERA_REGISTRE_MM se apunta el episodio; desde ATENCIO, aviso por
+# Telegram (en los tres casos se pasó entre 45 y 90 minutos antes); desde
+# PERILL, otro. Son una hipótesis con tres casos: se ajustan con el registro.
+RIERA_ESTACIO = "XV"                # Sant Cugat (CAR), en medio de la cuenca
+RIERA_CAPCALERA = ("D5", "Observatori Fabra")   # cresta de Collserola, junto a Les Planes
+CONCA_RIERA = (41.46, 2.10)         # centro aproximado de la cuenca, para el radar
+RIERA_HORES = 3
+RIERA_REGISTRE_MM = 20
+RIERA_ATENCIO_MM = 35
+RIERA_PERILL_MM = 50
+RIERA_FI_H = 3                      # horas por debajo del registro para cerrar el episodio

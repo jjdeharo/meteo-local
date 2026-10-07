@@ -434,8 +434,9 @@ def serie(r, ara, v, lat, lon):
 
 def resum(r, ahora=None):
     """Lo que se guarda en los datos: de dónde salen la imagen y el
-    movimiento y la serie de casa, del punto medio del trayecto y del
-    destino. None si no hay ninguna imagen."""
+    movimiento y la serie de casa, del punto medio del trayecto, del
+    destino y de la cuenca de la riera de Sant Cugat (ADR 0027). None si no
+    hay ninguna imagen."""
     im = imatge(r)
     if im is None:
         return None
@@ -450,7 +451,8 @@ def resum(r, ahora=None):
         res["cap_a"] = rumb(v)
         res["graus"] = round(graus(v))      # para comprobarlo con el registro
     mig = ((C.CASA[0] + C.DESTINO[0]) / 2, (C.CASA[1] + C.DESTINO[1]) / 2)
-    for nom, (lat, lon) in (("casa", C.CASA), ("mig", mig), ("desti", C.DESTINO)):
+    for nom, (lat, lon) in (("casa", C.CASA), ("mig", mig), ("desti", C.DESTINO),
+                            ("conca", C.CONCA_RIERA)):
         res["llocs"][nom] = serie(r, camp, v, lat, lon)
     res["fonts"] = fonts(r, v)
     return res

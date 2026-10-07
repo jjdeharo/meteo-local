@@ -56,6 +56,14 @@ como «Valoració feta amb IA». Por la mañana puede hacer la recomendación m�
 prudente, nunca menos; el comentario caduca si el programa cambia los niveles
 con que se escribió (`agent/`, ADR 0009).
 
+**Riera de Sant Cugat.** En cada pasada de la página de casa se calcula la
+lluvia de 3 horas en Sant Cugat (Meteocat) más la que el radar trae sobre la
+cuenca en la hora siguiente. Con 35 mm llega un aviso de atención por
+Telegram, y con 50, de peligro: la riera se desbordó en Montflorit con 53 mm
+(29-04-2024) y con 67 (29-09-2026 y 04-10-2026). Cada episodio se apunta con
+lo que midieron Sant Cugat, el Fabra (Collserola) y Montflorit, para ajustar
+los umbrales (`riera.py`, ADR 0027).
+
 Cada actualización queda apuntada en el NAS, y a las 16:00 se comprueba la
 lluvia que cayó y si la recomendación acertó (`registre.py`). A los 28 días
 llega un resumen por Telegram.
@@ -134,6 +142,7 @@ al motivo de los modelos. Para repetirla: `python3 calibracio/descarrega.py
 | `riscos.py` | Situaciones de peligro de la página de casa y aviso por Telegram (ADR 0018) |
 | `radar_fonts.py` | Apunta lo que daba cada radar en casa y, cada día, elige el que acierta más (ADR 0026) |
 | `pluja_arriba.py` | Aviso por Telegram unos 15 minutos antes de que llueva en casa, según el radar, y registro de sus aciertos (ADR 0022) |
+| `riera.py` | Lluvia en la cuenca de la riera de Sant Cugat y aviso por Telegram de atención o peligro de desbordamiento, con registro de episodios (ADR 0027) |
 | `registre.py` | Registro en el NAS de cada actualización y del resultado de cada día (ADR 0006) |
 | `aprenentatge.py` | Aprendizaje de la página de casa: regresiones, comprobación y cambio de método (ADR 0012, `docs/estadistica.md`) |
 | `.github/workflows/previsio.yml` | Al subir a `main`: pruebas |
