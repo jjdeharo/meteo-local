@@ -493,3 +493,6 @@ h1 { margin: 0; font-size: 1.6rem; line-height: 1.2; }
 .tren-avisos summary { cursor: pointer; color: var(--suau); }
 .tren-avisos p { margin: .3rem 0 0; }
 .trens .nota { margin-top: .5rem; }
+
+/* El text dels avisos de l'AEMET, citat tal com el publica (ADR 0033). */
+.avis q { quotes: "«" "»"; font-style: italic; }

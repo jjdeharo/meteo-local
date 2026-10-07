@@ -292,6 +292,21 @@ def ensemble(dias):
     return json.loads(get(f"https://ensemble-api.open-meteo.com/v1/ensemble?{q}"))["hourly"]
 
 
+def descripcion_aviso(url):
+    """El texto de un aviso de AEMET, tal como lo publica (en castellano; la
+    versión inglesa de la ficha repite el mismo texto). Cada ficha tiene su
+    dirección: si el aviso cambia, cambia la dirección, así que se puede
+    guardar horas. None si no hay texto."""
+    s = get_recent(url, segons=6 * 3600)
+    textos = {}
+    for info in re.findall(r"<info>.*?</info>", s, re.S):
+        idioma = re.search(r"<language>(.*?)<", info)
+        texto = re.search(r"<description>(.*?)</description>", info, re.S)
+        if texto and texto.group(1).strip():
+            textos[idioma.group(1) if idioma else ""] = html.unescape(" ".join(texto.group(1).split()))
+    return textos.get("es-ES") or next(iter(textos.values()), None)
+
+
 def avisos():
     """Avisos de lluvia y tormenta de AEMET, del feed de Meteoalarm."""
     s = get("https://feeds.meteoalarm.org/feeds/meteoalarm-legacy-atom-spain")
@@ -308,9 +323,18 @@ def avisos():
             continue
         nivel = {"Moderate": "groc", "Severe": "taronja", "Extreme": "vermell"}.get(
             evento.split()[0], evento)
-        res.append({"zona": zona, "tipo": tipo, "nivel": nivel,
-                    "inicio": dt.datetime.fromisoformat(campo("onset")).astimezone().isoformat(),
-                    "fin": dt.datetime.fromisoformat(campo("expires")).astimezone().isoformat()})
+        aviso = {"zona": zona, "tipo": tipo, "nivel": nivel,
+                 "inicio": dt.datetime.fromisoformat(campo("onset")).astimezone().isoformat(),
+                 "fin": dt.datetime.fromisoformat(campo("expires")).astimezone().isoformat()}
+        # El texto del aviso («Pueden ir acompañadas de granizo…») está en su
+        # ficha, no en el resumen (ADR 0033).
+        ficha = re.search(r'href="(https://feeds\.meteoalarm\.org/api/v1/warnings/[^"]+)"', ent)
+        if ficha and zona == C.ZONA_TRAYECTO and aviso["fin"] > AHORA.isoformat():
+            try:
+                aviso["descripcio"] = descripcion_aviso(ficha.group(1))
+            except Exception:
+                pass
+        res.append(aviso)
     # El feed repite entradas idénticas.
     unicos = {tuple(sorted(a.items())) for a in res}
     return sorted((dict(t) for t in unicos), key=lambda a: (a["inicio"], a["zona"], a["tipo"]))

@@ -395,7 +395,7 @@ function pinta(dades) {
   avisos.replaceChildren();
   const plans = blocPlans(dades.plans);
   if (plans) avisos.append(plans);
-  if (dades.avisos && dades.avisos.length) avisos.append(element('p', 'avis', textAvisos(dades.avisos)));
+  if (dades.avisos && dades.avisos.length) avisos.append(blocAvisosAemet(dades.avisos));
   if (dades.hores && dades.hores.length >= 2) pintaSelectors(dades.hores, new Date());
   pintaTrens(dades.trens);
   pintaSortida();

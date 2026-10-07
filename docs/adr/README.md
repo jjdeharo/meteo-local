@@ -34,5 +34,6 @@
 | [0030](0030-retirada-de-la-pagina-del-trayecto.md) | Retirada de la página del trayecto | aceptado |
 | [0031](0031-datos-viejos-y-vigilancia-externa.md) | Datos viejos y vigilancia externa | aceptado |
 | [0032](0032-servidor-de-reserva-en-ionos.md) | Servidor de reserva en IONOS | aceptado |
+| [0033](0033-texto-de-los-avisos-de-aemet.md) | Texto de los avisos de AEMET | aceptado |
 
 Plantilla: [0000-plantilla.md](0000-plantilla.md). Para crear uno: `nuevo-adr "Título"`.

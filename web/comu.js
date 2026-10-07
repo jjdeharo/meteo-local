@@ -287,6 +287,32 @@ function textFranja(inici, fi, ara) {
 // Una frase per nivell i tipus d'avís, amb totes les franges i el dia de
 // cadascuna: «Avís groc de l'AEMET per pluja i tempestes al Vallès: avui fins
 // a les 20:00; demà de 09:00 a 18:00 i de 22:00 a mitjanit.»
+// L'avís de l'AEMET i el seu text, tal com el publica: en castellà, citat i
+// marcat com a tal, agrupat per dia (ADR 0033).
+function blocAvisosAemet(avisos, ara = new Date()) {
+  const p = element('p', 'avis', textAvisos(avisos, ara));
+  const perDia = [];
+  for (const a of [...avisos].sort((x, y) => new Date(x.inicio) - new Date(y.inicio))) {
+    if (!a.descripcio || new Date(a.fin).getTime() + 1000 <= ara.getTime()) continue;
+    const dia = nomDiaCurt(new Date(Math.max(new Date(a.inicio).getTime(), ara.getTime())), ara);
+    let d = perDia.find((x) => x.dia === dia);
+    if (!d) perDia.push(d = { dia, textos: [] });
+    if (!d.textos.includes(a.descripcio)) d.textos.push(a.descripcio);
+  }
+  if (perDia.length) {
+    p.append(' ', T('L’AEMET hi afegeix —'), ' ');
+    perDia.forEach((d, n) => {
+      p.append(`${n ? '; ' : ''}${d.dia}: `);
+      d.textos.forEach((t, m) => {
+        const cita = element('q', null, t);
+        cita.lang = 'es';
+        p.append(...(m ? [' ', cita] : [cita]));
+      });
+    });
+  }
+  return p;
+}
+
 function textAvisos(avisos, ara = new Date()) {
   // 1. Franges de cada nivell i tipus, ajuntant les que es toquen. Els avisos
   // acaben a «hh:59:59»: un segon més dona l'hora en punt.

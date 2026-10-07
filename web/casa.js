@@ -329,7 +329,7 @@ function pinta(dades) {
   if (plans) avisos.append(plans);
   const riscos = blocRiscos(dades.riscos);
   if (riscos) avisos.append(riscos);
-  if (dades.avisos && dades.avisos.length) avisos.append(element('p', 'avis', textAvisos(dades.avisos)));
+  if (dades.avisos && dades.avisos.length) avisos.append(blocAvisosAemet(dades.avisos));
   if (dades.previsio_de) avisos.append(element('p', 'avis', textPrevisioAnterior(dades)));
   if (dades.models && dades.models.no_encerten) {
     const m = dades.models;
