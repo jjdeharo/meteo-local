@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Calcula el tiempo en Montflorit (casa.py) y publica «Temps a Montflorit»
-# (ADR 0024 y 0029): los datos en IONOS y la web en su repositorio. La web
-# antigua de este repositorio (rama gh-pages, jjdeharo.github.io/meteo-local)
-# solo tiene páginas que llevan a la pública (redireccions/, ADR 0030). Las
-# ramas gh-pages tienen siempre un solo commit: se rehacen en cada publicación.
+# (ADR 0024 y 0029): los datos en IONOS y la web en su repositorio. La rama
+# gh-pages de la web tiene siempre un solo commit: se rehace en cada
+# publicación. Las direcciones antiguas (jjdeharo.github.io/meteo-local) las
+# redirige el repositorio jjdeharo/jjdeharo.github.io, aparte (ADR 0035).
 #
 # Lo usa el NAS (con reloj.sh), que es el único que publica; a mano también
 # se puede ejecutar desde un ordenador con acceso a los repositorios.
@@ -12,7 +12,6 @@
 #   ESTAT_DIR   carpeta del estado (en el NAS, /estat): ahí se deja casa.json
 #               para los avisos y se lee el de la pasada anterior, por si
 #               Open-Meteo falla (ADR 0016). Sin ella, el publicado.
-#   DESTINO     adónde se empuja la web antigua (por defecto, el remoto origin)
 #   DESTINO_MONTFLORIT  adónde se empuja la web pública; vacío, no se publica
 #
 # En el NAS, los datos de la web pública (montflorit.json: los de casa sin lo
@@ -26,13 +25,11 @@ set -euo pipefail
 cd "$(dirname "$0")"
 
 ESTAT_DIR=${ESTAT_DIR:-}
-DESTINO=${DESTINO:-$(git remote get-url origin)}
 DESTINO_MONTFLORIT=${DESTINO_MONTFLORIT-git@github.com:meteo-montflorit/meteo-montflorit.github.io.git}
 
-sitio=$(mktemp -d)
 publica=$(mktemp -d)
 dades=$(mktemp -d)
-trap 'rm -rf "$sitio" "$publica" "$dades"' EXIT
+trap 'rm -rf "$publica" "$dades"' EXIT
 
 # Si Open-Meteo falla, casa.py reutiliza la última previsión buena (ADR 0016).
 if [ -n "$ESTAT_DIR" ]; then
@@ -81,16 +78,7 @@ if [ "$a_ionos" = 1 ] && [ -f "$estat_gh" ]; then
   fi
 fi
 
-# La web antigua: solo redirecciones a la pública (ADR 0030).
-cp -r redireccions/. "$sitio/"
-touch "$sitio/.nojekyll"
-git -C "$sitio" init -q -b gh-pages
-git -C "$sitio" add -A
-git -C "$sitio" -c user.name="Juan Jose de Haro" -c user.email="jjdeharo@gmail.com" \
-  commit -q -m "Redirecció a Temps a Montflorit"
-git -C "$sitio" push -q -f "$DESTINO" gh-pages
 [ -z "$ESTAT_DIR" ] || echo "$(date +%s) $codi" > "$estat_gh"
-echo "$(date '+%F %T')  publicado a GitHub"
 
 # La web pública, a su repositorio, con su propia clave de despliegue si la
 # hay (en el NAS). Un fallo aquí no detiene nada: se reintenta en la próxima.

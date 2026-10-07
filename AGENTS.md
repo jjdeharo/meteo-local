@@ -23,8 +23,9 @@ Al cambiar algo:
   en `config.py` y etiqueta la versión.
 - Los datos públicos (`montflorit.json`) se publican en IONOS
   (`bilateria.org/app/meteo-local/`) y la web, cada media hora como mucho
-  (ADR 0020). La rama `gh-pages` de este repositorio solo tiene
-  `redireccions/`. La clave del NAS para IONOS solo puede dejar `.json` en esa
+  (ADR 0020). Este repositorio no publica ninguna web: las direcciones
+  antiguas (`jjdeharo.github.io/meteo-local/…`) las redirige
+  `jjdeharo/jjdeharo.github.io` (ADR 0035). La clave del NAS para IONOS solo puede dejar `.json` en esa
   carpeta (orden fija en el `authorized_keys` de IONOS); la carpeta tiene un
   `.htaccess` que permite leer los datos desde `meteo-montflorit.github.io`.
 - La web pública (repositorio `meteo-montflorit/meteo-montflorit.github.io`;

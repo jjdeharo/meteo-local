@@ -13,7 +13,7 @@ set -euo pipefail
 
 IONOS="${IONOS_HOST:-ionos-webspace}"
 DIR=.meteo-reserva
-URL_REPO=https://github.com/jjdeharo/meteo-local.git
+URL_REPO=https://github.com/meteo-montflorit/meteo-local.git
 BASE="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
 
 echo "Carpeta, candado y aviso…"

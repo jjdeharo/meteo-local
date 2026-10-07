@@ -13,8 +13,9 @@ Montflorit, «por lo tanto ya no usará IA».
 
 ## Decisión
 
-- **Redirecciones** (`redireccions/`, publicadas en la rama `gh-pages` de este
-  repositorio): `index.html` (trayecto) y `sortir.html` llevan a
+- **Redirecciones** (desde el 07-10-2026, en el repositorio
+  `jjdeharo/jjdeharo.github.io`, ADR 0035; antes, `redireccions/` en la rama
+  `gh-pages` de este repositorio): `index.html` (trayecto) y `sortir.html` llevan a
   <https://meteo-montflorit.github.io/sortir.html>; `casa.html` y cualquier
   otra dirección, a <https://meteo-montflorit.github.io/>; `fonts.html`, a sus
   créditos. Con `meta refresh`, `location.replace` y `link rel="canonical"`.

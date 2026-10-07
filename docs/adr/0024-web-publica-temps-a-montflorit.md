@@ -43,7 +43,7 @@ clon con otro nombre y si se verían datos suyos o de su NAS.
 - **En catalán y, aparte, en castellano** (ADR 0025).
 - **El código fuente y los ADR, enlazados** (07-10-2026). «Fonts i crèdits»
   (apartado «Codi font i decisions», y el «Codi font» del pie) y el README del
-  repositorio público llevan a `jjdeharo/meteo-local` y a `docs/adr`. Antes la
+  repositorio público llevan a `meteo-montflorit/meteo-local` y a `docs/adr`. Antes la
   web pública no lo nombraba y los ADR no se encontraban desde ella; a Juanjo
   le preguntaron si había copiado la parte de los transportes, y el historial
   fechado de este repositorio es lo que muestra cómo nació cada pieza. Aceptó

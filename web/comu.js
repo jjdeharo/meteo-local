@@ -409,7 +409,7 @@ function posaVersio(versio) {
   $('versio').textContent = T`versió ${versio}`;
   // La pàgina pública enllaça el seu propi repositori (ADR 0024).
   $('versio').href = document.documentElement.dataset.notes
-    || 'https://github.com/jjdeharo/meteo-local/releases/tag/v' + versio;
+    || 'https://github.com/meteo-montflorit/meteo-local/releases/tag/v' + versio;
 }
 
 // Tema: segueix el del dispositiu mentre no se'n triï un altre; si es tria

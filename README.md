@@ -52,9 +52,9 @@ avisos y sube los públicos (`montflorit.json`) a IONOS
 genera `montflorit.py` a partir de `web/`, va a su repositorio
 (`meteo-montflorit/meteo-montflorit.github.io`, ADR 0028) solo cuando cambia
 el código, cada media hora como mucho o si IONOS falla: GitHub admite unas 10
-publicaciones por hora, y esa copia es la reserva si IONOS no responde. La
-rama `gh-pages` de este repositorio solo tiene las páginas que redirigen a la
-web pública (`redireccions/`).
+publicaciones por hora, y esa copia es la reserva si IONOS no responde. Las
+direcciones antiguas (`jjdeharo.github.io/meteo-local/…`) las redirige el
+repositorio aparte `jjdeharo/jjdeharo.github.io` (ADR 0035).
 
 **Reserva en IONOS** (`reserva/`, ADR 0032): si el NAS lleva más de 35
 minutos sin subir datos, el hosting de IONOS los calcula con el mismo programa,
@@ -95,7 +95,6 @@ Umbrales y lugares, en `config.py`. El porqué, en los ADR.
 | `web/` | Las fuentes de la web pública: `casa.html` y `casa.js` (el tiempo ahora), `sortir.html` y `sortir.js` («Si surts»), `comu.js` (lo común), `estil.css`, `fonts.html` (fuentes y créditos), `manifest.webmanifest`, `sw.js` e `icones/` |
 | `montflorit.py`, `montflorit/` | Genera la web pública a partir de `web/` y sus datos sin lo privado; manifiesto, iconos y README propios (ADR 0024), y `es.js`, los textos del programa en castellano (ADR 0025) |
 | `i18n/` | `es.json`, la traducción de los textos fijos, y `claus.js`, que saca del programa los textos por traducir (ADR 0025) |
-| `redireccions/` | Las páginas de la dirección antigua (`jjdeharo.github.io/meteo-local/`), que llevan a la web pública (ADR 0030) |
 | `publica.sh` | Calcula y publica (lo usa el NAS) |
 | `avisos_bot.py` | Decide los avisos públicos para el bot y el canal y los deja en `avisos.json` (ADR 0034) |
 | `bot/` | El bot de Telegram, que vive en IONOS: `bot.py` (menú, suscripciones, reparto y resumen) e `instalar.sh` (ADR 0034) |

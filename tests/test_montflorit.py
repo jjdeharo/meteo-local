@@ -87,9 +87,9 @@ class Web(unittest.TestCase):
         self.assertIn('data-dades="montflorit.json"', index)
         for nom in ("index.html", "manifest.webmanifest"):
             M.comprova(nom, self.llegeix(nom))        # no lanza
-        # Los créditos y el README enlazan el código fuente y los ADR (jjdeharo/meteo-local).
+        # Los créditos y el README enlazan el código fuente y los ADR (meteo-montflorit/meteo-local).
         M.comprova("fonts.html", self.llegeix("fonts.html"), M.PROHIBIDES_FONTS)
-        self.assertIn("https://github.com/jjdeharo/meteo-local/tree/main/docs/adr", self.llegeix("fonts.html"))
+        self.assertIn("https://github.com/meteo-montflorit/meteo-local/tree/main/docs/adr", self.llegeix("fonts.html"))
         M.comprova("README.md", self.llegeix("README.md"), M.PROHIBIDES_README)
         self.assertIn("docs/adr", self.llegeix("README.md"))
         # «Si surts» habla de motos y coches, pero no de casa ni del trayecto.
@@ -103,7 +103,7 @@ class Web(unittest.TestCase):
 
     def test_la_comprovacio_troba_el_que_no_hi_ha_de_ser(self):
         for dolent in ("<p>Temps a casa</p>", '<a href="./">Trajecte</a>', '<p title="Moto o cotxe?">x</p>',
-                       '<a href="https://github.com/jjdeharo/meteo-local">codi</a>'):
+                       '<a href="https://github.com/meteo-montflorit/meteo-local">codi</a>'):
             with self.assertRaises(ValueError):
                 M.comprova("prova", dolent)
         M.comprova("prova", '<script src="casa.js"></script><div id="casa">Montflorit</div>')

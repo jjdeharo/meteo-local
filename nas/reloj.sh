@@ -28,7 +28,7 @@
 set -u
 
 REPO=/proyecto
-URL_REPO=git@github.com:jjdeharo/meteo-local.git
+URL_REPO=git@github.com:meteo-montflorit/meteo-local.git
 ESTAT_DIR=/estat
 
 registro() { printf '%s  %s\n' "$(date '+%F %T')" "$*"; }
@@ -54,7 +54,7 @@ riscos() {
 
 pasada() {
   prepara || return
-  if ESTAT_DIR="$ESTAT_DIR" DESTINO="$URL_REPO" bash "$REPO/publica.sh" >/dev/null; then
+  if ESTAT_DIR="$ESTAT_DIR" bash "$REPO/publica.sh" >/dev/null; then
     registro "publicado"
     riscos
   else

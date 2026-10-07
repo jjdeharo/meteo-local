@@ -67,7 +67,7 @@ CANVIS_INDEX = [
      "d'una estació particular del barri; la pluja i el vent, de l'estació de Montflorit de meteocerdanyola.com, minut a minut"),
     ("amb el que ha mesurat l'estació de casa des de", "amb el que ha mesurat l'estació particular des de"),
     ("a Montflorit i a casa. Comprovada", "a Montflorit. Comprovada"),
-    ('href="https://github.com/jjdeharo/meteo-local/releases"', f'href="{REPO}"'),
+    ('href="https://github.com/meteo-montflorit/meteo-local/releases"', f'href="{REPO}"'),
 ]
 
 CANVIS_FONTS = [
@@ -88,7 +88,7 @@ CANVIS_SORTIR = [
     ('<p class="ruta">Montflorit, Cerdanyola del Vallès</p>',
      '<p class="ruta">Montflorit, Cerdanyola del Vallès'
      ' · <a href="es/sortir.html" lang="es" hreflang="es">Castellano</a></p>'),
-    ('href="https://github.com/jjdeharo/meteo-local/releases"', f'href="{REPO}"'),
+    ('href="https://github.com/meteo-montflorit/meteo-local/releases"', f'href="{REPO}"'),
 ]
 CANVIS_TELEGRAM = [
     ('<html lang="ca" data-theme="light">',
@@ -97,12 +97,12 @@ CANVIS_TELEGRAM = [
     ('<p class="ruta">Montflorit, Cerdanyola del Vallès</p>',
      '<p class="ruta">Montflorit, Cerdanyola del Vallès'
      ' · <a href="es/telegram.html" lang="es" hreflang="es">Castellano</a></p>'),
-    ('href="https://github.com/jjdeharo/meteo-local/releases"', f'href="{REPO}"'),
+    ('href="https://github.com/meteo-montflorit/meteo-local/releases"', f'href="{REPO}"'),
 ]
 # En «Si surts» se habla de medios de transporte: ahí sí van «moto» y «cotxe».
 PROHIBIDES_SORTIR = ("casa", "trajecte", "meteo-local")
 # Los créditos y el README enlazan el código fuente y los ADR, que están en
-# jjdeharo/meteo-local (Juanjo, 07-10-2026); lo demás sigue sin nombrarlo.
+# meteo-montflorit/meteo-local (Juanjo, 07-10-2026); lo demás sigue sin nombrarlo.
 PROHIBIDES_FONTS = ("casa", "cotxe", "moto", "trajecte")
 PROHIBIDES_README = ("casa", "trajecte")
 
