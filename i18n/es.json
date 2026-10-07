@@ -61,7 +61,6 @@
  "Avisos a Telegram · Temps a Montflorit": "Avisos en Telegram · Temps a Montflorit",
  "Avisos a Telegram": "Avisos en Telegram",
  "Montflorit, Cerdanyola del Vallès · <a href=\"es/telegram.html\" lang=\"es\" hreflang=\"es\">Castellano</a>": "Montflorit, Cerdanyola del Vallès · <a href=\"../telegram.html\" lang=\"ca\" hreflang=\"ca\">Català</a>",
- "Pots rebre al mòbil, a Telegram, els avisos del temps a Montflorit de dues maneres.": "Puedes recibir en el móvil, en Telegram, los avisos del tiempo en Montflorit de dos maneras.",
  "<img src=\"img/telegram/canal.webp\" width=\"56\" height=\"56\" alt=\"\"> Canal Temps a Montflorit": "<img src=\"img/telegram/canal.webp\" width=\"56\" height=\"56\" alt=\"\"> Canal Temps a Montflorit",
  "El mateix per a tothom, com un tauler d'anuncis. No cal triar res: reps els avisos de perill, els de la riera i la previsió de cada matí.": "El mismo para todo el mundo, como un tablón de anuncios. No hay que elegir nada: recibes los avisos de peligro, los de la riera y la previsión de cada mañana.",
  "<a class=\"boto\" href=\"https://t.me/TempsMontflorit\" target=\"_blank\" rel=\"noopener\">Obre el canal</a>": "<a class=\"boto\" href=\"https://t.me/TempsMontflorit\" target=\"_blank\" rel=\"noopener\">Abre el canal</a>",
@@ -86,5 +85,6 @@
  "Per canviar-ho, toca el botó de menú de baix a l'esquerra i tria <span class=\"nom\">/avisos</span>. Per deixar-ho, <span class=\"nom\">/baixa</span>.": "Para cambiarlo, toca el botón de menú de abajo a la izquierda y elige <span class=\"nom\">/avisos</span>. Para dejarlo, <span class=\"nom\">/baixa</span>.",
  "O busca'l a Telegram: <span class=\"nom\">@TempsMontflorit</span>": "O búscalo en Telegram: <span class=\"nom\">@TempsMontflorit</span>",
  "O busca'l a Telegram: <span class=\"nom\">@TempsMontfloritBot</span>": "O búscalo en Telegram: <span class=\"nom\">@TempsMontfloritBot</span>",
- "Avisos a Telegram: <a href=\"telegram.html\">com funciona</a>": "Avisos en Telegram: <a href=\"telegram.html\">cómo funciona</a>"
+ "Avisos a Telegram: <a href=\"telegram.html\">com funciona</a>": "Avisos en Telegram: <a href=\"telegram.html\">cómo funciona</a>",
+ "Pots rebre al mòbil, a Telegram, els avisos del temps a Montflorit de dues maneres: només el canal, només el bot o tots dos. Amb tots dos, els avisos que coincideixin t'arribaran dues vegades.": "Puedes recibir en el móvil, en Telegram, los avisos del tiempo en Montflorit de dos maneras: solo el canal, solo el bot o los dos. Con los dos, los avisos que coincidan te llegarán dos veces."
 }

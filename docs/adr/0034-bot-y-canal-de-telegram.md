@@ -69,7 +69,9 @@ internet en casa, que suele llegar con las tormentas.
   catalán (Juanjo, 07-10-2026).
 - **En la web**: «Avisos a Telegram: com funciona» bajo el menú,
   y en los créditos, qué guarda el bot. «Com funciona» lleva a una página de
-  ayuda breve (`web/telegram.html`, también en castellano), con un bloque
+  ayuda breve (`web/telegram.html`, también en castellano). Dice que se puede
+  usar solo el canal, solo el bot o los dos, y que con los dos los avisos que
+  coincidan llegan dos veces (Juanjo, 07-10-2026). Tiene un bloque
   para el canal (igual para todos, como un tablón; azul) y otro para el bot
   (personal; verde, como su icono y su botón). Cada bloque lleva su
   descripción, su botón, el nombre con que se busca en Telegram
