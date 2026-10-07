@@ -13,6 +13,7 @@
   --compte-fons: #fdf3e1;
   --cotxe: #b91c1c;
   --cotxe-fons: #fdeceb;
+  --bot: #15803d;          /* el verd de la icona del bot de Telegram */
   color-scheme: light;
 }
 
@@ -29,6 +30,7 @@
   --compte-fons: #2e2412;
   --cotxe: #f87171;
   --cotxe-fons: #331a1a;
+  --bot: #4ade80;
   color-scheme: dark;
 }
 
@@ -506,6 +508,7 @@ h1 { margin: 0; font-size: 1.6rem; line-height: 1.2; }
 .ajuda .opcio h2 img { width: 2.6rem; height: 2.6rem; border-radius: 50%; flex: none; }
 .ajuda .opcio p { margin: .3rem 0; }
 .ajuda .boto { display: inline-block; padding: .5rem 1rem; border-radius: 999px; background: var(--enllac); color: var(--fons); text-decoration: none; font-weight: 600; }
+.ajuda .boto.bot { background: var(--bot); }
 .ajuda .passos { display: grid; gap: 1rem; }
 .ajuda .pas { display: grid; grid-template-columns: 2rem 1fr; gap: .2rem .6rem; align-items: start; }
 .ajuda .pas .num { width: 2rem; height: 2rem; border-radius: 50%; background: var(--enllac); color: var(--fons); display: grid; place-items: center; font-weight: 700; }

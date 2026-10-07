@@ -68,7 +68,6 @@
  "<a class=\"boto\" href=\"https://t.me/TempsMontflorit\" target=\"_blank\" rel=\"noopener\">Obre el canal</a>": "<a class=\"boto\" href=\"https://t.me/TempsMontflorit\" target=\"_blank\" rel=\"noopener\">Abre el canal</a>",
  "<img src=\"img/telegram/bot.webp\" width=\"56\" height=\"56\" alt=\"\"> Bot Temps a Montflorit": "<img src=\"img/telegram/bot.webp\" width=\"56\" height=\"56\" alt=\"\"> Bot Temps a Montflorit",
  "Només per a tu. Tries quins avisos vols (també quan està a punt de ploure i si els trens no circulen) i a quina hora reps la previsió.": "Solo para ti. Eliges qué avisos quieres (también cuando está a punto de llover y si los trenes no circulan) y a qué hora recibes la previsión.",
- "<a class=\"boto\" href=\"https://t.me/TempsMontfloritBot\" target=\"_blank\" rel=\"noopener\">Obre el bot</a>": "<a class=\"boto\" href=\"https://t.me/TempsMontfloritBot\" target=\"_blank\" rel=\"noopener\">Abre el bot</a>",
  "Primer cal tenir Telegram al mòbil. És gratuït: <a href=\"https://telegram.org/apps\" target=\"_blank\" rel=\"noopener\">telegram.org</a>.": "Primero hay que tener Telegram en el móvil. Es gratuito: <a href=\"https://telegram.org/apps\" target=\"_blank\" rel=\"noopener\">telegram.org</a>.",
  "El canal, pas a pas": "El canal, paso a paso",
  "Toca «Obre el canal» i, a la pàgina que s'obre, el botó blau.": "Toca «Abre el canal» y, en la página que se abre, el botón azul.",
@@ -84,5 +83,6 @@
  "Xat del bot amb el botó Inicia marcat": "Chat del bot con el botón Iniciar marcado",
  "Menú del bot amb la pluja i les 7 h marcades": "Menú del bot con la lluvia y las 7 h marcadas",
  "Exemples d'avís de pluja, de la riera i de la previsió": "Ejemplos de aviso de lluvia, de la riera y de la previsión",
- "Menú d'ordres del bot obert": "Menú de órdenes del bot abierto"
+ "Menú d'ordres del bot obert": "Menú de órdenes del bot abierto",
+ "<a class=\"boto bot\" href=\"https://t.me/TempsMontfloritBot\" target=\"_blank\" rel=\"noopener\">Obre el bot</a>": "<a class=\"boto bot\" href=\"https://t.me/TempsMontfloritBot\" target=\"_blank\" rel=\"noopener\">Abre el bot</a>"
 }
