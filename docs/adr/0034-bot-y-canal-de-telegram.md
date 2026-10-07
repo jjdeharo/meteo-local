@@ -67,7 +67,7 @@ internet en casa, que suele llegar con las tormentas.
   con los suscriptores del bot, qué eligen y los miembros del canal
   (`bot.py informe`). El canal tiene fijado un mensaje de presentación, solo en
   catalán (Juanjo, 07-10-2026).
-- **En la web**: «Avisos a Telegram: com funciona · canal · bot» bajo el menú,
+- **En la web**: «Avisos a Telegram: com funciona» bajo el menú,
   y en los créditos, qué guarda el bot. «Com funciona» lleva a una página de
   ayuda breve (`web/telegram.html`, también en castellano), con un bloque
   para el canal (igual para todos, como un tablón; azul) y otro para el bot
@@ -77,7 +77,11 @@ internet en casa, que suele llegar con las tormentas.
   marcadas en rojo donde hay que tocar. En el ordenador, los pasos van en fila
   y los dos bloques comparten columnas; en el móvil, uno debajo de otro
   (Juanjo, 07-10-2026: «lo vertical puede estar bien para móvil, pero no para
-  web»). Juanjo pidió que se entienda sin saber Telegram y que sea
+  web»). Al pulsar una captura, en el ordenador se amplía sobre la propia
+  página, tan grande como quepa, con «Descarrega» y «Tanca» (visor de
+  `web/comu.js`, sirve para cualquier enlace con la clase `amplia`); en el
+  móvil se abre sola, donde se amplía con los dedos (Juanjo: la ventana nueva
+  «quizás sea mejor para móvil… pero para web no»). Juanjo pidió que se entienda sin saber Telegram y que sea
   breve, porque «la gente no lee». Las capturas se hicieron con Telegram Web en
   un perfil de navegador temporal, con el bot parado y la suscripción de Juanjo
   guardada y restaurada después.

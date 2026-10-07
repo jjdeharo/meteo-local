@@ -13,6 +13,8 @@ function ambArticle(dia) {
 var IDIOMA = {
   codi: 'es',
   textos: {
+    'Descarrega': 'Descargar',
+    'Tanca': 'Cerrar',
     "Les dades són de les {0}: fa més de {1} hores que no s\u2019actualitzen. La previsió i l\u2019estat dels trens no es mostren fins que tornin.": "Los datos son de las {0}: hace más de {1} horas que no se actualizan. La previsión y el estado de los trenes no se muestran hasta que vuelvan.",
     "Mentrestant: ": "Mientras tanto: ",
     "L\u2019AEMET hi afegeix —": "La AEMET añade —",

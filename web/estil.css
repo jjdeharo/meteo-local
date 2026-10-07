@@ -520,12 +520,29 @@ h1 { margin: 0; font-size: 1.6rem; line-height: 1.2; }
 .ajuda .pas a { grid-column: 2; }
 .ajuda .pas img { width: 100%; max-width: 260px; height: auto; border: 1px solid var(--vora); border-radius: .6rem; }
 @media (min-width: 900px) {
-  /* la mateixa reixa als dos blocs: els passos del canal cauen sobre els dos últims del bot */
-  .ajuda .opcio { grid-template-columns: minmax(0, 1fr) repeat(4, 8.4rem); column-gap: .9rem; }
-  .ajuda .opcio.canal .info { grid-column: span 3; }
+  /* quatre columnes iguals als dos blocs: el canal explica a l'esquerra i els seus
+     dos passos cauen sobre els dos últims del bot; el bot explica a tot l'ample */
+  .ajuda .opcio { grid-template-columns: repeat(4, minmax(0, 1fr)); column-gap: 1.3rem; }
+  .ajuda .opcio.canal .info { grid-column: span 2; }
+  .ajuda .opcio.bot .info { grid-column: 1 / -1; }
+  .ajuda .info p:has(.boto) { display: inline-block; margin-right: 1rem; }
+  .ajuda .info .cerca { display: inline-block; }
   /* el text a dalt i la captura a baix, totes a la mateixa altura */
   .ajuda .pas { grid-template-columns: 1.6rem 1fr; grid-template-rows: 1fr auto; }
   .ajuda .pas .num { width: 1.6rem; height: 1.6rem; font-size: .9rem; }
-  .ajuda .pas p { margin: 0 0 .4rem; font-size: .92rem; line-height: 1.35; }
+  .ajuda .pas p { margin: 0 0 .4rem; }
   .ajuda .pas a { grid-column: 1 / -1; }
+  /* petites: es poden ampliar amb un clic (visor de comu.js) */
+  .ajuda .pas img { max-width: 10.5rem; }
 }
+
+/* Visor d'imatges (comu.js): a l'ordinador, la captura a sobre de la pàgina, amb marge al voltant. */
+.visor { border: none; padding: 0; margin: 0; width: 100vw; height: 100vh; max-width: none; max-height: none;
+  background: rgb(0 0 0 / .78); }
+.visor[open] { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.visor::backdrop { background: transparent; }
+.visor img { display: block; max-width: 94vw; max-height: calc(94vh - 3.4rem); width: auto; height: auto; margin: 0 auto;
+  border-radius: .6rem; background: var(--superficie); }
+.visor-barra { display: flex; justify-content: center; gap: .6rem; margin-top: .6rem; }
+.visor-boto { font: inherit; font-weight: 600; padding: .45rem 1rem; border-radius: 999px; border: 1px solid var(--vora);
+  background: var(--superficie); color: var(--text); text-decoration: none; cursor: pointer; }

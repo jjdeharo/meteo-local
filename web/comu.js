@@ -439,5 +439,40 @@ sistemaFosc.addEventListener('change', (e) => {
   if (segueixSistema()) aplicaFosc(e.matches, false);
 });
 
+// Visor d'imatges: a l'ordinador, una imatge enllaçada amb la classe «amplia»
+// s'obre a sobre de la pàgina, tan gran com hi càpiga, amb «Descarrega» i
+// «Tanca» (també Esc o un clic fora). Al mòbil s'obre sola, on es pot ampliar
+// amb els dits (Juanjo, 07-10-2026).
+const pantallaGran = matchMedia('(min-width: 900px) and (pointer: fine)');
+
+function obreVisor(enllac) {
+  const visor = element('dialog', 'visor');
+  const imatge = element('img');
+  imatge.src = enllac.href;
+  imatge.alt = enllac.querySelector('img')?.alt || '';
+  const barra = element('div', 'visor-barra');
+  const baixa = element('a', 'visor-boto', T('Descarrega'));
+  baixa.href = enllac.href;
+  baixa.download = '';
+  const tanca = element('button', 'visor-boto', T('Tanca'));
+  tanca.type = 'button';
+  tanca.addEventListener('click', () => visor.close());
+  barra.append(baixa, tanca);
+  visor.append(imatge, barra);
+  visor.setAttribute('aria-label', imatge.alt);
+  visor.addEventListener('click', (e) => { if (e.target === visor) visor.close(); });
+  visor.addEventListener('close', () => visor.remove());
+  document.body.append(visor);
+  visor.showModal();
+  tanca.focus();
+}
+
+document.addEventListener('click', (e) => {
+  const enllac = e.target.closest('a.amplia');
+  if (!enllac || !pantallaGran.matches || e.ctrlKey || e.metaKey || e.shiftKey) return;
+  e.preventDefault();
+  obreVisor(enllac);
+});
+
 // Per poder instal·lar la web com a aplicació (sw.js).
 if ('serviceWorker' in navigator) navigator.serviceWorker.register(ARREL + 'sw.js').catch(() => {});
