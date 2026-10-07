@@ -78,7 +78,8 @@ internet en casa, que suele llegar con las tormentas.
   y los dos bloques comparten columnas; en el móvil, uno debajo de otro
   (Juanjo, 07-10-2026: «lo vertical puede estar bien para móvil, pero no para
   web»). Al pulsar una captura, en el ordenador se amplía sobre la propia
-  página, tan grande como quepa, con «Descarrega» y «Tanca» (visor de
+  página, tan grande como quepa, con una X arriba a la derecha y sin descarga, que en unas
+  capturas de ayuda no tiene sentido (Juanjo, 07-10-2026) (visor de
   `web/comu.js`, sirve para cualquier enlace con la clase `amplia`); en el
   móvil se abre sola, donde se amplía con los dedos (Juanjo: la ventana nueva
   «quizás sea mejor para móvil… pero para web no»). Juanjo pidió que se entienda sin saber Telegram y que sea

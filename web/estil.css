@@ -541,8 +541,8 @@ h1 { margin: 0; font-size: 1.6rem; line-height: 1.2; }
   background: rgb(0 0 0 / .78); }
 .visor[open] { display: flex; flex-direction: column; align-items: center; justify-content: center; }
 .visor::backdrop { background: transparent; }
-.visor img { display: block; max-width: 94vw; max-height: calc(94vh - 3.4rem); width: auto; height: auto; margin: 0 auto;
+.visor img { display: block; max-width: 88vw; max-height: 92vh; width: auto; height: auto; margin: 0 auto;
   border-radius: .6rem; background: var(--superficie); }
-.visor-barra { display: flex; justify-content: center; gap: .6rem; margin-top: .6rem; }
-.visor-boto { font: inherit; font-weight: 600; padding: .45rem 1rem; border-radius: 999px; border: 1px solid var(--vora);
-  background: var(--superficie); color: var(--text); text-decoration: none; cursor: pointer; }
+.visor-tanca { position: fixed; top: 1rem; right: 1rem; width: 2.75rem; height: 2.75rem; display: grid; place-items: center;
+  border: 1px solid var(--vora); border-radius: 50%; background: var(--superficie); color: var(--text); cursor: pointer; }
+.visor-tanca svg { width: 1.4rem; height: 1.4rem; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
