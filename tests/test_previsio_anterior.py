@@ -55,5 +55,21 @@ class PrevisioAnterior(unittest.TestCase):
         self.assertIsNone(casa.previsio_anterior("/no/existeix.json", None, []))
 
 
+
+class TemperaturaDelTram(unittest.TestCase):
+    def test_mitjana_del_principi_i_del_final(self):
+        # La temperatura és la d'un instant: el tram de 18 a 19, la mitjana de
+        # les 18 i les 19 (abans, la de les 19).
+        import config as C
+        desde = dt.datetime(2026, 10, 7, 18, 3).astimezone()
+        h = {"time": [f"2026-10-07T{x:02d}:00" for x in range(24)],
+             "temperature_2m_meteofrance_seamless": [float(x) for x in range(24)]}
+        for m in C.MODELOS_FINOS:
+            h[f"precipitation_{m}"] = [0.0] * 24
+        files = casa.previsio(desde, h, {}, None, [])
+        self.assertEqual([(f["hora"][11:16], f["temperatura"]) for f in files[:2]],
+                         [("18:00", 18.5), ("19:00", 19.5)])
+
+
 if __name__ == "__main__":
     unittest.main()

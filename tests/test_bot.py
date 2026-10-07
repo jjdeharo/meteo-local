@@ -105,6 +105,15 @@ class Resum(unittest.TestCase):
         self.assertIn("Trens de Cerdanyola: R4 sense trens.", r)
         self.assertIn("Lluvia: posible de 12 a 15 h", B.resum(dades(), "es", ARA))
 
+    def test_ara_amb_l_estacio_particular_i_fins_a_mitjanit(self):
+        # La temperatura d'ara, de l'estació particular; la pluja, de qualsevol.
+        d = dades()
+        d["ara_casa"] = {"temperatura": 14.6, "plou": True}
+        r = B.resum(d, "ca", ARA)
+        self.assertIn("Ara mateix: 15 °C, plou.", r)
+        self.assertIn("Temperatura d'aquí a mitjanit: entre ", r)
+        self.assertIn("Temperatura de aquí a medianoche: entre ", B.resum(d, "es", ARA))
+
     def test_a_les_20_la_de_dema(self):
         vespre = ARA.replace(hour=20)
         d = dades(vespre)

@@ -36,5 +36,7 @@
 | [0032](0032-servidor-de-reserva-en-ionos.md) | Servidor de reserva en IONOS | aceptado |
 | [0033](0033-texto-de-los-avisos-de-aemet.md) | Texto de los avisos de AEMET | aceptado |
 | [0034](0034-bot-y-canal-de-telegram.md) | Bot y canal de Telegram | aceptado |
+| [0035](0035-repositorio-en-la-organizacion-meteo-montflorit.md) | El repositorio, en la organización meteo-montflorit | aceptado |
+| [0036](0036-temperatura-de-ahora-y-de-cada-tramo.md) | Temperatura de ahora y de cada tramo | aceptado |
 
 Plantilla: [0000-plantilla.md](0000-plantilla.md). Para crear uno: `nuevo-adr "Título"`.

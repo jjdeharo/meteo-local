@@ -203,13 +203,16 @@ def franges(hores):
 
 
 def text_ara(dades, idioma, lloc=""):
-    a = dades.get("ara") or {}
-    if a.get("temperatura") is None:
+    """Como la web: la temperatura, de la estación particular (la de Montflorit
+    marca de más por la tarde); la lluvia, de cualquiera de las dos."""
+    a, c = dades.get("ara") or {}, dades.get("ara_casa") or {}
+    t = c["temperatura"] if c.get("temperatura") is not None else a.get("temperatura")
+    if t is None:
         return None
-    plou = (a.get("intensitat") or 0) > 0 or (a.get("pluja_30min") or 0) > 0
+    plou = (a.get("intensitat") or 0) > 0 or (a.get("pluja_30min") or 0) > 0 or bool(c.get("plou"))
     if idioma == "es":
-        return f"Ahora mismo{lloc and ' en ' + lloc}: {graus(a['temperatura'])}, {'llueve' if plou else 'no llueve'}."
-    return f"Ara mateix{lloc and ' a ' + lloc}: {graus(a['temperatura'])}, {'plou' if plou else 'no plou'}."
+        return f"Ahora mismo{lloc and ' en ' + lloc}: {graus(t)}, {'llueve' if plou else 'no llueve'}."
+    return f"Ara mateix{lloc and ' a ' + lloc}: {graus(t)}, {'plou' if plou else 'no plou'}."
 
 
 DIES = {"ca": ("dilluns", "dimarts", "dimecres", "dijous", "divendres", "dissabte", "diumenge"),
@@ -345,7 +348,8 @@ def resum(dades, idioma, moment):
         linies = [f"<b>El tiempo hoy, {nom_dia}, en Montflorit</b>" if idioma == "es"
                   else f"<b>El temps avui, {nom_dia}, a Montflorit</b>",
                   text_ara(dades, idioma),
-                  text_temperatura(tram, idioma, "Temperatura de hoy" if idioma == "es" else "Temperatura d'avui"),
+                  text_temperatura(tram, idioma, "Temperatura de aquí a medianoche" if idioma == "es"
+                                   else "Temperatura d'aquí a mitjanit"),
                   text_roba(tram, idioma),
                   text_pluja(tram, idioma)]
         linies += text_avisos_aemet(dades, idioma, moment.date(), moment)

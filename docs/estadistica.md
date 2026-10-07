@@ -226,6 +226,14 @@ temperatura que se muestra es la del modelo menos el error esperado:
 T_{\text{mostrada}} = T_{\text{modelo}} - \mathbf{v}^\top \mathbf{z}
 ```
 
+La corrección se calcula para cada hora en punto, que es lo que se compara con
+lo medido. Como la temperatura es la de un instante, cada tramo de la tabla
+(«de 18 a 19») muestra la media de sus dos extremos, los dos corregidos:
+
+```math
+T_{18\text{–}19} = \tfrac{1}{2}\left(T_{\text{mostrada}}(18) + T_{\text{mostrada}}(19)\right)
+```
+
 Se mide con el error medio absoluto, $\frac{1}{n} \sum_i |T_i - T_{\text{medida},i}|$.
 
 ### 3.1 Primer modelo: un año de la estación de casa

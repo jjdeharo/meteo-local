@@ -219,7 +219,14 @@ def previsio(desde, h, e, ara, avisos, model=None, casa=None, nc=None):
         if p is None:
             p = prob.get(t)
         mm = round(lluvia_modelos(h, i), 1)
+        # La temperatura es la de un instante: la del tramo de 18 a 19, la media
+        # de las 18 y las 19, las dos corregidas (la lluvia sí es la acumulada
+        # hasta el final del tramo).
         temp = A.temperatura(model, d)
+        if i > 0:
+            antes = A.temperatura(model, variables_hora(desde, h, prob, i - 1, prever))
+            if antes is not None and temp is not None:
+                temp = (antes + temp) / 2
         segun_estacion = False
         # Primeras horas: la persistencia de la lluvia que mide ahora la
         # estación, si da más que los modelos.
