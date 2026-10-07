@@ -48,7 +48,9 @@ internet en casa, que suele llegar con las tormentas.
     se repite en dos pasadas (ADR 0029).
   Un aviso que llega tarde no se manda (lluvia, a los 20 minutos; los demás, a
   las 3 horas).
-- **Cada persona elige** en un menú con botones, con una sola marca: ✓ es
+- **Cada persona elige** en un menú con botones (al darse de alta, el menú
+  empieza diciendo qué se le ha marcado ya: «Per començar, t'he activat els
+  avisos de la riera i de perill»), con una sola marca: ✓ es
   «sí»; sin marca, «no» (Juanjo, 07-10-2026: con «·» para el no, «el check
   siempre es afirmación»). Los cuatro tipos (por
   defecto, riera y peligro), la previsión, un mensaje al día a las 6, 7 u
