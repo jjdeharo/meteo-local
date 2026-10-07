@@ -208,6 +208,16 @@ class Repartiment(unittest.TestCase):
         self.assertEqual([(str(p["chat_id"]), p["text"][:4]) for _, p in api.enviats],
                          [("1", "R ca"), ("1", "<b>E")])
 
+    def test_la_benvinguda_diu_que_ja_hi_ha_marcat(self):
+        subs, api = {}, Api()
+        missatge = {"message": {"chat": {"id": 9, "type": "private"}, "from": {"language_code": "ca"}, "text": "/start"}}
+        B.atén(api, subs, missatge)
+        self.assertTrue(api.enviats[-1][1]["text"].startswith("Per començar, t'he activat"))
+        self.assertEqual(B.PER_DEFECTE, ["riera", "perill"])    # el que diu el text
+        api.enviats.clear()
+        B.atén(api, subs, missatge)                               # qui ja hi era: sense la frase
+        self.assertTrue(api.enviats[-1][1]["text"].startswith("Toca el que vulguis"))
+
     def test_el_menu_explica_el_canal(self):
         for idioma in ("ca", "es"):
             self.assertIn("@TempsMontflorit)", B.T[idioma]["menu"])

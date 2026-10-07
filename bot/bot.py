@@ -56,6 +56,7 @@ T = {
                        "(Cerdanyola del Vallès) que triïs a continuació. Els calcula un programa amb dades públiques: "
                        "són orientatius, no oficials. Segueix sempre les indicacions de Protecció Civil i de "
                        "l'Ajuntament.\n" + WEB),
+        "inici": "Per començar, t'he activat els avisos de la riera i de perill.",
         "menu": ("Toca el que vulguis rebre. ✓ vol dir que sí; si el tornes a tocar, es treu.\n"
                  "La previsió arriba un cop al dia, a l'hora que triïs.\n\n"
                  "Si també ets al canal (@TempsMontflorit), no et repetiré el que ja t'arriba per allà: els avisos "
@@ -74,6 +75,7 @@ T = {
                        "(Cerdanyola del Vallès) que elijas a continuación. Los calcula un programa con datos públicos: "
                        "son orientativos, no oficiales. Sigue siempre las indicaciones de Protección Civil y del "
                        "Ayuntamiento.\n" + WEB),
+        "inici": "Para empezar, te he activado los avisos de la riera y de peligro.",
         "menu": ("Toca lo que quieras recibir. ✓ quiere decir que sí; si lo vuelves a tocar, se quita.\n"
                  "La previsión llega una vez al día, a la hora que elijas.\n\n"
                  "Si también estás en el canal (@TempsMontflorit), no te repetiré lo que ya te llega por allí: los "
@@ -347,11 +349,13 @@ def atén(api, subs, update):
         idioma = (subs.pop(chat, None) or nou_subscriptor(m.get("from", {})))["idioma"]
         envia(api, chat, T[idioma]["baixa"])
         return
+    nou = chat not in subs
     sub = alta(subs, chat, m.get("from", {}))
     t = T[sub["idioma"]]
     if ordre == "/start":
         envia(api, chat, t["benvinguda"], html=True)
-        envia(api, chat, t["menu"], teclat(sub))
+        # A quien llega de nuevo se le dice qué se le ha marcado ya (Juanjo, 07-10-2026).
+        envia(api, chat, (t["inici"] + " " if nou else "") + t["menu"], teclat(sub))
     elif ordre in ("/avisos", "/menu"):
         envia(api, chat, t["menu"], teclat(sub))
     elif ordre == "/resum":
