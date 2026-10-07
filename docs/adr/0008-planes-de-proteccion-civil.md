@@ -37,6 +37,17 @@ La recomendación sigue a Protección Civil mientras el plan esté activado, sin
 hora de fin: el plan no la tiene. La descripción del plan no siempre dice la
 zona; en caso de duda se da por afectado el Vallès.
 
+**Cuando el plan es el único motivo** (versión 2.19.1, 07-10-2026): el INUNCAT
+siguió en emergencia días después de las lluvias del 3 al 6 de octubre, y una
+mañana seca la ida salía con «riesgo de lluvia alto» y todos los motivos
+visibles en verde, porque la ficha omitía el plan (ya sale arriba de todo).
+Juanjo pidió explicarlo tal cual: se sigue recomendando el coche, pero si el
+plan es el único motivo y ninguna otra fuente ve lluvia (todas en «moto»), la
+ficha muestra el plan y una nota con franja verde: «Només ho decideix el pla
+de Protecció Civil: ni els avisos de l'AEMET, ni el radar, ni les estacions,
+ni els models hi veuen pluja. No hi ha cap motiu aparent per no anar en moto.»
+Lo decide `nomesPla` en `web/app.js` (prueba en `tests/test_web.py`).
+
 ## Evidencia
 
 05-10-2026, 10:06: dos planes INUNCAT activados en fase de emergencia, uno

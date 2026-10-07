@@ -46,17 +46,32 @@ function liMotiu(motiu, ambDetall) {
   return li;
 }
 
+// El cotxe només el demana el pla de Protecció Civil: cap altra font (avisos
+// de l'AEMET, radar, estacions, models, simulacions) hi veu pluja.
+function nomesPla(trajecte) {
+  return trajecte.nivell === 'cotxe'
+    && trajecte.motius.some((m) => m.font === 'pc' && m.nivell === 'cotxe')
+    && trajecte.motius.every((m) => m.font === 'pc' || m.nivell === 'moto');
+}
+
 // A la vista, només el que decideix el nivell (com a molt tres línies). La
 // resta, i el detall de cada motiu, plegats a «Més detalls». El pla de
-// Protecció Civil no es repeteix: ja surt a dalt de tot.
+// Protecció Civil no es repeteix, perquè ja surt a dalt de tot, llevat que
+// sigui l'únic motiu: llavors es diu tal qual, amb la contradicció a la vista.
 function llistaMotius(trajecte, plans) {
-  const motius = trajecte.motius.filter((m) => !(m.font === 'pc' && plans && plans.length));
+  const sols = nomesPla(trajecte);
+  const motius = trajecte.motius.filter((m) => sols || !(m.font === 'pc' && plans && plans.length));
   let visibles = motius.filter((m) => m.nivell === trajecte.nivell).slice(0, MAX_MOTIUS_VISIBLES);
   if (!visibles.length) visibles = motius.slice(0, 2);
   const fragment = document.createDocumentFragment();
   const llista = element('ul', 'motius');
   for (const m of visibles) llista.append(liMotiu(m, false));
   fragment.append(llista);
+  if (sols) {
+    fragment.append(element('p', 'nomes-pla', 'Només ho decideix el pla de Protecció Civil: ni els avisos '
+      + 'de l\u2019AEMET, ni el radar, ni les estacions, ni els models hi veuen pluja. No hi ha cap motiu '
+      + 'aparent per no anar en moto.'));
+  }
   const resta = motius.filter((m) => !visibles.includes(m));
   if (resta.length || visibles.some((m) => m.detall)) {
     const plec = element('details', 'mes-detalls');

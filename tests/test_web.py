@@ -144,6 +144,18 @@ class Web(unittest.TestCase):
         self.assertIsNone(self.avalua("2026-10-05T20:05:00+02:00",
                                       f"sortidaAra({json.dumps(casa)})", "app.js"))
 
+    def test_cotxe_nomes_pel_pla(self):
+        # 07-10-2026: anada seca amb l'INUNCAT en emergència; tornada amb avís groc.
+        pc = {"nivell": "cotxe", "font": "pc", "text": "INUNCAT"}
+        sec = [{"nivell": "moto", "font": f} for f in ("models", "simulacions", "radar", "estacions", "aemet")]
+        anada = {"nivell": "cotxe", "motius": [pc] + sec}
+        tornada = {"nivell": "cotxe", "motius": [{"nivell": "cotxe", "font": "aemet"}, pc]}
+        compte = {"nivell": "cotxe", "motius": [pc, {"nivell": "compte", "font": "models"}]}
+        sense_pla = {"nivell": "moto", "motius": sec}
+        expr = f"[{json.dumps(anada)}, {json.dumps(tornada)}, {json.dumps(compte)}, {json.dumps(sense_pla)}]"
+        self.assertEqual(self.avalua("2026-10-07T07:10:00+02:00", f"{expr}.map(nomesPla)", "app.js"),
+                         [True, False, False, False])
+
 
 if __name__ == "__main__":
     unittest.main()

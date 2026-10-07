@@ -192,7 +192,17 @@ h1 { margin: 0; font-size: 1.6rem; line-height: 1.2; }
 .motiu.cotxe::before { background: var(--cotxe); }
 
 .targeta.passat { --color: var(--suau); }
-.targeta.passat .motius, .targeta.passat .perque { display: none; }
+.targeta.passat .motius, .targeta.passat .perque, .targeta.passat .nomes-pla { display: none; }
+/* Cotxe només pel pla de Protecció Civil: la franja verda diu que el temps
+   no ho demana. */
+.nomes-pla {
+  margin: .5rem 0 0;
+  padding: .45rem .7rem;
+  border-left: .3rem solid var(--moto);
+  border-radius: .3rem;
+  background: var(--moto-fons);
+  font-size: .95rem;
+}
 .etiqueta-passat { font-weight: 600; }
 
 .avis {
