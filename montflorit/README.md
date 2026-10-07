@@ -29,7 +29,10 @@ responsable de la seva exactitud.
 
 Aquest repositori conté la pàgina tal com es publica. Es genera sola: un
 programa calcula la previsió cada 15 minuts (cada 6 quan hi ha avisos o pluja
-a prop) i en renova les dades.
+a prop) i en renova les dades. El codi font és a
+<https://github.com/jjdeharo/meteo-local>, amb el
+[registre de decisions](https://github.com/jjdeharo/meteo-local/tree/main/docs/adr):
+per què es va fer cada canvi i quan.
 
 ## Llicències
 

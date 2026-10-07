@@ -41,6 +41,15 @@ clon con otro nombre y si se verían datos suyos o de su NAS.
   estación (ADR 0004). Respondió el mismo día sin oponerse, y Juanjo lo dio
   por permiso: desde entonces se puede indexar (`INDEXABLE = True`).
 - **En catalán y, aparte, en castellano** (ADR 0025).
+- **El código fuente y los ADR, enlazados** (07-10-2026). «Fonts i crèdits»
+  (apartado «Codi font i decisions», y el «Codi font» del pie) y el README del
+  repositorio público llevan a `jjdeharo/meteo-local` y a `docs/adr`. Antes la
+  web pública no lo nombraba y los ADR no se encontraban desde ella; a Juanjo
+  le preguntaron si había copiado la parte de los transportes, y el historial
+  fechado de este repositorio es lo que muestra cómo nació cada pieza. Aceptó
+  que así se vea el origen personal (el trayecto, la casa) y pidió quitar de
+  los ADR el nombre de la persona del trayecto. El resto de páginas sigue sin
+  nombrar este repositorio, la casa ni el trayecto.
 
 ## Alternativas descartadas
 

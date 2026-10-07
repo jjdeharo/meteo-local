@@ -85,9 +85,13 @@ class Web(unittest.TestCase):
         self.assertIn('<a href="./" aria-current="page"><svg aria-hidden="true"><use href="#i-cloud-sun"></use></svg>El temps ara</a>', index)
         self.assertNotIn("Trajecte", index)
         self.assertIn('data-dades="montflorit.json"', index)
-        for nom in ("index.html", "fonts.html", "manifest.webmanifest"):
+        for nom in ("index.html", "manifest.webmanifest"):
             M.comprova(nom, self.llegeix(nom))        # no lanza
-        M.comprova("README.md", self.llegeix("README.md"), M.PROHIBIDES_SORTIR)
+        # Los créditos y el README enlazan el código fuente y los ADR (jjdeharo/meteo-local).
+        M.comprova("fonts.html", self.llegeix("fonts.html"), M.PROHIBIDES_FONTS)
+        self.assertIn("https://github.com/jjdeharo/meteo-local/tree/main/docs/adr", self.llegeix("fonts.html"))
+        M.comprova("README.md", self.llegeix("README.md"), M.PROHIBIDES_README)
+        self.assertIn("docs/adr", self.llegeix("README.md"))
         # «Si surts» habla de motos y coches, pero no de casa ni del trayecto.
         sortir = self.llegeix("sortir.html")
         self.assertIn('aria-current="page"><svg aria-hidden="true"><use href="#i-door-open"></use></svg>Si surts</a>', sortir)
@@ -130,7 +134,7 @@ class Web(unittest.TestCase):
         self.assertIn('<a href="es/" lang="es" hreflang="es">Castellano</a>', self.llegeix("index.html"))
         # No queda catalán en lo que se lee.
         for nom, html in (("es/index.html", index), ("es/fonts.html", fonts)):
-            M.comprova(nom, html)
+            M.comprova(nom, html, M.PROHIBIDES_FONTS if "fonts" in nom else M.PROHIBIDES)
             visible = M.text_visible(html).lower()
             for paraula in ("pluja", "avui", "temps", "amb", "dels", "és", "hores"):
                 self.assertIsNone(re.search(rf"\b{paraula}\b", visible), f"{nom}: «{paraula}»")

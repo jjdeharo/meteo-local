@@ -76,7 +76,6 @@ CANVIS_FONTS = [
      "<strong>Estació particular:</strong> una estació pròpia del mateix barri, llegida"),
     ("<p>És una recomanació calculada automàticament, no una previsió oficial.",
      "<p>És una previsió calculada automàticament, no una previsió oficial."),
-    ('href="https://github.com/jjdeharo/meteo-local"', f'href="{REPO}"'),
     # Los modelos globales solo los usa la página del trayecto.
     ("amb models de Météo-France (AROME), del servei meteorològic alemany (ICON-EU i les seves 40 variants), "
      "de l'ECMWF, del Met Office britànic i de la NOAA.",
@@ -102,6 +101,10 @@ CANVIS_TELEGRAM = [
 ]
 # En «Si surts» se habla de medios de transporte: ahí sí van «moto» y «cotxe».
 PROHIBIDES_SORTIR = ("casa", "trajecte", "meteo-local")
+# Los créditos y el README enlazan el código fuente y los ADR, que están en
+# jjdeharo/meteo-local (Juanjo, 07-10-2026); lo demás sigue sin nombrarlo.
+PROHIBIDES_FONTS = ("casa", "cotxe", "moto", "trajecte")
+PROHIBIDES_README = ("casa", "trajecte")
 
 # Créditos de iconos que solo usa la página del trayecto.
 FORA_FONTS = [re.compile(r"\n      <li>Icones de roba i pluja de .*?</li>"),
@@ -183,7 +186,8 @@ def castella(html, nom, taula=None):
                    "fonts.html": [CREDIT_TRADUCCIO]}[nom], nom)
     if nom == "telegram.html":     # les captures, les de Telegram en castellà
         t = t.replace('img/telegram/ca/', 'img/telegram/es/').replace('="img/', '="../img/')
-    comprova("es/" + nom, t, PROHIBIDES_SORTIR if nom in ("sortir.html", "telegram.html") else PROHIBIDES)
+    comprova("es/" + nom, t, PROHIBIDES_SORTIR if nom in ("sortir.html", "telegram.html") else
+             PROHIBIDES_FONTS if nom == "fonts.html" else PROHIBIDES)
     return t
 
 
@@ -255,7 +259,7 @@ def fonts(fonts_html):
         t = treu(t, patro, "fonts.html")
     if INDEXABLE:
         t = canvia(t, [(ROBOTS, "")], "fonts.html")
-    comprova("fonts.html", t)
+    comprova("fonts.html", t, PROHIBIDES_FONTS)
     return t
 
 
@@ -300,7 +304,7 @@ def construeix(desti, web=None):
     open(os.path.join(desti, ".nojekyll"), "w").close()
     comprova("manifest.webmanifest", llegeix_fitxer(os.path.join(desti, "manifest.webmanifest")))
     # El README presenta també «Si surts»: hi poden sortir els mitjans.
-    comprova("README.md", llegeix_fitxer(os.path.join(desti, "README.md")), PROHIBIDES_SORTIR)
+    comprova("README.md", llegeix_fitxer(os.path.join(desti, "README.md")), PROHIBIDES_README)
     falten = [p for p in PECES[1:] if not os.path.exists(os.path.join(desti, p.replace("es/", "es/index.html")
                                                                       if p == "es/" else p))]
     if falten:

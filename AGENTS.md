@@ -30,7 +30,8 @@ Al cambiar algo:
 - La web pública (repositorio `meteo-montflorit/meteo-montflorit.github.io`;
   ADR 0024, 0028 y 0029) la genera `montflorit.py` a partir de
   `web/casa.html`, `web/sortir.html` y `web/fonts.html`, y no puede decir
-  «casa» ni nada del trayecto (en «Si surts» sí «moto» y «cotxe»). Si cambias
+  «casa» ni nada del trayecto (en «Si surts» sí «moto» y «cotxe»; los créditos
+  y el README enlazan este repositorio y sus ADR). Si cambias
   un texto que esté en sus listas de cambios, cámbialo también allí; las
   pruebas avisan. En ese repositorio no se edita nada a mano.
 - La web pública está también en castellano (ADR 0025). Todo texto visible de

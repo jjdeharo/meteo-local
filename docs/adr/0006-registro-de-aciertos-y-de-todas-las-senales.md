@@ -41,7 +41,7 @@ la clave (05-10-2026).
 
 Cuando haya bastantes días se podrá entrenar un modelo con todas las fuentes y
 compararlo con la regla con días que no haya visto. La elección del medio pasaría
-a ser una probabilidad con un umbral que decide Farners.
+a ser una probabilidad con un umbral que decide quien hace el trayecto.
 
 ## Evidencia
 

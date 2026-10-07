@@ -37,7 +37,7 @@ HD, AROME e ICON-EU desde principios de 2024.
 
 ## Consecuencias
 
-La regla queda respaldada con datos, y Farners ve en cada motivo cuántas veces
+La regla queda respaldada con datos, y quien hace el trayecto ve en cada motivo cuántas veces
 llovió de verdad con previsiones parecidas. La calibración se puede repetir
 cuando haya más datos: `python3 calibracio/descarrega.py --forzar` y
 `python3 calibracio/analitza.py`.
