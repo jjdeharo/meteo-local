@@ -172,8 +172,10 @@ def franges(hores):
     """[(inici, fi, prob)] de les hores seguides amb risc de pluja."""
     res = []
     for f in hores:
-        p = f.get("probabilitat") or 0
-        if p >= 0.2 or (f.get("pluja_mm") or 0) >= 0.2:
+        # Como en la web: decide la probabilidad; sin ella, los milímetros.
+        p = f.get("probabilitat")
+        if (p >= 0.2) if p is not None else (f.get("pluja_mm") or 0) >= 0.2:
+            p = p or 0
             h = dt.datetime.fromisoformat(f["hora"])
             if res and res[-1][1] == h:
                 res[-1] = (res[-1][0], h + dt.timedelta(hours=1), max(res[-1][2], p))

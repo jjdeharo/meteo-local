@@ -87,6 +87,12 @@ class Resum(unittest.TestCase):
         self.assertIn("Trens: R4 sense trens.", r)
         self.assertIn("Lluvia: posible de 12 a 15 h", B.resum(dades(), "es", ARA))
 
+    def test_milimetres_sense_probabilitat_no_compten(self):
+        d = dades()
+        for f in d["hores"]:
+            f.update(probabilitat=0.17, pluja_mm=0.4)
+        self.assertIn("Sense pluja prevista.", B.resum(d, "ca", ARA))
+
     def test_dades_velles(self):
         r = B.resum(dades(ARA - dt.timedelta(hours=3)), "ca", ARA)
         self.assertIn("no s'actualitzen des de les", r)
