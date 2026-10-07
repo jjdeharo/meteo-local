@@ -24,7 +24,8 @@ que tenía que seguir llevando a la web.
 - **Datos**: el `.htaccess` de `bilateria.org/app/meteo-local/` devuelve
   `Access-Control-Allow-Origin` con el origen que pide si es
   `jjdeharo.github.io` o `meteo-montflorit.github.io` (la cabecera solo admite
-  uno), con `Vary: Origin`. No está en el repositorio: vive en IONOS.
+  uno), con `Vary: Origin`. No está en el repositorio: vive en IONOS. Desde la
+  retirada de la web antigua (ADR 0030), solo `meteo-montflorit.github.io`.
 - **La dirección antigua redirige**: `jjdeharo/meteo-montflorit` queda con
   páginas que llevan a la misma página de la web nueva (`index.html`,
   `fonts.html`, `es/` y, para cualquier otra ruta, `404.html`), con
