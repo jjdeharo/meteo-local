@@ -44,10 +44,17 @@ Montflorit, «por lo tanto ya no usará IA».
 - Hay que copiar `nas/reloj.sh` al NAS y reconstruir el contenedor.
 - El contenedor sigue teniendo Claude Code y el token, que usan otros
   automatismos del NAS; meteo-local ya no los usa.
-- **Pendiente**: `prevision.py` y `registre.py` conservan la lógica del
-  trayecto (decisión, ropa, registro de aciertos) mezclada con la recogida de
-  datos que usa la página del tiempo. Se retirará en un cambio aparte; mientras
-  tanto, no se ejecuta.
+- `prevision.py` y `registre.py` conservaban la lógica del trayecto
+  (decisión, ropa, registro de aciertos) mezclada con la recogida de datos
+  que usa la página del tiempo. **2026-10-07: retirada.** `prevision.py` solo
+  recoge datos (avisos, planes, estaciones, radar y modo aviso) y mide la
+  lluvia del radar desde casa, no desde el punto medio del trayecto;
+  `nowcast.py` centra el mosaico en casa y ya no calcula las series del
+  punto medio ni del destino; `registre.py` solo apunta lo medido; de
+  `config.py` salen el destino, las ventanas, el horario y los umbrales del
+  trayecto. El CSS, el manifiesto privado y los comentarios del contenedor
+  describen lo que queda. La calibración de las ventanas del trayecto sigue en
+  `calibracio/` (datos y análisis históricos), con sus constantes locales.
 - ADR 0001, 0003, 0006, 0009, 0011, 0013 y 0014 describen piezas retiradas;
   quedan como historia.
 

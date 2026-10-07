@@ -366,5 +366,30 @@ class RepartimentAmbReintents(unittest.TestCase):
         d["trens"]["linies"] = [{"linia": "R4", "estat": "sense_dades"}, {"linia": "S2", "estat": "circula"}]
         self.assertIn("Trens de Cerdanyola: R4 sense dades.", B.resum(d, "ca", ARA))
 
+
+class AltesIRiscos(unittest.TestCase):
+    def test_un_text_qualsevol_no_dona_d_alta(self):
+        api, subs = Api(), {}
+        B.atén(api, subs, {"message": {"chat": {"id": 5, "type": "private"}, "from": {}, "text": "hola"}})
+        self.assertEqual(subs, {})
+        self.assertEqual(len(api.enviats), 1)       # només l'ajuda
+        B.atén(api, subs, {"message": {"chat": {"id": 5, "type": "private"}, "from": {}, "text": "/start"}})
+        self.assertIn("5", subs)
+
+    def test_un_risc_no_caduca_mentre_falten_dades(self):
+        r = {"clau": "previsio:ratxa", "tipus": "ratxa", "origen": "previsio", "nivell": "groc", "valor": 75,
+             "des_de": "2026-10-07T15:00+02:00", "fins": "2026-10-07T16:00+02:00",
+             "text": "Vent molt fort previst: ratxes de fins a 75 km/h, avui de 15 a 16 h."}
+        complet = {"riscos": [r], "hores": [{}], "ara": {"temperatura": 1}}
+        estat = {}
+        self.assertEqual(len(AB.decideix(estat, complet, ARA)), 1)
+        # Sense previsió ni estació durant hores: el risc segueix apuntat i no es repeteix en tornar.
+        AB.decideix(estat, {"riscos": [], "hores": None, "ara": None}, ARA + dt.timedelta(hours=5))
+        self.assertIn("previsio:ratxa", estat["perill"])
+        self.assertEqual(AB.decideix(estat, complet, ARA + dt.timedelta(hours=6)), [])
+        # Amb dades i sense veure'l 3 hores, caduca i es tornaria a avisar.
+        AB.decideix(estat, {"riscos": [], "hores": [{}], "ara": {"temperatura": 1}}, ARA + dt.timedelta(hours=10))
+        self.assertNotIn("previsio:ratxa", estat["perill"])
+
 if __name__ == "__main__":
     unittest.main()

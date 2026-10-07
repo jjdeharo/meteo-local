@@ -401,7 +401,7 @@ function blocPlans(plans) {
     const par = element('p', null,
       T`Protecció Civil: pla ${TD(p.nom)} (${p.pla}) en fase ${deFase(TD(NOM_FASE[p.fase] || p.fase))}.`);
     if (p.fase === 'emergència') {
-      par.append(T(' Eviteu els desplaçaments que no siguin necessaris.'));
+      par.append(T(' Evita els desplaçaments que no siguin necessaris.'));
     }
     if (p.comunicat) {
       const a = element('a', null, T('Comunicat (PDF)'));

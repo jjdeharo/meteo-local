@@ -84,20 +84,6 @@ class Registre(unittest.TestCase):
         self.assertEqual(len(lineas), 2)                 # la hora vacía no se guarda
         self.assertTrue(lineas[1].startswith("2026-10-05T07:00,0.4,17.2"))
 
-    def test_casa_seca_no_cuenta_en_la_verificacion(self):
-        # El cero de casa no prueba que no lloviera: si es la única fuente,
-        # no hay datos.
-        with mock.patch.object(R, "lineas_del_dia", return_value=[
-                {"decisio": {"mantinguda": False, "mitja": "moto", "decidit": "06:00"},
-                 "anada": {"nivell": "moto"}, "tornada": {"nivell": "moto"}}]), \
-                mock.patch.object(R, "lluvia_montflorit", side_effect=OSError), \
-                mock.patch.object(R, "lluvia_meteocat", side_effect=OSError), \
-                mock.patch.object(R, "lluvia_casa", return_value=[0.0, 0.0]), \
-                mock.patch.object(R.E, "disponible", return_value=True), \
-                mock.patch.object(R, "leer_resultados") as leer:
-            R.verifica("2026-10-05")
-            leer.assert_not_called()
-
 
 
 class PressioNivellMar(unittest.TestCase):

@@ -49,7 +49,7 @@ var IDIOMA = {
     "demà": "mañana",
     "a mitjanit": "a medianoche",
     "Avís de Protecció Civil": "Aviso de Protección Civil",
-    " Eviteu els desplaçaments que no siguin necessaris.": " Evitad los desplazamientos que no sean necesarios.",
+    " Evita els desplaçaments que no siguin necessaris.": " Evita los desplazamientos que no sean necesarios.",
     "Comunicat (PDF)": "Comunicado (PDF)",
     "Pressió {0}\u00a0hPa": "Presión {0}\u00a0hPa",
     "{0}, estable": "{0}, estable",

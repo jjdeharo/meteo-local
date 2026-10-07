@@ -84,16 +84,33 @@ def risc(tipus, origen, valor, ini=None, fin=None, ahora=None):
             "fins": fin and fin.isoformat(timespec="minutes"), "text": text}
 
 
+TRAM_PAUSA_H = 2
+
+
 def pitjor_tram(hores, tipus, valor_de):
     """De las horas que pasan el umbral amarillo, el peor valor y el tramo
-    que va de la primera a la última."""
+    de horas seguidas que lo contiene."""
     dins = [(f, valor_de(f)) for f in hores if nivell(tipus, valor_de(f))]
     if not dins:
         return None
     cmp = min if tipus == "fred" else max
     valor = cmp(v for _, v in dins)
-    ini = dt.datetime.fromisoformat(dins[0][0]["hora"])
-    fin = dt.datetime.fromisoformat(dins[-1][0]["fins"])
+    # Tramos de horas seguidas (una pausa de hasta TRAM_PAUSA_H horas no los
+    # separa): el que tiene el peor valor. Antes se unían la primera y la
+    # última hora aunque hubiera media noche sin riesgo en medio («avui de
+    # 15 a 4 h»).
+    trams, tram = [], [dins[0]]
+    for ant, act in zip(dins, dins[1:]):
+        pausa = dt.datetime.fromisoformat(act[0]["hora"]) - dt.datetime.fromisoformat(ant[0]["fins"])
+        if pausa <= dt.timedelta(hours=TRAM_PAUSA_H):
+            tram.append(act)
+        else:
+            trams.append(tram)
+            tram = [act]
+    trams.append(tram)
+    tram = next(t for t in trams if any(v == valor for _, v in t))
+    ini = dt.datetime.fromisoformat(tram[0][0]["hora"])
+    fin = dt.datetime.fromisoformat(tram[-1][0]["fins"])
     return valor, ini, fin
 
 

@@ -100,7 +100,11 @@ while true; do
     registro "hay código nuevo en main"
     pasada
   fi
-  if [ -d "$REPO/.git" ] && [ "$ahora" = "$(hora_verificacion)" ]; then
+  # A la hora de verificación o después, una vez al día: una pasada larga
+  # que cruce la hora en punto no la deja sin hacer.
+  if [ -d "$REPO/.git" ] && [[ "$ahora" > "$(hora_verificacion)" || "$ahora" = "$(hora_verificacion)" ]] \
+      && [ "$(cat "$ESTAT_DIR/verificacio-feta" 2>/dev/null)" != "$(date +%F)" ]; then
+    date +%F > "$ESTAT_DIR/verificacio-feta"
     verificacion
   fi
   if [ -d "$REPO/.git" ] && [ "${ahora#*:}" = "05" ] && [ -f /estat/vigila-pluviometre.json ]; then

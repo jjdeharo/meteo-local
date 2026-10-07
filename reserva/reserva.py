@@ -27,6 +27,7 @@ Uso (con el Python del entorno de la reserva):
   reserva.py estat       cómo está
 """
 import datetime as dt
+import fcntl
 import json
 import os
 import shutil
@@ -34,6 +35,11 @@ import subprocess
 import sys
 import tempfile
 import time
+
+# La hora local de Montflorit, pase lo que pase con la del hosting: casa.py
+# compara horas locales de Open-Meteo con la del sistema.
+os.environ.setdefault("TZ", "Europe/Madrid")
+time.tzset()
 
 BASE = os.environ.get("RESERVA_DIR", os.path.expanduser("~/.meteo-reserva"))
 REPO = os.path.join(BASE, "repo")
@@ -56,6 +62,20 @@ ENTORN = dict(os.environ,
 
 def ara():
     return dt.datetime.now().astimezone()
+
+
+def cadenat():
+    """Una sola vuelta a la vez: el cron entra cada 5 minutos y un cálculo
+    puede durar más (numpy a un hilo). Devuelve el archivo bloqueado, que hay
+    que conservar hasta acabar, o None si otra vuelta sigue en marcha."""
+    os.makedirs(BASE, exist_ok=True)
+    f = open(os.path.join(BASE, "reserva.lock"), "w")
+    try:
+        fcntl.flock(f, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except OSError:
+        f.close()
+        return None
+    return f
 
 
 def apunta(text):
@@ -121,6 +141,9 @@ def actualitza_repo(estat):
 
 
 def vigila():
+    pany = cadenat()
+    if pany is None:
+        return          # la vuelta anterior aún no ha acabado
     os.makedirs(os.path.join(ESTAT, "registre"), exist_ok=True)
     estat = llegeix_estat()
     dades, edat = dades_publicades()
@@ -182,6 +205,10 @@ def vigila():
 
 def prova():
     """Calcula sense publicar ni avisar; si falla, ho diu."""
+    pany = cadenat()
+    if pany is None:
+        apunta("prova ajornada: hi ha una volta en marxa")
+        return
     os.makedirs(os.path.join(ESTAT, "registre"), exist_ok=True)
     estat = llegeix_estat()
     estat["pull"] = 0

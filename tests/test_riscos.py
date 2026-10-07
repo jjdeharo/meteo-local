@@ -101,5 +101,16 @@ class Avis(unittest.TestCase):
         self.assertIsNone(RS.avisa(ruta, AHORA, envia=False))
 
 
+
+class Trams(unittest.TestCase):
+    def test_dos_trams_separats_no_s_ajunten(self):
+        # Ratxes avui de 15 a 16 h i demà de 3 a 4 h: el tram és el del pitjor
+        # valor, no «avui de 15 a 4 h».
+        r = salida(hores({3: {"ratxa": 75}, 15: {"ratxa": 80}}))["riscos"]
+        self.assertEqual(len(r), 1)
+        self.assertIn("demà de 3 a 4 h", r[0]["text"])
+        r = salida(hores({3: {"ratxa": 80}, 15: {"ratxa": 75}}))["riscos"]
+        self.assertIn("avui de 15 a 16 h", r[0]["text"])
+
 if __name__ == "__main__":
     unittest.main()

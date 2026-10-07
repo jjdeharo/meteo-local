@@ -1,7 +1,7 @@
 {
-  "name": "Moto o cotxe?",
-  "short_name": "Moto o cotxe",
-  "description": "Cotxe o moto, la roba i el temps a Cerdanyola, amb la previsió que s'actualitza sola.",
+  "name": "Temps a casa",
+  "short_name": "Temps a casa",
+  "description": "El temps ara a casa i la previsió de les pròximes 24 hores, amb el radar i els avisos, que s'actualitza sola.",
   "lang": "ca",
   "start_url": "./",
   "scope": "./",

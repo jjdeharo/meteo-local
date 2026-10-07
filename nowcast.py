@@ -17,7 +17,7 @@ más de 20. Aquí:
 2. **El movimiento**: el de la advección de Meteocat, que lo calcula con las
    tres últimas imágenes y extrapola una hora; aquí se mide lo que desplaza
    su primera imagen prevista hasta la última, en la lluvia que hay a 60 km
-   o menos del trayecto (ADR 0023): la que puede llegar es esa, y la de más
+   o menos de casa (ADR 0023): la que puede llegar es esa, y la de más
    lejos puede moverse de otra manera. Si cerca hay poca lluvia, en un cuadro
    de unos 300 km. Si no hay advección, el de RainViewer (pares de imágenes
    separados 30 minutos), solo si los pares coinciden.
@@ -29,7 +29,7 @@ más de 20. Aquí:
 
 La lluvia que nace o muere en ese tiempo no se ve: por eso solo 2 horas.
 
-Uso: python3 nowcast.py    resumen para casa, el trayecto y el destino
+Uso: python3 nowcast.py    resumen para casa y la cuenca de la riera
 """
 import csv
 import datetime as dt
@@ -226,7 +226,7 @@ def meteocat(get, tx, ty, get_pagina=None):
     """La última imagen del radar de Meteocat y las dos de su advección (la
     primera y la última prevista), con sus horas. Las teselas siguen el
     esquema TMS (la y, contada desde el sur). La página, con get_pagina si se
-    da (para reutilizarla entre las dos páginas de una pasada)."""
+    da (para reutilizarla entre las lecturas de una misma pasada)."""
     import re
     pagina = (get_pagina or get)("https://www.meteo.cat/observacions/radar")
     if isinstance(pagina, bytes):
@@ -257,9 +257,9 @@ def meteocat(get, tx, ty, get_pagina=None):
 def carrega(get, get_pagina=None):
     """Todo lo que hace falta: las imágenes de los dos radares, si están. Si
     Meteocat falla, la misma pasada sigue con RainViewer; si lo que hace es
-    rechazar las peticiones, se deja en pausa una hora."""
-    lat = (C.CASA[0] + C.DESTINO[0]) / 2
-    lon = (C.CASA[1] + C.DESTINO[1]) / 2
+    rechazar las peticiones, se deja en pausa una hora. El mosaico se centra
+    en casa."""
+    lat, lon = C.CASA
     tx, ty = geometria(lat, lon)
     r = {"tx": tx, "ty": ty, "km_px": km_px(lat), "errors": []}
     neteja_cache()
@@ -311,15 +311,15 @@ def desplacament(a, b):
 
 def desplacament_local(a, b, r, minuts):
     """Desplazamiento (filas, columnas) de a a b de la lluvia que hay a
-    RADI_MOV_KM o menos del trayecto: la traslación con la que más coinciden
+    RADI_MOV_KM o menos de casa: la traslación con la que más coinciden
     las dos manchas de lluvia (lo que comparten entre lo que ocupan las dos).
     None si cerca hay poca lluvia en alguna de las dos imágenes, si no
     coinciden lo bastante, si la lluvia va tan deprisa que se sale de la
-    búsqueda o si no se sabe dónde está el trayecto."""
+    búsqueda o si no se sabe dónde está casa."""
     import numpy as np
     if "tx" not in r:
         return None
-    fila, col = pixel((C.CASA[0] + C.DESTINO[0]) / 2, (C.CASA[1] + C.DESTINO[1]) / 2, r["tx"], r["ty"])
+    fila, col = pixel(C.CASA[0], C.CASA[1], r["tx"], r["ty"])
     f, c = int(round(fila)), int(round(col))
     radi = int(RADI_MOV_KM / r["km_px"]) + 1
     # Solo saltos de hasta RADI_MOV_KM: más lejos ya se compararía con otra
@@ -354,7 +354,7 @@ def desplacament_local(a, b, r, minuts):
 
 def moviment(r, ara=None):
     """Velocidad (filas y columnas por minuto) y de dónde sale: la advección
-    de Meteocat si es reciente (medida en la lluvia de cerca del trayecto y,
+    de Meteocat si es reciente (medida en la lluvia de cerca de casa y,
     si hay poca, en todo el cuadro); si no, RainViewer si sus pares
     coinciden. None si no hay forma fiable de saberlo."""
     import numpy as np
@@ -434,9 +434,8 @@ def serie(r, ara, v, lat, lon):
 
 def resum(r, ahora=None):
     """Lo que se guarda en los datos: de dónde salen la imagen y el
-    movimiento y la serie de casa, del punto medio del trayecto, del
-    destino y de la cuenca de la riera de Sant Cugat (ADR 0027). None si no
-    hay ninguna imagen."""
+    movimiento y la serie de casa y de la cuenca de la riera de Sant Cugat
+    (ADR 0027). None si no hay ninguna imagen."""
     im = imatge(r)
     if im is None:
         return None
@@ -450,9 +449,7 @@ def resum(r, ahora=None):
         res["velocitat_kmh"] = round(math.hypot(*v) * r["km_px"] * 60)
         res["cap_a"] = rumb(v)
         res["graus"] = round(graus(v))      # para comprobarlo con el registro
-    mig = ((C.CASA[0] + C.DESTINO[0]) / 2, (C.CASA[1] + C.DESTINO[1]) / 2)
-    for nom, (lat, lon) in (("casa", C.CASA), ("mig", mig), ("desti", C.DESTINO),
-                            ("conca", C.CONCA_RIERA)):
+    for nom, (lat, lon) in (("casa", C.CASA), ("conca", C.CONCA_RIERA)):
         res["llocs"][nom] = serie(r, camp, v, lat, lon)
     res["fonts"] = fonts(r, v)
     return res

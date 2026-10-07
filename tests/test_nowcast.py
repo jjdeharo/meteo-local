@@ -49,7 +49,7 @@ class Moviment(unittest.TestCase):
         self.assertIsNone(N.desplacament(np.zeros((N.MIDA, N.MIDA)), np.zeros((N.MIDA, N.MIDA))))
 
     def test_moviment_de_la_pluja_de_prop(self):
-        # Cerca del trayecto, lluvia que va al este; lejos, una masa mayor que
+        # Cerca de casa, lluvia que va al este; lejos, una masa mayor que
         # va al sur. Manda la de cerca (ADR 0023).
         r = {"tx": 64, "ty": 47, "km_px": N.km_px(41.52)}
         f, c = (int(x) for x in N.pixel(*C.CASA, 64, 47))
@@ -189,22 +189,11 @@ class Endavant(unittest.TestCase):
         self.assertIsNone(N.arribada({"hora": T0.isoformat(), "llocs": {"casa": s}}))
 
 
-class Trajecte(unittest.TestCase):
+class ModeAvis(unittest.TestCase):
     def nc(self, prob, mm_h):
         passos = [{"min": m, "mm_h": mm_h, "prob": prob} for m in range(0, 125, 5)]
         return {"hora": P.AHORA.isoformat(), "cap_a": "a l'est", "velocitat_kmh": 30,
-                "llocs": {k: passos for k in ("casa", "mig", "desti")}}
-
-    def nivell(self, prob, mm_h):
-        ini, fin = P.AHORA + dt.timedelta(minutes=30), P.AHORA + dt.timedelta(minutes=60)
-        t = N.en_tram(self.nc(prob, mm_h), "casa", ini, fin)
-        return P.motivo_nowcast(t, self.nc(prob, mm_h), ini, fin)[1]
-
-    def test_nivells(self):
-        self.assertEqual(self.nivell(0.7, 3.0), "cotxe")
-        self.assertEqual(self.nivell(0.7, 0.4), "compte")     # probable però feble
-        self.assertEqual(self.nivell(0.3, 3.0), "compte")
-        self.assertEqual(self.nivell(0.05, 3.0), "moto")
+                "llocs": {"casa": passos}}
 
     def test_mode_avis(self):
         self.assertEqual(P.motivos_modo_aviso([], [], [], {"km_lluvia": None, "nowcast": self.nc(0.4, 1)}),

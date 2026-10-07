@@ -29,8 +29,13 @@ import re
 import shutil
 import sys
 
+from config import VERSION
+
 ARREL = os.path.dirname(os.path.abspath(__file__))
 REPO = "https://github.com/meteo-montflorit/meteo-montflorit.github.io"
+WEB = "https://meteo-montflorit.github.io/"
+# La versión del pie enlaza sus notas, en el repositorio del código.
+NOTES = f"https://github.com/meteo-montflorit/meteo-local/releases/tag/v{VERSION}"
 DADES = "montflorit.json"
 # Lo que casa.json lleva para la página del trayecto, y el estado de la
 # riera, que solo sirve para el aviso por Telegram (ADR 0027).
@@ -38,8 +43,10 @@ PRIVADES = ("sortides", "sortida_per_defecte_h", "riera")
 # Con False, la página pide a los buscadores que no la indexen. Desde el
 # 06-10-2026, con el permiso de meteocerdanyola.com, sí (ADR 0024).
 INDEXABLE = True
-# Palabras que no pueden quedar en lo que se lee de la web pública.
-PROHIBIDES = ("casa", "cotxe", "moto", "trajecte", "meteo-local")
+# Palabras que no pueden quedar en lo que se lee de la web pública. El nombre
+# del repositorio del código ya no está prohibido: los créditos lo enlazan
+# (Juanjo, 07-10-2026) y la versión del pie enlaza sus notas (NOTES).
+PROHIBIDES = ("casa", "cotxe", "moto", "trajecte")
 
 NAV = re.compile(r'\n  <nav class="pagines".*?</nav>', re.S)
 # El menú de la web pública: el temps ara i «Si surts» (ADR 0029).
@@ -56,7 +63,7 @@ ROBOTS = '  <meta name="robots" content="noindex">\n'
 CANVIS_INDEX = [
     ('<html lang="ca" data-theme="light">',
      '<html lang="ca" data-theme="light" data-lloc="Montflorit" data-estacio="l’estació particular"'
-     f' data-dades="{DADES}" data-notes="{REPO}">'),
+     f' data-dades="{DADES}" data-notes="{NOTES}">'),
     ('content="El temps ara a casa (Montflorit, Cerdanyola del Vallès) i',
      'content="El temps ara a Montflorit (Cerdanyola del Vallès) i'),
     ("<title>Temps a casa</title>", "<title>Temps a Montflorit</title>"),
@@ -67,44 +74,40 @@ CANVIS_INDEX = [
      "d'una estació particular del barri; la pluja, de l'estació de Montflorit de meteocerdanyola.com, minut a minut"),
     ("amb el que ha mesurat l'estació de casa des de", "amb el que ha mesurat l'estació particular des de"),
     ("a Montflorit i a casa. Comprovada", "a Montflorit. Comprovada"),
-    ('href="https://github.com/meteo-montflorit/meteo-local/releases"', f'href="{REPO}"'),
 ]
 
 CANVIS_FONTS = [
-    ("<title>Fonts i crèdits · Moto o cotxe?</title>", "<title>Fonts i crèdits · Temps a Montflorit</title>"),
+    ('<html lang="ca" data-theme="light">',
+     f'<html lang="ca" data-theme="light" data-dades="{DADES}" data-notes="{NOTES}">'),
+    ("<title>Fonts i crèdits · Temps a casa</title>", "<title>Fonts i crèdits · Temps a Montflorit</title>"),
+    ('<p class="ruta">Montflorit, Cerdanyola del Vallès</p>',
+     '<p class="ruta">Montflorit, Cerdanyola del Vallès'
+     ' · <a href="es/fonts.html" lang="es" hreflang="es">Castellano</a></p>'),
     ("<strong>Estació de casa:</strong> una estació pròpia a uns 300-400 m de la de Montflorit, llegida",
      "<strong>Estació particular:</strong> una estació pròpia del mateix barri, llegida"),
-    ("<p>És una recomanació calculada automàticament, no una previsió oficial.",
-     "<p>És una previsió calculada automàticament, no una previsió oficial."),
     ("<li>Icones del cotxe i del ciclomotor de <a href=\"https://tabler.io/icons\" target=\"_blank\" rel=\"noopener\">"
      "Tabler Icons</a>, llicència MIT; la icona de l'aplicació els combina amb el núvol de Lucide.</li>",
      "<li>La icona de la moto de «Si surts», de <a href=\"https://tabler.io/icons\" target=\"_blank\" rel=\"noopener\">"
      "Tabler Icons</a>, llicència MIT.</li>"),
-    # Los modelos globales solo los usa la página del trayecto.
-    ("amb models de Météo-France (AROME), del servei meteorològic alemany (ICON-EU i les seves 40 variants), "
-     "de l'ECMWF, del Met Office britànic i de la NOAA.",
-     "amb models de Météo-France (AROME i ARPEGE) i del servei meteorològic alemany (ICON-EU i les seves 40 variants)."),
 ]
 CANVIS_SORTIR = [
     ('<html lang="ca" data-theme="light">',
-     f'<html lang="ca" data-theme="light" data-dades="{DADES}" data-notes="{REPO}">'),
+     f'<html lang="ca" data-theme="light" data-dades="{DADES}" data-notes="{NOTES}">'),
     ("<title>Si surts</title>", "<title>Si surts · Temps a Montflorit</title>"),
     ('<p class="ruta">Montflorit, Cerdanyola del Vallès</p>',
      '<p class="ruta">Montflorit, Cerdanyola del Vallès'
      ' · <a href="es/sortir.html" lang="es" hreflang="es">Castellano</a></p>'),
-    ('href="https://github.com/meteo-montflorit/meteo-local/releases"', f'href="{REPO}"'),
 ]
 CANVIS_TELEGRAM = [
     ('<html lang="ca" data-theme="light">',
-     f'<html lang="ca" data-theme="light" data-dades="{DADES}" data-notes="{REPO}">'),
+     f'<html lang="ca" data-theme="light" data-dades="{DADES}" data-notes="{NOTES}">'),
     ("<title>Avisos a Telegram</title>", "<title>Avisos a Telegram · Temps a Montflorit</title>"),
     ('<p class="ruta">Montflorit, Cerdanyola del Vallès</p>',
      '<p class="ruta">Montflorit, Cerdanyola del Vallès'
      ' · <a href="es/telegram.html" lang="es" hreflang="es">Castellano</a></p>'),
-    ('href="https://github.com/meteo-montflorit/meteo-local/releases"', f'href="{REPO}"'),
 ]
 # En «Si surts» se habla de medios de transporte: ahí sí van «moto» y «cotxe».
-PROHIBIDES_SORTIR = ("casa", "trajecte", "meteo-local")
+PROHIBIDES_SORTIR = ("casa", "trajecte")
 # Los créditos y el README enlazan el código fuente y los ADR, que están en
 # meteo-montflorit/meteo-local (Juanjo, 07-10-2026); lo demás sigue sin nombrarlo.
 # «moto» sí: el crédito del icono de la moto de «Si surts».
@@ -138,6 +141,10 @@ CANVIS_ES_INDEX = [
     ('<script src="casa.js"></script>', '<script src="../casa.js"></script>'),
 ]
 CANVIS_ES_TELEGRAM = [
+    (f'data-dades="{DADES}"', f'data-dades="{DADES}" data-arrel="../"'),
+    ('<script src="comu.js"></script>', '<script src="../es.js"></script>\n  <script src="../comu.js"></script>'),
+]
+CANVIS_ES_FONTS = [
     (f'data-dades="{DADES}"', f'data-dades="{DADES}" data-arrel="../"'),
     ('<script src="comu.js"></script>', '<script src="../es.js"></script>\n  <script src="../comu.js"></script>'),
 ]
@@ -188,7 +195,7 @@ def castella(html, nom, taula=None):
     t = canvia(tradueix(html, taula, nom), CANVIS_ES, nom)
     t = canvia(t, {"index.html": CANVIS_ES_INDEX + CANVIS_ES_NAV, "sortir.html": CANVIS_ES_SORTIR + CANVIS_ES_NAV,
                    "telegram.html": CANVIS_ES_TELEGRAM + CANVIS_ES_NAV,
-                   "fonts.html": [CREDIT_TRADUCCIO]}[nom], nom)
+                   "fonts.html": CANVIS_ES_FONTS + CANVIS_ES_NAV + [CREDIT_TRADUCCIO]}[nom], nom)
     if nom == "telegram.html":     # les captures, les de Telegram en castellà
         t = t.replace('img/telegram/ca/', 'img/telegram/es/').replace('="img/', '="../img/')
     comprova("es/" + nom, t, PROHIBIDES_SORTIR if nom in ("sortir.html", "telegram.html") else
@@ -234,6 +241,16 @@ def menu(text, actual, nom):
     return text
 
 
+def alternes(html, nom):
+    """Cada página pública dice dónde está en la otra lengua (hreflang), para
+    los buscadores; el enlace visible ya está junto al municipio."""
+    ca = WEB + ("" if nom == "index.html" else nom)
+    enllacos = (f'\n  <link rel="alternate" hreflang="ca" href="{ca}">'
+                f'\n  <link rel="alternate" hreflang="es" href="{WEB}es/{"" if nom == "index.html" else nom}">'
+                f'\n  <link rel="alternate" hreflang="x-default" href="{ca}">')
+    return canvia(html, [("\n</head>", enllacos + "\n</head>")], nom)
+
+
 def index(casa_html):
     t = menu(canvia(casa_html, CANVIS_INDEX, "casa.html"), "./", "casa.html")
     if INDEXABLE:
@@ -259,7 +276,7 @@ def telegram(html):
 
 
 def fonts(fonts_html):
-    t = canvia(fonts_html, CANVIS_FONTS, "fonts.html")
+    t = menu(canvia(fonts_html, CANVIS_FONTS, "fonts.html"), "fonts.html", "fonts.html")
     for patro in FORA_FONTS:
         t = treu(t, patro, "fonts.html")
     if INDEXABLE:
@@ -295,6 +312,7 @@ def construeix(desti, web=None):
     escriu = lambda nom, text: escriu_fitxer(os.path.join(desti, nom), text)
     pagines = {"index.html": index(llegeix("casa.html")), "sortir.html": sortir(llegeix("sortir.html")),
                "telegram.html": telegram(llegeix("telegram.html")), "fonts.html": fonts(llegeix("fonts.html"))}
+    pagines = {nom: alternes(html, nom) for nom, html in pagines.items()}
     os.makedirs(os.path.join(desti, "es"), exist_ok=True)
     for nom, html in pagines.items():
         escriu(nom, html)

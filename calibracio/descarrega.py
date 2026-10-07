@@ -29,6 +29,9 @@ PORTAL = "https://analisi.transparenciacatalunya.cat/resource/nzvn-apee.json"
 PREVIAS = "https://previous-runs-api.open-meteo.com/v1/forecast"
 MODELOS = C.MODELOS_FINOS
 UA = {"User-Agent": "meteo-local/" + C.VERSION}
+# El destino del trayecto retirado (ADR 0030): se conserva aquí porque el
+# histórico (prev_desti.csv) y la calibración de sus ventanas salen de él.
+DESTI_TRAJECTE = (41.557, 2.109)   # Parc Taulí, Sabadell
 
 
 def get_json(url, intentos=4):
@@ -74,7 +77,7 @@ def observaciones(inicio, fin):
 
 def previsiones(inicio, fin):
     variables = ["precipitation", "precipitation_previous_day1", "cape", "cape_previous_day1"]
-    for nombre, (lat, lon) in (("casa", C.CASA), ("desti", C.DESTINO)):
+    for nombre, (lat, lon) in (("casa", C.CASA), ("desti", DESTI_TRAJECTE)):
         tramos = []
         a = dt.date.fromisoformat(inicio)
         final = dt.date.fromisoformat(fin)

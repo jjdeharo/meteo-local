@@ -5,7 +5,8 @@
 Lee lo que baja descarrega.py y escribe:
 - calibracio/informe.md: aciertos de la regla actual y del modelo calibrado;
 - calibracio/calibracio.json: frecuencia real de lluvia en cada nivel de la
-  regla, que prevision.py muestra como motivo.
+  regla del trayecto retirado (ADR 0030; queda como histórico) y la
+  persistencia de la lluvia, que usa casa.py.
 
 La regresión logística y el CAPE se calculan solo para compararlos con la
 regla: con estos datos no la mejoran (ver informe.md y el ADR 0003).
@@ -32,6 +33,12 @@ DIR = os.path.join(AQUI, "dades")
 LOCAL = ZoneInfo("Europe/Madrid")
 UTC = dt.timezone.utc
 UMBRAL_LLUVIA = 0.2
+# La regla del trayecto retirado (ADR 0030), que aquí se sigue comparando con
+# el histórico: sus ventanas en moto (hora local) y el umbral de lluvia clara
+# (mm en una hora). Estaban en config.py.
+ANADA = ("06:30", "07:30")
+TORNADA = ("15:00", "15:30")
+UMBRAL_MM_COCHE = 1.0
 
 
 # --- Lectura -------------------------------------------------------------------
@@ -129,7 +136,7 @@ def tabla(obs, prev, ventana, plazo):
 # --- Regla actual ----------------------------------------------------------------
 
 def nivel_regla(fino_max):
-    if fino_max >= C.UMBRAL_MM_COCHE:
+    if fino_max >= UMBRAL_MM_COCHE:
         return "cotxe"
     if fino_max >= C.UMBRAL_MM:
         return "compte"
@@ -254,7 +261,7 @@ def analizar():
               "Previsiones archivadas de Open-Meteo: «corto plazo» une las primeras horas de cada "
               "pasada del modelo; «24 h antes» es la previsión hecha un día antes.", ""]
     resumen_dia = {}
-    for nombre, ventana in (("anada", C.IDA), ("tornada", C.VUELTA)):
+    for nombre, ventana in (("anada", ANADA), ("tornada", TORNADA)):
         for plazo, rotulo in (("", "corto plazo"), ("_previous_day1", "24 h antes")):
             filas = tabla(obs, prev, ventana, plazo)
             if not filas:

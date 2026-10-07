@@ -78,11 +78,12 @@ if [ "$a_ionos" = 1 ] && [ -f "$estat_gh" ]; then
   fi
 fi
 
-[ -z "$ESTAT_DIR" ] || echo "$(date +%s) $codi" > "$estat_gh"
-
 # La web pública, a su repositorio, con su propia clave de despliegue si la
-# hay (en el NAS). Un fallo aquí no detiene nada: se reintenta en la próxima.
-if [ -n "$DESTINO_MONTFLORIT" ]; then
+# hay (en el NAS). Un fallo aquí no detiene nada: se reintenta en la próxima
+# pasada, porque la marca de «ya publicado» solo se apunta si el push entra.
+if [ -z "$DESTINO_MONTFLORIT" ]; then
+  [ -z "$ESTAT_DIR" ] || echo "$(date +%s) $codi" > "$estat_gh"
+else
   CLAU_MONTFLORIT=${CLAU_MONTFLORIT:-$HOME/.ssh/id_montflorit}
   if (
     python3 montflorit.py web "$publica"
@@ -94,6 +95,7 @@ if [ -n "$DESTINO_MONTFLORIT" ]; then
     git -C "$publica" push -q -f "$DESTINO_MONTFLORIT" gh-pages
   ); then
     echo "$(date '+%F %T')  publicada la web de Montflorit"
+    [ -z "$ESTAT_DIR" ] || echo "$(date +%s) $codi" > "$estat_gh"
   else
     echo "$(date '+%F %T')  no s'ha pogut publicar la web de Montflorit" >&2
   fi

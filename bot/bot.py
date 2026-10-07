@@ -34,6 +34,10 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
+# La hora local de Montflorit, pase lo que pase con la del hosting.
+os.environ.setdefault("TZ", "Europe/Madrid")
+time.tzset()
+
 BASE = os.environ.get("BOT_DIR", os.path.expanduser("~/.temps-bot"))
 DADES = os.environ.get("BOT_DADES", os.path.expanduser("~/app/meteo-local"))
 REPO = os.environ.get("BOT_REPO", os.path.expanduser("~/.meteo-reserva/repo"))
@@ -419,6 +423,10 @@ def atén(api, subs, update):
         envia(api, chat, T[idioma]["baixa"])
         return
     nou = chat not in subs
+    if nou and ordre not in ("/start", "/avisos", "/menu", "/resum", "/ara"):
+        # Quien escribe cualquier cosa sin haber empezado solo recibe la ayuda.
+        envia(api, chat, T[nou_subscriptor(m.get("from", {}))["idioma"]]["ajuda"])
+        return
     sub = alta(subs, chat, m.get("from", {}))
     t = T[sub["idioma"]]
     if ordre == "/start":

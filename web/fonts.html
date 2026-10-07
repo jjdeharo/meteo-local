@@ -5,7 +5,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex">
-  <title>Fonts i crèdits · Moto o cotxe?</title>
+  <title>Fonts i crèdits · Temps a casa</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232563eb' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 14.9A7 7 0 1 1 15.7 8h1.8a4.5 4.5 0 0 1 2.5 8.2'/%3E%3Cpath d='M16 14v6M8 14v6M12 16v6'/%3E%3C/svg%3E">
   <script>
     try {
       const triat = localStorage.getItem('meteo.fosc');
@@ -15,16 +16,32 @@
   </script>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="apple-touch-icon" href="icones/apple-touch-icon.png">
-  <meta name="theme-color" content="#1d4ed8">
+  <meta name="theme-color" content="#1d4ed8" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#12161c" media="(prefers-color-scheme: dark)">
   <link rel="stylesheet" href="estil.css">
 </head>
 <body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <!-- Icones de Lucide (ISC) -->
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2m-7.07-17.07 1.41 1.41m11.32 11.32 1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></symbol>
+    <symbol id="i-cloud-sun" viewBox="0 0 24 24"><path d="M12 2v2m-7.07.93 1.41 1.41M20 12h2m-2.93-7.07-1.41 1.41M15.947 12.65a4 4 0 0 0-5.925-4.128"/><path d="M13 22H7a5 5 0 1 1 4.9-6H13a3 3 0 0 1 0 6Z"/></symbol>
+    <symbol id="i-door-open" viewBox="0 0 24 24"><path d="M10 21H2M10 3H7a2 2 0 0 0-2 2v16M14 12h.01M22 21h-3"/><path d="M19 21V5a2 2 0 0 0-1.675-1.974l-6.163-1.013A1 1 0 0 0 10 3v18a1 1 0 0 0 1.124.992z"/></symbol>
+  </svg>
+
   <header class="cap">
     <div>
       <h1>Fonts i crèdits</h1>
-      <p class="ruta"><a href="./">← Tornar a la previsió</a></p>
+      <p class="ruta">Montflorit, Cerdanyola del Vallès</p>
     </div>
+    <button type="button" id="btn-fosc" class="boto-icona" title="Canvia entre tema clar i fosc" aria-label="Canvia entre tema clar i fosc">
+      <svg aria-hidden="true"><use href="#i-moon"></use></svg>
+    </button>
   </header>
+  <nav class="pagines" aria-label="Pàgines">
+    <a href="casa.html"><svg aria-hidden="true"><use href="#i-cloud-sun"></use></svg>Temps a casa</a>
+    <a href="sortir.html"><svg aria-hidden="true"><use href="#i-door-open"></use></svg>Si surts</a>
+  </nav>
 
   <main class="contingut">
     <h2>D'on surten les dades</h2>
@@ -36,7 +53,7 @@
       <li><strong>Estacions de Meteocat:</strong> Sabadell (Parc Agrari) i Sant Cugat (CAR), de la <a href="https://www.meteo.cat/observacions/xema" target="_blank" rel="noopener">Xarxa d'Estacions Meteorològiques Automàtiques de Meteocat</a>, a la seva web o, si falla, al <a href="https://analisi.transparenciacatalunya.cat/d/nzvn-apee" target="_blank" rel="noopener">portal de dades obertes de la Generalitat</a>. El vent d'ara és el de Sant Cugat, per mitges hores: l'anemòmetre de Montflorit gairebé sempre marca zero.</li>
       <li><strong>Trens:</strong> avisos i posició dels trens en temps real de <a href="https://data.renfe.com/" target="_blank" rel="noopener">Renfe</a> i de les <a href="https://dadesobertes.fgc.cat/" target="_blank" rel="noopener">dades obertes d'FGC</a>, totes dues amb llicència CC BY 4.0.</li>
       <li><strong>Plans de Protecció Civil:</strong> <a href="https://analisi.transparenciacatalunya.cat/d/wj9c-j6vf" target="_blank" rel="noopener">dades obertes de la Generalitat</a>, en temps real.</li>
-      <li><strong>Models i simulacions:</strong> <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo</a> (dades CC BY 4.0), amb models de Météo-France (AROME), del servei meteorològic alemany (ICON-EU i les seves 40 variants), de l'ECMWF, del Met Office britànic i de la NOAA.</li>
+      <li><strong>Models i simulacions:</strong> <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo</a> (dades CC BY 4.0), amb models de Météo-France (AROME i ARPEGE) i del servei meteorològic alemany (ICON-EU i les seves 40 variants).</li>
     </ul>
 
     <h2>Altres crèdits</h2>
@@ -50,14 +67,18 @@
     <p>El codi font és a <a href="https://github.com/meteo-montflorit/meteo-local" target="_blank" rel="noopener">github.com/meteo-montflorit/meteo-local</a>, amb el <a href="https://github.com/meteo-montflorit/meteo-local/tree/main/docs/adr" target="_blank" rel="noopener">registre de decisions</a>: per què es va fer cada canvi i quan.</p>
 
     <h2>Avís</h2>
-    <p>És una recomanació calculada automàticament, no una previsió oficial. En cas de dubte, mana el que es vegi al cel i al radar.</p>
+    <p>És una previsió calculada automàticament, no una previsió oficial. En cas de dubte, mana el que es vegi al cel i al radar.</p>
     <p>Les dades dels serveis meteorològics, de Renfe, d'FGC i de la resta de fonts d'aquesta pàgina es consulten automàticament per internet: l'autor no es fa responsable de la seva exactitud.</p>
     <p>El bot de Telegram (<a href="https://t.me/TempsMontfloritBot" target="_blank" rel="noopener">@TempsMontfloritBot</a>) només desa l'identificador de Telegram de qui s'hi dona d'alta i el que tria; l'ordre /baixa ho esborra. Els seus avisos de desbordament de la riera de Sant Cugat estan en proves i són orientatius, no oficials.</p>
   </main>
 
   <footer class="peu">
-    <p>© 2026 <a href="https://bilateria.org" target="_blank" rel="noopener">Juan José de Haro</a> · Continguts <a href="https://creativecommons.org/licenses/by-sa/4.0/deed.ca" target="_blank" rel="noopener">CC BY-SA 4.0</a> · Codi <a href="https://www.gnu.org/licenses/agpl-3.0.html" target="_blank" rel="noopener">AGPL v3</a> · <a href="https://github.com/meteo-montflorit/meteo-local" target="_blank" rel="noopener">Codi font</a></p>
+    <p><a id="versio" href="https://github.com/meteo-montflorit/meteo-local/releases" target="_blank" rel="noopener">versió —</a> · <a href="fonts.html">Fonts i crèdits</a></p>
+    <p>© 2026 <a href="https://bilateria.org" target="_blank" rel="noopener">Juan José de Haro</a> · Continguts <a href="https://creativecommons.org/licenses/by-sa/4.0/deed.ca" target="_blank" rel="noopener">CC BY-SA 4.0</a> · Codi <a href="https://www.gnu.org/licenses/agpl-3.0.html" target="_blank" rel="noopener">AGPL v3</a></p>
     <p>Fet amb IA (Claude Code, octubre de 2026), <a href="https://jjdeharo.github.io/miae/?nivel=4" target="_blank" rel="noopener">nivell 4 del MIAE</a>.</p>
   </footer>
+
+  <script src="comu.js"></script>
+  <script>llegeixDades(document.documentElement.dataset.dades || 'casa.json').then((d) => posaVersio(d.versio)).catch(() => {});</script>
 </body>
 </html>

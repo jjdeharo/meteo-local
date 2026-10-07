@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# meteo-local en el NAS: actualiza la web de «Moto o cotxe?» cada media hora
-# en las franjas de config.py (HORARIO), con la hora local exacta.
+# meteo-local en el NAS: calcula los datos de «Temps a Montflorit» cada cuarto
+# de hora (en modo aviso, cada 6 minutos; config.py), con la hora local
+# exacta, los sube a IONOS y publica la web; avisa por Telegram del peligro,
+# de la lluvia inminente y de la riera.
 #
 #   docker compose up -d --build          construir y arrancar
 #   docker compose logs -f                ver el reloj
@@ -11,9 +13,10 @@
 #   home/   la clave de despliegue (.ssh), que solo da acceso a este repositorio,
 #           el aviso por Telegram (.local/bin/avisar-juanjo y su configuración)
 #           y las claves de la estación de casa (.config/meteo-local/ecowitt.env)
-#   estat/  los últimos datos publicados, para mantener la decisión del día, y
-#           registre/: cada actualización y el resultado de cada día, y
-#           aprenentatge/: el modelo que usa la página de casa (ADR 0012)
+#   estat/  los últimos datos publicados (casa.json), la caché del radar y
+#           registre/: lo medido en Montflorit y en la estación de casa, los
+#           avisos de lluvia y los episodios de la riera, y
+#           aprenentatge/: el modelo que usa la página (ADR 0012)
 services:
   meteo-local:
     # La versión de Claude Code sale del archivo común del NAS
@@ -35,9 +38,9 @@ services:
       APRENENTATGE_DIR: /estat/aprenentatge
       PATH: /home/jjdeharo/.local/bin:/usr/local/bin:/usr/bin:/bin
     cpus: 0.5
-    # El token de Claude (claude setup-token), para todo el contenedor: así lo
-    # usan el agente diario, el actualizador semanal y la comprobación diaria
-    # de sesiones del vigía. No está en el repositorio.
+    # El token de Claude (claude setup-token), para todo el contenedor: lo
+    # usan el actualizador semanal y la comprobación diaria de sesiones del
+    # vigía; meteo-local ya no usa IA (ADR 0030). No está en el repositorio.
     # Y las claves de la estación de casa (Ecowitt, ADR 0017).
     env_file:
       - path: ./home/.config/meteo-local/claude.env

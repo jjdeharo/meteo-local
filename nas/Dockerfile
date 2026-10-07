@@ -1,7 +1,8 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Lo justo para calcular la previsión y publicarla: Python con numpy y Pillow
-# (el radar), git y ssh (para empujar a gh-pages con la clave de despliegue),
-# y Claude Code para el agente diario (agent/).
+# (el radar), git y ssh (para publicar la web y subir los datos a IONOS con
+# las claves de despliegue), y Claude Code, que usan otros automatismos del
+# NAS desde este contenedor (meteo-local ya no usa IA, ADR 0030).
 FROM debian:12-slim
 
 ENV DEBIAN_FRONTEND=noninteractive \

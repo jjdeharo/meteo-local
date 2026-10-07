@@ -7,12 +7,12 @@
   --suau: #566173;
   --vora: #dde2e8;
   --enllac: #1d4ed8;
-  --moto: #15803d;
-  --moto-fons: #e8f6ec;
+  --verd: #15803d;          /* el que va bé */
+  --verd-fons: #e8f6ec;
   --compte: #a15c00;
   --compte-fons: #fdf3e1;
-  --cotxe: #b91c1c;
-  --cotxe-fons: #fdeceb;
+  --vermell: #b91c1c;       /* el que no */
+  --vermell-fons: #fdeceb;
   --bot: #15803d;          /* el verd de la icona del bot de Telegram */
   color-scheme: light;
 }
@@ -24,12 +24,12 @@
   --suau: #a3adbb;
   --vora: #2e3743;
   --enllac: #8ab4ff;
-  --moto: #4ade80;
-  --moto-fons: #15291d;
+  --verd: #4ade80;
+  --verd-fons: #15291d;
   --compte: #fbbf24;
   --compte-fons: #2e2412;
-  --cotxe: #f87171;
-  --cotxe-fons: #331a1a;
+  --vermell: #f87171;
+  --vermell-fons: #331a1a;
   --bot: #4ade80;
   color-scheme: dark;
 }
@@ -80,37 +80,12 @@ h1 { margin: 0; font-size: 1.6rem; line-height: 1.2; }
 }
 :focus-visible { outline: 3px solid var(--enllac); outline-offset: 2px; }
 
-.dia h2 {
-  margin: 1.4rem 0 .6rem;
-  font-size: 1.1rem;
-}
-.dia h2::first-letter { text-transform: uppercase; }
-
-.graella {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
-  gap: .8rem;
-}
-
 .targeta {
   background: var(--superficie);
   border: 1px solid var(--vora);
   border-left: .45rem solid var(--color);
   border-radius: .6rem;
   padding: .8rem 1rem;
-}
-.targeta.moto { --color: var(--moto); --color-fons: var(--moto-fons); }
-.targeta.compte { --color: var(--compte); --color-fons: var(--compte-fons); }
-.targeta.cotxe { --color: var(--cotxe); --color-fons: var(--cotxe-fons); }
-
-.trajecte {
-  margin: 0;
-  color: var(--suau);
-  font-size: .9rem;
-  font-weight: 400;
-  display: flex;
-  justify-content: space-between;
-  gap: .5rem;
 }
 .veredicte {
   margin: .1rem 0 0;
@@ -119,8 +94,6 @@ h1 { margin: 0; font-size: 1.6rem; line-height: 1.2; }
   line-height: 1.2;
   color: var(--color);
 }
-.frase { margin: 0 0 .5rem; }
-
 .decisio { margin-top: 1rem; padding: 1rem 1.2rem; }
 .decisio .data { margin: 0; font-size: 1rem; color: var(--suau); font-weight: 600; }
 .decisio .data::first-letter { text-transform: uppercase; }
@@ -136,35 +109,10 @@ h1 { margin: 0; font-size: 1.6rem; line-height: 1.2; }
   stroke-linecap: round;
   stroke-linejoin: round;
 }
-.decisio .frase { font-size: 1.1rem; margin-bottom: .3rem; }
-.roba {
-  display: flex;
-  gap: .8rem;
-  align-items: flex-start;
-  margin: .6rem 0 .7rem;
-  padding: .7rem .9rem;
-  border-radius: .5rem;
-  background: var(--fons);
-  border: 1px solid var(--vora);
-}
-.roba p { margin: 0; }
-.roba-icones { display: flex; flex-direction: column; gap: .3rem; flex-shrink: 0; color: var(--color, var(--enllac)); }
-.roba-icones svg {
-  width: 2.4rem;
-  height: 2.4rem;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.75;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
 .nota { margin: 0; color: var(--suau); font-size: .9rem; }
 .horari { margin: 1rem 0 0; }
 .horari:empty { display: none; }
 .horari .mode { color: var(--suau); font-size: .9rem; }
-.temps { margin: 0 0 .4rem; }
-.decisio .perque { margin-top: 1rem; }
-.risc { margin: .1rem 0 .4rem; font-size: 1.15rem; font-weight: 700; color: var(--color); }
 
 .perque {
   margin: 1.4rem 0 .5rem;
@@ -173,40 +121,6 @@ h1 { margin: 0; font-size: 1.6rem; line-height: 1.2; }
   letter-spacing: .05em;
   color: var(--suau);
 }
-.motius { margin: 0; padding: 0; list-style: none; }
-.motiu {
-  position: relative;
-  padding: .15rem 0 .15rem 1.1rem;
-  font-size: .95rem;
-}
-/* El color repeteix el que diu el text amagat: no és l'única pista. */
-.motiu::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: .62rem;
-  width: .55rem;
-  height: .55rem;
-  border-radius: 50%;
-  background: var(--moto);
-}
-.motiu.compte::before { background: var(--compte); }
-.motiu.cotxe::before { background: var(--cotxe); }
-
-.targeta.passat { --color: var(--suau); }
-.targeta.passat .motius, .targeta.passat .perque, .targeta.passat .nomes-pla { display: none; }
-/* Cotxe només pel pla de Protecció Civil: la franja verda diu que el temps
-   no ho demana. */
-.nomes-pla {
-  margin: .5rem 0 0;
-  padding: .45rem .7rem;
-  border-left: .3rem solid var(--moto);
-  border-radius: .3rem;
-  background: var(--moto-fons);
-  font-size: .95rem;
-}
-.etiqueta-passat { font-weight: 600; }
-
 .avis {
   margin: 1rem 0 0;
   padding: .6rem .8rem;
@@ -250,7 +164,7 @@ h1 { margin: 0; font-size: 1.6rem; line-height: 1.2; }
 
 .contingut h2 { font-size: 1.1rem; margin: 1.4rem 0 .4rem; }
 
-/* Navegació entre les dues pàgines, sempre al mateix lloc. */
+/* Navegació entre les pàgines, sempre al mateix lloc. */
 .pagines { display: flex; gap: .4rem; margin: .8rem 0 0; flex-wrap: wrap; }
 .pagines a {
   padding: .3rem .8rem;
@@ -275,15 +189,6 @@ h1 { margin: 0; font-size: 1.6rem; line-height: 1.2; }
 /* Pàgina de casa */
 .targeta.ara { --color: var(--enllac); }
 .targeta.fora { --color: var(--suau); }
-.camp-tornada { margin: .5rem 0 .4rem; font-size: 1.05rem; }
-.camp-tornada input {
-  font: inherit;
-  padding: .2rem .5rem;
-  border: 1px solid var(--vora);
-  border-radius: .4rem;
-  background: var(--superficie);
-  color: var(--text);
-}
 .previsio { margin-top: 1rem; }
 .taula-contenidor { overflow-x: auto; }
 .taula-hores { width: 100%; border-collapse: collapse; font-size: .95rem; background: var(--superficie); border-radius: .6rem; }
@@ -355,13 +260,13 @@ h1 { margin: 0; font-size: 1.6rem; line-height: 1.2; }
 /* Risc previst, amb el color del nivell de l'AEMET. */
 .risc-previst { --nivell: #ca8a04; border-color: var(--nivell); border-left-width: .4rem; }
 .risc-previst.taronja { --nivell: #ea580c; }
-.risc-previst.vermell { --nivell: var(--cotxe); background: var(--cotxe-fons); }
+.risc-previst.vermell { --nivell: var(--vermell); background: var(--vermell-fons); }
 .titol-risc { display: flex; align-items: center; gap: .4rem; margin: 0; font-weight: 700; }
 .titol-risc svg { color: var(--nivell); }
 .risc-previst ul { margin: .3rem 0 0; padding-left: 1.3rem; }
 .risc-previst .detall { color: var(--suau); font-size: .9rem; }
 
-.avis-pc { border-color: var(--cotxe); background: var(--cotxe-fons); }
+.avis-pc { border-color: var(--vermell); background: var(--vermell-fons); }
 .avis-pc p { margin: 0; }
 .avis-pc p + p { margin-top: .4rem; }
 .taula-hores td.cel { white-space: normal; }
@@ -411,14 +316,6 @@ h1 { margin: 0; font-size: 1.6rem; line-height: 1.2; }
 .franja-avis.taronja .barra-avis { background: #fb923c; }
 .franja-avis.vermell .barra-avis { background: #ef4444; color: #fff; }
 
-
-/* Comentari de l'agent diari */
-.comentari { margin: .7rem 0 0; padding: .6rem .8rem; border-radius: .5rem; background: var(--fons); font-size: .98rem; }
-
-.mes-detalls { margin-top: .3rem; font-size: .9rem; }
-.mes-detalls summary { cursor: pointer; color: var(--suau); }
-.mes-detalls .detall { color: var(--suau); }
-
 /* Pàgina «Si surts» (ADR 0029) */
 .hores-sortida { display: flex; flex-wrap: wrap; gap: .6rem 1.2rem; margin: 1rem 0 .2rem; font-size: 1.05rem; }
 .hores-sortida select {
@@ -450,11 +347,11 @@ h1 { margin: 0; font-size: 1.6rem; line-height: 1.2; }
 .xip input { position: absolute; opacity: 0; width: 1px; height: 1px; }
 /* Marcat, en verd; desmarcat, en vermell. La marca ✓ o ✕ diu el mateix sense
    dependre del color. */
-.xip:has(input:checked) { color: var(--text); border-color: var(--moto); background: var(--moto-fons); }
-.xip:has(input:not(:checked)) { color: var(--text); border-color: var(--cotxe); background: var(--cotxe-fons); }
+.xip:has(input:checked) { color: var(--text); border-color: var(--verd); background: var(--verd-fons); }
+.xip:has(input:not(:checked)) { color: var(--text); border-color: var(--vermell); background: var(--vermell-fons); }
 .xip span::after { margin-left: .35rem; font-weight: 700; }
-.xip:has(input:checked) span::after { content: "✓"; color: var(--moto); }
-.xip:has(input:not(:checked)) span::after { content: "✕"; color: var(--cotxe); }
+.xip:has(input:checked) span::after { content: "✓"; color: var(--verd); }
+.xip:has(input:not(:checked)) span::after { content: "✕"; color: var(--vermell); }
 .explica-triats { margin: .35rem 0 0; }
 .xip:has(input:focus-visible) { outline: 2px solid var(--enllac); outline-offset: 2px; }
 .xip svg, .mitja-nom svg {
@@ -469,7 +366,7 @@ h1 { margin: 0; font-size: 1.6rem; line-height: 1.2; }
 }
 .mitja-nom { display: inline-flex; align-items: center; gap: .4rem; }
 .mitja, .tren {
-  --color: var(--moto);
+  --color: var(--verd);
   padding: .55rem .8rem;
   border: 1px solid var(--vora);
   border-left: .35rem solid var(--color);
@@ -477,7 +374,7 @@ h1 { margin: 0; font-size: 1.6rem; line-height: 1.2; }
   background: var(--superficie);
 }
 .mitja.compte, .tren.compte { --color: var(--compte); }
-.mitja.no, .tren.no { --color: var(--cotxe); }
+.mitja.no, .tren.no { --color: var(--vermell); }
 .tren.neutre, .mitja.neutre { --color: var(--suau); }
 .mitja p, .tren p { margin: 0; }
 .mitja-cap, .tren-cap { display: flex; flex-wrap: wrap; gap: .2rem .6rem; align-items: baseline; }

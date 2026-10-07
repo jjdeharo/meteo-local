@@ -92,7 +92,7 @@ Umbrales y lugares, en `config.py`. El porqué, en los ADR.
 | Archivo | Para qué |
 |---|---|
 | `casa.py` | Datos de la web (`casa.json`): lo de ahora, la previsión hora a hora, el índice UV, los trenes y la riera |
-| `prevision.py` | Recogida de datos que usa `casa.py` (avisos, planes, radar, estaciones); conserva aún la lógica de la página retirada del trayecto (ADR 0030) |
+| `prevision.py` | Recogida de datos que usa `casa.py`: avisos de AEMET, planes de Protección Civil, radar, lluvia y viento de las estaciones, y el modo aviso |
 | `config.py` | Coordenadas, horario, estaciones, zonas de aviso, modelos y umbrales |
 | `web/` | Las fuentes de la web pública: `casa.html` y `casa.js` (el tiempo ahora), `sortir.html` y `sortir.js` («Si surts»), `comu.js` (lo común), `estil.css`, `fonts.html` (fuentes y créditos), `manifest.webmanifest`, `sw.js` e `icones/` |
 | `montflorit.py`, `montflorit/` | Genera la web pública a partir de `web/` y sus datos sin lo privado; manifiesto, iconos y README propios (ADR 0024), y `es.js`, los textos del programa en castellano (ADR 0025) |
@@ -111,7 +111,7 @@ Umbrales y lugares, en `config.py`. El porqué, en los ADR.
 | `pluja_arriba.py` | Aviso por Telegram unos 15 minutos antes de que llueva en casa, con registro de aciertos (ADR 0022) |
 | `riera.py` | Lluvia en la cuenca de la riera de Sant Cugat y aviso de atención o peligro de desbordamiento, con registro de episodios (ADR 0027) |
 | `radar_fonts.py` | Apunta lo que daba cada radar y, cada día, elige el que acierta más (ADR 0026) |
-| `registre.py` | Registro en el NAS de lo medido en Montflorit y en la estación particular (ADR 0006) |
+| `registre.py` | Registro en el NAS de lo medido en Montflorit y en la estación particular, y de lo que daban los modelos, para aprender (ADR 0006 y 0012) |
 | `aprenentatge.py` | Aprendizaje de la previsión: regresiones, comprobación y cambio de método (ADR 0012, `docs/estadistica.md`) |
 | `calibracio/` | Descarga del histórico, análisis y calibración (los datos, en `dades/`, no se suben) |
 | `tests/` | Pruebas sin red |
@@ -146,7 +146,9 @@ leer los datos de IONOS y usa la copia de su carpeta).
 - Con una fuente caída, la web lo avisa y sigue mostrando lo demás.
 - Con datos de más de 2 horas, la web solo muestra el aviso y enlaces
   oficiales (ADR 0031); si los datos de IONOS llevan más de una hora sin
-  renovarse, el vigía de IONOS avisa a Juanjo.
+  renovarse, el vigía de IONOS avisa a Juanjo (desde que existe la reserva,
+  ADR 0032, eso solo pasa si fallan el NAS y la reserva: una caída del NAS
+  sola la avisa la propia reserva a los 35 minutos).
 
 ## Fuentes y licencias
 

@@ -38,6 +38,9 @@ import trens as TR
 
 HORAS = 24
 HORAS_PERSISTENCIA = 4      # las que tiene la tabla de calibracio.json
+# Una lectura de «ahora» con más de estos minutos no vale: un feed congelado
+# no puede decir que llueve (o que no) durante horas.
+ARA_MAX_MIN = 30
 HORAS_COMPROBACION = 3      # últimas horas en que se comparan modelos y estación
 
 
@@ -61,6 +64,8 @@ def montflorit():
         return [], None
     u = filas[-1]
     hora = dt.datetime.fromisoformat(u["dt_local"]).astimezone()
+    if P.AHORA - hora > dt.timedelta(minutes=ARA_MAX_MIN):
+        raise RuntimeError(f"l'última lectura és de les {hora:%H:%M}")
     # El viento de Montflorit no se publica: su anemómetro marca casi siempre
     # 0 (config.VENT_ESTACIO, ADR 0037).
     ara = {"hora": hora.isoformat(), "temperatura": u.get("TEMP"), "humitat": u.get("HUM"),
@@ -72,7 +77,10 @@ def montflorit():
     return filas, ara
 
 
-def modelos(desde):
+def modelos(desde, errors=None):
+    """Los modelos deterministas y, aparte, el ensemble: si solo falla el
+    ensemble, la previsión sigue (la probabilidad sale del modelo aprendido
+    sin él) y queda apuntado en errors."""
     dias = [desde.date().isoformat(), (desde + dt.timedelta(days=2)).date().isoformat()]
     q = urllib.parse.urlencode({
         "latitude": C.CASA[0], "longitude": C.CASA[1],
@@ -84,7 +92,13 @@ def modelos(desde):
     q = urllib.parse.urlencode({
         "latitude": C.CASA[0], "longitude": C.CASA[1], "hourly": "precipitation",
         "models": C.ENSEMBLE, "timezone": P.TZ, "start_date": dias[0], "end_date": dias[1]})
-    e = json.loads(P.get(f"https://ensemble-api.open-meteo.com/v1/ensemble?{q}"))["hourly"]
+    try:
+        e = json.loads(P.get(f"https://ensemble-api.open-meteo.com/v1/ensemble?{q}"))["hourly"]
+    except Exception as ex:
+        if errors is None:
+            raise
+        errors.append(f"ensemble: {ex}")
+        e = {}
     return h, e
 
 
@@ -101,7 +115,13 @@ def indice_uv(desde):
 
 def estacio_casa():
     """Lo que mide ahora la estación de casa (None sin claves o si falla)."""
-    return E.resum_ara() if E.disponible() else None
+    if not E.disponible():
+        return None
+    casa = E.resum_ara()
+    hora = dt.datetime.fromisoformat(casa["hora"])
+    if P.AHORA - hora > dt.timedelta(minutes=ARA_MAX_MIN):
+        raise RuntimeError(f"l'última lectura és de les {hora:%H:%M}")
+    return casa
 
 
 def llueve_ahora_en(ara, casa):
@@ -163,7 +183,7 @@ def avisos_del_tramo(ini, fin, avisos):
     res = {}
     for a in avisos or []:
         a_ini, a_fin = (dt.datetime.fromisoformat(a[k]) for k in ("inicio", "fin"))
-        if a["zona"] == C.ZONA_TRAYECTO and a_ini < fin and a_fin > ini:
+        if a["zona"] == C.ZONA_AVISOS and a_ini < fin and a_fin > ini:
             res.setdefault(a["nivel"], set()).add(a["tipo"])
     return [{"nivell": n, "tipus": sorted(t)} for n, t in res.items()]
 
@@ -362,7 +382,7 @@ def recoger(anterior=None):
         salida["errors"].append(f"vent: {ex}")
     avisos = planes = None
     try:
-        avisos = [a for a in P.avisos() if a["zona"] == C.ZONA_TRAYECTO
+        avisos = [a for a in P.avisos() if a["zona"] == C.ZONA_AVISOS
                   and dt.datetime.fromisoformat(a["fin"]) > P.AHORA]
     except Exception as ex:
         salida["errors"].append(f"avisos: {ex}")
@@ -397,13 +417,15 @@ def recoger(anterior=None):
             hora = dt.datetime.fromisoformat(ara["hora"])
             m3 = lluvia_entre(filas_estacion, hora - dt.timedelta(hours=C.RIERA_HORES), hora)
         salida["riera"] = RI.calcula(P.AHORA, nc, montflorit_3h=m3)
+        if salida["riera"] is None:
+            salida["errors"].append("riera: Sant Cugat (Meteocat) sense dades recents")
     except Exception as ex:
         salida["riera"] = None
         salida["errors"].append(f"riera: {ex}")
     salida["horari"] = P.horario([C.HORARIO_CASA_AVISO if motivos else C.HORARIO_CASA],
                                  C.INTERVALO_CASA_MIN, motivos)
     try:
-        h, e = modelos(P.AHORA)
+        h, e = modelos(P.AHORA, salida["errors"])
         model = A.carrega()
         salida["aprenentatge"] = A.resum_pagina(model)
         salida["hores"] = previsio(P.AHORA, h, e, ara, avisos, model, casa, nc)

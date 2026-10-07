@@ -180,8 +180,11 @@ def decideix(estat, salida, ahora):
             nous_perill.append(r)
             actius[r["clau"]] = {"nivell": r["nivell"]}
         actius[r["clau"]]["vist"] = hora
+    # Sin previsión o sin estación no se ha podido mirar: el riesgo no caduca,
+    # para no repetirlo al canal cuando vuelvan los datos.
+    sense = not salida.get("hores") or not salida.get("ara")
     for clau, a in list(actius.items()):
-        if ahora - dt.datetime.fromisoformat(a["vist"]) >= dt.timedelta(hours=C.RISC_FI_H):
+        if not sense and ahora - dt.datetime.fromisoformat(a["vist"]) >= dt.timedelta(hours=C.RISC_FI_H):
             del actius[clau]
     if nous_perill:
         text, pitjor = text_perill(nous_perill, ahora)

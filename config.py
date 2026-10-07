@@ -1,19 +1,15 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-"""Datos fijos del trayecto. Se cambian aquí, no en prevision.py."""
+"""Datos fijos de «Temps a Montflorit»: lugares, horario, fuentes y umbrales.
+Se cambian aquí, no en los programas."""
 
-VERSION = "3.10.1"
+VERSION = "3.11.0"
 
-# Coordenadas redondeadas a unos 500 m: para el tiempo da igual una calle u
-# otra, y el repositorio es público.
+# Coordenadas con tres decimales (unos 100 m), no las exactas: para el tiempo
+# da igual una calle u otra, y el repositorio es público.
 CASA = (41.482, 2.135)      # Cerdanyola del Vallès (Montflorit)
-DESTINO = (41.557, 2.109)   # Parc Taulí, Sabadell
-
-# Ventanas del trayecto en moto (hora local). Unos 8 km, 15-20 minutos.
-IDA = ("06:30", "07:30")      # llegada a las 7:30
-VUELTA = ("15:00", "15:30")   # salida a las 15:00
 
 # Estaciones de meteocerdanyola.com (nombre en su web: nombre), minuto a
-# minuto. Montflorit está al principio del trayecto.
+# minuto. Montflorit es la del barrio.
 ESTACIONES_LOCALES = {
     "cerdanyola_montflorit": "Cerdanyola (Montflorit)",
 }
@@ -44,66 +40,51 @@ ESTACIONES = {
     "XV": "Sant Cugat (CAR)",
 }
 
-# Horario de actualización con datos en directo (hora local), cada cuarto de
-# hora. Por la mañana, para decidir el medio; al mediodía, el tiempo de la
-# vuelta. La web lo muestra tal cual. Los datos van a IONOS en cada pasada y
-# la web a GitHub cada media hora como mucho (ADR 0020).
-HORARIO = [("05:00", "07:30"), ("13:00", "15:30")]
-INTERVALO_MIN = 15
-
-# La página de casa (casa.html): previsión a 24 horas, actualizada cada cuarto
-# de hora todo el día.
+# Horario de actualización con datos en directo (hora local): previsión a 24
+# horas, actualizada cada cuarto de hora todo el día. La web lo muestra tal
+# cual. Los datos van a IONOS en cada pasada y la web a GitHub cada media hora
+# como mucho (ADR 0020).
 HORARIO_CASA = ("00:00", "23:45")
 HORARIO_CASA_AVISO = ("00:00", "23:54")
 INTERVALO_CASA_MIN = 15
 
 # Modo aviso: con aviso de AEMET vigente, plan de Protección Civil en alerta o
 # emergencia, lluvia en Montflorit o lluvia en el radar a menos de
-# RADAR_AVISO_KM (o que llegará a casa en la próxima hora), las dos páginas se
-# actualizan cada 6 minutos (la del trayecto, dentro de sus franjas): el ritmo
-# del radar de Meteocat, que saca una imagen a :00, :06, :12… y la publica
-# unos 13-14 minutos después. Con el desfase de 3 minutos, cada pasada coge
-# la imagen nueva (la de las 10:06, publicada a las 10:19:43, a las 10:21).
+# RADAR_AVISO_KM de casa (o que llegará a casa en la próxima hora), la página
+# se actualiza cada 6 minutos: el ritmo del radar de Meteocat, que saca una
+# imagen a :00, :06, :12… y la publica unos 13-14 minutos después. Con el
+# desfase de 3 minutos, cada pasada coge la imagen nueva (la de las 10:06,
+# publicada a las 10:19:43, a las 10:21).
 MODO_AVISO_INTERVALO_MIN = 6
 MODO_AVISO_DESFASE_MIN = 3
 RADAR_AVISO_KM = 15
 
-# Registro de aciertos (registre.py): a qué hora se comprueba la lluvia que
-# cayó, a los cuántos días se manda el resumen por Telegram y cuántos días de
-# lluvia hacen falta para juzgar la regla.
+# A qué hora el reloj del NAS (nas/reloj.sh) rellena las horas que falten de
+# la estación de casa (registre.py estacio) y la página aprende de sus
+# aciertos (aprenentatge.py diari).
 HORA_VERIFICACION = "16:00"
-REGISTRO_DIAS_AVISO = 28
-REGISTRO_LLUVIAS_MINIMAS = 5
 
-# Zonas de aviso de AEMET. La primera es la del trayecto; un aviso solo en la
+# Zonas de aviso de AEMET. La primera es la del barrio; un aviso solo en la
 # segunda, la costa, se tiene en cuenta pero no decide.
-ZONA_TRAYECTO = "Prelitoral de Barcelona"
+ZONA_AVISOS = "Prelitoral de Barcelona"
 ZONA_CERCANA = "Litoral de Barcelona"
 
 # Planes de Protección Civil de la Generalitat que dependen del tiempo, con el
 # nombre que ve el lector. Un plan en alerta o emergencia cuenta como riesgo
 # alto; en prealerta solo se avisa.
 PLANES_PC = {"INUNCAT": "d'inundacions", "VENTCAT": "de vent", "NEUCAT": "de neu"}
-# Si la descripción del plan nombra solo otras zonas, no afecta al trayecto.
+# Si la descripción del plan nombra solo otras zonas, no afecta al barrio.
 ZONAS_PROPIAS_PC = ["Vallès", "Barcelona", "Catalunya"]
 ZONAS_AJENAS_PC = ["Ebre", "Pirineu", "Aran", "Lleida", "Girona", "Tarragona", "Empordà"]
 
-# Modelos deterministas de Open-Meteo. Los «finos» deciden; los globales,
-# con celdas de 10-25 km que incluyen mar, solo se muestran.
+# Modelos deterministas «finos» de Open-Meteo: los que usa la previsión.
 MODELOS_FINOS = [
     "meteofrance_arome_france_hd",  # 1,5 km, el más fino que cubre Cataluña
     "meteofrance_arome_france",     # 2,5 km
     "icon_eu",                      # 7 km
 ]
-MODELOS_GLOBALES = ["ecmwf_ifs025", "ukmo_seamless", "gfs_seamless"]
 # Ensemble horario usado como probabilidad.
 ENSEMBLE = "icon_eu_eps"
-
-# Ropa (prevision.roba): el ciclomotor va como mucho a 45 km/h. Con 10 °C o
-# menos, el frío se calcula como sensación térmica a esa velocidad (índice de
-# Environment Canada); por encima, con la temperatura del aire.
-VELOCIDAD_CICLOMOTOR_KMH = 45
-ROPA_DIFERENCIA_CAPAS = 8      # °C entre ida y vuelta para avisar de las capas
 
 # Si Open-Meteo falla, la página de casa usa la última previsión buena, si no
 # tiene más de estas horas (ADR 0016).
@@ -138,13 +119,11 @@ AVIS_PLUJA_MIN = 15
 AVIS_PLUJA_REPOS_MIN = 60
 AVIS_PLUJA_VERIFICA_MIN = 45
 
-# Umbrales de la decisión (mm en una hora; fracción de miembros; km).
-UMBRAL_MM = 0.2          # ya moja en moto
-UMBRAL_MM_COCHE = 1.0    # lluvia clara
+# Umbrales de la lluvia (mm en una hora; fracción de miembros del ensemble o
+# del círculo del radar): lo que ya moja, y desde qué probabilidad se avisa
+# de lluvia posible.
+UMBRAL_MM = 0.2
 PROB_ATENCION = 0.2
-PROB_COCHE = 0.5
-RADAR_COCHE_KM = 15
-RADAR_ATENCION_KM = 40
 
 # Riera de Sant Cugat (riera.py, ADR 0027): nace en Collserola y pasa por
 # Montflorit. Se desbordó con 53 mm en 3 horas en Sant Cugat (29-04-2024, el

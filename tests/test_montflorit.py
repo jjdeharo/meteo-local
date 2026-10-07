@@ -105,11 +105,12 @@ class Web(unittest.TestCase):
         self.assertEqual(json.loads(self.llegeix("manifest.webmanifest"))["name"], "Temps a Montflorit")
 
     def test_la_comprovacio_troba_el_que_no_hi_ha_de_ser(self):
-        for dolent in ("<p>Temps a casa</p>", '<a href="./">Trajecte</a>', '<p title="Moto o cotxe?">x</p>',
-                       '<a href="https://github.com/meteo-montflorit/meteo-local">codi</a>'):
+        for dolent in ("<p>Temps a casa</p>", '<a href="./">Trajecte</a>', '<p title="Moto o cotxe?">x</p>'):
             with self.assertRaises(ValueError):
                 M.comprova("prova", dolent)
         M.comprova("prova", '<script src="casa.js"></script><div id="casa">Montflorit</div>')
+        # El repositori del codi sí pot sortir: els crèdits l'enllacen i la versió enllaça les seves notes.
+        M.comprova("prova", '<a href="https://github.com/meteo-montflorit/meteo-local">codi</a>')
 
     def test_si_la_pagina_canvia_falla(self):
         with self.assertRaises(ValueError):
@@ -122,6 +123,20 @@ class Web(unittest.TestCase):
         self.assertNotIn("casa.html", sw)
         self.assertIn("'es/'", sw)
 
+
+    def test_fonts_amb_capcalera_comuna_i_lligams_entre_llengues(self):
+        fonts = self.llegeix("fonts.html")
+        self.assertIn('id="btn-fosc"', fonts)
+        self.assertIn('<nav class="pagines"', fonts)
+        self.assertIn('<a href="es/fonts.html" lang="es" hreflang="es">Castellano</a>', fonts)
+        self.assertIn('<script src="comu.js"></script>', fonts)
+        self.assertIn('data-notes="https://github.com/meteo-montflorit/meteo-local/releases/tag/v', fonts)
+        self.assertIn('<script src="../es.js"></script>', self.llegeix("es/fonts.html"))
+        for nom, ca in (("index.html", ""), ("sortir.html", "sortir.html")):
+            for html in (self.llegeix(nom), self.llegeix("es/" + nom)):
+                self.assertIn(f'<link rel="alternate" hreflang="ca" href="https://meteo-montflorit.github.io/{ca}">', html)
+                self.assertIn(f'<link rel="alternate" hreflang="es" href="https://meteo-montflorit.github.io/es/{ca}">', html)
+        self.assertIn('media="(prefers-color-scheme: dark)"', self.llegeix("index.html"))
     def test_en_castella(self):
         index, fonts = self.llegeix("es/index.html"), self.llegeix("es/fonts.html")
         for html in (index, fonts):

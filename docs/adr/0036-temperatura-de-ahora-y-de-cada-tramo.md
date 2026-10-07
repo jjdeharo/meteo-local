@@ -42,7 +42,9 @@ tres causas:
 ## Consecuencias
 
 - La temperatura mostrada en el registro (`mostrat`) pasa a ser la media del
-  tramo; nada la usa para aprender.
+  tramo; nada la usa para aprender. Sí la usan los avisos de peligro
+  (`riscos.py`, calor y frío) y el «entre X y Y» del bot: con la media, el
+  pico horario queda suavizado medio grado (revisión del 07-10-2026).
 - Si la estación particular deja de dar datos, el bot vuelve a la de
   Montflorit.
 

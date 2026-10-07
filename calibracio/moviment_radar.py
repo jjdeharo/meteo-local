@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 """Comprueba cómo acierta el radar llevado hacia delante según de dónde salga
 el movimiento (ADR 0023): de todo el cuadro de 300 km o de la lluvia de cerca
-del trayecto.
+de casa.
 
 Parte de una tarde de imágenes guardadas (no están en el repositorio):
   radar-FECHA.npz     hores, ims (mm/h), casa (fila, columna), km_px
@@ -44,8 +44,7 @@ def main(ruta_radar, ruta_adveccio):
     hores = {minuts(str(h)): i for i, h in enumerate(d["hores"])}
     ims, km_px = d["ims"].astype(float), float(d["km_px"])
     fc, cc = (int(round(float(x))) for x in d["casa"])
-    lat, lon = (C.CASA[0] + C.DESTINO[0]) / 2, (C.CASA[1] + C.DESTINO[1]) / 2
-    tx, ty = N.geometria(lat, lon)
+    tx, ty = N.geometria(*C.CASA)
     r = {"tx": tx, "ty": ty, "km_px": km_px}
     punts = [(fc + int(j * 10 / km_px), cc + int(i * 10 / km_px))
              for j in range(-5, 6) for i in range(-5, 6) if np.hypot(i, j) * 10 <= 55]
