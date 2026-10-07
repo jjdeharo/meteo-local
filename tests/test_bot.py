@@ -208,14 +208,9 @@ class Repartiment(unittest.TestCase):
         self.assertEqual([(str(p["chat_id"]), p["text"][:4]) for _, p in api.enviats],
                          [("1", "R ca"), ("1", "<b>E")])
 
-    def test_avis_en_triar_el_que_ja_dona_el_canal(self):
-        subs = {"1": {"idioma": "ca", "avisos": [], "resum": None}}
-        for dada, avis in (("t:riera", True), ("t:pluja", False), ("r:7", True), ("r:8", False)):
-            api = Api(al_canal=["1"])
-            B.atén(api, subs, {"callback_query": {"id": "q", "data": dada, "from": {},
-                                                  "message": {"chat": {"id": 1}, "message_id": 5}}})
-            resposta = [p for m, p in api.enviats if m == "answerCallbackQuery"][0]
-            self.assertEqual(resposta.get("text") is not None, avis, dada)
+    def test_el_menu_explica_el_canal(self):
+        for idioma in ("ca", "es"):
+            self.assertIn("@TempsMontflorit)", B.T[idioma]["menu"])
 
 
 class AvisosPublics(unittest.TestCase):

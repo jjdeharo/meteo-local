@@ -58,6 +58,8 @@ T = {
                        "l'Ajuntament.\n" + WEB),
         "menu": ("Toca el que vulguis rebre. ✓ vol dir que sí; si el tornes a tocar, es treu.\n"
                  "La previsió arriba un cop al dia, a l'hora que triïs.\n\n"
+                 "Si també ets al canal (@TempsMontflorit), no et repetiré el que ja t'arriba per allà: els avisos "
+                 "de la riera i de perill i la previsió de les 7 h.\n\n"
                  "Només es desa el teu identificador de Telegram i el que triïs aquí. Amb /baixa s'esborra tot."),
         "riera": "Desbordament de la riera de Sant Cugat (en proves)", "perill": "Perill (pluja forta, vent, calor…)",
         "pluja": "Pluja a punt de començar (15 min abans)", "trens": "Trens de Cerdanyola (si no circulen)",
@@ -66,7 +68,6 @@ T = {
         "ajuda": ("/avisos tria què reps · /resum la previsió · /ara el temps ara · "
                   "/baixa deixa de rebre'n i esborra les teves dades"),
         "velles": "Les dades de Temps a Montflorit no s'actualitzen des de les {}: ara no puc donar la previsió.",
-        "ja_canal": "Ets al canal: això ja t'hi arriba, aquí no t'ho repetiré.",
     },
     "es": {
         "benvinguda": ("<b>Bot Temps a Montflorit</b>\nTe enviaré, solo a ti, los avisos del tiempo en Montflorit "
@@ -75,6 +76,8 @@ T = {
                        "Ayuntamiento.\n" + WEB),
         "menu": ("Toca lo que quieras recibir. ✓ quiere decir que sí; si lo vuelves a tocar, se quita.\n"
                  "La previsión llega una vez al día, a la hora que elijas.\n\n"
+                 "Si también estás en el canal (@TempsMontflorit), no te repetiré lo que ya te llega por allí: los "
+                 "avisos de la riera y de peligro y la previsión de las 7 h.\n\n"
                  "Solo se guarda tu identificador de Telegram y lo que elijas aquí. Con /baixa se borra todo."),
         "riera": "Desbordamiento de la riera de Sant Cugat (en pruebas)", "perill": "Peligro (lluvia fuerte, viento, calor…)",
         "pluja": "Lluvia a punto de empezar (15 min antes)", "trens": "Trenes de Cerdanyola (si no circulan)",
@@ -83,7 +86,6 @@ T = {
         "ajuda": ("/avisos elige qué recibes · /resum la previsión · /ara el tiempo ahora · "
                   "/baixa deja de recibir y borra tus datos"),
         "velles": "Los datos de Temps a Montflorit no se actualizan desde las {}: ahora no puedo dar la previsión.",
-        "ja_canal": "Estás en el canal: esto ya te llega por allí, aquí no te lo repetiré.",
     },
 }
 
@@ -331,14 +333,10 @@ def atén(api, subs, update):
         q = update["callback_query"]
         chat = str(q["message"]["chat"]["id"])
         sub = alta(subs, chat, q.get("from", {}))
-        dada = q.get("data", "")
-        avis = None
-        if canvia(sub, dada):
+        if canvia(sub, q.get("data", "")):
             api("editMessageText", chat_id=chat, message_id=q["message"]["message_id"],
                 text=T[sub["idioma"]]["menu"], reply_markup={"inline_keyboard": teclat(sub)})
-            if dona_el_canal(sub, dada) and al_canal(api, chat, {}):
-                avis = T[sub["idioma"]]["ja_canal"]
-        api("answerCallbackQuery", callback_query_id=q["id"], text=avis)
+        api("answerCallbackQuery", callback_query_id=q["id"])
         return
     m = update.get("message") or {}
     if m.get("chat", {}).get("type") != "private" or "text" not in m:
@@ -383,6 +381,7 @@ def a_repartir(avisos, enviats, moment):
 # riera y peligro y la previsión de las 7 (Juanjo, 07-10-2026). El bot, como
 # administrador del canal, puede preguntar quién está; ante la duda o si el
 # canal no lo ha recibido, se manda: mejor un aviso repetido que uno perdido.
+# El menú del bot lo explica.
 DINS_CANAL = ("creator", "administrator", "member")
 
 
@@ -394,12 +393,6 @@ def al_canal(api, chat, memoria):
         except Exception:
             memoria[chat] = False
     return memoria[chat]
-
-
-def dona_el_canal(sub, dada):
-    """Si el botón que acaba de activar es algo que también da el canal."""
-    tipus = dada.removeprefix("t:")
-    return (dada.startswith("t:") and tipus in CANAL_TIPUS and tipus in sub["avisos"]) or dada == f"r:{CANAL_RESUM}"
 
 
 def reparteix(api, subs, estat, moment):

@@ -67,10 +67,10 @@ internet en casa, que suele llegar con las tormentas.
   previsión a otra hora. El bot, administrador del canal, lo pregunta a
   Telegram (`getChatMember`) una vez por pasada y solo cuando hay algo que
   repartir. Si el canal no ha recibido el aviso o la pregunta falla, el bot lo
-  manda igualmente: mejor repetido que perdido. Al marcar en el menú algo que
-  ya da el canal, un aviso breve de Telegram se lo dice («Ets al canal: això
-  ja t'hi arriba…»), en lugar de una línea fija en el menú, que solo
-  importaría a una parte. Antes, la página avisaba de que con los dos algunos
+  manda igualmente: mejor repetido que perdido. El menú del bot lo dice, con
+  el enlace al canal: «Si també ets al canal (@TempsMontflorit), no et repetiré
+  el que ja t'arriba per allà…» (Juanjo pidió que el bot lo dijera claro; un
+  aviso breve al marcar un botón no bastaba y se quitó). Antes, la página avisaba de que con los dos algunos
   avisos podían llegar repetidos; Juanjo prefirió evitarlo.
 - **Altas**: cada alta nueva, una línea a Juanjo con el número total, sin
   nombres (Juanjo, 07-10-2026).
@@ -136,5 +136,5 @@ elige cada uno, canal, una sola vez, aviso caducado, baja de quien bloquea,
 resumen a la hora de cada uno y del canal; avisos públicos de trenes (dos
 pasadas), riera con el aviso orientativo y peligro en castellano, con su
 titular en negrita; quien está en el canal no recibe repetido lo que el canal
-da (y sí lo recibe si el canal falla), y el aviso al marcarlo en el menú. La página de ayuda pasa por las pruebas de la web pública
+da (y sí lo recibe si el canal falla), y el menú lo explica. La página de ayuda pasa por las pruebas de la web pública
 (traducción completa), `probar-web` y axe-core.
