@@ -60,7 +60,7 @@ T = {
                  "identificador de Telegram i el que triïs aquí. Amb /baixa s'esborra tot."),
         "riera": "Desbordament de la riera de Sant Cugat (en proves)", "perill": "Perill (pluja forta, vent, calor…)",
         "pluja": "Pluja d'aquí a 15 minuts", "trens": "Trens de Cerdanyola",
-        "resum": "Previsió, un cop al dia, a les:", "no": "Sense previsió", "h": "{} h", "dema": "{} h (per a demà)",
+        "resum": "Previsió, un cop al dia, a les:", "no": "No vull rebre la previsió", "h": "{} h", "dema": "{} h (per a demà)",
         "baixa": "Fet: s'han esborrat les teves dades i ja no rebràs res. Amb /start pots tornar-hi.",
         "ajuda": ("/avisos tria què reps · /resum la previsió · /ara el temps ara · "
                   "/baixa deixa de rebre'n i esborra les teves dades"),
@@ -76,7 +76,7 @@ T = {
                  "tu identificador de Telegram y lo que elijas aquí. Con /baixa se borra todo."),
         "riera": "Desbordamiento de la riera de Sant Cugat (en pruebas)", "perill": "Peligro (lluvia fuerte, viento, calor…)",
         "pluja": "Lluvia dentro de 15 minutos", "trens": "Trenes de Cerdanyola",
-        "resum": "Previsión, una vez al día, a las:", "no": "Sin previsión", "h": "{} h", "dema": "{} h (para mañana)",
+        "resum": "Previsión, una vez al día, a las:", "no": "No quiero recibir la previsión", "h": "{} h", "dema": "{} h (para mañana)",
         "baixa": "Hecho: se han borrado tus datos y ya no recibirás nada. Con /start puedes volver.",
         "ajuda": ("/avisos elige qué recibes · /resum la previsión · /ara el tiempo ahora · "
                   "/baixa deja de recibir y borra tus datos"),

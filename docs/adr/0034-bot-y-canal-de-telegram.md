@@ -42,7 +42,7 @@ internet en casa, que suele llegar con las tormentas.
   defecto, riera y peligro), la previsión, un mensaje al día a las 6, 7 u
   8 h (el tiempo ahora y el resto del día) o a las 20 h (la de mañana: la
   noche solo si se espera lluvia, temperaturas, lluvia y avisos de AEMET de
-  mañana; sin trenes), o «Sense previsió» (el menú lo explica), y el
+  mañana; sin trenes), o «No vull rebre la previsió» (el menú lo explica), y el
   idioma (catalán o castellano, al principio el de su Telegram). Órdenes:
   /avisos, /resum, /ara y /baixa, que borra sus datos. Solo se guardan su
   identificador de Telegram y lo que elige; si bloquea el bot, se le da de
