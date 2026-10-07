@@ -1,0 +1,100 @@
+<!doctype html>
+<!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
+<html lang="ca" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <meta name="description" content="Si surts de Montflorit (Cerdanyola del Vallès): com anirà cada mitjà de transport, què et cal posar i si circulen els trens, segons l'hora de sortir i de tornar.">
+  <title>Si surts</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232563eb' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 14.9A7 7 0 1 1 15.7 8h1.8a4.5 4.5 0 0 1 2.5 8.2'/%3E%3Cpath d='M16 14v6M8 14v6M12 16v6'/%3E%3C/svg%3E">
+  <script>
+    // Tema abans de pintar, perquè no parpellegi: el del sistema, si no s'ha triat.
+    try {
+      const triat = localStorage.getItem('meteo.fosc');
+      const fosc = triat === null ? matchMedia('(prefers-color-scheme: dark)').matches : triat === '1';
+      document.documentElement.dataset.theme = fosc ? 'dark' : 'light';
+    } catch (_) {}
+  </script>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icones/apple-touch-icon.png">
+  <meta name="theme-color" content="#1d4ed8">
+  <link rel="stylesheet" href="estil.css">
+</head>
+<body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <!-- Icones de Lucide (ISC) -->
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2m-7.07-17.07 1.41 1.41m11.32 11.32 1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></symbol>
+    <symbol id="i-cloud-sun" viewBox="0 0 24 24"><path d="M12 2v2m-7.07.93 1.41 1.41M20 12h2m-2.93-7.07-1.41 1.41M15.947 12.65a4 4 0 0 0-5.925-4.128"/><path d="M13 22H7a5 5 0 1 1 4.9-6H13a3 3 0 0 1 0 6Z"/></symbol>
+    <symbol id="i-door-open" viewBox="0 0 24 24"><path d="M10 21H2M10 3H7a2 2 0 0 0-2 2v16M14 12h.01M22 21h-3"/><path d="M19 21V5a2 2 0 0 0-1.675-1.974l-6.163-1.013A1 1 0 0 0 10 3v18a1 1 0 0 0 1.124.992z"/></symbol>
+    <symbol id="i-footprints" viewBox="0 0 24 24"><path d="M4 16v-2.38C4 11.5 2.97 10.5 3 8c.03-2.72 1.49-6 4.5-6C9.37 2 10 3.8 10 5.5c0 3.11-2 5.66-2 8.68V16a2 2 0 1 1-4 0Z"/><path d="M20 20v-2.38c0-2.12 1.03-3.12 1-5.62-.03-2.72-1.49-6-4.5-6C14.63 6 14 7.8 14 9.5c0 3.11 2 5.66 2 8.68V20a2 2 0 1 0 4 0Z"/><path d="M16 17h4M4 13h4"/></symbol>
+    <symbol id="i-bike" viewBox="0 0 24 24"><circle cx="18.5" cy="17.5" r="3.5"/><circle cx="5.5" cy="17.5" r="3.5"/><circle cx="15" cy="5" r="1"/><path d="M12 17.5V14l-3-3 4-3 2 3h2"/></symbol>
+    <symbol id="i-motorbike" viewBox="0 0 24 24"><path d="m18 14-1-3M3 9l6 2a2 2 0 0 1 2-2h2a2 2 0 0 1 1.99 1.81M8 17h3a1 1 0 0 0 1-1 6 6 0 0 1 6-6 1 1 0 0 0 1-1v-.75A5 5 0 0 0 17 5"/><circle cx="19" cy="17" r="3"/><circle cx="5" cy="17" r="3"/></symbol>
+    <symbol id="i-car" viewBox="0 0 24 24"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2M9 17h6"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/></symbol>
+    <symbol id="i-train-front" viewBox="0 0 24 24"><path d="M8 3.1V7a4 4 0 0 0 8 0V3.1M9 15l-1-1M15 15l1-1M9 19c-2.8 0-5-2.2-5-5v-4a8 8 0 0 1 16 0v4c0 2.8-2.2 5-5 5ZM8 19l-2 3M16 19l2 3"/></symbol>
+  </svg>
+
+  <header class="cap">
+    <div>
+      <h1>Si surts</h1>
+      <p class="ruta">Montflorit, Cerdanyola del Vallès</p>
+    </div>
+    <button type="button" id="btn-fosc" class="boto-icona" title="Canvia entre tema clar i fosc" aria-label="Canvia entre tema clar i fosc">
+      <svg aria-hidden="true"><use href="#i-moon"></use></svg>
+    </button>
+  </header>
+  <nav class="pagines" aria-label="Pàgines">
+    <a href="casa.html"><svg aria-hidden="true"><use href="#i-cloud-sun"></use></svg>Temps a casa</a>
+    <a href="sortir.html" aria-current="page"><svg aria-hidden="true"><use href="#i-door-open"></use></svg>Si surts</a>
+  </nav>
+
+  <main>
+    <p id="avis-dades" class="avis" hidden></p>
+    <div id="avisos" aria-live="polite"></div>
+    <p id="horari" class="horari"></p>
+    <form id="hores" class="hores-sortida">
+      <label>Surto <select id="surto"></select></label>
+      <label>Torno <select id="torno"></select></label>
+    </form>
+    <fieldset id="triats" class="triats">
+      <legend class="visualment-amagat">Mitjans que vols veure</legend>
+    </fieldset>
+    <div id="sortida" aria-live="polite">
+      <p class="carregant">Carregant la previsió…</p>
+    </div>
+    <section id="trens" class="trens" aria-labelledby="titol-trens" hidden>
+      <h2 id="titol-trens" class="seccio">Trens ara</h2>
+      <ul id="llista-trens" class="llista-trens"></ul>
+      <p id="estat-operadors" class="nota"></p>
+      <p id="hora-trens" class="nota"></p>
+    </section>
+
+    <details class="com">
+      <summary>Com es decideix</summary>
+      <p>Per a l'anada compta l'hora de sortir i, per a la tornada, l'hora de tornar; la pluja que pugui caure mentre ets fora decideix el paraigua. Les dades són les de la previsió hora a hora de Montflorit: valen per moure's per la zona (Cerdanyola, Sant Cugat, Sabadell, la UAB o Barcelona).</p>
+      <ul>
+        <li><strong>A peu:</strong> amb risc de pluja, paraigua. Només es desaconsella amb ratxes de vent de 70&nbsp;km/h o més.</li>
+        <li><strong>Bici o patinet:</strong> pluja probable (50&nbsp;% o 1&nbsp;mm en una hora), ratxes de 50&nbsp;km/h o 1&nbsp;°C o menys (gel), millor no; risc de pluja (20&nbsp;% o 0,2&nbsp;mm), ratxes de 40&nbsp;km/h o 3&nbsp;°C o menys, compte.</li>
+        <li><strong>Moto:</strong> llindars de pluja comprovats amb dades del 2024 al 2026 (50&nbsp;% o 1&nbsp;mm, millor no; 20&nbsp;% o 0,2&nbsp;mm, impermeable); ratxes de 70&nbsp;km/h o 1&nbsp;°C o menys, millor no; de 50&nbsp;km/h o 3&nbsp;°C, compte.</li>
+        <li><strong>Cotxe:</strong> només canvia amb ratxes de 90&nbsp;km/h o més.</li>
+        <li><strong>Transport públic:</strong> segons els trens que paren a Cerdanyola; si alguna línia no circula, va per carretera o té incidències, es diu. Dels busos no hi ha dades en temps real.</li>
+        <li><strong>Roba:</strong> segons la temperatura més baixa de l'anada i de la tornada i el fred que fa a la velocitat de cada mitjà (uns 18&nbsp;km/h en bici i 45&nbsp;km/h en moto), amb capes si entre les dues hi ha 8&nbsp;°C o més de diferència.</li>
+        <li><strong>Consells:</strong> protector solar amb índex UV de 3 o més mentre ets fora; roba visible o llum si surts o tornes de nit; aigua amb 32&nbsp;°C o més.</li>
+        <li><strong>Trens:</strong> els de Rodalies (R4, R7 i R8) i d'FGC (S2) que paren a Cerdanyola. Una línia circula si en l'última hora s'hi ha vist algun tren movent-se a prop de l'estació, segons les dades en temps real de Renfe i d'FGC; els avisos són els seus, en l'idioma en què els publiquen.</li>
+      </ul>
+      <p>Els llindars de la bici, el patinet i a peu encara no s'han comprovat amb dades: són una primera proposta que s'anirà ajustant.</p>
+    </details>
+
+  </main>
+
+  <footer class="peu">
+    <p><a id="versio" href="https://github.com/jjdeharo/meteo-local/releases" target="_blank" rel="noopener">versió —</a> · <a href="fonts.html">Fonts i crèdits</a></p>
+    <p>© 2026 <a href="https://bilateria.org" target="_blank" rel="noopener">Juan José de Haro</a> · Continguts <a href="https://creativecommons.org/licenses/by-sa/4.0/deed.ca" target="_blank" rel="noopener">CC BY-SA 4.0</a> · Codi <a href="https://www.gnu.org/licenses/agpl-3.0.html" target="_blank" rel="noopener">AGPL v3</a></p>
+    <p>Fet amb IA (Claude Code, octubre de 2026), <a href="https://jjdeharo.github.io/miae/?nivel=4" target="_blank" rel="noopener">nivell 4 del MIAE</a>.</p>
+  </footer>
+
+  <script src="comu.js"></script>
+  <script src="sortir.js"></script>
+</body>
+</html>

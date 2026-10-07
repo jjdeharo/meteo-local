@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 """Datos fijos del trayecto. Se cambian aquí, no en prevision.py."""
 
-VERSION = "2.20.0"
+VERSION = "3.0.0"
 
 # Coordenadas redondeadas a unos 500 m: para el tiempo da igual una calle u
 # otra, y el repositorio es público.
@@ -44,12 +44,6 @@ INTERVALO_MIN = 15
 HORARIO_CASA = ("00:00", "23:45")
 HORARIO_CASA_AVISO = ("00:00", "23:54")
 INTERVALO_CASA_MIN = 15
-
-# Agente diario (agent/): a qué hora y en qué modo se ejecuta, y con qué
-# modelo. Va después de la actualización de la hora en punto, para leer datos
-# recientes.
-AGENTE_HORAS = {"05:47": "mati", "13:07": "tarda"}   # la de la mañana, lista antes de las 6
-AGENTE_MODELO = "claude-sonnet-5-5"   # fijo: el alias «sonnet» cambiaría solo
 
 # Modo aviso: con aviso de AEMET vigente, plan de Protección Civil en alerta o
 # emergencia, lluvia en Montflorit o lluvia en el radar a menos de
@@ -102,11 +96,6 @@ ROPA_DIFERENCIA_CAPAS = 8      # °C entre ida y vuelta para avisar de las capas
 # Si Open-Meteo falla, la página de casa usa la última previsión buena, si no
 # tiene más de estas horas (ADR 0016).
 CASA_PREVISION_ANTERIOR_MAX_H = 6
-
-# Salida fuera de las franjas (casa.py, sortides): vuelta por defecto dentro de
-# estas horas, y cambio de temperatura que se avisa.
-SALIDA_VUELTA_POR_DEFECTO_H = 4
-SALIDA_CAMBIO_TEMPERATURA = 6
 
 # Situaciones de peligro en casa (riscos.py, ADR 0018): los umbrales de aviso
 # amarillo, naranja y rojo de AEMET para el Prelitoral de Barcelona (zona
@@ -165,3 +154,19 @@ RIERA_ATENCIO_MM = 35
 RIERA_PERILL_MM = 50
 RIERA_PERILL_6H_MM = 60
 RIERA_FI_H = 3                      # horas por debajo del registro para cerrar el episodio
+
+# Trenes de cerca (trens.py, ADR 0029): línea, operador y dónde para en
+# Cerdanyola. Una línea circula si se ha visto un tren suyo moviéndose a
+# TRENS_RADI_KM o menos de su estación (TRENS_ESTACIONS) en los últimos
+# TRENS_VIST_MIN minutos; fuera de TRENS_HORARI, sin trenes es lo normal.
+TRENS = [
+    ("R4", "rodalies", "Cerdanyola del Vallès"),
+    ("R7", "rodalies", "Cerdanyola Universitat"),
+    ("R8", "rodalies", "Cerdanyola Universitat"),
+    ("S2", "fgc", "Bellaterra i Universitat Autònoma"),
+]
+TRENS_ESTACIONS = {"R4": (41.493, 2.148), "R7": (41.497, 2.115), "R8": (41.497, 2.115),
+                   "S2": (41.502, 2.091)}
+TRENS_RADI_KM = 6
+TRENS_VIST_MIN = 60
+TRENS_HORARI = ("05:30", "23:30")

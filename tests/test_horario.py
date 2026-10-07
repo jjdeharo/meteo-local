@@ -21,28 +21,24 @@ def datos(horari):
 
 
 class QueToca(unittest.TestCase):
+    # Solo la página del tiempo: el trayecto se retiró (ADR 0030).
     def test_horario_normal(self):
-        d = datos(P.horario(C.HORARIO, C.INTERVALO_MIN, []))
         c = datos(P.horario([C.HORARIO_CASA], C.INTERVALO_CASA_MIN, []))
-        self.assertEqual(Q.que_toca("06:30", d, c), "completa")
-        self.assertEqual(Q.que_toca("10:00", d, c), "casa")
-        self.assertEqual(Q.que_toca("10:30", d, c), "casa")
-        self.assertEqual(Q.que_toca("10:10", d, c), "")
+        self.assertEqual(Q.que_toca("06:30", c), "casa")
+        self.assertEqual(Q.que_toca("10:00", c), "casa")
+        self.assertEqual(Q.que_toca("10:10", c), "")
 
     def test_modo_aviso_al_ritme_del_radar(self):
         # Cada 6 minutos, 3 después de cada imagen de Meteocat (ADR 0020).
         self.assertEqual((C.MODO_AVISO_INTERVALO_MIN, C.MODO_AVISO_DESFASE_MIN), (6, 3))
-        d = datos(P.horario(C.HORARIO, C.INTERVALO_MIN, ["pluja al radar"]))
         c = datos(P.horario([C.HORARIO_CASA_AVISO], C.INTERVALO_CASA_MIN, ["pluja al radar"]))
-        self.assertEqual(Q.que_toca("05:03", d, c), "completa")
-        self.assertEqual(Q.que_toca("06:15", d, c), "completa")
-        self.assertEqual(Q.que_toca("10:21", d, c), "casa")
-        self.assertEqual(Q.que_toca("23:57", d, c), "casa")
-        self.assertEqual(Q.que_toca("10:00", d, c), "")
-        self.assertEqual(Q.que_toca("10:20", d, c), "")
+        self.assertEqual(Q.que_toca("10:21", c), "casa")
+        self.assertEqual(Q.que_toca("23:57", c), "casa")
+        self.assertEqual(Q.que_toca("10:00", c), "")
+        self.assertEqual(Q.que_toca("10:20", c), "")
 
     def test_sin_datos_de_hoy_usa_el_horario_normal(self):
-        self.assertEqual(Q.que_toca("13:00", "/no/existe", "/no/existe"), "completa")
+        self.assertEqual(Q.que_toca("13:00", "/no/existe"), "casa")
 
 
 class ModoAviso(unittest.TestCase):

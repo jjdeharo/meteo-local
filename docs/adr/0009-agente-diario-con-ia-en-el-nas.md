@@ -1,6 +1,6 @@
 # 9. Agente diario con IA en el NAS
 
-Fecha: 2026-10-05 · Estado: aceptado
+Fecha: 2026-10-05 · Estado: retirado el 2026-10-07 (ADR 0030)
 
 ## Contexto
 

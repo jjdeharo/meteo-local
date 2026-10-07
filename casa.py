@@ -34,6 +34,7 @@ import radar_fonts as RF
 import registre as R
 import riera as RI
 import riscos as RS
+import trens as TR
 
 HORAS = 24
 HORAS_PERSISTENCIA = 4      # las que tiene la tabla de calibracio.json
@@ -83,6 +84,17 @@ def modelos(desde):
         "models": C.ENSEMBLE, "timezone": P.TZ, "start_date": dias[0], "end_date": dias[1]})
     e = json.loads(P.get(f"https://ensemble-api.open-meteo.com/v1/ensemble?{q}"))["hourly"]
     return h, e
+
+
+def indice_uv(desde):
+    """Índice UV por hora ({"AAAA-MM-DDTHH:MM": valor}) para la página «Si
+    surts» (ADR 0029). Solo lo da el modelo por defecto de Open-Meteo: va en
+    una consulta aparte, y si falla la página sigue sin él."""
+    dias = [desde.date().isoformat(), (desde + dt.timedelta(days=2)).date().isoformat()]
+    q = urllib.parse.urlencode({"latitude": C.CASA[0], "longitude": C.CASA[1], "hourly": "uv_index",
+                                "timezone": P.TZ, "start_date": dias[0], "end_date": dias[1]})
+    h = json.loads(P.get(f"https://api.open-meteo.com/v1/forecast?{q}"))["hourly"]
+    return {t: v for t, v in zip(h["time"], h["uv_index"]) if v is not None}
 
 
 def estacio_casa():
@@ -267,88 +279,6 @@ def filas_registro(desde, h, e, ara, mostradas, casa=None):
     return filas
 
 
-def nivel_hora(f, planes):
-    """Riesgo de lluvia de una hora de la tabla y su motivo, con los umbrales del
-    trayecto: plan de Protección Civil activado, aviso de AEMET, lluvia ahora,
-    1 mm o 50 %, coche; 0,2 mm o 20 %, moto con impermeable."""
-    p, mm = f.get("probabilitat") or 0, f.get("pluja_mm") or 0
-    pluja = f"pluja {round(p * 100)}\u00a0%"
-    plan = next((x for x in planes or [] if x["fase"] in ("alerta", "emergència")), None)
-    if plan:
-        return "cotxe", f"Protecció Civil en {plan['fase']}"
-    if f.get("avisos"):
-        a = f["avisos"][0]
-        return "cotxe", f"avís {a['nivell']} de l\u2019AEMET"
-    if f.get("plou_ara"):
-        return "cotxe", "plou ara"
-    if p >= C.PROB_COCHE or mm >= C.UMBRAL_MM_COCHE:
-        return "cotxe", pluja
-    if p >= C.PROB_ATENCION or mm >= C.UMBRAL_MM:
-        return "compte", pluja
-    return "moto", pluja
-
-
-def moja(f):
-    """Riesgo de lluvia en una hora: probabilidad, cantidad, lluvia ahora o
-    aviso de AEMET por lluvia o tormentas."""
-    return ((f.get("probabilitat") or 0) >= C.PROB_ATENCION or (f.get("pluja_mm") or 0) >= C.UMBRAL_MM
-            or bool(f.get("plou_ara"))
-            or any(t in ("pluja", "tempestes") for a in f.get("avisos") or [] for t in a["tipus"]))
-
-
-def canvis(tramo):
-    """Cómo cambia el tiempo entre la salida y la vuelta: si empieza o acaba el
-    riesgo de lluvia (moja) y si la temperatura cambia mucho."""
-    res = []
-    mullat = [moja(f) for f in tramo]
-    if not mullat[0] and any(mullat):
-        f = tramo[mullat.index(True)]
-        p = f["probabilitat"]
-        res.append(f"A partir de les {int(f['hora'][11:13])}\u00a0h, risc de pluja"
-                   + (f" ({round(p * 100)}\u00a0%)." if p is not None and p >= C.PROB_ATENCION else "."))
-    elif mullat[0] and not all(mullat):
-        f = tramo[mullat.index(False)]
-        res.append(f"Cap a les {int(f['hora'][11:13])}\u00a0h s\u2019acaba el risc de pluja.")
-    temps = [(f["temperatura"], f["hora"]) for f in tramo if f["temperatura"] is not None]
-    if temps:
-        (t_min, h_min), (t_max, h_max) = min(temps), max(temps)
-        if t_max - t_min >= C.SALIDA_CAMBIO_TEMPERATURA:
-            res.append(f"La temperatura va de {P.graus(round(t_min))} ({int(h_min[11:13])}\u00a0h) "
-                       f"a {P.graus(round(t_max))} ({int(h_max[11:13])}\u00a0h).")
-    return res
-
-
-def sortides(hores, planes):
-    """Para quien sale ahora, fuera de las franjas del trayecto: medio, ropa y
-    cambios para cada hora de vuelta posible (ADR 0014). El medio sale de las
-    dos horas en que se circula, la de salir y la de volver. Se calcula con la
-    salida en la hora en curso y en la siguiente: la página usa la que coincide
-    con su hora, aunque los datos sean de la hora anterior."""
-    res = []
-    for k in (0, 1):
-        if len(hores) < k + 2:
-            break
-        ida = hores[k]
-        tornades = []
-        for j in range(k + 1, len(hores)):
-            vuelta = hores[j]
-            (niv_ida, mot_ida), (niv_vuelta, mot_vuelta) = nivel_hora(ida, planes), nivel_hora(vuelta, planes)
-            mitja = P.peor(niv_ida, niv_vuelta)
-            temps = [{"temps": {"temp_min": round(f["temperatura"]), "temp_max": round(f["temperatura"])}}
-                     if f["temperatura"] is not None else {} for f in (ida, vuelta)]
-            # El paraguas, si llueve en algún momento fuera de casa; el coche
-            # por Protección Civil sin lluvia, explicado.
-            pluja = any(moja(f) for f in hores[k:j + 1])
-            explicacio = P.explica_cotxe(planes) if mitja == "cotxe" and not pluja else None
-            tornades.append({
-                "hora": vuelta["hora"], "mitja": mitja, "explicacio": explicacio,
-                "anada": {"nivell": niv_ida, "motiu": mot_ida},
-                "tornada": {"nivell": niv_vuelta, "motiu": mot_vuelta},
-                "roba": P.roba(mitja, *temps, pluja=pluja), "canvis": canvis(hores[k:j + 1])})
-        res.append({"surt": ida["hora"], "tornades": tornades})
-    return res
-
-
 def previsio_anterior(origen, ara, avisos, casa=None):
     """Las horas que aún no han pasado de la última previsión buena, con los
     avisos y la lluvia de ahora. None si no la hay o tiene más de
@@ -462,8 +392,6 @@ def recoger(anterior=None):
         model = A.carrega()
         salida["aprenentatge"] = A.resum_pagina(model)
         salida["hores"] = previsio(P.AHORA, h, e, ara, avisos, model, casa, nc)
-        salida["sortides"] = sortides(salida["hores"], planes)
-        salida["sortida_per_defecte_h"] = C.SALIDA_VUELTA_POR_DEFECTO_H
         salida["models"] = comprobacion_modelos(P.AHORA, h, filas_estacion)
     except Exception as ex:
         salida["hores"] = salida["models"] = None
@@ -472,8 +400,20 @@ def recoger(anterior=None):
         antes = previsio_anterior(anterior, ara, avisos, casa)
         if antes:
             salida.update(antes)
-            salida["sortides"] = sortides(salida["hores"], planes)
-            salida["sortida_per_defecte_h"] = C.SALIDA_VUELTA_POR_DEFECTO_H
+    # Para «Si surts» (ADR 0029): el índice UV de cada hora y si circulan los
+    # trenes de cerca.
+    try:
+        uv = indice_uv(P.AHORA)
+        for f in salida["hores"] or []:
+            valors = [uv[t] for t in (f["hora"], f["fins"]) if t in uv]
+            f["uv"] = round(max(valors), 1) if valors else None
+    except Exception as ex:
+        salida["errors"].append(f"índex UV: {ex}")
+    try:
+        salida["trens"] = TR.calcula(P.AHORA)
+    except Exception as ex:
+        salida["trens"] = None
+        salida["errors"].append(f"trens: {ex}")
     # Situaciones de peligro según lo medido y lo previsto (ADR 0018).
     salida["riscos"] = RS.detecta(salida, P.AHORA)
     # Registro para aprender (solo en el NAS, que tiene /estat): lo que medían

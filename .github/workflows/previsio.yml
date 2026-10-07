@@ -1,8 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # En cada cambio de main: pasa las pruebas. No publica: la web la publica
-# solo el NAS (nas/), que tiene la decisión del día, el comentario del agente
-# y el registro. El NAS detecta los cambios de main en menos de un minuto
-# (ADR 0005).
+# solo el NAS (nas/), que tiene el estado y los registros. El NAS detecta los
+# cambios de main en menos de un minuto (ADR 0005).
 name: Proves
 
 on:

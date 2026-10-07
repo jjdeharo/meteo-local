@@ -1,169 +1,122 @@
 # meteo-local
 
-Responde a una pregunta concreta: **¿lloverá en el trayecto en moto de
-Cerdanyola del Vallès al Parc Taulí (Sabadell), a la ida (6:30-7:30) o a la
-vuelta (15:00-15:30)?** Da **un solo medio para todo el día** (moto, moto con
-impermeable o coche), porque quien va en moto vuelve en moto, y el riesgo de
-lluvia de cada trayecto con sus motivos.
+Calcula y publica **Temps a Montflorit** (<https://meteo-montflorit.github.io/>),
+la web del tiempo del barrio de Montflorit (Cerdanyola del Vallès), en catalán
+y en [castellano](https://meteo-montflorit.github.io/es/). Tiene dos páginas:
 
-Web: <https://jjdeharo.github.io/meteo-local/> (en catalán, para quien hace
-el trayecto). Al lado, [el tiempo en casa](https://jjdeharo.github.io/meteo-local/casa.html):
-lo que miden ahora la estación de casa y la de Montflorit y la previsión hora
-a hora para las 24 horas siguientes, actualizada cada media hora (ADR 0007).
+- **El temps ara**: lo que miden ahora una estación particular del barrio y la
+  de Montflorit, y la previsión hora a hora para las 24 horas siguientes, con
+  los avisos de AEMET y los planes de Protección Civil (ADR 0007 y 0024).
+- **Si surts**: para quien sale a una hora y vuelve a otra, cómo irá cada
+  medio (a pie, bici o patinete, moto, coche y transporte público), qué ropa
+  ponerse, consejos (lluvia, sol, noche, calor) y si circulan los trenes que
+  paran en Cerdanyola (ADR 0029). Cada persona elige qué medios ve.
+
 La probabilidad de lluvia sale de una regresión logística ajustada con lo que
-llovió de verdad y comprobada con todo el archivo (ADR 0021), y de ella sale
-también el cielo de la tabla; la temperatura se corrige con un año de la estación de casa
-(ADR 0017), y el NAS guarda cada hora lo previsto y lo medido para seguir
-aprendiendo (ADR 0012; explicación en [docs/estadistica.md](docs/estadistica.md)).
-Si lo que miden las estaciones o lo que prevé la página llega a los umbrales de
-aviso de AEMET para el Vallès (lluvia, rachas, calor, frío o nieve), la página
-lo marca como «Risc» y el NAS avisa a Juanjo por Telegram; los avisos de AEMET y
-de Protección Civil por sí solos no lo hacen (ADR 0018). Las dos primeras horas
-de la tabla y del trayecto tienen en cuenta hacia dónde va la lluvia del radar
-(ADR 0019), y cuando ese radar dice que la lluvia llega a casa en unos 15
-minutos, el NAS avisa a Juanjo por Telegram, una vez por episodio de lluvia
-(ADR 0022).
+llovió de verdad y comprobada con todo el archivo (ADR 0021); la temperatura se
+corrige con un año de la estación particular (ADR 0017), y el NAS guarda cada
+hora lo previsto y lo medido para seguir aprendiendo (ADR 0012; explicación en
+[docs/estadistica.md](docs/estadistica.md)). Las dos primeras horas tienen en
+cuenta hacia dónde va la lluvia del radar (ADR 0019).
 
-La página de casa se publica además aparte, como web del tiempo del barrio:
-[Temps a Montflorit](https://meteo-montflorit.github.io/), sin la
-página del trayecto, generada en cada publicación a partir de esta (ADR 0024),
-en catalán y en [castellano](https://meteo-montflorit.github.io/es/)
-(ADR 0025).
+Además, solo para Juanjo, el NAS avisa por Telegram si lo medido o lo previsto
+llega a los umbrales de aviso de AEMET (ADR 0018), unos 15 minutos antes de que
+llueva en casa (ADR 0022) y si la lluvia en la cuenca de la riera de Sant Cugat
+llega al umbral de atención o de peligro de desbordamiento (ADR 0027).
+
+Hasta el 07-10-2026 el repositorio publicaba también la página «Moto o cotxe?»,
+que recomendaba un medio para un trayecto fijo, con un agente diario con IA.
+Se retiró: su dirección (<https://jjdeharo.github.io/meteo-local/>) lleva a «Si
+surts», que hace lo mismo para cualquier salida, y la de «Temps a casa», a
+Temps a Montflorit (ADR 0030).
 
 ## Cómo funciona
 
 Un contenedor en el NAS de casa (`nas/`) ejecuta `publica.sh` cada cuarto de
-hora (la página del trayecto, de 5:00 a 7:30 y de 13:00 a 15:30; la de casa,
-todo el día; el horario está en `config.py` y la web lo muestra).
-`publica.sh` calcula los datos con `prevision.py` y `casa.py` y los sube a
-IONOS (`bilateria.org/app/meteo-local/`), de donde los lee la página. La web
-entera va a la rama `gh-pages`, de la que sirve GitHub Pages, solo cuando
-cambia el código, cada media hora como mucho o si IONOS falla: GitHub admite
-unas 10 publicaciones por hora, y esa copia es la reserva si IONOS no
-responde (ADR 0020). Al subir cambios a `main`, una acción de GitHub pasa las
-pruebas, y el NAS, que mira cada minuto si hay código nuevo, publica. Solo
-publica el NAS.
+hora, todo el día; en modo aviso (aviso de AEMET, plan de Protección Civil
+activado o lluvia en las estaciones o en el radar a menos de 15 km), cada 6
+minutos, justo después de cada imagen nueva del radar de Meteocat (ADR 0010 y
+0020). El horario lo decide `que_toca.py` con el mismo dato que muestra la web.
 
-**Modo aviso:** con aviso de AEMET, plan de Protección Civil activado, lluvia
-en las estaciones o en el radar a menos de 15 km, las dos páginas pasan a
-actualizarse cada 6 minutos (:03, :09…), justo después de cada imagen nueva
-del radar de Meteocat (ADR 0010). El horario lo decide `que_toca.py` con el
-mismo dato que muestra la web. En `main` no hay commits automáticos.
+`publica.sh` calcula los datos con `casa.py`, deja una copia en el NAS para los
+avisos y sube los públicos (`montflorit.json`) a IONOS
+(`bilateria.org/app/meteo-local/`), de donde los lee la página. La web, que
+genera `montflorit.py` a partir de `web/`, va a su repositorio
+(`meteo-montflorit/meteo-montflorit.github.io`, ADR 0028) solo cuando cambia
+el código, cada media hora como mucho o si IONOS falla: GitHub admite unas 10
+publicaciones por hora, y esa copia es la reserva si IONOS no responde. La
+rama `gh-pages` de este repositorio solo tiene las páginas que redirigen a la
+web pública (`redireccions/`).
 
-A las 5:47 y a las 13:07, un agente con IA (Claude Sonnet 5.5) mira los datos y el
-radar en imagen y escribe un comentario breve en catalán, que la página muestra
-como «Valoració feta amb IA». Por la mañana puede hacer la recomendación más
-prudente, nunca menos; el comentario caduca si el programa cambia los niveles
-con que se escribió (`agent/`, ADR 0009).
+Al subir cambios a `main`, una acción de GitHub pasa las pruebas, y el NAS, que
+mira cada minuto si hay código nuevo, publica. Solo publica el NAS.
 
-**Riera de Sant Cugat.** En cada pasada de la página de casa se calcula la
-lluvia de 3 horas en Sant Cugat (Meteocat) más la que el radar trae sobre la
-cuenca en la hora siguiente. Con 35 mm llega un aviso de atención por
-Telegram, y con 50 en 3 horas y 60 en 6, de peligro: la riera se desbordó en
-Montflorit con 53 mm en 3 horas y 75 en 6 (29-04-2024) y con 67 en 3 horas
-(29-09-2026 y 04-10-2026), y no con 52 en 3 y 6 horas sobre suelo seco
-(13-09-2025). Cada episodio se apunta con
-lo que midieron Sant Cugat, el Fabra (Collserola) y Montflorit, para ajustar
-los umbrales (`riera.py`, ADR 0027).
+A las 16:00 el NAS rellena las horas que falten de la estación particular y la
+previsión aprende de sus aciertos (`aprenentatge.py`). En `main` no hay commits
+automáticos.
 
-Cada actualización queda apuntada en el NAS, y a las 16:00 se comprueba la
-lluvia que cayó y si la recomendación acertó (`registre.py`). A los 28 días
-llega un resumen por Telegram.
+Fuentes de la previsión:
 
-La página del trayecto solo informa dentro de sus franjas (5:00-7:30 y
-13:00-15:30). Por la mañana recomienda un solo medio para el día y la ropa
-(según el frío a 45 km/h, el calor y la lluvia; ADR 0013); por la tarde
-solo da el tiempo de la vuelta (riesgo de lluvia, temperatura y viento). Fuera
-de las franjas hace lo mismo para quien sale en ese momento: se elige la hora
-de vuelta y dice el medio, la ropa y cómo cambiará el tiempo (ADR 0014).
-
-Se puede instalar en el móvil como aplicación (manifiesto, iconos y service
-worker que nunca guarda los datos; ADR 0015). Si Open-Meteo falla, la página de casa mantiene la
-última previsión buena, de 6 horas como mucho, y lo avisa (ADR 0016). Las
-dos páginas, si están abiertas, se ponen al día solas después de cada
-actualización prevista (ADR 0011).
-
-El riesgo de cada trayecto (bajo, moderado o alto) junta cinco fuentes y
-manda la más desfavorable; el medio del día sale del trayecto con más riesgo:
-alto, coche; moderado, moto con impermeable; bajo en los dos, moto. La
-decisión se recalcula hasta el final de la ventana de ida (7:30) y desde
-entonces se mantiene: cada ejecución lee los datos ya publicados (`--anterior`). Si
-después empeora la vuelta, la web lo avisa sin cambiar el medio.
-
-Fuentes, de la más a la menos decisiva:
-
-1. **Avisos de AEMET** del Prelitoral de Barcelona (el Vallès): un aviso de
-   lluvia o tormenta a la hora del trayecto, riesgo alto. **Planes de Protección
-   Civil** de inundaciones, viento o nieve en alerta o emergencia: riesgo alto
-   (ADR 0008).
+1. **Estaciones**: Montflorit (meteocerdanyola.com), minuto a minuto; la
+   particular (Ecowitt), cuya lluvia solo cuenta cuando marca (ADR 0017), y las
+   de Meteocat en Sabadell y Sant Cugat.
 2. **Radar** de Meteocat o, si su imagen va 10 minutos por detrás, de
-   RainViewer; una comparación diaria decide cuál acierta más (ADR 0026). Hasta 2
-   horas, la lluvia de ahora se lleva hacia delante con el movimiento de la
-   advección de Meteocat, medido en la lluvia de cerca del trayecto (ADR 0019
-   y 0023): probable (50 %) y de 1 mm/h, riesgo alto;
-   posible (20 %), moderado. Entre 2 y 3 horas, la distancia: lluvia a menos
-   de 15 km y creciendo, alto; a menos de 40 km, moderado.
-3. **Estaciones**: Montflorit, de meteocerdanyola.com, minuto a minuto; la de
-   casa (Ecowitt), solo cuando marca lluvia (ADR 0017), y las de Meteocat en Sabadell y Sant Cugat (página de meteo.cat o, si falla,
-   portal de datos abiertos de la Generalitat). Si llueve y falta menos de
-   hora y media, riesgo alto.
-4. **Modelos finos** (AROME HD, AROME e ICON-EU): 1 mm en una hora, alto;
-   0,2 mm, moderado. Los globales (ECMWF, UKMO, GFS) se descargan pero no
-   deciden: sus celdas de 10-25 km incluyen mar.
-5. **Ensemble ICON-EU-EPS** (40 miembros): el 50 % o más con lluvia, alto; el
-   20 %, moderado.
+   RainViewer; una comparación diaria decide cuál acierta más (ADR 0026).
+3. **Modelos** de Open-Meteo (AROME HD, AROME e ICON-EU, y el ensemble
+   ICON-EU-EPS), con el índice UV del modelo por defecto.
+4. **Avisos de AEMET** del Prelitoral de Barcelona y **planes de Protección
+   Civil** (ADR 0008).
+5. **Trenes**: avisos y posición en tiempo real de Renfe (R4, R7 y R8) y de FGC
+   (S2), para «Si surts» (`trens.py`, ADR 0029).
 
 Umbrales y lugares, en `config.py`. El porqué, en los ADR.
-
-**Calibración.** Los umbrales de los modelos se han comprobado con lo que
-llovió de verdad entre 2024 y 2026 en Sabadell y Sant Cugat
-(`calibracio/`). Cuando la regla dice moto, llovió el 1 % de los días; compte,
-del 10 al 13 %; coche, del 37 al 52 %. Ajustar un modelo estadístico o añadir
-el CAPE no la mejora de forma apreciable. La web muestra esas frecuencias junto
-al motivo de los modelos. Para repetirla: `python3 calibracio/descarrega.py
---forzar` y `python3 calibracio/analitza.py`.
 
 ## Archivos
 
 | Archivo | Para qué |
 |---|---|
-| `prevision.py` | Recoge los datos, decide y escribe `dades.json`; sin `--json`, imprime un resumen |
+| `casa.py` | Datos de la web (`casa.json`): lo de ahora, la previsión hora a hora, el índice UV, los trenes y la riera |
+| `prevision.py` | Recogida de datos que usa `casa.py` (avisos, planes, radar, estaciones); conserva aún la lógica de la página retirada del trayecto (ADR 0030) |
 | `config.py` | Coordenadas, horario, estaciones, zonas de aviso, modelos y umbrales |
-| `web/` | Las páginas: `index.html` y `app.js` (trayecto), `casa.html` y `casa.js` (casa), `comu.js` (lo común), `estil.css` y `fonts.html` (fuentes y créditos); `manifest.webmanifest`, `sw.js` e `icones/` para instalarla como aplicación |
-| `calibracio/` | Descarga del histórico, análisis, `informe.md` y `calibracio.json` (los datos, en `dades/`, no se suben) |
-| `tests/` | Pruebas de la regla, del horario, de la web y del aprendizaje, sin red |
-| `casa.py` | Datos de la página de casa (`casa.json`) |
-| `publica.sh` | Calcula y publica en la rama `gh-pages` (lo usa el NAS), y la web pública en su repositorio |
-| `montflorit.py`, `montflorit/` | Genera la web pública «Temps a Montflorit» a partir de la página de casa, y sus datos sin el trayecto; manifiesto, iconos y README propios (ADR 0024), y `es.js`, los textos del programa en castellano (ADR 0025) |
-| `i18n/` | `es.json`, la traducción de los textos fijos de la web pública, y `claus.js`, que saca del programa los textos por traducir (ADR 0025) |
+| `web/` | Las fuentes de la web pública: `casa.html` y `casa.js` (el tiempo ahora), `sortir.html` y `sortir.js` («Si surts»), `comu.js` (lo común), `estil.css`, `fonts.html` (fuentes y créditos), `manifest.webmanifest`, `sw.js` e `icones/` |
+| `montflorit.py`, `montflorit/` | Genera la web pública a partir de `web/` y sus datos sin lo privado; manifiesto, iconos y README propios (ADR 0024), y `es.js`, los textos del programa en castellano (ADR 0025) |
+| `i18n/` | `es.json`, la traducción de los textos fijos, y `claus.js`, que saca del programa los textos por traducir (ADR 0025) |
+| `redireccions/` | Las páginas de la dirección antigua (`jjdeharo.github.io/meteo-local/`), que llevan a la web pública (ADR 0030) |
+| `publica.sh` | Calcula y publica (lo usa el NAS) |
+| `que_toca.py` | Si toca actualizar en este minuto, según el horario publicado |
 | `nas/` | Contenedor del NAS: `compose.yml`, `Dockerfile` y `reloj.sh` |
-| `agent/` | Agente diario: instrucciones, imagen del radar, ejecución y validación |
-| `ecowitt.py` | La estación de casa con la API oficial de Ecowitt; las claves, fuera del repositorio (ADR 0017) |
-| `pluviometre.py` | Comprueba una vez, tras limpiarlo, si el pluviómetro de casa marca la lluvia débil y avisa por Telegram (ADR 0017) |
-| `nowcast.py` | La lluvia del radar (Meteocat o RainViewer) llevada hacia delante hasta 2 horas (ADR 0019 y 0023) |
-| `riscos.py` | Situaciones de peligro de la página de casa y aviso por Telegram (ADR 0018) |
-| `radar_fonts.py` | Apunta lo que daba cada radar en casa y, cada día, elige el que acierta más (ADR 0026) |
-| `pluja_arriba.py` | Aviso por Telegram unos 15 minutos antes de que llueva en casa, según el radar, y registro de sus aciertos (ADR 0022) |
-| `riera.py` | Lluvia en la cuenca de la riera de Sant Cugat y aviso por Telegram de atención o peligro de desbordamiento, con registro de episodios (ADR 0027) |
-| `registre.py` | Registro en el NAS de cada actualización y del resultado de cada día (ADR 0006) |
-| `aprenentatge.py` | Aprendizaje de la página de casa: regresiones, comprobación y cambio de método (ADR 0012, `docs/estadistica.md`) |
+| `trens.py` | Estado de las líneas de tren de Cerdanyola con los datos en tiempo real de Renfe y FGC (ADR 0029) |
+| `nowcast.py` | La lluvia del radar llevada hacia delante hasta 2 horas (ADR 0019 y 0023) |
+| `ecowitt.py` | La estación particular con la API oficial de Ecowitt; las claves, fuera del repositorio (ADR 0017) |
+| `pluviometre.py` | Comprueba una vez, tras limpiarlo, si el pluviómetro marca la lluvia débil y avisa por Telegram (ADR 0017) |
+| `riscos.py` | Situaciones de peligro y aviso por Telegram (ADR 0018) |
+| `pluja_arriba.py` | Aviso por Telegram unos 15 minutos antes de que llueva en casa, con registro de aciertos (ADR 0022) |
+| `riera.py` | Lluvia en la cuenca de la riera de Sant Cugat y aviso de atención o peligro de desbordamiento, con registro de episodios (ADR 0027) |
+| `radar_fonts.py` | Apunta lo que daba cada radar y, cada día, elige el que acierta más (ADR 0026) |
+| `registre.py` | Registro en el NAS de lo medido en Montflorit y en la estación particular (ADR 0006) |
+| `aprenentatge.py` | Aprendizaje de la previsión: regresiones, comprobación y cambio de método (ADR 0012, `docs/estadistica.md`) |
+| `calibracio/` | Descarga del histórico, análisis y calibración (los datos, en `dades/`, no se suben) |
+| `tests/` | Pruebas sin red |
 | `.github/workflows/previsio.yml` | Al subir a `main`: pruebas |
 | `docs/adr/` | Registro de decisiones |
 
 ## Uso local
 
 ```sh
-python3 prevision.py                        # resumen en la terminal
-python3 prevision.py --json web/dades.json  # datos para ver la web en local
-python3 -m unittest discover -s tests       # pruebas
+python3 casa.py --json /tmp/casa.json          # los datos, con red
+python3 montflorit.py web /tmp/web             # la web pública
+python3 montflorit.py dades /tmp/casa.json /tmp/web/montflorit.json
+python3 trens.py                               # el estado de los trenes
+python3 riera.py ara                           # el índice de la riera
+python3 -m unittest discover -s tests          # pruebas
 ```
 
-Necesita Python 3 con `numpy` y `Pillow`. Tarda unos 15 s. La estación de
-casa se lee si están las variables `ECOWITT_APPLICATION_KEY`,
+Necesita Python 3 con `numpy` y `Pillow`, y Node para las pruebas de la web.
+La estación particular se lee si están las variables `ECOWITT_APPLICATION_KEY`,
 `ECOWITT_API_KEY` y `ECOWITT_MAC` o el archivo
 `~/.config/meteo-local/ecowitt.env`; sin ellas, todo funciona con Montflorit.
-La corrección de la temperatura se rehace con `python3
-calibracio/estacio_casa.py --descarrega`.
+Para ver la web en local, sírvela con un servidor (desde `localhost` no puede
+leer los datos de IONOS y usa la copia de su carpeta).
 
 ## Comprobaciones tras cada cambio
 
@@ -171,21 +124,23 @@ calibracio/estacio_casa.py --descarrega`.
 - La web carga en Firefox, Chromium y WebKit, en móvil y escritorio, en tema
   claro y oscuro, sin desbordamiento horizontal (`probar-web`).
 - axe-core no encuentra incidencias.
-- Con una fuente caída, la web lo avisa y la recomendación sigue saliendo.
-- Con datos de más de 3 horas, la web lo avisa.
-- Tras la hora de salida, el medio no cambia aunque cambie la previsión.
+- Con una fuente caída, la web lo avisa y sigue mostrando lo demás.
 
 ## Fuentes y licencias
 
 Previsión de [Open-Meteo](https://open-meteo.com/) (CC BY 4.0), observaciones
 de [Meteocat](https://www.meteo.cat/observacions/xema) y del
-[portal de datos abiertos de la Generalitat](https://analisi.transparenciacatalunya.cat/d/nzvn-apee), estación de Montflorit de
+[portal de datos abiertos de la Generalitat](https://analisi.transparenciacatalunya.cat/d/nzvn-apee),
+estación de Montflorit de
 [meteocerdanyola.com](https://meteocerdanyola.com/2026/sites/cerdanyola_montflorit/index.html),
-estación de casa con la [API de Ecowitt](https://doc.ecowitt.net/web/#/apiv3en?page_id=1),
+estación particular con la [API de Ecowitt](https://doc.ecowitt.net/web/#/apiv3en?page_id=1),
 radar y advección de [Meteocat](https://www.meteo.cat/observacions/radar) y,
-de reserva, de [RainViewer](https://www.rainviewer.com/), y avisos de AEMET a través de
-[Meteoalarm](https://meteoalarm.org/). Iconos de [Lucide](https://lucide.dev/)
-(ISC).
+de reserva, de [RainViewer](https://www.rainviewer.com/), avisos de AEMET a
+través de [Meteoalarm](https://meteoalarm.org/), y trenes de
+[Renfe](https://data.renfe.com/) y de las
+[dades obertes d'FGC](https://dadesobertes.fgc.cat/) (las dos, CC BY 4.0).
+Iconos de [Lucide](https://lucide.dev/) (ISC). Los datos de terceros se
+consultan automáticamente: el autor no se hace responsable de su exactitud.
 
 Código bajo AGPL-3.0-or-later ([LICENSE](LICENSE)); contenidos bajo CC BY-SA
 4.0 ([LICENSE-CONTINGUTS.md](LICENSE-CONTINGUTS.md)). Hecho con IA:

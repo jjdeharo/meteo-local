@@ -52,6 +52,28 @@ function icona(id) {
   return svg;
 }
 
+function coma(x, decimals = 1) {
+  return Number(x).toFixed(decimals).replace('.', ',');
+}
+
+// Altura del sol (graus) a Cerdanyola en un moment donat, amb la fórmula
+// aproximada de la NOAA: n'hi ha prou per saber si és de dia o de nit.
+const CASA_COORD = [41.5, 2.1];
+function alturaSol(data) {
+  const rad = Math.PI / 180;
+  const dies = data.getTime() / 864e5 + 2440587.5 - 2451545;
+  const l = (280.46 + 0.9856474 * dies) % 360;
+  const g = ((357.528 + 0.9856003 * dies) % 360) * rad;
+  const lambda = (l + 1.915 * Math.sin(g) + 0.02 * Math.sin(2 * g)) * rad;
+  const eps = (23.439 - 0.0000004 * dies) * rad;
+  const dec = Math.asin(Math.sin(eps) * Math.sin(lambda));
+  const ar = Math.atan2(Math.cos(eps) * Math.sin(lambda), Math.cos(lambda));
+  const gmst = (18.697374558 + 24.06570982441908 * dies) % 24;
+  const angle = (gmst * 15 + CASA_COORD[1]) * rad - ar;
+  const lat = CASA_COORD[0] * rad;
+  return Math.asin(Math.sin(lat) * Math.sin(dec) + Math.cos(lat) * Math.cos(dec) * Math.cos(angle)) / rad;
+}
+
 // Data d'avui (hora local) a l'hora «HH:MM».
 function avuiA(hhmm) {
   const [h, m] = hhmm.split(':').map(Number);

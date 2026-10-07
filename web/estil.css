@@ -259,6 +259,16 @@ h1 { margin: 0; font-size: 1.6rem; line-height: 1.2; }
   background: var(--superficie);
 }
 .pagines a[aria-current="page"] { background: var(--text); color: var(--fons); border-color: var(--text); }
+.pagines a { display: inline-flex; align-items: center; gap: .4rem; }
+.pagines svg {
+  width: 1.1rem;
+  height: 1.1rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
 
 /* Pàgina de casa */
 .targeta.ara { --color: var(--enllac); }
@@ -406,3 +416,79 @@ h1 { margin: 0; font-size: 1.6rem; line-height: 1.2; }
 .mes-detalls { margin-top: .3rem; font-size: .9rem; }
 .mes-detalls summary { cursor: pointer; color: var(--suau); }
 .mes-detalls .detall { color: var(--suau); }
+
+/* Pàgina «Si surts» (ADR 0029) */
+.hores-sortida { display: flex; flex-wrap: wrap; gap: .6rem 1.2rem; margin: 1rem 0 .2rem; font-size: 1.05rem; }
+.hores-sortida select {
+  font: inherit;
+  padding: .2rem .4rem;
+  margin-left: .3rem;
+  border: 1px solid var(--vora);
+  border-radius: .4rem;
+  background: var(--superficie);
+  color: var(--text);
+}
+.mitjans, .llista-trens { margin: .8rem 0 0; padding: 0; list-style: none; display: grid; gap: .5rem; }
+/* En pantalla ampla, les fitxes en columnes: la pàgina no creix tant. */
+.mitjans { grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); }
+.triats { display: flex; flex-wrap: wrap; gap: .4rem; margin: .8rem 0 0; padding: 0; border: 0; }
+.xip {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  padding: .3rem .7rem;
+  border: 1px solid var(--vora);
+  border-radius: 999px;
+  background: var(--superficie);
+  color: var(--suau);
+  cursor: pointer;
+  user-select: none;
+}
+.xip input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+/* Marcat, en verd; desmarcat, en vermell. La marca ✓ o ✕ diu el mateix sense
+   dependre del color. */
+.xip:has(input:checked) { color: var(--text); border-color: var(--moto); background: var(--moto-fons); }
+.xip:has(input:not(:checked)) { color: var(--text); border-color: var(--cotxe); background: var(--cotxe-fons); }
+.xip span::after { margin-left: .35rem; font-weight: 700; }
+.xip:has(input:checked) span::after { content: "✓"; color: var(--moto); }
+.xip:has(input:not(:checked)) span::after { content: "✕"; color: var(--cotxe); }
+.explica-triats { margin: .35rem 0 0; }
+.xip:has(input:focus-visible) { outline: 2px solid var(--enllac); outline-offset: 2px; }
+.xip svg, .mitja-nom svg {
+  width: 1.15rem;
+  height: 1.15rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  flex: none;
+}
+.mitja-nom { display: inline-flex; align-items: center; gap: .4rem; }
+.mitja, .tren {
+  --color: var(--moto);
+  padding: .55rem .8rem;
+  border: 1px solid var(--vora);
+  border-left: .35rem solid var(--color);
+  border-radius: .5rem;
+  background: var(--superficie);
+}
+.mitja.compte, .tren.compte { --color: var(--compte); }
+.mitja.no, .tren.no { --color: var(--cotxe); }
+.tren.neutre, .mitja.neutre { --color: var(--suau); }
+.mitja p, .tren p { margin: 0; }
+.mitja-cap, .tren-cap { display: flex; flex-wrap: wrap; gap: .2rem .6rem; align-items: baseline; }
+.mitja-nom, .tren-linia { font-weight: 600; }
+.mitja-nivell, .tren-estat { margin-left: auto; color: var(--color); font-weight: 600; }
+.tren-estacio { color: var(--suau); font-size: .9rem; }
+.mitja-motiu { font-size: .95rem; }
+.mitja-roba { font-size: .9rem; color: var(--suau); margin-top: .15rem !important; }
+.consells { margin: .9rem 0 0; padding-left: 1.2rem; }
+.consells li { margin: .2rem 0; }
+.trens { margin-top: 1.4rem; scroll-margin-top: 1rem; }
+.mitja-detall { font-size: .9rem; }
+.seccio { font-size: .8rem; text-transform: uppercase; letter-spacing: .05em; color: var(--suau); margin: 0; }
+.tren-avisos { margin-top: .3rem; font-size: .9rem; }
+.tren-avisos summary { cursor: pointer; color: var(--suau); }
+.tren-avisos p { margin: .3rem 0 0; }
+.trens .nota { margin-top: .5rem; }

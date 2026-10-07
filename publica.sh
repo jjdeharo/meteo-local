@@ -1,73 +1,50 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Calcula la previsión y publica la web (web/ + dades.json) en la rama
-# gh-pages, de la que sirve GitHub Pages. La rama tiene siempre un solo
-# commit: se rehace en cada publicación para no llenar el historial.
+# Calcula el tiempo en Montflorit (casa.py) y publica «Temps a Montflorit»
+# (ADR 0024 y 0029): los datos en IONOS y la web en su repositorio. La web
+# antigua de este repositorio (rama gh-pages, jjdeharo.github.io/meteo-local)
+# solo tiene páginas que llevan a la pública (redireccions/, ADR 0030). Las
+# ramas gh-pages tienen siempre un solo commit: se rehacen en cada publicación.
 #
 # Lo usa el NAS (con reloj.sh), que es el único que publica; a mano también
-# se puede ejecutar desde un ordenador con acceso al repositorio.
-# Calcula las dos páginas: la del trayecto (dades.json) y la de casa
-# (casa.json). Variables:
-#   ANTERIOR    datos del trayecto publicados antes, para mantener la decisión
-#               del día: una URL o un archivo (por defecto, la web publicada)
-#   DESTINO     adónde se empuja (por defecto, el remoto origin)
-#   SOLO_CASA   si vale 1, solo recalcula la página de casa y vuelve a
-#               publicar los datos del trayecto tal como estaban (ANTERIOR)
-#   COMENTARI   comentario del agente diario (agent/), si lo hay
-#   DESTINO_MONTFLORIT  adónde se empuja la web pública «Temps a Montflorit»
-#               (ADR 0024); vacío, no se publica
+# se puede ejecutar desde un ordenador con acceso a los repositorios.
+# Variables:
+#   ESTAT_DIR   carpeta del estado (en el NAS, /estat): ahí se deja casa.json
+#               para los avisos y se lee el de la pasada anterior, por si
+#               Open-Meteo falla (ADR 0016). Sin ella, el publicado.
+#   DESTINO     adónde se empuja la web antigua (por defecto, el remoto origin)
+#   DESTINO_MONTFLORIT  adónde se empuja la web pública; vacío, no se publica
 #
-# En el NAS, los datos (dades.json y casa.json) se suben en cada pasada a
-# IONOS (bilateria.org/app/meteo-local/), de donde los lee la página, y la
-# web entera a GitHub solo si ha cambiado el código, si hace GH_CADA_MIN
-# minutos de la última vez o si IONOS falla: GitHub Pages admite unas 10
-# publicaciones por hora (ADR 0020). Fuera del NAS, sin la clave de IONOS,
-# todo va a GitHub como siempre.
-#
-# La web pública «Temps a Montflorit» (ADR 0024) sale de la misma pasada: sus
-# datos (montflorit.json: los de casa sin lo del trayecto) van a IONOS con los
-# demás, y la web, generada por montflorit.py, a su repositorio cuando se
-# publica esta. Si falla, esta se publica igual.
+# En el NAS, los datos de la web pública (montflorit.json: los de casa sin lo
+# privado) se suben en cada pasada a IONOS (bilateria.org/app/meteo-local/),
+# de donde los lee la página, y las webs a GitHub solo si ha cambiado el
+# código, si hace GH_CADA_MIN minutos de la última vez o si IONOS falla:
+# GitHub Pages admite unas 10 publicaciones por hora (ADR 0020). La copia de
+# los datos en el repositorio de la web pública es la reserva si IONOS no
+# responde. Fuera del NAS, sin la clave de IONOS, todo va a GitHub.
 set -euo pipefail
 cd "$(dirname "$0")"
 
-ANTERIOR=${ANTERIOR:-https://jjdeharo.github.io/meteo-local/dades.json}
+ESTAT_DIR=${ESTAT_DIR:-}
 DESTINO=${DESTINO:-$(git remote get-url origin)}
 DESTINO_MONTFLORIT=${DESTINO_MONTFLORIT-git@github.com:meteo-montflorit/meteo-montflorit.github.io.git}
 
 sitio=$(mktemp -d)
 publica=$(mktemp -d)
-trap 'rm -rf "$sitio" "$publica"' EXIT
-cp -r web/. "$sitio/"
-rm -f "$sitio/dades.json"
-if [ "${SOLO_CASA:-0}" = 1 ]; then
-  case "$ANTERIOR" in
-    http*) curl -fsS "$ANTERIOR" -o "$sitio/dades.json" ;;
-    *) cp "$ANTERIOR" "$sitio/dades.json" ;;
-  esac
-else
-  python3 prevision.py --anterior "$ANTERIOR" --comentari "${COMENTARI:-/dev/null}" \
-    --json "$sitio/dades.json"
-fi
-# Si Open-Meteo falla, casa.py reutiliza la última previsión buena (ADR 0016).
-case "$ANTERIOR" in
-  http*) CASA_ANTERIOR=https://jjdeharo.github.io/meteo-local/casa.json ;;
-  *) CASA_ANTERIOR="$(dirname "$ANTERIOR")/casa.json" ;;
-esac
-python3 casa.py --json "$sitio/casa.json" --anterior "$CASA_ANTERIOR" >/dev/null
-# Una copia de casa.json para el agente, junto a los datos del trayecto.
-if [ "${ANTERIOR#http}" = "$ANTERIOR" ]; then
-  cp "$sitio/casa.json" "$(dirname "$ANTERIOR")/casa.json"
-fi
-# Sin Jekyll: la web es HTML ya hecho.
-touch "$sitio/.nojekyll"
-# Los datos de la web pública: los de casa sin lo del trayecto.
-python3 montflorit.py dades "$sitio/casa.json" "$publica/montflorit.json"
+dades=$(mktemp -d)
+trap 'rm -rf "$sitio" "$publica" "$dades"' EXIT
 
-# Si ANTERIOR es un archivo, se guarda ahí lo publicado para la próxima vez.
-if [ "${SOLO_CASA:-0}" != 1 ] && [ "${ANTERIOR#http}" = "$ANTERIOR" ]; then
-  cp "$sitio/dades.json" "$ANTERIOR"
+# Si Open-Meteo falla, casa.py reutiliza la última previsión buena (ADR 0016).
+if [ -n "$ESTAT_DIR" ]; then
+  CASA_ANTERIOR="$ESTAT_DIR/casa.json"
+else
+  CASA_ANTERIOR=https://bilateria.org/app/meteo-local/montflorit.json
 fi
+python3 casa.py --json "$dades/casa.json" --anterior "$CASA_ANTERIOR" >/dev/null
+# Una copia para los avisos por Telegram (riscos.py, pluja_arriba.py, riera.py).
+[ -z "$ESTAT_DIR" ] || cp "$dades/casa.json" "$ESTAT_DIR/casa.json"
+# Los datos de la web pública: los de casa sin lo privado.
+python3 montflorit.py dades "$dades/casa.json" "$publica/montflorit.json"
 
 # Los datos, a IONOS: una conexión con una clave que solo puede dejar .json
 # en su carpeta (la orden la fija IONOS en authorized_keys).
@@ -79,7 +56,7 @@ CONF_IONOS=${CONF_IONOS:-$HOME/.config/meteo-local/ionos.env}
 GH_CADA_MIN=${GH_CADA_MIN:-30}
 a_ionos=0
 if [ -f "$CLAU_IONOS" ] && [ -n "${IONOS:-}" ]; then
-  if tar -czf - -C "$sitio" dades.json casa.json -C "$publica" montflorit.json \
+  if tar -czf - -C "$publica" montflorit.json \
       | ssh -i "$CLAU_IONOS" -o BatchMode=yes -o ConnectTimeout=20 "$IONOS" 2>/dev/null; then
     a_ionos=1
     echo "$(date '+%F %T')  dades a IONOS"
@@ -89,7 +66,7 @@ if [ -f "$CLAU_IONOS" ] && [ -n "${IONOS:-}" ]; then
 fi
 
 # A GitHub: siempre sin IONOS; con IONOS, si cambia el código o toca.
-estat_gh="${ESTAT_GH:-$(dirname "${ANTERIOR#http*}")/gh-darrer}"
+estat_gh="${ESTAT_GH:-${ESTAT_DIR:-$dades}/gh-darrer}"
 codi=$(git rev-parse HEAD 2>/dev/null || echo "?")
 if [ "$a_ionos" = 1 ] && [ -f "$estat_gh" ]; then
   read -r darrer_t darrer_codi < "$estat_gh" || true
@@ -98,14 +75,15 @@ if [ "$a_ionos" = 1 ] && [ -f "$estat_gh" ]; then
   fi
 fi
 
+# La web antigua: solo redirecciones a la pública (ADR 0030).
+cp -r redireccions/. "$sitio/"
+touch "$sitio/.nojekyll"
 git -C "$sitio" init -q -b gh-pages
 git -C "$sitio" add -A
 git -C "$sitio" -c user.name="Juan Jose de Haro" -c user.email="jjdeharo@gmail.com" \
-  commit -q -m "Previsió $(date '+%F %H:%M')"
+  commit -q -m "Redirecció a Temps a Montflorit"
 git -C "$sitio" push -q -f "$DESTINO" gh-pages
-if [ "${ANTERIOR#http}" = "$ANTERIOR" ]; then
-  echo "$(date +%s) $codi" > "$estat_gh"
-fi
+[ -z "$ESTAT_DIR" ] || echo "$(date +%s) $codi" > "$estat_gh"
 echo "$(date '+%F %T')  publicado a GitHub"
 
 # La web pública, a su repositorio, con su propia clave de despliegue si la

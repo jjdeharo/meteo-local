@@ -42,6 +42,15 @@ INDEXABLE = True
 PROHIBIDES = ("casa", "cotxe", "moto", "trajecte", "meteo-local")
 
 NAV = re.compile(r'\n  <nav class="pagines".*?</nav>', re.S)
+# El menú de la web pública: el temps ara i «Si surts» (ADR 0029).
+PAGINES_PUBLIQUES = [("./", "El temps ara", "i-cloud-sun"), ("sortir.html", "Si surts", "i-door-open")]
+
+
+def nav_publica(actual):
+    enllacos = "".join(f'\n    <a href="{href}"' + (' aria-current="page"' if href == actual else "")
+                       + f'><svg aria-hidden="true"><use href="#{icona}"></use></svg>{text}</a>'
+                       for href, text, icona in PAGINES_PUBLIQUES)
+    return f'\n  <nav class="pagines" aria-label="Pàgines">{enllacos}\n  </nav>'
 ROBOTS = '  <meta name="robots" content="noindex">\n'
 
 CANVIS_INDEX = [
@@ -73,13 +82,25 @@ CANVIS_FONTS = [
      "de l'ECMWF, del Met Office britànic i de la NOAA.",
      "amb models de Météo-France (AROME i ARPEGE) i del servei meteorològic alemany (ICON-EU i les seves 40 variants)."),
 ]
+CANVIS_SORTIR = [
+    ('<html lang="ca" data-theme="light">',
+     f'<html lang="ca" data-theme="light" data-dades="{DADES}" data-notes="{REPO}">'),
+    ("<title>Si surts</title>", "<title>Si surts · Temps a Montflorit</title>"),
+    ('<p class="ruta">Montflorit, Cerdanyola del Vallès</p>',
+     '<p class="ruta">Montflorit, Cerdanyola del Vallès'
+     ' · <a href="es/sortir.html" lang="es" hreflang="es">Castellano</a></p>'),
+    ('href="https://github.com/jjdeharo/meteo-local/releases"', f'href="{REPO}"'),
+]
+# En «Si surts» se habla de medios de transporte: ahí sí van «moto» y «cotxe».
+PROHIBIDES_SORTIR = ("casa", "trajecte", "meteo-local")
+
 # Créditos de iconos que solo usa la página del trayecto.
 FORA_FONTS = [re.compile(r"\n      <li>Icones de roba i pluja de .*?</li>"),
               re.compile(r"\n      <li>Icones del cotxe i del ciclomotor de .*?</li>")]
 
 SW_PECES = re.compile(r"const PECES = \[.*?\];", re.S)
-PECES = ["./", "index.html", "fonts.html", "es/", "es/fonts.html", "estil.css", "comu.js", "casa.js",
-         "es.js", "manifest.webmanifest", "icones/icona-192.png"]
+PECES = ["./", "index.html", "sortir.html", "fonts.html", "es/", "es/sortir.html", "es/fonts.html", "estil.css",
+         "comu.js", "casa.js", "sortir.js", "es.js", "manifest.webmanifest", "icones/icona-192.png"]
 
 # --- En castellano (ADR 0025) ---
 TRADUCCIONS = os.path.join(ARREL, "i18n", "es.json")
@@ -98,6 +119,16 @@ CANVIS_ES_INDEX = [
     ('<script src="comu.js"></script>', '<script src="../es.js"></script>\n  <script src="../comu.js"></script>'),
     ('<script src="casa.js"></script>', '<script src="../casa.js"></script>'),
 ]
+CANVIS_ES_SORTIR = [
+    (f'data-dades="{DADES}"', f'data-dades="{DADES}" data-arrel="../"'),
+    ('<script src="comu.js"></script>', '<script src="../es.js"></script>\n  <script src="../comu.js"></script>'),
+    ('<script src="sortir.js"></script>', '<script src="../sortir.js"></script>'),
+    ("<label>Surto ", "<label>Salgo "),
+    ("<label>Torno ", "<label>Vuelvo "),
+    (">Mitjans que vols veure</legend>", ">Medios que quieres ver</legend>"),
+]
+# El menú público: lo que no traduce la tabla de bloques (los enlaces).
+CANVIS_ES_NAV = [(">El temps ara</a>", ">El tiempo ahora</a>"), (">Si surts</a>", ">Si sales</a>")]
 # La traducción es automática: se dice en los créditos.
 CREDIT_TRADUCCIO = ('</a>, licencia ISC.</li>',
                     '</a>, licencia ISC.</li>\n      <li>Versión en castellano traducida con IA, sin revisión profesional.</li>')
@@ -133,8 +164,9 @@ def castella(html, nom, taula=None):
         with open(TRADUCCIONS, encoding="utf-8") as f:
             taula = json.load(f)
     t = canvia(tradueix(html, taula, nom), CANVIS_ES, nom)
-    t = canvia(t, CANVIS_ES_INDEX if nom == "index.html" else [CREDIT_TRADUCCIO], nom)
-    comprova("es/" + nom, t)
+    t = canvia(t, {"index.html": CANVIS_ES_INDEX + CANVIS_ES_NAV, "sortir.html": CANVIS_ES_SORTIR + CANVIS_ES_NAV,
+                   "fonts.html": [CREDIT_TRADUCCIO]}[nom], nom)
+    comprova("es/" + nom, t, PROHIBIDES_SORTIR if nom == "sortir.html" else PROHIBIDES)
     return t
 
 
@@ -162,18 +194,33 @@ def text_visible(html):
     return re.sub(r"<[^>]+>", " ", html) + " " + atributs
 
 
-def comprova(nom, text):
+def comprova(nom, text, prohibides=PROHIBIDES):
     visible = text_visible(text).lower()
-    for paraula in PROHIBIDES:
+    for paraula in prohibides:
         if re.search(rf"\b{re.escape(paraula)}\b", visible):
             raise ValueError(f"{nom}: hi queda «{paraula}»")
 
 
+def menu(text, actual, nom):
+    text, n = NAV.subn(lambda m: nav_publica(actual), text)
+    if n != 1:
+        raise ValueError(f"{nom}: no trobo el menú de pàgines")
+    return text
+
+
 def index(casa_html):
-    t = treu(canvia(casa_html, CANVIS_INDEX, "casa.html"), NAV, "casa.html")
+    t = menu(canvia(casa_html, CANVIS_INDEX, "casa.html"), "./", "casa.html")
     if INDEXABLE:
         t = canvia(t, [(ROBOTS, "")], "casa.html")
     comprova("index.html", t)
+    return t
+
+
+def sortir(sortir_html):
+    t = menu(canvia(sortir_html, CANVIS_SORTIR, "sortir.html"), "sortir.html", "sortir.html")
+    if INDEXABLE:
+        t = canvia(t, [(ROBOTS, "")], "sortir.html")
+    comprova("sortir.html", t, PROHIBIDES_SORTIR)
     return t
 
 
@@ -212,20 +259,22 @@ def construeix(desti, web=None):
     llegeix = lambda nom: llegeix_fitxer(os.path.join(web, nom))
     os.makedirs(desti, exist_ok=True)
     escriu = lambda nom, text: escriu_fitxer(os.path.join(desti, nom), text)
-    pagines = {"index.html": index(llegeix("casa.html")), "fonts.html": fonts(llegeix("fonts.html"))}
+    pagines = {"index.html": index(llegeix("casa.html")), "sortir.html": sortir(llegeix("sortir.html")),
+               "fonts.html": fonts(llegeix("fonts.html"))}
     os.makedirs(os.path.join(desti, "es"), exist_ok=True)
     for nom, html in pagines.items():
         escriu(nom, html)
         escriu("es/" + nom, castella(html, nom))
     escriu("sw.js", service_worker(llegeix("sw.js")))
-    for nom in ("estil.css", "comu.js", "casa.js"):
+    for nom in ("estil.css", "comu.js", "casa.js", "sortir.js"):
         shutil.copy(os.path.join(web, nom), desti)
     shutil.copytree(propi, desti, dirs_exist_ok=True)
     for nom in ("LICENSE", "LICENSE-CONTINGUTS.md"):
         shutil.copy(os.path.join(ARREL, nom), desti)
     open(os.path.join(desti, ".nojekyll"), "w").close()
-    for nom in ("manifest.webmanifest", "README.md"):
-        comprova(nom, llegeix_fitxer(os.path.join(desti, nom)))
+    comprova("manifest.webmanifest", llegeix_fitxer(os.path.join(desti, "manifest.webmanifest")))
+    # El README presenta també «Si surts»: hi poden sortir els mitjans.
+    comprova("README.md", llegeix_fitxer(os.path.join(desti, "README.md")), PROHIBIDES_SORTIR)
     falten = [p for p in PECES[1:] if not os.path.exists(os.path.join(desti, p.replace("es/", "es/index.html")
                                                                       if p == "es/" else p))]
     if falten:

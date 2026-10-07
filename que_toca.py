@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: AGPL-3.0-or-later
-"""Qué toca hacer en este minuto, según el horario que muestran las páginas.
+"""Si toca actualizar en este minuto, según el horario que muestra la página.
 
 El reloj del NAS lo pregunta cada minuto. Lee el horario de los últimos datos
-publicados (en modo aviso, cada 10 minutos con desfase; si no, el normal de
+publicados (en modo aviso, cada 6 minutos con desfase; si no, el normal de
 config.py), de modo que lo que dice la página y lo que se hace son lo mismo.
+Desde el 07-10-2026 solo hay la página del tiempo (ADR 0030).
 
-Uso: python3 que_toca.py HH:MM [DADES.json] [CASA.json]
-Escribe «completa» (las dos páginas), «casa» (solo la de casa) o nada.
+Uso: python3 que_toca.py HH:MM [CASA.json]
+Escribe «casa» si toca, o nada.
 """
 import datetime as dt
 import json
@@ -40,15 +41,10 @@ def horas(horari):
     return res
 
 
-def que_toca(hhmm, dades="/estat/dades.json", casa="/estat/casa.json"):
-    trayecto = leer_horario(dades, {"trams": C.HORARIO, "cada_min": C.INTERVALO_MIN})
+def que_toca(hhmm, casa="/estat/casa.json"):
     hogar = leer_horario(casa, {"trams": [C.HORARIO_CASA], "cada_min": C.INTERVALO_CASA_MIN})
-    if hhmm in horas(trayecto):
-        return "completa"
-    if hhmm in horas(hogar):
-        return "casa"
-    return ""
+    return "casa" if hhmm in horas(hogar) else ""
 
 
 if __name__ == "__main__":
-    print(que_toca(*sys.argv[1:4]))
+    print(que_toca(*sys.argv[1:3]))

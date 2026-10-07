@@ -119,43 +119,6 @@ class Web(unittest.TestCase):
         expr = f"properaActualitzacio({json.dumps(trajecte)}).toISOString()"
         self.assertEqual(self.avalua("2026-10-05T09:00:00+02:00", expr), "2026-10-05T11:00:00.000Z")
 
-    def test_franja_del_trajecte(self):
-        horari = json.dumps({"trams": [["05:00", "07:30"], ["13:00", "15:30"]], "cada_min": 30,
-                             "desfase_min": 0})
-        def franja(ara):
-            return self.avalua(ara, f"[!!franjaActiva({horari}), properaFranja({horari})]", "app.js")
-        self.assertEqual(franja("2026-10-05T06:10:00+02:00")[0], True)
-        # Fins que s'ha publicat la darrera de les 7:30.
-        self.assertEqual(franja("2026-10-05T07:31:00+02:00")[0], True)
-        self.assertEqual(franja("2026-10-05T07:33:00+02:00"), [False, {"dia": "avui", "hora": "13:00"}])
-        # Acabada de començar, sense dades: torna a la mateixa franja, no demà.
-        self.assertEqual(franja("2026-10-05T13:01:00+02:00"), [True, {"dia": "avui", "hora": "13:00"}])
-        self.assertEqual(franja("2026-10-05T16:00:00+02:00"), [False, {"dia": "demà", "hora": "05:00"}])
-        self.assertEqual(franja("2026-10-05T03:00:00+02:00"), [False, {"dia": "avui", "hora": "05:00"}])
-
-    def test_tornada_triada(self):
-        casa = {"sortides": [{"surt": "2026-10-05T19:00", "tornades": [
-            {"hora": "2026-10-05T23:00"}, {"hora": "2026-10-06T08:00"}]}]}
-        expr = f"(() => {{ const s = sortidaAra({json.dumps(casa)}); return [s && s.surt, "
-        expr += "tornadaTriada(s, '23:00').hora, tornadaTriada(s, '08:30').hora, tornadaTriada(s, '12:00')]; })()"
-        self.assertEqual(self.avalua("2026-10-05T19:20:00+02:00", expr, "app.js"),
-                         ["2026-10-05T19:00", "2026-10-05T23:00", "2026-10-06T08:00", None])
-        # Dades d'una hora que ja ha passat: cap sortida.
-        self.assertIsNone(self.avalua("2026-10-05T20:05:00+02:00",
-                                      f"sortidaAra({json.dumps(casa)})", "app.js"))
-
-    def test_cotxe_nomes_pel_pla(self):
-        # 07-10-2026: anada seca amb l'INUNCAT en emergència; tornada amb avís groc.
-        pc = {"nivell": "cotxe", "font": "pc", "text": "INUNCAT"}
-        sec = [{"nivell": "moto", "font": f} for f in ("models", "simulacions", "radar", "estacions", "aemet")]
-        anada = {"nivell": "cotxe", "motius": [pc] + sec}
-        tornada = {"nivell": "cotxe", "motius": [{"nivell": "cotxe", "font": "aemet"}, pc]}
-        compte = {"nivell": "cotxe", "motius": [pc, {"nivell": "compte", "font": "models"}]}
-        sense_pla = {"nivell": "moto", "motius": sec}
-        expr = f"[{json.dumps(anada)}, {json.dumps(tornada)}, {json.dumps(compte)}, {json.dumps(sense_pla)}]"
-        self.assertEqual(self.avalua("2026-10-07T07:10:00+02:00", f"{expr}.map(nomesPla)", "app.js"),
-                         [True, False, False, False])
-
 
 if __name__ == "__main__":
     unittest.main()

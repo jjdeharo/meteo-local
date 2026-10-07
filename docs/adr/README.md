@@ -10,7 +10,7 @@
 | [0006](0006-registro-de-aciertos-y-de-todas-las-senales.md) | Registro de aciertos y de todas las señales | aceptado |
 | [0007](0007-pagina-del-tiempo-en-casa.md) | Página del tiempo en casa | aceptado |
 | [0008](0008-planes-de-proteccion-civil.md) | Planes de Protección Civil | aceptado |
-| [0009](0009-agente-diario-con-ia-en-el-nas.md) | Agente diario con IA en el NAS | aceptado |
+| [0009](0009-agente-diario-con-ia-en-el-nas.md) | Agente diario con IA en el NAS | retirado (ADR 0030) |
 | [0010](0010-modo-aviso-actualizacion-cada-10-minutos.md) | Modo aviso: actualización al ritmo del radar | aceptado |
 | [0011](0011-paginas-que-se-ponen-al-dia-solas-y-trayecto-solo-en-franja.md) | Páginas que se ponen al día solas; el trayecto, solo en su franja | aceptado |
 | [0012](0012-aprendizaje-de-la-pagina-de-casa.md) | Aprendizaje de la página de casa | aceptado |
@@ -30,5 +30,7 @@
 | [0026](0026-radar-de-meteocat-o-de-rainviewer-segun-cual-acierta-mas.md) | Radar de Meteocat o de RainViewer según cuál acierta más | aceptado |
 | [0027](0027-aviso-de-desbordamiento-de-la-riera-de-sant-cugat.md) | Aviso de desbordamiento de la riera de Sant Cugat | aceptado |
 | [0028](0028-web-publica-en-su-propia-organizacion.md) | Web pública en su propia organización | aceptado |
+| [0029](0029-pagina-si-surts-y-estado-de-los-trenes.md) | Página «Si surts» y estado de los trenes | aceptado |
+| [0030](0030-retirada-de-la-pagina-del-trayecto.md) | Retirada de la página del trayecto | aceptado |
 
 Plantilla: [0000-plantilla.md](0000-plantilla.md). Para crear uno: `nuevo-adr "Título"`.

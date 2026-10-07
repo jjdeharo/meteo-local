@@ -81,10 +81,20 @@ class Web(unittest.TestCase):
     def test_no_parla_del_trajecte_ni_de_casa(self):
         index = self.llegeix("index.html")
         self.assertIn("<h1>Temps a Montflorit</h1>", index)
-        self.assertNotIn('class="pagines"', index)
+        # El menú público: el tiempo ahora y «Si surts», sin el trayecto (ADR 0029).
+        self.assertIn('<a href="./" aria-current="page"><svg aria-hidden="true"><use href="#i-cloud-sun"></use></svg>El temps ara</a>', index)
+        self.assertNotIn("Trajecte", index)
         self.assertIn('data-dades="montflorit.json"', index)
-        for nom in ("index.html", "fonts.html", "manifest.webmanifest", "README.md"):
+        for nom in ("index.html", "fonts.html", "manifest.webmanifest"):
             M.comprova(nom, self.llegeix(nom))        # no lanza
+        M.comprova("README.md", self.llegeix("README.md"), M.PROHIBIDES_SORTIR)
+        # «Si surts» habla de motos y coches, pero no de casa ni del trayecto.
+        sortir = self.llegeix("sortir.html")
+        self.assertIn('aria-current="page"><svg aria-hidden="true"><use href="#i-door-open"></use></svg>Si surts</a>', sortir)
+        self.assertIn('data-dades="montflorit.json"', sortir)
+        M.comprova("sortir.html", sortir, M.PROHIBIDES_SORTIR)
+        self.assertIn(">Si sales</a>", self.llegeix("es/sortir.html"))
+        self.assertIn('<script src="../sortir.js"></script>', self.llegeix("es/sortir.html"))
         self.assertEqual(json.loads(self.llegeix("manifest.webmanifest"))["name"], "Temps a Montflorit")
 
     def test_la_comprovacio_troba_el_que_no_hi_ha_de_ser(self):

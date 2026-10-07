@@ -5,6 +5,12 @@ per a les pròximes 24 hores: <https://meteo-montflorit.github.io/>
 
 També en castellà: <https://meteo-montflorit.github.io/es/>
 
+I **Si surts** (<https://meteo-montflorit.github.io/sortir.html>): per a qui
+surt a una hora i torna a una altra, com anirà cada mitjà (a peu, bici o
+patinet, moto, cotxe i transport públic), quina roba cal, consells i si
+circulen els trens que paren a Cerdanyola, amb les dades en temps real de
+Renfe i d'FGC.
+
 - **Ara:** temperatura, humitat i pressió d'una estació particular del barri;
   pluja i vent de l'estació de Montflorit de
   [meteocerdanyola.com](https://meteocerdanyola.com/2026/sites/cerdanyola_montflorit/index.html).
@@ -17,7 +23,9 @@ També en castellà: <https://meteo-montflorit.github.io/es/>
 
 La pàgina explica com es calcula cada cosa a «D'on surt», i totes les fonts
 són a [Fonts i crèdits](https://meteo-montflorit.github.io/fonts.html).
-És una previsió calculada automàticament, no una previsió oficial.
+És una previsió calculada automàticament, no una previsió oficial. Les dades
+de tercers es consulten automàticament per internet: l'autor no es fa
+responsable de la seva exactitud.
 
 Aquest repositori conté la pàgina tal com es publica. Es genera sola: un
 programa calcula la previsió cada 15 minuts (cada 6 quan hi ha avisos o pluja
