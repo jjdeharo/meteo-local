@@ -54,32 +54,32 @@ T = {
                        "automàticament amb dades de Meteocat, l'AEMET, el radar, les estacions del barri, "
                        "Renfe i FGC. Els de desbordament de la riera estan en proves i són orientatius, no "
                        "oficials: segueix sempre les indicacions de Protecció Civil i de l'Ajuntament.\n" + WEB),
-        "menu": ("Tria què vols rebre: toca un botó per activar-ho o desactivar-ho. El resum és un sol missatge "
-                 "cada dia, a l'hora que triïs.\n\nNomés es desa el teu identificador de Telegram i el que triïs "
-                 "aquí. Amb /baixa s'esborra tot."),
+        "menu": ("Tria què vols rebre: toca un botó per activar-ho o desactivar-ho. La previsió és un sol "
+                 "missatge cada dia, a l'hora que triïs; la de les 20 h és per a l'endemà.\n\nNomés es desa el teu "
+                 "identificador de Telegram i el que triïs aquí. Amb /baixa s'esborra tot."),
         "riera": "Desbordament de la riera de Sant Cugat (en proves)", "perill": "Perill (pluja forta, vent, calor…)",
         "pluja": "Pluja d'aquí a 15 minuts", "trens": "Trens de Cerdanyola",
-        "resum": "Resum del temps, un cop al dia, a les:", "no": "Sense resum", "h": "{} h",
+        "resum": "Previsió, un cop al dia, a les:", "no": "Sense previsió", "h": "{} h", "dema": "{} h (per a demà)",
         "baixa": "Fet: s'han esborrat les teves dades i ja no rebràs res. Amb /start pots tornar-hi.",
-        "ajuda": ("/avisos tria què reps · /resum el temps d'avui · /ara el temps ara · "
+        "ajuda": ("/avisos tria què reps · /resum la previsió · /ara el temps ara · "
                   "/baixa deixa de rebre'n i esborra les teves dades"),
-        "velles": "Les dades de Temps a Montflorit no s'actualitzen des de les {}: ara no puc donar-ne el resum.",
+        "velles": "Les dades de Temps a Montflorit no s'actualitzen des de les {}: ara no puc donar la previsió.",
     },
     "es": {
         "benvinguda": ("Este bot envía avisos del tiempo en Montflorit (Cerdanyola del Vallès), calculados "
                        "automáticamente con datos de Meteocat, la AEMET, el radar, las estaciones del barrio, "
                        "Renfe y FGC. Los de desbordamiento de la riera están en pruebas y son orientativos, "
                        "no oficiales: sigue siempre las indicaciones de Protección Civil y del Ayuntamiento.\n" + WEB),
-        "menu": ("Elige qué quieres recibir: toca un botón para activarlo o desactivarlo. El resumen es un solo "
-                 "mensaje cada día, a la hora que elijas.\n\nSolo se guarda tu identificador de Telegram y lo que "
-                 "elijas aquí. Con /baixa se borra todo."),
+        "menu": ("Elige qué quieres recibir: toca un botón para activarlo o desactivarlo. La previsión es un solo "
+                 "mensaje cada día, a la hora que elijas; la de las 20 h es para el día siguiente.\n\nSolo se guarda "
+                 "tu identificador de Telegram y lo que elijas aquí. Con /baixa se borra todo."),
         "riera": "Desbordamiento de la riera de Sant Cugat (en pruebas)", "perill": "Peligro (lluvia fuerte, viento, calor…)",
         "pluja": "Lluvia dentro de 15 minutos", "trens": "Trenes de Cerdanyola",
-        "resum": "Resumen del tiempo, una vez al día, a las:", "no": "Sin resumen", "h": "{} h",
+        "resum": "Previsión, una vez al día, a las:", "no": "Sin previsión", "h": "{} h", "dema": "{} h (para mañana)",
         "baixa": "Hecho: se han borrado tus datos y ya no recibirás nada. Con /start puedes volver.",
-        "ajuda": ("/avisos elige qué recibes · /resum el tiempo de hoy · /ara el tiempo ahora · "
+        "ajuda": ("/avisos elige qué recibes · /resum la previsión · /ara el tiempo ahora · "
                   "/baixa deja de recibir y borra tus datos"),
-        "velles": "Los datos de Temps a Montflorit no se actualizan desde las {}: ahora no puedo dar el resumen.",
+        "velles": "Los datos de Temps a Montflorit no se actualizan desde las {}: ahora no puedo dar la previsión.",
     },
 }
 
@@ -137,7 +137,8 @@ def teclat(sub):
     marca = lambda actiu: "✓ " if actiu else "· "
     files = [[{"text": marca(x in sub["avisos"]) + t[x], "callback_data": f"t:{x}"}] for x in TIPUS]
     files.append([{"text": t["resum"], "callback_data": "-"}])
-    files.append([{"text": ("• " if sub.get("resum") == h else "") + t["h"].format(h), "callback_data": f"r:{h}"}
+    files.append([{"text": ("• " if sub.get("resum") == h else "")
+                   + t["dema" if int(h) >= HORA_DEMA else "h"].format(h), "callback_data": f"r:{h}"}
                   for h in HORES_RESUM])
     files.append([{"text": ("• " if not sub.get("resum") else "") + t["no"], "callback_data": "r:no"}])
     files.append([{"text": ("• " if sub["idioma"] == i else "") + n, "callback_data": f"i:{i}"}
@@ -197,52 +198,81 @@ def text_ara(dades, idioma):
     return f"Ara a Montflorit: {graus(a['temperatura'])}, {'plou' if plou else 'no plou'}."
 
 
+DIES = {"ca": ("dilluns", "dimarts", "dimecres", "dijous", "divendres", "dissabte", "diumenge"),
+        "es": ("lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo")}
+# A partir de esta hora, la previsión es para el día siguiente.
+HORA_DEMA = 18
+
+
+def text_pluja(tram, idioma):
+    pluges = franges(tram)
+    if idioma == "es":
+        return ("Lluvia: " + "; ".join(f"posible de {a.hour} a {b.hour} h (hasta {round(p * 100)} %)"
+                                       for a, b, p in pluges) + ".") if pluges else "Sin lluvia prevista."
+    return ("Pluja: " + "; ".join(f"possible de {a.hour} a {b.hour} h (fins al {round(p * 100)} %)"
+                                  for a, b, p in pluges) + ".") if pluges else "Sense pluja prevista."
+
+
+def text_temperatura(tram, idioma, quan):
+    temps = [f["temperatura"] for f in tram if f.get("temperatura") is not None]
+    return f"{quan}: de {graus(min(temps))} a {graus(max(temps))}." if temps else None
+
+
+def text_avisos_aemet(dades, idioma, dia, moment):
+    """Los avisos de AEMET de un día: hoy, «fins a les 20:00»; mañana, «de 10:00 a 20:00»."""
+    avisos = [a for a in dades.get("avisos") or [] if dt.datetime.fromisoformat(a["fin"]) > moment
+              and dt.datetime.fromisoformat(a["inicio"]).date() == dia]
+    res = []
+    for nivell in ("vermell", "taronja", "groc"):
+        dels = [a for a in avisos if a["nivel"] == nivell]
+        if not dels:
+            continue
+        tipus = sorted({a["tipo"] for a in dels})
+        ini = min(dt.datetime.fromisoformat(a["inicio"]) for a in dels).strftime("%H:%M")
+        fi = (max(dt.datetime.fromisoformat(a["fin"]) for a in dels) + dt.timedelta(seconds=1)).strftime("%H:%M")
+        if idioma == "es":
+            nom = {"vermell": "rojo", "taronja": "naranja", "groc": "amarillo"}[nivell]
+            que = " y ".join({"pluja": "lluvia", "tempestes": "tormentas"}.get(x, x) for x in tipus)
+            quan = f"hasta las {fi}" if dia == moment.date() else f"de {ini} a {fi}"
+            res.append(f"Aviso {nom} de la AEMET por {que} {quan}.")
+        else:
+            quan = f"fins a les {fi}" if dia == moment.date() else f"de {ini} a {fi}"
+            res.append(f"Avís {nivell} de l'AEMET per {' i '.join(tipus)} {quan}.")
+    return res
+
+
 def resum(dades, idioma, moment):
-    """El tiempo del día en pocas líneas, con los datos públicos."""
+    """La previsión en pocas líneas, con los datos públicos: hasta las 18 h,
+    el tiempo ahora y el resto del día; desde las 18 h, la de mañana."""
     t = T[idioma]
     if not dades.get("generat"):
         return t["velles"].format("?")
     generat = dt.datetime.fromisoformat(dades["generat"])
     if moment - generat > dt.timedelta(hours=DADES_VELLES_H):
         return t["velles"].format(generat.strftime("%H:%M"))
-    hores = [f for f in dades.get("hores") or [] if dt.datetime.fromisoformat(f["fins"]) > moment.replace(tzinfo=None)]
-    # Hasta el final del día; de noche, las próximas 12 horas.
-    fins = moment.replace(hour=23, minute=59, tzinfo=None) if moment.hour < 18 else \
-        moment.replace(tzinfo=None) + dt.timedelta(hours=12)
-    tram = [f for f in hores if dt.datetime.fromisoformat(f["hora"]) < fins]
-    linies = []
-    ara_t = text_ara(dades, idioma)
-    if ara_t:
-        linies.append(ara_t)
-    temps = [f["temperatura"] for f in tram if f.get("temperatura") is not None]
-    pluges = franges(tram)
-    if idioma == "es":
-        quan = "Hoy" if moment.hour < 18 else "Próximas 12 horas"
-        if temps:
-            linies.append(f"{quan}: de {graus(min(temps))} a {graus(max(temps))}.")
-        linies.append("Lluvia: " + "; ".join(f"posible de {a.hour} a {b.hour} h (hasta {round(p * 100)} %)"
-                                              for a, b, p in pluges) + "." if pluges else "Sin lluvia prevista.")
+    ara_n = moment.replace(tzinfo=None)
+    hores = [f for f in dades.get("hores") or [] if dt.datetime.fromisoformat(f["fins"]) > ara_n]
+    hora = lambda f: dt.datetime.fromisoformat(f["hora"])
+    if moment.hour >= HORA_DEMA:
+        dema = (moment + dt.timedelta(days=1)).date()
+        nit = [f for f in hores if hora(f) < dt.datetime.combine(dema, dt.time(6))]
+        dia = [f for f in hores if hora(f).date() == dema and hora(f).hour >= 6]
+        nom_dia = DIES[idioma][dema.weekday()]
+        linies = [f"Previsión para mañana, {nom_dia}:" if idioma == "es" else f"Previsió per a demà, {nom_dia}:"]
+        if franges(nit):    # la noche, solo si se espera lluvia
+            linies.append(("Esta noche: " if idioma == "es" else "Aquesta nit: ")
+                          + text_pluja(nit, idioma).split(": ", 1)[1])
+        linies.append(text_temperatura(dia, idioma, "Mañana" if idioma == "es" else "Demà"))
+        linies.append(text_pluja(dia, idioma))
+        linies += text_avisos_aemet(dades, idioma, dema, moment)
     else:
-        quan = "Avui" if moment.hour < 18 else "Properes 12 hores"
-        if temps:
-            linies.append(f"{quan}: de {graus(min(temps))} a {graus(max(temps))}.")
-        linies.append("Pluja: " + "; ".join(f"possible de {a.hour} a {b.hour} h (fins al {round(p * 100)} %)"
-                                            for a, b, p in pluges) + "." if pluges else "Sense pluja prevista.")
-    avisos = [a for a in dades.get("avisos") or [] if dt.datetime.fromisoformat(a["fin"]) > moment
-              and dt.datetime.fromisoformat(a["inicio"]).date() == moment.date()]
-    for nivell in ("vermell", "taronja", "groc"):
-        tipus = sorted({a["tipo"] for a in avisos if a["nivel"] == nivell})
-        if not tipus:
-            continue
-        fi = max(dt.datetime.fromisoformat(a["fin"]) for a in avisos if a["nivel"] == nivell)
-        hora_fi = (fi + dt.timedelta(seconds=1)).strftime("%H:%M")
-        if idioma == "es":
-            nom = {"vermell": "rojo", "taronja": "naranja", "groc": "amarillo"}[nivell]
-            que = " y ".join({"pluja": "lluvia", "tempestes": "tormentas"}.get(x, x) for x in tipus)
-            linies.append(f"Aviso {nom} de la AEMET por {que} hasta las {hora_fi}.")
-        else:
-            linies.append(f"Avís {nivell} de l'AEMET per {' i '.join(tipus)} fins a les {hora_fi}.")
-    linies.append(text_trens_resum(dades, idioma))
+        fi_dia = ara_n.replace(hour=23, minute=59)
+        tram = [f for f in hores if hora(f) < fi_dia]
+        linies = [text_ara(dades, idioma),
+                  text_temperatura(tram, idioma, "Hoy" if idioma == "es" else "Avui"),
+                  text_pluja(tram, idioma)]
+        linies += text_avisos_aemet(dades, idioma, moment.date(), moment)
+        linies.append(text_trens_resum(dades, idioma))
     linies.append(WEB)
     return "\n".join(x for x in linies if x)
 

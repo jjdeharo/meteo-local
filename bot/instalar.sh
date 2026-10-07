@@ -29,12 +29,12 @@ def crida(metode, **p):
     with urllib.request.urlopen(api + metode, dades, timeout=30) as r:
         assert json.load(r)["ok"], metode
 TEXTOS = {
-    "ca": ([("avisos", "Tria quins avisos reps"), ("resum", "El temps d'avui"), ("ara", "El temps ara"),
+    "ca": ([("avisos", "Tria quins avisos reps"), ("resum", "La previsió (a partir de les 18 h, la de demà)"), ("ara", "El temps ara"),
             ("baixa", "Deixa de rebre avisos i esborra les teves dades")],
            "Avisos del temps a Montflorit (Cerdanyola del Vallès): riera de Sant Cugat, perill per pluja o vent, "
            "pluja d'aquí a 15 minuts, trens i resum del dia. Tu tries què reps. Orientatiu, no oficial; la riera, en proves.",
            "Avisos del temps a Montflorit: riera, perill, pluja, trens i resum del dia."),
-    "es": ([("avisos", "Elige qué avisos recibes"), ("resum", "El tiempo de hoy"), ("ara", "El tiempo ahora"),
+    "es": ([("avisos", "Elige qué avisos recibes"), ("resum", "La previsión (desde las 18 h, la de mañana)"), ("ara", "El tiempo ahora"),
             ("baixa", "Deja de recibir avisos y borra tus datos")],
            "Avisos del tiempo en Montflorit (Cerdanyola del Vallès): riera de Sant Cugat, peligro por lluvia o "
            "viento, lluvia dentro de 15 minutos, trenes y resumen del día. Tú eliges qué recibes. Orientativo, no oficial; la riera, en pruebas.",

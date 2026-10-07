@@ -59,6 +59,7 @@ class Menu(unittest.TestCase):
         self.assertIn("✓ Lluvia dentro de 15 minutos", textos)
         self.assertIn("· Desbordamiento de la riera de Sant Cugat (en pruebas)", textos)
         self.assertIn("• 7 h", textos)
+        self.assertIn("20 h (para mañana)", textos)
 
     def test_start_i_baixa(self):
         api, subs = Api(), {}
@@ -86,6 +87,21 @@ class Resum(unittest.TestCase):
         self.assertIn("Avís groc de l'AEMET per tempestes fins a les 20:00.", r)
         self.assertIn("Trens: R4 sense trens.", r)
         self.assertIn("Lluvia: posible de 12 a 15 h", B.resum(dades(), "es", ARA))
+
+    def test_a_les_20_la_de_dema(self):
+        vespre = ARA.replace(hour=20)
+        d = dades(vespre)
+        d["avisos"].append({"inicio": "2026-10-08T10:00:00+02:00", "fin": "2026-10-08T19:59:59+02:00",
+                            "nivel": "groc", "tipo": "pluja", "zona": "Prelitoral de Barcelona"})
+        r = B.resum(d, "ca", vespre)
+        self.assertTrue(r.startswith("Previsió per a demà, dijous:"))
+        self.assertIn("Demà: de ", r)
+        self.assertIn("Pluja: possible de 12 a 15 h (fins al 40 %).", r)
+        self.assertIn("Avís groc de l'AEMET per pluja de 10:00 a 20:00.", r)
+        self.assertNotIn("Ara a Montflorit", r)
+        self.assertNotIn("Trens", r)
+        self.assertNotIn("Aquesta nit", r)
+        self.assertTrue(B.resum(d, "es", vespre).startswith("Previsión para mañana, jueves:"))
 
     def test_milimetres_sense_probabilitat_no_compten(self):
         d = dades()
