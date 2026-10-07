@@ -22,7 +22,6 @@ const LLINDARS = {
   public: { ratxa: [null, null], fred: [null, null] },
 };
 const VELOCITAT = { peu: 0, bici: 18, moto: 45, cotxe: 0, public: 0 };
-const CAPES_DIFERENCIA = 8;
 const CANVI_TEMPERATURA = 6;
 const CALOR = 32;
 const UV_MINIM = 3;
@@ -115,37 +114,55 @@ function avaluaPublic(trens) {
     motius: [T`Trens: ${quines}.`], detall: true };
 }
 
-// Roba per a un mitjà, segons la temperatura més baixa de l'anada i la
-// tornada i el fred a la seva velocitat (com la del trajecte).
-function roba(mitja, tram, pluja) {
-  const viatge = [tram[0], tram[tram.length - 1]];
-  const temps = viatge.map((f) => f.temperatura).filter((t) => t != null);
-  if (!temps.length) return '';
-  const tMin = Math.min(...temps);
-  const tMax = Math.max(...temps);
-  const s = esNota(tMin, VELOCITAT[mitja]);
-  const parts = [];
+// Peça per a una temperatura que es nota (arrodonida) i un mitjà.
+function peca(mitja, s) {
   if (mitja === 'moto') {
-    if (s < 0) parts.push(T('Roba de moto d’hivern tèrmica, guants d’hivern i tub de coll.'));
-    else if (tMin <= 10) parts.push(T('Jaqueta de moto d’hivern, guants d’hivern i tub de coll.'));
-    else if (tMin <= 17) parts.push(T('Jaqueta de moto amb folre i guants d’entretemps.'));
-    else if (tMin <= 24) parts.push(T('Jaqueta de moto de mitja temporada i guants d’entretemps.'));
-    else parts.push(T('Jaqueta de moto d’estiu, ventilada, i guants d’estiu.'));
-  } else if (mitja === 'bici') {
-    if (s <= 0) parts.push(T('Jaqueta d’abric, guants i tub de coll.'));
-    else if (s <= 10) parts.push(T('Jaqueta tallavent amb una capa a sota, i guants.'));
-    else if (tMin <= 17) parts.push(T('Jaqueta tallavent lleugera.'));
-    else if (tMin <= 24) parts.push(T('Màniga llarga o una jaqueta molt lleugera.'));
-    else parts.push(T('Roba d’estiu.'));
-  } else if (tMin <= 0) parts.push(T('Abric, guants i gorra.'));
-  else if (tMin <= 10) parts.push(T('Abric.'));
-  else if (tMin <= 17) parts.push(T('Jaqueta.'));
-  else if (tMin <= 24) parts.push(T('Jaqueta lleugera o jersei.'));
-  else parts.push(T('Roba d’estiu.'));
-  if (VELOCITAT[mitja] && Math.round(s) < Math.round(tMin)) {
-    parts.push(T`A ${VELOCITAT[mitja]} km/h, ${graus(tMin)} es noten com ${graus(s)}.`);
+    if (s < 0) return T('Roba de moto d’hivern tèrmica, guants d’hivern i tub de coll.');
+    if (s <= 10) return T('Jaqueta de moto d’hivern, guants d’hivern i tub de coll.');
+    if (s <= 17) return T('Jaqueta de moto amb folre i guants d’entretemps.');
+    if (s <= 24) return T('Jaqueta de moto de mitja temporada i guants d’entretemps.');
+    return T('Jaqueta de moto d’estiu, ventilada, i guants d’estiu.');
   }
-  if (tMax - tMin >= CAPES_DIFERENCIA) parts.push(T`De ${graus(tMin)} a ${graus(tMax)}: millor capes.`);
+  if (mitja === 'bici') {
+    if (s <= 0) return T('Jaqueta d’abric, guants i tub de coll.');
+    if (s <= 10) return T('Jaqueta tallavent amb una capa a sota, i guants.');
+    if (s <= 17) return T('Jaqueta tallavent lleugera.');
+    if (s <= 20) return T('Màniga llarga o una jaqueta molt lleugera.');
+    return T('Màniga curta.');
+  }
+  if (s <= 0) return T('Abric, gorro, bufanda i guants.');
+  if (s <= 5) return T('Abric, bufanda i guants.');
+  if (s <= 10) return T('Abric.');
+  if (s <= 14) return T('Jaqueta.');
+  if (s <= 17) return T('Jaqueta lleugera o jersei.');
+  if (s <= 20) return T('Màniga llarga o jersei fi.');
+  if (s <= 24) return T('Màniga curta o màniga llarga fina.');
+  return T('Màniga curta.');
+}
+
+// Roba per a un mitjà, a l'anada i a la tornada, amb el fred que es nota: a la
+// velocitat del mitjà en bici i en moto, i amb el vent previst a peu (també
+// fins al cotxe o a l'estació). Si la tornada demana una altra peça, es diu a
+// part; en moto, una sola jaqueta per a tota la sortida, la del moment més fred.
+function roba(mitja, tram, pluja) {
+  const extrems = [tram[0], tram[tram.length - 1]]
+    .filter((f) => f.temperatura != null)
+    .map((f) => {
+      const kmh = VELOCITAT[mitja] || f.vent || 0;
+      return { f, t: f.temperatura, kmh, s: Math.round(esNota(f.temperatura, kmh)) };
+    });
+  if (!extrems.length) return '';
+  const fred = extrems.reduce((a, b) => (b.s < a.s ? b : a));
+  const [anada, tornada] = mitja === 'moto' ? [fred, fred] : [extrems[0], extrems[extrems.length - 1]];
+  const parts = [peca(mitja, anada.s)];
+  const altra = peca(mitja, tornada.s);
+  if (tram.length > 1 && altra !== parts[0]) {
+    parts.push(T`A la tornada (${hora(tornada.f)} h, ${graus(tornada.t)}): ${altra[0].toLowerCase() + altra.slice(1)}`);
+  }
+  if (fred.s < Math.round(fred.t)) {
+    parts.push(VELOCITAT[mitja] ? T`A ${VELOCITAT[mitja]} km/h, ${graus(fred.t)} es noten com ${graus(fred.s)}.`
+      : T`Amb vent de ${Math.round(fred.kmh)} km/h, ${graus(fred.t)} es noten com ${graus(fred.s)}.`);
+  }
   if (pluja && (mitja === 'moto' || mitja === 'bici')) parts.push(T('Impermeable.'));
   return parts.join(' ');
 }
@@ -177,7 +194,7 @@ function consells(tram, ara) {
   const uv = tram.filter((f) => f.uv != null).reduce((a, b) => (!a || b.uv > a.uv ? b : a), null);
   if (uv && uv.uv >= UV_MINIM) {
     const nivell = NIVELL_UV.find(([minim]) => uv.uv >= minim)[1];
-    res.push(T`Protector solar: índex UV ${TD(nivell)} (${Math.round(uv.uv)}) cap a les ${hora(uv)} h.`);
+    res.push(T`Protector solar, gorra i ulleres de sol: índex UV ${TD(nivell)} (${Math.round(uv.uv)}) cap a les ${hora(uv)} h.`);
   }
   // De nit: el sol per sota de l'horitzó en sortir o en tornar.
   const surt = new Date(Math.max(new Date(tram[0].hora).getTime(), ara.getTime()));

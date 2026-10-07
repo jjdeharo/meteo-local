@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 """Pruebas del JavaScript de la web (sin red ni navegador): el texto de los
-avisos de la página de casa y la hora en que la página vuelve a leer los
-datos. Necesita Node."""
+avisos de la página de casa, la hora en que la página vuelve a leer los
+datos y la ropa de «Si surts». Necesita Node."""
 import json
 import os
 import shutil
@@ -21,11 +21,11 @@ class FakeDate extends RealDate {
   constructor(...a) { super(...(a.length ? a : [ara])); }
   static now() { return new RealDate(ara).getTime(); }
 }
-const el = () => ({ setAttribute() {}, addEventListener() {}, append() {}, replaceChildren() {},
+const el = () => ({ setAttribute() {}, addEventListener() {}, append() {}, after() {}, replaceChildren() {},
   querySelector: () => ({ setAttribute() {} }), dataset: {}, style: { setProperty() {} } });
 const ctx = vm.createContext({
   Date: FakeDate, Math, JSON, Number, Object, Set, console,
-  document: { getElementById: el, createElement: el, addEventListener() {},
+  document: { getElementById: el, createElement: el, createElementNS: el, addEventListener() {},
     documentElement: { dataset: {} } },
   matchMedia: () => ({ matches: false, addEventListener() {} }), addEventListener() {}, AbortController,
   localStorage: { getItem: () => null }, navigator: {},
@@ -108,6 +108,38 @@ class Web(unittest.TestCase):
         self.assertEqual(cel(pluja_mm=0.3, probabilitat=None), "Pluja feble")
         self.assertEqual(self.avalua("2026-10-06T13:00:00+02:00",
                                      "plujaHora({plou_ara: true, probabilitat: 1, pluja_mm: 0})"), "pluja")
+
+    def roba(self, mitja, anada, tornada, pluja=False):
+        tram = [{"hora": f"2026-10-07T{h:02d}:00", "temperatura": t, "vent": v}
+                for h, t, v in (anada, tornada)]
+        return self.avalua("2026-10-07T08:00:00+02:00",
+                           f"roba({json.dumps(mitja)}, {json.dumps(tram)}, {json.dumps(pluja)})", "sortir.js")
+
+    def test_roba_a_peu(self):
+        # Trams de la temperatura que es nota, sense vent.
+        casos = [(28, "Màniga curta."), (23, "Màniga curta o màniga llarga fina."),
+                 (19, "Màniga llarga o jersei fi."), (16, "Jaqueta lleugera o jersei."),
+                 (12, "Jaqueta."), (8, "Abric."), (3, "Abric, bufanda i guants."),
+                 (-1, "Abric, gorro, bufanda i guants.")]
+        for t, text in casos:
+            self.assertEqual(self.roba("peu", (9, t, 0), (11, t, 0)), text)
+
+    def test_roba_amb_vent_a_peu(self):
+        # 8 °C amb 30 km/h es noten com 4 °C (índex d'Environment Canada).
+        self.assertEqual(self.roba("peu", (9, 8, 30), (11, 8, 30)),
+                         "Abric, bufanda i guants. Amb vent de 30\u00a0km/h, 8\u00a0°C es noten com 4\u00a0°C.")
+
+    def test_roba_diferent_a_la_tornada(self):
+        self.assertEqual(self.roba("peu", (16, 26, 5), (21, 15, 5)),
+                         "Màniga curta. A la tornada (21\u00a0h, 15\u00a0°C): jaqueta lleugera o jersei.")
+        # En moto, una sola jaqueta: la del moment més fred.
+        self.assertEqual(self.roba("moto", (16, 26, 5), (21, 15, 5)),
+                         "Jaqueta de moto amb folre i guants d’entretemps.")
+
+    def test_roba_bici(self):
+        self.assertEqual(self.roba("bici", (9, 22, 0), (11, 22, 0)), "Màniga curta.")
+        self.assertEqual(self.roba("bici", (9, 19, 0), (11, 19, 0), pluja=True),
+                         "Màniga llarga o una jaqueta molt lleugera. Impermeable.")
 
     def test_propera_lectura(self):
         horari = {"trams": [["00:00", "23:50"]], "cada_min": 10, "desfase_min": 1}

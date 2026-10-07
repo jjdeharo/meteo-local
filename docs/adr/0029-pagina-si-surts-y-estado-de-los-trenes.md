@@ -32,10 +32,20 @@ y otros transportes.
   incidències» si alguno no circula, va por carretera o tiene avisos, «Sense
   trens» si no circula ninguno; con un enlace al bloque «Trens ara» de debajo,
   para que la ficha no crezca.
-- **Ropa por medio**, con el frío a su velocidad (18 km/h en bici, 45 en moto)
-  y capas si la temperatura cambia 8 °C o más; **consejos**: lluvia que empieza
-  o acaba, cambio de temperatura, protector solar (UV 3 o más), salida o vuelta
-  de noche y calor (32 °C o más).
+- **Ropa por medio**, según la temperatura que se nota a la ida y a la vuelta:
+  con la velocidad del medio en bici (18 km/h) y en moto (45 km/h), y con el
+  viento previsto a pie, en coche y en transporte público (el rato a pie hasta
+  el coche o la estación), con el índice de Environment Canada (10 °C o menos).
+  A pie, ocho tramos, de «Màniga curta» (más de 24 °C) a «Abric, gorro, bufanda
+  i guants» (0 °C o menos); en bici, manga corta desde 21 °C. Si la vuelta pide
+  otra prenda, se dice aparte con su hora y temperatura, en lugar del antiguo
+  «millor capes» (Juanjo pidió el 07-10-2026 distinguir manga corta y larga y
+  que fuese «algo más completo… sin caer en tonterías»). En moto, una sola
+  chaqueta para toda la salida, la del momento más frío, porque no se cambia por
+  el camino. Se dejan fuera pantalón, calzado y humedad: dependen de cada
+  persona y la previsión no trae humedad. **Consejos**: lluvia que empieza o
+  acaba, cambio de temperatura, protector solar, gorra y gafas de sol (UV 3 o
+  más), salida o vuelta de noche y calor (32 °C o más).
 - **Cada uno elige qué medios ve**: casillas con icono, en verde (✓) o rojo
   (✕), guardadas en el navegador (`localStorage`); sin «Transport públic» no
   sale el bloque de los trenes. Una explicación corta desaparece tras la
@@ -100,7 +110,9 @@ y otros transportes.
 
 ## Riesgos y limitaciones
 
-- Los umbrales de bici, patinete y a pie no están comprobados con datos.
+- Los umbrales de bici, patinete y a pie no están comprobados con datos, ni
+  los tramos de ropa, que son orientativos: no hay fuente oficial que diga a
+  qué temperatura se lleva cada prenda.
 - Con trenes cada 30 minutos, una línea puede tardar hasta una hora en pasar a
   «Sense trens» tras parar.
 - Si Renfe o FGC cambian el formato de sus datos, la línea queda «Sense dades».
@@ -108,7 +120,8 @@ y otros transportes.
 
 ## Validación
 
-`tests/test_trens.py` (protobuf, idiomas, trenes parados, lejos de la estación,
+`tests/test_web.py` (tramos de ropa, viento a pie, otra prenda a la vuelta, una
+sola chaqueta en moto, bici), `tests/test_trens.py` (protobuf, idiomas, trenes parados, lejos de la estación,
 vistos hace poco, estados y orden de los avisos) y `tests/test_montflorit.py`
 (menú, página pública, palabras permitidas, castellano). La página, probada en
 Chromium, Firefox y WebKit, en escritorio, móvil y tableta, con tema claro y
