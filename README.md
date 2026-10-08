@@ -21,13 +21,17 @@ hora lo previsto y lo medido para seguir aprendiendo (ADR 0012; explicación en
 [docs/estadistica.md](docs/estadistica.md)). Las dos primeras horas tienen en
 cuenta hacia dónde va la lluvia del radar (ADR 0019).
 
-Los vecinos pueden recibir avisos por Telegram: el «Bot Temps a Montflorit»
+Los vecinos pueden recibir los avisos como notificaciones del móvil o del
+ordenador, sin Telegram, desde la página «Avisos» de la web («Avisos al mòbil»;
+ADR 0048): riera de Sant Cugat, peligro, lluvia en unos minutos, trenes y la
+previsión del día, lo que elija cada uno. También por Telegram: el «Bot Temps a Montflorit»
 ([@TempsMontfloritBot](https://t.me/TempsMontfloritBot)), donde cada uno elige
 riera de Sant Cugat, peligro, lluvia en unos minutos, trenes y la previsión
 del día, y el «Canal Temps a Montflorit»
 ([@TempsMontflorit](https://t.me/TempsMontflorit)), igual para todos, con la
 riera, el peligro y la previsión de las 7. La web tiene una página de ayuda
-con capturas, «Avisos a Telegram». El bot vive en IONOS (ADR 0034).
+con capturas, «Avisos a Telegram». El bot y el envío de las notificaciones
+viven en IONOS (ADR 0034 y 0048).
 
 Además, solo para Juanjo, el NAS avisa por Telegram si lo medido o lo previsto
 llega a los umbrales de aviso de AEMET (ADR 0018), unos 15 minutos antes de que
@@ -97,7 +101,7 @@ Umbrales y lugares, en `config.py`. El porqué, en los ADR.
 | `casa.py` | Datos de la web (`casa.json`): lo de ahora, la previsión hora a hora, el índice UV, los trenes y la riera |
 | `prevision.py` | Recogida de datos que usa `casa.py`: avisos de AEMET, planes de Protección Civil, radar, lluvia y viento de las estaciones, y el modo aviso |
 | `config.py` | Coordenadas, horario, estaciones, zonas de aviso, modelos y umbrales |
-| `web/` | Las fuentes de la web pública: `casa.html` y `casa.js` (el tiempo ahora), `sortir.html` y `sortir.js` («Si surts»), `comu.js` (lo común), `estil.css`, `fonts.html` (fuentes y créditos), `manifest.webmanifest`, `sw.js` e `icones/` |
+| `web/` | Las fuentes de la web pública: `casa.html` y `casa.js` (el tiempo ahora), `sortir.html` y `sortir.js` («Si surts»), `avisos.html` y `avisos.js` (avisos en el navegador), `telegram.html` (ayuda de Telegram), `comu.js` (lo común), `estil.css`, `fonts.html` (fuentes y créditos), `manifest.webmanifest`, `sw.js` e `icones/` |
 | `montflorit.py`, `montflorit/` | Genera la web pública a partir de `web/` y sus datos sin lo privado; manifiesto, iconos y README propios (ADR 0024), y `es.js`, los textos del programa en castellano (ADR 0025) |
 | `i18n/` | `es.json`, la traducción de los textos fijos, y `claus.js`, que saca del programa los textos por traducir (ADR 0025) |
 | `publica.sh` | Calcula y publica (lo usa el NAS) |
@@ -105,7 +109,7 @@ Umbrales y lugares, en `config.py`. El porqué, en los ADR.
 | `desplegament.py` | Pone al día la copia del repositorio (NAS, reserva y bot) hasta el último commit con las pruebas de GitHub en verde; si GitHub no responde o las pruebas llevan más de 20 minutos sin acabar, despliega igualmente y lo apunta (ADR 0038) |
 | `avis_privat.py` | Avisos privados a Juanjo por Telegram con cola de reintento si Telegram no los acepta (ADR 0038) |
 | `avisos_bot.py` | Decide los avisos públicos para el bot y el canal y los deja en `avisos.json` (ADR 0034) |
-| `bot/` | El bot de Telegram, que vive en IONOS: `bot.py` (menú, suscripciones, reparto y resumen) e `instalar.sh` (ADR 0034) |
+| `bot/` | Lo que vive en IONOS para repartir avisos: el bot de Telegram, `bot.py` (menú, suscripciones, reparto y resumen, ADR 0034); los avisos en el navegador, `push.py` (envío) y `subscripcio.php` (altas y bajas, ADR 0048); e `instalar.sh` |
 | `reserva/` | Servidor de reserva en IONOS: `reserva.py` (vigila, calcula y avisa si el NAS no publica), `avisar-juanjo`, `rep-dades.sh` (recibe los datos que sube el NAS: la orden fija de su clave, ADR 0038) e `instalar.sh` (ADR 0032) |
 | `que_toca.py` | Si toca actualizar en este minuto, según el horario publicado |
 | `nas/` | Contenedor del NAS: `compose.yml`, `Dockerfile` y `reloj.sh`; `copia-registre.sh`, la copia diaria del registro en el repositorio privado `meteo-local-registre`, (ADR 0044) |

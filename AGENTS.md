@@ -65,7 +65,11 @@ Al cambiar algo:
 - El bot de Telegram vive en IONOS (`bot/`, ADR 0034). Estado: `ssh
   ionos-webspace 'python3 .meteo-reserva/repo/bot/bot.py estat'`; tras cambiar
   sus órdenes o descripción, `bot/instalar.sh`. Los suscriptores son datos
-  personales: no se copian fuera de IONOS ni se publican.
+  personales: no se copian fuera de IONOS ni se publican. Los avisos en el
+  navegador (página «Avisos», ADR 0048) también viven allí: `bot/push.py`
+  envía cada minuto y `bot/subscripcio.php` guarda las suscripciones en
+  `.temps-bot/push.json`, igual de personales. Estado: `ssh ionos-webspace
+  '.meteo-reserva/v/bin/python .meteo-reserva/repo/bot/push.py estat'`.
 - Los automatismos de este proyecto figuran en el inventario del NAS
   (`vigilancia-nas/config/automatismos.json`, ficha «Automatismos» de
   bilateria.org/nas). Si se añade, cambia o retira uno, se actualiza allí.

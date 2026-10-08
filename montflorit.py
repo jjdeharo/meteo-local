@@ -107,6 +107,14 @@ CANVIS_TELEGRAM = [
      '<p class="ruta">Montflorit, Cerdanyola del Vallès'
      ' · <a href="es/telegram.html" lang="es" hreflang="es">Castellano</a></p>'),
 ]
+CANVIS_AVISOS = [
+    ('<html lang="ca" data-theme="light">',
+     f'<html lang="ca" data-theme="light" data-dades="{DADES}" data-notes="{NOTES}">'),
+    ("<title>Avisos</title>", "<title>Avisos · Temps a Montflorit</title>"),
+    ('<p class="ruta">Montflorit, Cerdanyola del Vallès</p>',
+     '<p class="ruta">Montflorit, Cerdanyola del Vallès'
+     ' · <a href="es/avisos.html" lang="es" hreflang="es">Castellano</a></p>'),
+]
 # En «Si surts» se habla de medios de transporte: ahí sí van «moto» y «cotxe».
 PROHIBIDES_SORTIR = ("casa", "trajecte")
 # Los créditos y el README enlazan el código fuente y los ADR, que están en
@@ -120,9 +128,9 @@ PROHIBIDES_README = ("casa", "trajecte")
 FORA_FONTS = [re.compile(r"\n      <li>Icones de roba i pluja de .*?</li>")]
 
 SW_PECES = re.compile(r"const PECES = \[.*?\];", re.S)
-PECES = ["./", "index.html", "sortir.html", "telegram.html", "fonts.html", "es/", "es/sortir.html",
-         "es/telegram.html", "es/fonts.html", "estil.css",
-         "comu.js", "casa.js", "sortir.js", "es.js", "manifest.webmanifest", "icones/icona-192.png"]
+PECES = ["./", "index.html", "sortir.html", "avisos.html", "telegram.html", "fonts.html", "es/", "es/sortir.html",
+         "es/avisos.html", "es/telegram.html", "es/fonts.html", "estil.css",
+         "comu.js", "casa.js", "sortir.js", "avisos.js", "es.js", "manifest.webmanifest", "icones/icona-192.png"]
 
 # --- En castellano (ADR 0025) ---
 TRADUCCIONS = os.path.join(ARREL, "i18n", "es.json")
@@ -144,6 +152,12 @@ CANVIS_ES_INDEX = [
 CANVIS_ES_TELEGRAM = [
     (f'data-dades="{DADES}"', f'data-dades="{DADES}" data-arrel="../"'),
     ('<script src="comu.js"></script>', '<script src="../es.js"></script>\n  <script src="../comu.js"></script>'),
+]
+CANVIS_ES_AVISOS = [
+    (f'data-dades="{DADES}"', f'data-dades="{DADES}" data-arrel="../"'),
+    ('<script src="comu.js"></script>', '<script src="../es.js"></script>\n  <script src="../comu.js"></script>'),
+    ('<script src="avisos.js"></script>', '<script src="../avisos.js"></script>'),
+    ('="img/', '="../img/'),
 ]
 CANVIS_ES_FONTS = [
     (f'data-dades="{DADES}"', f'data-dades="{DADES}" data-arrel="../"'),
@@ -196,6 +210,7 @@ def castella(html, nom, taula=None):
     t = canvia(tradueix(html, taula, nom), CANVIS_ES, nom)
     t = canvia(t, {"index.html": CANVIS_ES_INDEX + CANVIS_ES_NAV, "sortir.html": CANVIS_ES_SORTIR + CANVIS_ES_NAV,
                    "telegram.html": CANVIS_ES_TELEGRAM + CANVIS_ES_NAV,
+                   "avisos.html": CANVIS_ES_AVISOS + CANVIS_ES_NAV,
                    "fonts.html": CANVIS_ES_FONTS + CANVIS_ES_NAV + [CREDIT_TRADUCCIO]}[nom], nom)
     if nom == "telegram.html":     # les captures, les de Telegram en castellà
         t = t.replace('img/telegram/ca/', 'img/telegram/es/').replace('="img/', '="../img/')
@@ -276,6 +291,14 @@ def telegram(html):
     return t
 
 
+def avisos(html):
+    t = menu(canvia(html, CANVIS_AVISOS, "avisos.html"), "avisos.html", "avisos.html")
+    if INDEXABLE:
+        t = canvia(t, [(ROBOTS, "")], "avisos.html")
+    comprova("avisos.html", t)
+    return t
+
+
 def fonts(fonts_html):
     t = menu(canvia(fonts_html, CANVIS_FONTS, "fonts.html"), "fonts.html", "fonts.html")
     for patro in FORA_FONTS:
@@ -312,14 +335,15 @@ def construeix(desti, web=None):
     os.makedirs(desti, exist_ok=True)
     escriu = lambda nom, text: escriu_fitxer(os.path.join(desti, nom), text)
     pagines = {"index.html": index(llegeix("casa.html")), "sortir.html": sortir(llegeix("sortir.html")),
-               "telegram.html": telegram(llegeix("telegram.html")), "fonts.html": fonts(llegeix("fonts.html"))}
+               "avisos.html": avisos(llegeix("avisos.html")), "telegram.html": telegram(llegeix("telegram.html")),
+               "fonts.html": fonts(llegeix("fonts.html"))}
     pagines = {nom: alternes(html, nom) for nom, html in pagines.items()}
     os.makedirs(os.path.join(desti, "es"), exist_ok=True)
     for nom, html in pagines.items():
         escriu(nom, html)
         escriu("es/" + nom, castella(html, nom))
     escriu("sw.js", service_worker(llegeix("sw.js")))
-    for nom in ("estil.css", "comu.js", "casa.js", "sortir.js"):
+    for nom in ("estil.css", "comu.js", "casa.js", "sortir.js", "avisos.js"):
         shutil.copy(os.path.join(web, nom), desti)
     shutil.copytree(propi, desti, dirs_exist_ok=True)
     shutil.copytree(os.path.join(web, "img"), os.path.join(desti, "img"), dirs_exist_ok=True)

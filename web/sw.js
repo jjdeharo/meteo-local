@@ -4,7 +4,7 @@
 // connexió, les pàgines i els estils guardats. Les dades (.json) no es guarden
 // mai: una previsió vella no s'ha de mostrar com si fos d'ara.
 const MAGATZEM = 'meteo-local';
-const PECES = ['casa.html', 'sortir.html', 'fonts.html', 'estil.css', 'comu.js', 'casa.js', 'sortir.js',
+const PECES = ['casa.html', 'sortir.html', 'avisos.html', 'fonts.html', 'estil.css', 'comu.js', 'casa.js', 'sortir.js', 'avisos.js',
   'manifest.webmanifest', 'icones/icona-192.png'];
 
 self.addEventListener('install', (e) => {
@@ -29,4 +29,26 @@ self.addEventListener('fetch', (e) => {
       })
       .catch(() => caches.match(e.request, { ignoreSearch: true })),
   );
+});
+
+// Els avisos al navegador (ADR 0048): bot/push.py envia {title, body, url,
+// tag}; tocar la notificació obre la web (o la porta al davant, si ja hi és).
+self.addEventListener('push', (e) => {
+  let d = {};
+  try { d = e.data.json(); } catch (_) { d = { title: e.data ? e.data.text() : '' }; }
+  e.waitUntil(self.registration.showNotification(d.title || 'Temps a Montflorit', {
+    body: d.body || '',
+    icon: 'icones/icona-192.png',
+    tag: d.tag,
+    data: { url: new URL(d.url || './', self.registration.scope).href },
+  }));
+});
+
+self.addEventListener('notificationclick', (e) => {
+  e.notification.close();
+  const url = e.notification.data && e.notification.data.url;
+  e.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((finestres) => {
+    const oberta = finestres.find((f) => f.url.split('#')[0] === url.split('#')[0]);
+    return oberta ? oberta.focus() : self.clients.openWindow(url);
+  }));
 });

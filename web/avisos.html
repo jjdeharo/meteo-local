@@ -1,0 +1,88 @@
+<!doctype html>
+<!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
+<html lang="ca" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <meta name="description" content="Rep al mòbil o a l'ordinador els avisos del temps a Montflorit (Cerdanyola del Vallès), com les notificacions de qualsevol aplicació, o a Telegram.">
+  <title>Avisos</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232563eb' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 14.9A7 7 0 1 1 15.7 8h1.8a4.5 4.5 0 0 1 2.5 8.2'/%3E%3Cpath d='M16 14v6M8 14v6M12 16v6'/%3E%3C/svg%3E">
+  <script>
+    // Tema abans de pintar, perquè no parpellegi: el del sistema, si no s'ha triat.
+    try {
+      const triat = localStorage.getItem('meteo.fosc');
+      const fosc = triat === null ? matchMedia('(prefers-color-scheme: dark)').matches : triat === '1';
+      document.documentElement.dataset.theme = fosc ? 'dark' : 'light';
+    } catch (_) {}
+  </script>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icones/apple-touch-icon.png">
+  <meta name="theme-color" content="#1d4ed8" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#12161c" media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="estil.css">
+</head>
+<body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <!-- Icones de Lucide (ISC) -->
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2m-7.07-17.07 1.41 1.41m11.32 11.32 1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></symbol>
+    <symbol id="i-cloud-sun" viewBox="0 0 24 24"><path d="M12 2v2m-7.07.93 1.41 1.41M20 12h2m-2.93-7.07-1.41 1.41M15.947 12.65a4 4 0 0 0-5.925-4.128"/><path d="M13 22H7a5 5 0 1 1 4.9-6H13a3 3 0 0 1 0 6Z"/></symbol>
+    <symbol id="i-door-open" viewBox="0 0 24 24"><path d="M10 21H2M10 3H7a2 2 0 0 0-2 2v16M14 12h.01M22 21h-3"/><path d="M19 21V5a2 2 0 0 0-1.675-1.974l-6.163-1.013A1 1 0 0 0 10 3v18a1 1 0 0 0 1.124.992z"/></symbol>
+    <symbol id="i-bell-ring" viewBox="0 0 24 24"><path d="M10.268 21a2 2 0 0 0 3.464 0M22 8c0-2.3-.8-4.3-2-6"/><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326M4 2C2.8 3.7 2 5.7 2 8"/></symbol>
+    <symbol id="i-triangle-alert" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3M12 9v4M12 17h.01"/></symbol>
+    <symbol id="i-waves" viewBox="0 0 24 24"><path d="M2 6c.6.5 1.2 1 2.5 1C7 7 7 5 9.5 5c2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1M2 12c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1M2 18c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/></symbol>
+    <symbol id="i-cloud-rain" viewBox="0 0 24 24"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242M16 14v6M8 14v6M12 16v6"/></symbol>
+    <symbol id="i-train-front" viewBox="0 0 24 24"><path d="M8 3.1V7a4 4 0 0 0 8 0V3.1M9 15l-1-1M15 15l1-1M9 19c-2.8 0-5-2.2-5-5v-4a8 8 0 0 1 16 0v4c0 2.8-2.2 5-5 5ZM8 19l-2 3M16 19l2 3"/></symbol>
+  </svg>
+
+  <header class="cap">
+    <div>
+      <h1>Avisos</h1>
+      <p class="ruta">Montflorit, Cerdanyola del Vallès</p>
+    </div>
+    <button type="button" id="btn-fosc" class="boto-icona" title="Canvia entre tema clar i fosc" aria-label="Canvia entre tema clar i fosc">
+      <svg aria-hidden="true"><use href="#i-moon"></use></svg>
+    </button>
+  </header>
+  <nav class="pagines" aria-label="Pàgines">
+    <a href="casa.html"><svg aria-hidden="true"><use href="#i-cloud-sun"></use></svg>Temps a casa</a>
+    <a href="sortir.html"><svg aria-hidden="true"><use href="#i-door-open"></use></svg>Si surts</a>
+  </nav>
+
+  <main class="contingut ajuda">
+    <p class="entrada novetat"><span class="nou">Nou:</span> ara pots rebre els avisos del temps a Montflorit directament al mòbil o a l'ordinador, com les notificacions de qualsevol aplicació, sense Telegram ni cap compte.</p>
+
+    <section class="opcio push" aria-label="Avisos en aquest dispositiu">
+      <div class="info">
+        <h2><svg class="icona-titol" aria-hidden="true"><use href="#i-bell-ring"></use></svg>Avisos en aquest dispositiu</h2>
+        <p id="push-iphone" class="avis" hidden>A l'iPhone i a l'iPad, primer cal afegir aquesta web a la pantalla d'inici: a Safari, toca el botó de compartir i «Afegeix a la pantalla d'inici», amb l'opció d'obrir-la com a aplicació activada. Després obre-la des de la icona nova i torna a aquesta pàgina.</p>
+        <p id="push-no" class="avis" hidden>Aquest navegador no pot rebre avisos. Prova-ho amb Chrome, Firefox, Edge o Safari actualitzats.</p>
+        <p id="push-instala" class="nota" hidden>Al mòbil, millor afegeix aquesta web a la pantalla d'inici (al menú del navegador): així els avisos no es desactiven sols si fa temps que no l'obres.</p>
+        <form id="push" class="push-tria" hidden></form>
+        <p id="push-estat" class="nota" aria-live="polite"></p>
+      </div>
+    </section>
+
+    <section class="opcio telegram" aria-label="També a Telegram">
+      <div class="info">
+        <h2><img src="img/telegram/canal.webp" width="56" height="56" alt=""> També a Telegram</h2>
+        <p>Si fas servir Telegram, hi tens un canal igual per a tothom i un bot on tries tu què reps.</p>
+        <p><a class="boto" href="telegram.html">Com fer-ho a Telegram</a></p>
+      </div>
+    </section>
+
+    <p class="nota">Els avisos els calcula un programa i són orientatius, no oficials; els de la riera, a més, estan en proves. Segueix sempre Protecció Civil i l'Ajuntament.</p>
+    <p class="nota">D'aquest dispositiu només es desa l'adreça anònima que el navegador dona per enviar-li notificacions i el que hi tries; «Desactiva» ho esborra. Les notificacions passen pel servei del teu navegador (Google, Apple, Mozilla o Microsoft), com les de qualsevol web.</p>
+  </main>
+
+  <footer class="peu">
+    <p><a id="versio" href="https://github.com/meteo-montflorit/meteo-local/releases" target="_blank" rel="noopener">versió —</a> · <a href="fonts.html">Fonts i crèdits</a></p>
+    <p>© 2026 <a href="https://bilateria.org" target="_blank" rel="noopener">Juan José de Haro</a> · Continguts <a href="https://creativecommons.org/licenses/by-sa/4.0/deed.ca" target="_blank" rel="noopener">CC BY-SA 4.0</a> · Codi <a href="https://www.gnu.org/licenses/agpl-3.0.html" target="_blank" rel="noopener">AGPL v3</a></p>
+    <p>Fet amb IA (Claude Code, octubre de 2026), <a href="https://jjdeharo.github.io/miae/?nivel=4" target="_blank" rel="noopener">nivell 4 del MIAE</a>.</p>
+  </footer>
+
+  <script src="comu.js"></script>
+  <script src="avisos.js"></script>
+</body>
+</html>

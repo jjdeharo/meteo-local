@@ -167,9 +167,9 @@ h1 { margin: 0; font-size: 1.6rem; line-height: 1.2; }
 /* Navegació entre les pàgines, sempre al mateix lloc. */
 /* Navegació i enllaç de Telegram a la mateixa fila (al mòbil, el segon baixa). */
 .barra { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: .4rem .8rem; margin: .8rem 0 0; }
-.barra .pagines, .barra .avisos-telegram { margin: 0; }
-.avisos-telegram a { display: inline-flex; align-items: center; gap: .3rem; }
-.avisos-telegram svg { width: 1.1rem; height: 1.1rem; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.barra .pagines, .barra .enllac-avisos { margin: 0; }
+.enllac-avisos a { display: inline-flex; align-items: center; gap: .3rem; }
+.enllac-avisos svg { width: 1.1rem; height: 1.1rem; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .pagines { display: flex; gap: .4rem; margin: .8rem 0 0; flex-wrap: wrap; }
 .pagines a {
   padding: .3rem .8rem;
@@ -430,7 +430,7 @@ h1 { margin: 0; font-size: 1.6rem; line-height: 1.2; }
 
 /* El text dels avisos de l'AEMET, citat tal com el publica (ADR 0033). */
 .avis q, .avis-item q { quotes: "«" "»"; font-style: italic; }
-.avisos-telegram { margin: .5rem 0 0; }
+.enllac-avisos { margin: .5rem 0 0; }
 
 /* Pàgina «Avisos a Telegram» (ADR 0034): un bloc per al canal i un per al bot,
    cadascun amb el seu color i els seus passos; a l'ordinador, els passos en fila. */
@@ -445,6 +445,30 @@ h1 { margin: 0; font-size: 1.6rem; line-height: 1.2; }
 .ajuda .nom { white-space: nowrap; font-weight: 600; color: var(--text); }
 .ajuda .boto { display: inline-block; padding: .5rem 1rem; border-radius: 999px; background: var(--enllac); color: var(--fons); text-decoration: none; font-weight: 600; }
 .ajuda .boto.bot { background: var(--bot); }
+/* Pàgina «Avisos» (ADR 0048): les opcions dels avisos al navegador, una per
+   línia amb les mateixes caselles que «Si surts», i els botons de l'ajuda. */
+.ajuda button.boto { border: 0; font: inherit; font-weight: 600; cursor: pointer; }
+.ajuda .boto.secundari { background: transparent; color: var(--enllac); border: 1px solid var(--vora); }
+.ajuda .boto:focus-visible { outline: 2px solid var(--enllac); outline-offset: 2px; }
+.ajuda .opcio h2 .icona-titol { width: 2rem; height: 2rem; flex: none; fill: none; stroke: var(--enllac);
+  stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+/* Que no es confongui amb Telegram: la novetat, amb una franja de color i
+   la paraula «Nou» en el mateix color, no en negreta (Juanjo, 08-10-2026). */
+.ajuda .entrada.novetat { border-left: 5px solid var(--enllac); padding: .2rem 0 .2rem .8rem; }
+.ajuda .novetat .nou { color: var(--enllac); }
+.push-tria[hidden] { display: none; }
+.push-tipus { display: grid; justify-items: start; gap: .4rem; margin: .5rem 0 0; padding: 0; border: 0; }
+.push-tipus legend { padding: 0; margin-bottom: .3rem; font-weight: 600; }
+.push-resum { display: block; margin: .9rem 0 0; font-weight: 600; }
+.push-resum select { font: inherit; font-weight: normal; padding: .2rem .4rem; margin-left: .3rem;
+  border: 1px solid var(--vora); border-radius: .4rem; background: var(--superficie); color: var(--text); }
+.push-botons { display: flex; flex-wrap: wrap; gap: .5rem; margin: 1rem 0 .3rem; }
+#push-estat.error { color: var(--vermell); }
+.ajuda > p.nota + p.nota { margin-top: .5rem; }
+@media (min-width: 900px) {
+  /* Aquí no hi ha passos amb captures: cada bloc a tot l'ample. */
+  .ajuda .opcio.push .info, .ajuda .opcio.telegram .info { grid-column: 1 / -1; }
+}
 .ajuda .pas { display: grid; grid-template-columns: 2rem 1fr; gap: .2rem .6rem; align-items: start; align-content: start; }
 .ajuda .pas .num { width: 2rem; height: 2rem; border-radius: 50%; background: var(--enllac); color: var(--fons); display: grid; place-items: center; font-weight: 700; }
 .ajuda .bot .pas .num { background: var(--bot); }

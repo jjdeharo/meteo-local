@@ -58,12 +58,28 @@ for idioma, (ordres, descripcio, curta) in TEXTOS.items():
 print("fet")
 PY
 
+# Los avisos en el navegador (ADR 0048): pywebpush en el entorno de la
+# reserva, las claves VAPID (se crean una vez y no se copian) y, en la carpeta
+# de los datos, un subscripcio.php que carga el del repositorio, que se pone
+# al día con el git pull del bot.
+echo "Avisos en el navegador…"
+ssh "$IONOS" ".meteo-reserva/v/bin/python -c 'import pywebpush' 2>/dev/null \
+  || .meteo-reserva/v/bin/pip install -q --disable-pip-version-check pywebpush; \
+  .meteo-reserva/v/bin/python .meteo-reserva/repo/bot/push.py claus >/dev/null"
+ssh "$IONOS" "cat > app/meteo-local/subscripcio.php" <<'PHP'
+<?php
+// Temps a Montflorit: els avisos al navegador (meteo-local, ADR 0048).
+define('TEMPS_BOT', dirname(__DIR__, 2) . '/.temps-bot');
+require dirname(__DIR__, 2) . '/.meteo-reserva/repo/bot/subscripcio.php';
+PHP
+
 if [ "${1:-}" != "--sin-cron" ]; then
-  echo "Cron: cada minuto, y el recuento los lunes a las 9…"
+  echo "Cron: cada minuto (bot y avisos en el navegador), y el recuento los lunes a las 9…"
   ssh "$IONOS" "
-    ( crontab -l 2>/dev/null | grep -v 'repo/bot/bot.py' ;
+    ( crontab -l 2>/dev/null | grep -v 'repo/bot/bot.py' | grep -v 'repo/bot/push.py' ;
       echo '* * * * * python3 \$HOME/.meteo-reserva/repo/bot/bot.py >>\$HOME/$DIR/cron.log 2>&1' ;
+      echo '* * * * * \$HOME/.meteo-reserva/v/bin/python \$HOME/.meteo-reserva/repo/bot/push.py >>\$HOME/$DIR/cron.log 2>&1' ;
       echo '0 9 * * 1 python3 \$HOME/.meteo-reserva/repo/bot/bot.py informe >>\$HOME/$DIR/cron.log 2>&1' ) | crontab -
-    crontab -l | grep bot.py"
+    crontab -l | grep 'repo/bot/'"
 fi
 echo "Hecho. Estado: ssh $IONOS 'python3 .meteo-reserva/repo/bot/bot.py estat'"

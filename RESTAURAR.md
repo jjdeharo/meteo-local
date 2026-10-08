@@ -117,7 +117,8 @@ Desde el portátil, con el alias `ionos-webspace` apuntando al hosting nuevo
 ```sh
 reserva/instalar.sh     # carpeta .meteo-reserva, receptor rep-dades, entorno de Python,
                         # app/meteo-local con su .htaccess, prueba y cron
-bot/instalar.sh         # carpeta .temps-bot, configuración y cron del bot
+bot/instalar.sh         # carpeta .temps-bot, configuración y cron del bot; avisos en el
+                        # navegador: pywebpush, claves VAPID nuevas, subscripcio.php y cron
 ```
 
 Y en `~/.ssh/authorized_keys` del hosting, la clave del NAS
@@ -140,3 +141,10 @@ No tienen copia: son datos personales y no salen del hosting (AGENTS.md;
 `.temps-bot/subscriptors.json` directamente de un servidor al otro. Si el
 hosting desaparece de golpe, el bot vuelve con su mismo nombre pero sin la
 lista: se anuncia en el canal que quien lo usaba vuelva a escribir `/start`.
+
+Lo mismo con los avisos en el navegador (ADR 0048): `.temps-bot/push.json` y
+las claves `.temps-bot/vapid.json` se pasan juntos de un servidor al otro.
+Sin ellos, `bot/instalar.sh` crea claves nuevas y cada uno tiene que volver a
+tocar «Activa els avisos» en la página «Avisos»: las suscripciones antiguas
+iban atadas a la clave perdida y la página, al no encontrarlas en el
+servidor, las da por desactivadas.

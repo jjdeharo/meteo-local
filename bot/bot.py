@@ -992,6 +992,15 @@ def mostra_estat():
         pass
 
 
+def text_push():
+    """Los avisos en el navegador (bot/push.py, ADR 0048), en el recuento."""
+    push = llegeix(os.path.join(BASE, "push.json"), {})
+    n = lambda x: sum(x in s.get("avisos", []) for s in push.values())
+    return (f"Avisos en el navegador: {len(push)} dispositivos (riera {n('riera')}, peligro {n('perill')}, "
+            f"lluvia {n('pluja')}, trenes {n('trens')}, previsión diaria "
+            f"{sum(bool(s.get('resum')) for s in push.values())}).\n")
+
+
 def informe():
     """Los lunes, a Juanjo, con su bot de avisos (el del vigía de IONOS):
     cuántos suscriptores hay y qué eligen, y cuántos miembros tiene el canal."""
@@ -1004,6 +1013,7 @@ def informe():
     text = (f"Temps a Montflorit: {len(subs)} suscriptores en el bot (riera {n('riera')}, peligro {n('perill')}, "
             f"lluvia {n('pluja')}, trenes {n('trens')}, previsión diaria "
             f"{sum(bool(s.get('resum')) for s in subs.values())}) y {canal} miembros en el canal.\n"
+            + text_push()
             + text_estadistiques(dies=(7,)))
     propi = llegeix(os.environ.get("AVISAR_CONFIG", os.path.expanduser("~/.vigilancia-nas/config.json")), {})
     if propi.get("token") and propi.get("chat_id"):
