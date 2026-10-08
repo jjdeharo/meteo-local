@@ -480,17 +480,18 @@ def neteja(subs, estat):
         p["chats"] = [c for c in p["chats"] if c in subs]
 
 
-def alta_canal(api, cm):
-    """Juanjo quiere saber quién se apunta al canal (08-10-2026). Telegram lo
-    cuenta al bot porque es administrador del canal. El nombre va solo en el
-    aviso a Juanjo, que lo ve igualmente en la lista del canal: no se guarda."""
+def canvi_canal(api, cm):
+    """Juanjo quiere saber quién entra y quién sale del canal (08-10-2026).
+    Telegram lo cuenta al bot porque es administrador del canal. El nombre va
+    solo en el aviso a Juanjo, que lo ve igualmente en la lista del canal: no
+    se guarda."""
     if cm.get("chat", {}).get("username", "").lower() != CANAL.lstrip("@").lower():
         return
     dins = lambda m: m.get("status") in DINS_CANAL or bool(m.get("status") == "restricted" and m.get("is_member"))
     abans, despres = cm.get("old_chat_member") or {}, cm.get("new_chat_member") or {}
-    if dins(abans) or not dins(despres):
+    if dins(abans) == dins(despres):
         return
-    u = despres.get("user") or {}
+    u = despres.get("user") or abans.get("user") or {}
     nom = " ".join(x for x in (u.get("first_name"), u.get("last_name")) if x) or "?"
     if u.get("username"):
         nom += f" (@{u['username']})"
@@ -498,12 +499,13 @@ def alta_canal(api, cm):
         total = f" Ja en són {api('getChatMemberCount', chat_id=CANAL)}."
     except Exception:
         total = ""
-    avisa_juanjo(f"Temps a Montflorit: alta nova al canal, {nom}.{total}")
+    que = "alta nova al canal" if dins(despres) else "baixa del canal"
+    avisa_juanjo(f"Temps a Montflorit: {que}, {nom}.{total}")
 
 
 def atén(api, subs, update, estat=None):
     if "chat_member" in update:
-        alta_canal(api, update["chat_member"])
+        canvi_canal(api, update["chat_member"])
         return
     if "callback_query" in update:
         q = update["callback_query"]

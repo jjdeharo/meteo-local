@@ -103,7 +103,7 @@ class Menu(unittest.TestCase):
             B.avisa_juanjo = original
         self.assertEqual(avisos, ["Temps a Montflorit: alta nova al bot (ja en són 1)."])
 
-    def test_alta_al_canal_avisa_a_juanjo(self):
+    def test_altes_i_baixes_del_canal_avisen_a_juanjo(self):
         avisos, original = [], B.avisa_juanjo
         B.avisa_juanjo = avisos.append
         canal = {"id": -100, "type": "channel", "username": "TempsMontflorit"}
@@ -113,12 +113,15 @@ class Menu(unittest.TestCase):
                                     "new_chat_member": {"status": despres, "user": usuari}}}
         try:
             B.atén(Api(), {}, canvi(canal, "left", "member"))
-            B.atén(Api(), {}, canvi(canal, "member", "left"))            # les baixes, no
+            B.atén(Api(), {}, canvi(canal, "member", "left"))
+            B.atén(Api(), {}, canvi(canal, "member", "kicked"))
             B.atén(Api(), {}, canvi(canal, "member", "administrator"))   # ja hi era
             B.atén(Api(), {}, canvi({"id": -200, "type": "channel", "username": "Altre"}, "left", "member"))
         finally:
             B.avisa_juanjo = original
-        self.assertEqual(avisos, ["Temps a Montflorit: alta nova al canal, Quela (@Glamurosa). Ja en són 10."])
+        self.assertEqual(avisos, ["Temps a Montflorit: alta nova al canal, Quela (@Glamurosa). Ja en són 10.",
+                                  "Temps a Montflorit: baixa del canal, Quela (@Glamurosa). Ja en són 10.",
+                                  "Temps a Montflorit: baixa del canal, Quela (@Glamurosa). Ja en són 10."])
 
     def test_grups_no(self):
         api, subs = Api(), {}
