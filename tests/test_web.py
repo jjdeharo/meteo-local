@@ -133,7 +133,7 @@ class Web(unittest.TestCase):
         self.assertEqual(cel(pluja_mm=2, probabilitat=0.05, codi=95), "Cobert")
         # Amb pluja d'algun model (0,2 mm o més), mai «Serè»: com a mínim núvols
         # (el cas del 07-10-2026: «Serè» amb 0,4 mm i un 13 %).
-        self.assertEqual(cel(pluja_mm=0.4, probabilitat=0.13, nuvols=0), "Núvols")
+        self.assertEqual(cel(pluja_mm=0.4, probabilitat=0.13, nuvols=0), "Mig ennuvolat")
         self.assertEqual(cel(pluja_mm=0.4, probabilitat=0.13, nuvols=90), "Cobert")
         self.assertEqual(cel(pluja_mm=0.1, probabilitat=0.05, nuvols=0), "Serè")
         self.assertEqual(cel(pluja_mm=0, probabilitat=0.01, nuvols=10), "Serè")

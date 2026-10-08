@@ -43,8 +43,9 @@ function cel(f) {
   // pot sortir serè encara que la probabilitat sigui baixa: com a mínim, núvols.
   const nuvols = (f.pluja_mm || 0) >= 0.2 ? Math.max(f.nuvols, 50) : f.nuvols;
   if (nuvols < 20) return [T('Serè'), nit ? 'i-moon-cel' : 'i-sun'];
-  if (nuvols < 50) return [T('Poc núvol'), nit ? 'i-cloud-moon' : 'i-cloud-sun'];
-  if (nuvols < 85) return [T('Núvols'), 'i-cloud'];
+  // L'escala de Meteocat: serè, poc ennuvolat, mig ennuvolat, cobert (Juanjo, 08-10-2026).
+  if (nuvols < 50) return [T('Poc ennuvolat'), nit ? 'i-cloud-moon' : 'i-cloud-sun'];
+  if (nuvols < 85) return [T('Mig ennuvolat'), 'i-cloud'];
   return [T('Cobert'), 'i-cloudy'];
 }
 
