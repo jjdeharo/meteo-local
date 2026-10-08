@@ -126,7 +126,14 @@ internet en casa, que suele llegar con las tormentas.
   igualmente en la lista del canal.
 - **Recuento**: los lunes a las 9, una línea a Juanjo (con su bot de avisos)
   con los suscriptores del bot, qué eligen y los miembros del canal
-  (`bot.py informe`). El canal tiene fijado un mensaje de presentación, solo en
+  (`bot.py informe`), y desde el 08-10-2026 los usos de cada orden en la
+  última semana. **Contador anónimo** (Juanjo, 08-10-2026: «estadísticas de lo
+  que la gente consulta en el bot sin contar yo»): `~/.temps-bot/comptador.json`
+  guarda, por día, cuántas veces se usa cada orden, sin identificador ni texto
+  (una orden desconocida cuenta como «altres»); las de Juanjo no cuentan. Él lo
+  consulta escribiendo `/estadistiques` al bot (solo responde a su chat y no
+  sale en el menú: últimos 7 y 30 días) o con `bot.py estat`. Los créditos de la
+  web lo dicen. El canal tiene fijado un mensaje de presentación, solo en
   catalán (Juanjo, 07-10-2026).
 - **En la web**: «Avisos a Telegram: com funciona» bajo el menú,
   y en los créditos, qué guarda el bot. «Com funciona» lleva a una página de

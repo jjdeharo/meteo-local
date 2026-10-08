@@ -623,6 +623,51 @@ def linies_riscos(riscos, idioma, moment):
 
 # --- Mensajes recibidos -------------------------------------------------------------
 
+# --- Comptador anònim de les ordres (Juanjo, 08-10-2026) --------------------------
+# Quantes vegades es fa servir cada ordre cada dia, sense saber qui: no es desa
+# cap identificador ni cap text. Les ordres de Juanjo no compten. Una ordre que
+# no existeix compta com «altres», sense guardar què s'ha escrit.
+
+COMPTADOR = os.path.join(BASE, "comptador.json")
+ORDRES = ("/start", "/avisos", "/menu", "/resum", "/dema", "/ara", "/radar", "/trens", "/avisos_actius", "/baixa")
+COMPTADOR_DIES = 400
+
+
+def chat_juanjo():
+    propi = llegeix(os.environ.get("AVISAR_CONFIG", os.path.expanduser("~/.vigilancia-nas/config.json")), {})
+    return str(propi.get("chat_id") or "")
+
+
+def compta(ordre, chat, dia=None):
+    if chat == chat_juanjo():
+        return
+    clau = ordre if ordre in ORDRES else "altres"
+    dia = dia or ara().date().isoformat()
+    c = llegeix(COMPTADOR, {})
+    c.setdefault(dia, {})
+    c[dia][clau] = c[dia].get(clau, 0) + 1
+    for vell in sorted(c)[:-COMPTADOR_DIES]:
+        del c[vell]
+    desa(COMPTADOR, c)
+
+
+def text_estadistiques(dies=(7, 30), avui=None):
+    """Els usos de cada ordre en els últims dies, de més a menys."""
+    c = llegeix(COMPTADOR, {})
+    avui = avui or ara().date()
+    linies = ["Usos del bot (sense comptar-te a tu; no es desa qui):"]
+    for n in dies:
+        des_de = (avui - dt.timedelta(days=n - 1)).isoformat()
+        total = {}
+        for dia, ordres in c.items():
+            if dia >= des_de:
+                for o, k in ordres.items():
+                    total[o] = total.get(o, 0) + k
+        detall = ", ".join(f"{o} {k}" for o, k in sorted(total.items(), key=lambda x: -x[1])) or "cap"
+        linies.append(f"Últims {n} dies: {sum(total.values())} ({detall})")
+    return "\n".join(linies)
+
+
 def avisa_juanjo(text):
     """A Juanjo, con su bot de avisos (el del vigía de IONOS). Sin nombres de
     nadie: el bot promete guardar solo el identificador."""
@@ -706,6 +751,15 @@ def atén(api, subs, update, estat=None):
         return
     chat = str(m["chat"]["id"])
     ordre = m["text"].split()[0].split("@")[0].lower()
+    # Només Juanjo, i no surt al menú: les estadístiques del comptador anònim.
+    if ordre == "/estadistiques" and chat == chat_juanjo():
+        envia(api, chat, text_estadistiques())
+        return
+    if ordre.startswith("/"):
+        try:
+            compta(ordre, chat)
+        except Exception as ex:              # el comptador no pot aturar el bot
+            registra(f"comptador: {ex}")
     if ordre == "/baixa":
         idioma = (subs.pop(chat, None) or nou_subscriptor(m.get("from", {})))["idioma"]
         esborra(estat, chat)
@@ -926,6 +980,7 @@ def mostra_estat():
         print(f"  {x}: {sum(x in s['avisos'] for s in subs.values())}")
     print(f"  resum: {sum(bool(s.get('resum')) for s in subs.values())}")
     print(f"Avisos repartits (3 dies): {len(estat.get('enviats', {}))}")
+    print(text_estadistiques())
     pendents = estat.get("pendents") or {}
     if pendents:
         print(f"Pendents d'entregar: {', '.join(pendents)}")
@@ -948,7 +1003,8 @@ def informe():
         canal = "?"
     text = (f"Temps a Montflorit: {len(subs)} suscriptores en el bot (riera {n('riera')}, peligro {n('perill')}, "
             f"lluvia {n('pluja')}, trenes {n('trens')}, previsión diaria "
-            f"{sum(bool(s.get('resum')) for s in subs.values())}) y {canal} miembros en el canal.")
+            f"{sum(bool(s.get('resum')) for s in subs.values())}) y {canal} miembros en el canal.\n"
+            + text_estadistiques(dies=(7,)))
     propi = llegeix(os.environ.get("AVISAR_CONFIG", os.path.expanduser("~/.vigilancia-nas/config.json")), {})
     if propi.get("token") and propi.get("chat_id"):
         Api(propi["token"])("sendMessage", chat_id=propi["chat_id"], text=text)

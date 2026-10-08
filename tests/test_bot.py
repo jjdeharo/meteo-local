@@ -14,6 +14,12 @@ sys.path.insert(0, os.path.join(ARREL, "bot"))
 import avisos_bot as AB  # noqa: E402
 import bot as B  # noqa: E402
 
+# Les proves no escriuen mai a ~/.temps-bot: el registre d'errors i el comptador
+# van a una carpeta temporal.
+_BASE = tempfile.TemporaryDirectory()
+B.BASE = _BASE.name
+B.COMPTADOR = os.path.join(_BASE.name, "comptador.json")
+
 ARA = dt.datetime(2026, 10, 7, 7, 0).astimezone()
 
 
@@ -452,6 +458,42 @@ class Consultes(unittest.TestCase):
             api = Api()
             B.atén(api, subs, {"message": {"chat": {"id": 7, "type": "private"}, "from": {}, "text": "/trens"}})
         self.assertIn("no s'actualitzen", api.enviats[-1][1]["text"])
+
+
+class Comptador(unittest.TestCase):
+    """Comptador anònim de les ordres (Juanjo, 08-10-2026): sense qui, sense Juanjo."""
+
+    def setUp(self):
+        self.dir = tempfile.TemporaryDirectory()
+        self.abans = B.COMPTADOR
+        B.COMPTADOR = os.path.join(self.dir.name, "comptador.json")
+
+    def tearDown(self):
+        B.COMPTADOR = self.abans
+        self.dir.cleanup()
+
+    def test_compta_sense_qui_i_sense_juanjo(self):
+        with unittest.mock.patch.object(B, "chat_juanjo", return_value="99"):
+            for ordre, chat in (("/resum", "1"), ("/resum", "2"), ("/trens", "1"), ("/resum", "99"), ("/hola", "3")):
+                B.compta(ordre, chat, dia="2026-10-08")
+        c = json.load(open(B.COMPTADOR))
+        self.assertEqual(c, {"2026-10-08": {"/resum": 2, "/trens": 1, "altres": 1}})
+        self.assertNotIn("1", json.dumps(c).replace('"/resum": 2', "").replace('"/trens": 1', "").replace("2026-10-08", "").replace('"altres": 1', ""))
+        text = B.text_estadistiques(avui=dt.date(2026, 10, 8))
+        self.assertIn("Últims 7 dies: 4 (/resum 2, /trens 1, altres 1)", text)
+
+    def test_estadistiques_nomes_per_a_juanjo(self):
+        B.compta("/ara", "1", dia=ARA.date().isoformat())
+        with unittest.mock.patch.object(B, "chat_juanjo", return_value="99"), \
+                unittest.mock.patch.object(B, "ara", return_value=ARA):
+            api = Api()
+            B.atén(api, {"99": {"idioma": "es", "avisos": [], "resum": None}},
+                   {"message": {"chat": {"id": 99, "type": "private"}, "from": {}, "text": "/estadistiques"}})
+            self.assertTrue(api.enviats[-1][1]["text"].startswith("Usos del bot"))
+            api = Api()
+            B.atén(api, {"5": {"idioma": "es", "avisos": [], "resum": None}},
+                   {"message": {"chat": {"id": 5, "type": "private"}, "from": {}, "text": "/estadistiques"}})
+            self.assertFalse(api.enviats[-1][1]["text"].startswith("Usos del bot"))
 
 
 class AvisosPublics(unittest.TestCase):
