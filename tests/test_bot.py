@@ -23,6 +23,8 @@ class Api:
         self.canal_falla = canal_falla
 
     def __call__(self, metode, temps=30, **p):
+        if metode == "getChatMemberCount":
+            return 10
         if metode == "getChatMember":       # preguntar no envía nada
             return {"status": "member" if str(p["user_id"]) in self.al_canal else "left"}
         if metode == "sendMessage" and str(p["chat_id"]) in self.bloquejats:
@@ -100,6 +102,23 @@ class Menu(unittest.TestCase):
         finally:
             B.avisa_juanjo = original
         self.assertEqual(avisos, ["Temps a Montflorit: alta nova al bot (ja en són 1)."])
+
+    def test_alta_al_canal_avisa_a_juanjo(self):
+        avisos, original = [], B.avisa_juanjo
+        B.avisa_juanjo = avisos.append
+        canal = {"id": -100, "type": "channel", "username": "TempsMontflorit"}
+        usuari = {"id": 5, "first_name": "Quela", "username": "Glamurosa"}
+        def canvi(chat, abans, despres):
+            return {"chat_member": {"chat": chat, "old_chat_member": {"status": abans, "user": usuari},
+                                    "new_chat_member": {"status": despres, "user": usuari}}}
+        try:
+            B.atén(Api(), {}, canvi(canal, "left", "member"))
+            B.atén(Api(), {}, canvi(canal, "member", "left"))            # les baixes, no
+            B.atén(Api(), {}, canvi(canal, "member", "administrator"))   # ja hi era
+            B.atén(Api(), {}, canvi({"id": -200, "type": "channel", "username": "Altre"}, "left", "member"))
+        finally:
+            B.avisa_juanjo = original
+        self.assertEqual(avisos, ["Temps a Montflorit: alta nova al canal, Quela (@Glamurosa). Ja en són 10."])
 
     def test_grups_no(self):
         api, subs = Api(), {}

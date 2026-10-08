@@ -102,6 +102,12 @@ internet en casa, que suele llegar con las tormentas.
   incidències».
 - **Altas**: cada alta nueva, una línea a Juanjo con el número total, sin
   nombres (Juanjo, 07-10-2026).
+- **Altas en el canal**: cada persona que se apunta al canal, una línea a
+  Juanjo con su nombre y el número total (Juanjo, 08-10-2026: «avísame por
+  telegram cuando se apunte alguien nuevo»). Telegram solo cuenta las altas de
+  un canal a sus administradores, y al bot si las pide (`chat_member` en
+  `getUpdates`). El nombre no se guarda: va solo en el aviso, y Juanjo lo ve
+  igualmente en la lista del canal. Las bajas no se avisan.
 - **Recuento**: los lunes a las 9, una línea a Juanjo (con su bot de avisos)
   con los suscriptores del bot, qué eligen y los miembros del canal
   (`bot.py informe`). El canal tiene fijado un mensaje de presentación, solo en
@@ -166,5 +172,7 @@ pasadas), riera con el aviso orientativo y peligro en castellano, con su
 titular en negrita; ropa del día en la previsión (dos prendas por orden de hora,
 viento, una sola prenda, fuera de 7 a 21 h) y tabla igual a la de la web
 (`tests/test_web.py`); quien está en el canal no recibe repetido lo que el canal
-da (y sí lo recibe si el canal falla), y el menú lo explica. La página de ayuda pasa por las pruebas de la web pública
+da (y sí lo recibe si el canal falla), y el menú lo explica; un alta al canal
+avisa a Juanjo con el nombre, y una baja, un cambio de papel o un alta en otro
+chat, no. La página de ayuda pasa por las pruebas de la web pública
 (traducción completa), `probar-web` y axe-core.

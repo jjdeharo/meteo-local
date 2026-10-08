@@ -480,7 +480,31 @@ def neteja(subs, estat):
         p["chats"] = [c for c in p["chats"] if c in subs]
 
 
+def alta_canal(api, cm):
+    """Juanjo quiere saber quién se apunta al canal (08-10-2026). Telegram lo
+    cuenta al bot porque es administrador del canal. El nombre va solo en el
+    aviso a Juanjo, que lo ve igualmente en la lista del canal: no se guarda."""
+    if cm.get("chat", {}).get("username", "").lower() != CANAL.lstrip("@").lower():
+        return
+    dins = lambda m: m.get("status") in DINS_CANAL or bool(m.get("status") == "restricted" and m.get("is_member"))
+    abans, despres = cm.get("old_chat_member") or {}, cm.get("new_chat_member") or {}
+    if dins(abans) or not dins(despres):
+        return
+    u = despres.get("user") or {}
+    nom = " ".join(x for x in (u.get("first_name"), u.get("last_name")) if x) or "?"
+    if u.get("username"):
+        nom += f" (@{u['username']})"
+    try:
+        total = f" Ja en són {api('getChatMemberCount', chat_id=CANAL)}."
+    except Exception:
+        total = ""
+    avisa_juanjo(f"Temps a Montflorit: alta nova al canal, {nom}.{total}")
+
+
 def atén(api, subs, update, estat=None):
+    if "chat_member" in update:
+        alta_canal(api, update["chat_member"])
+        return
     if "callback_query" in update:
         q = update["callback_query"]
         chat = str(q["message"]["chat"]["id"])
@@ -686,7 +710,7 @@ def volta():
             break
         try:
             updates = api("getUpdates", temps=queda + 10, offset=estat.get("offset"),
-                          timeout=min(queda, 25), allowed_updates=["message", "callback_query"]) or []
+                          timeout=min(queda, 25), allowed_updates=["message", "callback_query", "chat_member"]) or []
         except Exception as ex:
             registra(f"getUpdates: {ex}")
             time.sleep(5)
