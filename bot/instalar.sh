@@ -29,16 +29,18 @@ def crida(metode, **p):
     with urllib.request.urlopen(api + metode, dades, timeout=30) as r:
         assert json.load(r)["ok"], metode
 # El bot porta un nom diferent del canal, perquè no es confonguin (Juanjo, 07-10-2026).
+# Les descripcions de les ordres, d'una línia: amb dues, el menú de Telegram no
+# hi cap sencer i amaga /avisos (Juanjo, 08-10-2026).
 NOM = "Bot Temps a Montflorit"
 TEXTOS = {
-    "ca": ([("avisos", "Tria quins avisos reps"), ("resum", "La previsió (a partir de les 18 h, la de demà)"), ("ara", "El temps ara"),
-            ("baixa", "Deixa de rebre avisos i esborra les teves dades")],
+    "ca": ([("avisos", "Tria quins avisos reps"), ("resum", "La previsió"), ("ara", "El temps ara"),
+            ("baixa", "Dona't de baixa")],
            "Bot personal: tu tries quins avisos del temps a Montflorit (Cerdanyola del Vallès) vols rebre: "
            "riera de Sant Cugat (en proves), perill per pluja o vent, pluja a punt de començar, trens i la previsió "
            "diària. Orientatiu, no oficial. Si no vols triar res, hi ha el Canal Temps a Montflorit: @TempsMontflorit.",
            "Bot personal: tria quins avisos del temps a Montflorit vols rebre."),
-    "es": ([("avisos", "Elige qué avisos recibes"), ("resum", "La previsión (desde las 18 h, la de mañana)"), ("ara", "El tiempo ahora"),
-            ("baixa", "Deja de recibir avisos y borra tus datos")],
+    "es": ([("avisos", "Elige qué avisos recibes"), ("resum", "La previsión"), ("ara", "El tiempo ahora"),
+            ("baixa", "Darse de baja")],
            "Bot personal: tú eliges qué avisos del tiempo en Montflorit (Cerdanyola del Vallès) quieres recibir: "
            "riera de Sant Cugat (en pruebas), peligro por lluvia o viento, lluvia a punto de empezar, trenes y la "
            "previsión diaria. Orientativo, no oficial. Si no quieres elegir nada, está el Canal Temps a Montflorit: @TempsMontflorit.",
