@@ -400,6 +400,15 @@ class Consultes(unittest.TestCase):
         self.assertIn("<b>S2</b> (Bellaterra): sense incidències\n", trens)
         self.assertIn("pla d'inundacions (INUNCAT) en fase d'emergència", self.ordre("/avisos_actius", subs))
         self.assertTrue(self.ordre("/dema", subs).startswith("<b>Previsió per a demà"))
+        # /resum, sempre la d'avui, també de vespre; el resum programat de les 20 h, la de demà.
+        with unittest.mock.patch.object(B, "ara", return_value=ARA.replace(hour=20)):
+            d = json.load(open(os.path.join(self.dir.name, "montflorit.json")))
+            d["generat"] = ARA.replace(hour=20).isoformat()
+            json.dump(d, open(os.path.join(self.dir.name, "montflorit.json"), "w"))
+            api = Api()
+            B.atén(api, subs, {"message": {"chat": {"id": 7, "type": "private"}, "from": {}, "text": "/resum"}})
+        self.assertTrue(api.enviats[-1][1]["text"].startswith("<b>El temps avui"))
+        self.assertTrue(B.resum(d, "ca", ARA.replace(hour=20)).startswith("<b>Previsió per a demà"))
         subs["7"]["idioma"] = "es"
         self.assertIn("en fase de emergencia", self.ordre("/avisos_actius", subs))
         # El temps excepcional calculat també hi surt, dit que no és oficial.

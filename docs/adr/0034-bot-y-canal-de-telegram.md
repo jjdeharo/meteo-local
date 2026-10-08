@@ -61,7 +61,10 @@ internet en casa, que suele llegar con las tormentas.
   mañana; sin trenes), o «No vull rebre la previsió» (el menú lo explica), y el
   idioma (catalán o castellano, al principio el de su Telegram). Órdenes:
   /avisos, /resum, /ara y /baixa, que borra sus datos; desde el 08-10-2026,
-  también /dema (la previsión de mañana a cualquier hora), /radar (lo que ve
+  también /dema (la previsión de mañana a cualquier hora; desde entonces
+  /resum da siempre la de hoy, lo que queda del día y, de noche, la lluvia
+  antes de las 6, mientras el resumen programado de las 20 h sigue siendo el
+  de mañana), /radar (lo que ve
   el radar y el enlace en directo), /trens (cada línea y su último aviso) y
   /avisos_actius (AEMET, Protección Civil y el tiempo excepcional que calcula
   la página, dicho que no es oficial), que solo leen los datos públicos

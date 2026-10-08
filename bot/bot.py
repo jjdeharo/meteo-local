@@ -72,7 +72,7 @@ T = {
         "pluja": "Pluja a punt de començar (15 min abans)", "trens": "Trens de Cerdanyola (si no circulen)",
         "resum": "Previsió, un cop al dia, a les:", "no": "No vull rebre la previsió", "h": "{} h", "dema": "{} h (per a demà)",
         "baixa": "Fet: s'han esborrat les teves dades i ja no rebràs res. Amb /start pots tornar-hi.",
-        "ajuda": ("/avisos tria què reps · /resum la previsió · /dema la de demà · /ara el temps ara · "
+        "ajuda": ("/avisos tria què reps · /resum la previsió d'avui · /dema la de demà · /ara el temps ara · "
                   "/radar el radar ara · /trens els trens · /avisos_actius els avisos oficials · "
                   "/baixa deixa de rebre'n i esborra les teves dades"),
         "velles": "Les dades de Temps a Montflorit no s'actualitzen des de les {}: ara no puc donar la previsió.",
@@ -95,7 +95,7 @@ T = {
         "pluja": "Lluvia a punto de empezar (15 min antes)", "trens": "Trenes de Cerdanyola (si no circulan)",
         "resum": "Previsión, una vez al día, a las:", "no": "No quiero recibir la previsión", "h": "{} h", "dema": "{} h (para mañana)",
         "baixa": "Hecho: se han borrado tus datos y ya no recibirás nada. Con /start puedes volver.",
-        "ajuda": ("/avisos elige qué recibes · /resum la previsión · /dema la de mañana · /ara el tiempo ahora · "
+        "ajuda": ("/avisos elige qué recibes · /resum la previsión de hoy · /dema la de mañana · /ara el tiempo ahora · "
                   "/radar el radar ahora · /trens los trenes · /avisos_actius los avisos oficiales · "
                   "/baixa deja de recibir y borra tus datos"),
         "velles": "Los datos de Temps a Montflorit no se actualizan desde las {}: ahora no puedo dar la previsión.",
@@ -371,7 +371,7 @@ def text_avisos_aemet(dades, idioma, dia, moment):
     return res
 
 
-def resum(dades, idioma, moment, dema=False):
+def resum(dades, idioma, moment, dema=False, avui=False):
     """La previsión en pocas líneas, con los datos públicos: hasta las 18 h,
     el tiempo ahora y el resto del día; desde las 18 h, la de mañana. Con la
     ropa para ir a pie (text_roba)."""
@@ -384,7 +384,9 @@ def resum(dades, idioma, moment, dema=False):
     ara_n = moment.replace(tzinfo=None)
     hores = [f for f in dades.get("hores") or [] if dt.datetime.fromisoformat(f["fins"]) > ara_n]
     hora = lambda f: dt.datetime.fromisoformat(f["hora"])
-    if dema or moment.hour >= HORA_DEMA:
+    # /resum demana sempre la d'avui, /dema la de demà; el resum programat
+    # canvia a demà a partir de HORA_DEMA (Juanjo, 08-10-2026).
+    if dema or (moment.hour >= HORA_DEMA and not avui):
         dema = (moment + dt.timedelta(days=1)).date()
         # La nit comença a les HORA_DEMA d'avui, també si es demana /dema al matí.
         vespre = dt.datetime.combine(moment.date(), dt.time(HORA_DEMA))
@@ -418,6 +420,13 @@ def resum(dades, idioma, moment, dema=False):
                                    else "Temperatura d'aquí a mitjanit"),
                   text_pluja(tram, idioma)]
         roba = text_roba(tram, idioma)
+        # De vespre, si ha de ploure abans de les 6, també la nit.
+        if avui and moment.hour >= HORA_DEMA:
+            fi_nit = dt.datetime.combine(moment.date() + dt.timedelta(days=1), dt.time(6))
+            nit = [f for f in hores if fi_dia <= hora(f) < fi_nit]
+            if franges(nit):
+                linies.append(("Esta noche: " if idioma == "es" else "Aquesta nit: ")
+                              + text_pluja(nit, idioma).split(": ", 1)[1])
         linies += text_avisos_aemet(dades, idioma, moment.date(), moment)
         linies.append(text_trens_resum(dades, idioma))
     # La ropa, al final y aparte (Juanjo, 08-10-2026: «muy desordenado»).
@@ -667,7 +676,7 @@ def atén(api, subs, update, estat=None):
     elif ordre in ("/avisos", "/menu"):
         envia(api, chat, t["menu"], teclat(sub))
     elif ordre == "/resum":
-        envia(api, chat, resum(llegeix(os.path.join(DADES, "montflorit.json"), {}), sub["idioma"], ara()), html=True)
+        envia(api, chat, resum(llegeix(os.path.join(DADES, "montflorit.json"), {}), sub["idioma"], ara(), avui=True), html=True)
     elif ordre == "/ara":
         dades = llegeix(os.path.join(DADES, "montflorit.json"), {})
         envia(api, chat, text_ara_bot(dades, sub["idioma"], ara()) + "\n" + WEB)

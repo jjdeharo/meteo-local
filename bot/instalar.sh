@@ -33,14 +33,14 @@ def crida(metode, **p):
 # hi cap sencer i amaga /avisos (Juanjo, 08-10-2026).
 NOM = "Bot Temps a Montflorit"
 TEXTOS = {
-    "ca": ([("avisos", "Tria quins avisos reps"), ("resum", "La previsió"), ("dema", "La previsió de demà"),
+    "ca": ([("avisos", "Tria quins avisos reps"), ("resum", "La previsió d'avui"), ("dema", "La previsió de demà"),
             ("ara", "El temps ara"), ("radar", "El radar ara"), ("trens", "Els trens de Cerdanyola"),
             ("avisos_actius", "Avisos oficials vigents"), ("baixa", "Dona't de baixa")],
            "Bot personal: tu tries quins avisos del temps a Montflorit (Cerdanyola del Vallès) vols rebre: "
            "riera de Sant Cugat (en proves), perill per pluja o vent, pluja a punt de començar, trens i la previsió "
            "diària. Orientatiu, no oficial. Si no vols triar res, hi ha el Canal Temps a Montflorit: @TempsMontflorit.",
            "Bot personal: tria quins avisos del temps a Montflorit vols rebre."),
-    "es": ([("avisos", "Elige qué avisos recibes"), ("resum", "La previsión"), ("dema", "La previsión de mañana"),
+    "es": ([("avisos", "Elige qué avisos recibes"), ("resum", "La previsión de hoy"), ("dema", "La previsión de mañana"),
             ("ara", "El tiempo ahora"), ("radar", "El radar ahora"), ("trens", "Los trenes de Cerdanyola"),
             ("avisos_actius", "Avisos oficiales vigentes"), ("baixa", "Darse de baja")],
            "Bot personal: tú eliges qué avisos del tiempo en Montflorit (Cerdanyola del Vallès) quieres recibir: "
