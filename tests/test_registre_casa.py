@@ -15,6 +15,30 @@ def fila(hhmm, prec, temp=20.0, dia="2026-10-05"):
 
 
 class HorasMontflorit(unittest.TestCase):
+    def test_rehaz_la_pluja_de_casa(self):
+        # El 06-10-2026 la hora de 20 a 21 quedó con 1,3 mm en lugar de 3,5 (ADR 0017).
+        import tempfile
+        from unittest import mock
+        tz = dt.timezone(dt.timedelta(hours=2))
+        with tempfile.TemporaryDirectory() as d:
+            vell = R.ESTACIO_CASA
+            R.ESTACIO_CASA = os.path.join(d, "estacio-casa.csv")
+            try:
+                with open(R.ESTACIO_CASA, "w") as f:
+                    f.write("fins,pluja_mm,temperatura,humitat,rosada,pressio,solar\n"
+                            "2026-10-06T21:00,1.3,20.1,99,19.9,1015,0\n2026-10-06T22:00,5.6,19.8,99,19.6,1014.7,0\n")
+                lectura = lambda h, m, p: {"t": dt.datetime(2026, 10, 6, h, m, tzinfo=tz), "pluja_avui": p}
+                historial = [lectura(20, 0, 0.0), lectura(20, 30, 1.0), lectura(21, 0, 3.5), lectura(22, 0, 9.1)]
+                with mock.patch.object(R.E, "historial", return_value=historial):
+                    self.assertEqual(R.rehaz_pluja_casa(dt.datetime(2026, 10, 8, 20, 0, tzinfo=tz)), 1)
+                with open(R.ESTACIO_CASA) as f:
+                    filas = f.read().splitlines()
+                self.assertEqual(filas[1], "2026-10-06T21:00,3.5,20.1,99,19.9,1015,0")
+                self.assertEqual(filas[2], "2026-10-06T22:00,5.6,19.8,99,19.6,1014.7,0")
+                self.assertEqual(len([n for n in os.listdir(d) if ".bak-pluja-" in n]), 1)
+            finally:
+                R.ESTACIO_CASA = vell
+
     def test_avisos_y_plan_de_la_hora(self):
         # Lo oficial de cada hora, para que el modelo aprenda cuánto pesa (ADR 0047).
         avisos = [{"zona": casa.C.ZONA_AVISOS, "nivel": "groc", "tipo": "pluja",

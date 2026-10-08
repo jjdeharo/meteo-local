@@ -2,6 +2,25 @@
 
 Fecha: 2026-10-06 · Estado: aceptado
 
+**08-10-2026, el pluviómetro mide bien; el fallo era nuestro.** Juanjo pidió
+averiguar por qué fallaba su pluviómetro. Comparado con su historial de
+Ecowitt (cada 5 minutos), con Montflorit hora a hora (4 al 8 de octubre) y con
+Sabadell y Sant Cugat día a día (octubre de 2025 a octubre de 2026), mide
+bien, también la lluvia débil: el 5 de octubre, 45,5 mm frente a 52,4 de
+Montflorit; el 6, 10,9 frente a 8,6; el 8, 1,0 frente a 0,6; solo se le
+escaparon dos horas de 0,2 mm (una marca) y el 6 de agosto (4,5 mm en
+Sabadell, 8,8 en Sant Cugat y nada en casa). Lo que fallaba era
+`ecowitt.hores`: en cada pasada guardaba la lluvia de la primera hora de la
+ventana, cortada, encima de la buena (el 6 de octubre, 1,3 mm de 20 a 21 h en
+lugar de 3,5 y 0,2 de 21 a 22 h en lugar de 5,6), y con eso también se
+equivocaba la vigilancia del pluviómetro. Desde la 3.27.5 solo cuenta horas
+enteras, y `python3 registre.py rehaz-pluja-casa` rehízo el registro con el
+historial (con copia del archivo de antes). Que esté en una esquina entre dos
+paredes puede hacer que recoja de menos o de más según el viento, pero los
+datos no lo muestran. La regla de no fiarse de sus ceros
+(`PLUVIOMETRE_CASA_FIABLE_FINS`) se mantiene mientras la vigilancia, ya con
+datos buenos, no dé su resultado.
+
 ## Contexto
 
 Juanjo tiene una estación Ecowitt en casa, a unos 300-400 m de la de

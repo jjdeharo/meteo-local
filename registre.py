@@ -6,6 +6,8 @@ Lo ejecuta el reloj del NAS, sin IA:
 
   python3 registre.py estacio             rellena las horas que falten de la
                                           estación de casa con su historial
+  python3 registre.py rehaz-pluja-casa    vuelve a calcular su lluvia por horas
+                                          con el historial (ADR 0017)
 
 Además, casa.py apunta en cada pasada lo que mide Montflorit hora a hora
 (montflorit.csv) y la estación de casa (estacio-casa.csv, ADR 0017) y, una vez
@@ -180,6 +182,44 @@ def completa_estacio_casa(ahora=None):
     print("Estació de casa completada des de", desde.isoformat(timespec="minutes"))
 
 
+def rehaz_pluja_casa(ahora=None):
+    """Vuelve a calcular la lluvia de cada hora de estacio-casa.csv con el
+    historial de Ecowitt (5 minutos, los últimos ESTACIO_CASA_DIES_MAX días).
+    Hasta la 3.27.5 se guardaba la de la primera hora cortada de cada pasada
+    encima de la buena (ADR 0017). Deja una copia del archivo de antes y solo
+    cambia la lluvia."""
+    ahora = ahora or P.AHORA
+    if not os.path.exists(ESTACIO_CASA):
+        return 0
+    with open(ESTACIO_CASA, encoding="utf-8") as f:
+        filas = list(csv.DictReader(f))
+    desde = max(ahora - dt.timedelta(days=ESTACIO_CASA_DIES_MAX),
+                dt.datetime.fromisoformat(filas[0]["fins"]).astimezone() - dt.timedelta(hours=1))
+    buenas = {fin.strftime("%Y-%m-%dT%H:%M"): h["pluja_mm"]
+              for fin, h in E.hores(E.historial(desde, ahora, "5min")).items() if h["pluja_mm"] is not None}
+    canvis = 0
+    for r in filas:
+        if r["fins"] in buenas and _num(r["pluja_mm"]) != buenas[r["fins"]]:
+            r["pluja_mm"] = buenas[r["fins"]]
+            canvis += 1
+    if canvis:
+        copia = f"{ESTACIO_CASA}.bak-pluja-{ahora:%Y%m%d%H%M}"
+        os.replace(ESTACIO_CASA, copia)
+        with open(ESTACIO_CASA + ".tmp", "w", newline="", encoding="utf-8") as f:
+            w = csv.DictWriter(f, fieldnames=CAMPOS_ESTACIO_CASA)
+            w.writeheader()
+            w.writerows(filas)
+        os.replace(ESTACIO_CASA + ".tmp", ESTACIO_CASA)
+    return canvis
+
+
+def _num(x):
+    try:
+        return round(float(x), 1)
+    except (TypeError, ValueError):
+        return None
+
+
 def apunta_casa(emes, ara, hores, ara_casa=None, sant_cugat=None):
     """Una línea por hora de reloj: la primera pasada de cada hora. sant_cugat:
     la lluvia de la última hora en la estación de Meteocat de Sant Cugat, por
@@ -202,5 +242,7 @@ if __name__ == "__main__":
     orden = sys.argv[1] if len(sys.argv) > 1 else ""
     if orden == "estacio":
         completa_estacio_casa()
+    elif orden == "rehaz-pluja-casa":
+        print("Horas con la lluvia corregida:", rehaz_pluja_casa())
     else:
         print(__doc__)

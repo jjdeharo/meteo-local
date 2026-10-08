@@ -31,6 +31,12 @@ class Ecowitt(unittest.TestCase):
         self.assertAlmostEqual(h[siete]["pluja_mm"], 1.0)
         self.assertEqual(h[siete]["temperatura"], 17.5)
         self.assertAlmostEqual(h[ocho]["pluja_mm"], 0.6)
+        # La primera hora, cortada, no cuenta: guardada encima de la buena,
+        # apuntaba la lluvia de unos minutos (06-10-2026, ADR 0017).
+        tallades = [lectura("20:55", 2.2), lectura("21:00", 3.5), lectura("21:30", 8.3), lectura("22:00", 8.9)]
+        h = E.hores(tallades)
+        self.assertEqual(list(h), [dt.datetime(2026, 10, 5, 22, 0, tzinfo=TZ)])
+        self.assertAlmostEqual(h[dt.datetime(2026, 10, 5, 22, 0, tzinfo=TZ)]["pluja_mm"], 5.4)
 
     def test_medianoche_y_presion(self):
         filas = [lectura("23:30", 5.0, dia="2026-10-04"), lectura("00:00", 5.2, dia="2026-10-05"),

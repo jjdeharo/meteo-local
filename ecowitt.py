@@ -239,7 +239,12 @@ def hores(filas):
             cerca[marca] = (dist, f)
     res = {}
     primera, ultima = filas[0]["t"], filas[-1]["t"]
+    # Solo las horas enteras: la primera, cortada, daba la lluvia de unos
+    # minutos y en cada pasada se guardaba encima de la buena (el 06-10-2026,
+    # 1,3 mm en lugar de 3,5; ADR 0017).
     fin = primera.replace(minute=0, second=0, microsecond=0) + dt.timedelta(hours=1)
+    if fin - dt.timedelta(hours=1) < primera:
+        fin += dt.timedelta(hours=1)
     while fin <= ultima:
         f = cerca.get(fin, (None, {}))[1]
         res[fin] = {"pluja_mm": round(lluvia.get(fin, 0.0), 1) if lecturas.get(fin) else None,
