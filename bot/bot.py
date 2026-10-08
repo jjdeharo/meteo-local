@@ -401,7 +401,7 @@ def resum(dades, idioma, moment, dema=False, avui=False):
         linies = [(f"<b>Previsión para mañana, {nom_dia}, en Montflorit</b>" if idioma == "es"
                    else f"<b>Previsió per a demà, {nom_dia}, a Montflorit</b>") + fins]
         if franges(nit):    # la noche, solo si se espera lluvia
-            linies.append(("Esta noche: " if idioma == "es" else "Aquesta nit: ")
+            linies.append(("Esta noche: lluvia " if idioma == "es" else "Aquesta nit: pluja ")
                           + text_pluja(nit, idioma).split(": ", 1)[1])
         linies.append(text_temperatura(dia, idioma, "Temperatura"))
         linies.append(text_pluja(dia, idioma))
@@ -425,7 +425,7 @@ def resum(dades, idioma, moment, dema=False, avui=False):
             fi_nit = dt.datetime.combine(moment.date() + dt.timedelta(days=1), dt.time(6))
             nit = [f for f in hores if fi_dia <= hora(f) < fi_nit]
             if franges(nit):
-                linies.append(("Esta noche: " if idioma == "es" else "Aquesta nit: ")
+                linies.append(("Esta noche: lluvia " if idioma == "es" else "Aquesta nit: pluja ")
                               + text_pluja(nit, idioma).split(": ", 1)[1])
         linies += text_avisos_aemet(dades, idioma, moment.date(), moment)
         linies.append(text_trens_resum(dades, idioma))

@@ -205,6 +205,15 @@ class Resum(unittest.TestCase):
         self.assertNotIn("Aquesta nit", r)
         self.assertTrue(B.resum(d, "es", vespre).startswith("<b>Previsión para mañana, jueves, en Montflorit</b> (hasta las 20 h)"))
 
+    def test_pluja_aquesta_nit(self):
+        # El 08-10-2026 deia «Esta noche: posible de 20 a 23 h»: hi faltava la pluja.
+        vespre = ARA.replace(hour=20)
+        d = dades(vespre)
+        for f in d["hores"][:3]:
+            f["probabilitat"] = 0.56
+        self.assertIn("Aquesta nit: pluja possible de 20 a 23 h (probabilitat fins al 56 %).", B.resum(d, "ca", vespre))
+        self.assertIn("Esta noche: lluvia posible de 20 a 23 h (probabilidad hasta el 56 %).", B.resum(d, "es", vespre))
+
     def test_roba_de_tot_el_dia(self):
         # Les dades de prova van de 15 °C (7 h) a 24 °C (16 h): dues peces, per ordre d'hora.
         self.assertIn("Roba per anar a peu: jaqueta lleugera o jersei a les 7 h (15 °C); "
