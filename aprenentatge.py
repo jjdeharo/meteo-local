@@ -70,6 +70,10 @@ RASGOS_ARXIU = ["constant", "arome_hd", "arome", "icon_eu", "antelacio",
                 "arome_hd_antelacio", "arome_antelacio", "icon_eu_antelacio",
                 "algun_antelacio", "tres_antelacio"]
 RASGOS_PROPIS = RASGOS_ARXIU + ["ensemble", "persistencia", "sequedat"]
+# Con la lluvia de la última hora en Sant Cugat (Meteocat, a 4,6 km, en la
+# cuenca de la riera): se ajusta aparte y solo gana si acierta más (ADR 0042).
+RASGOS_PROPIS_XV = RASGOS_PROPIS + ["sant_cugat"]
+AVIS_XV = os.path.join(DIR, "avis-sant-cugat")
 # Sin la estación de casa (si falla al prever), la temperatura se corrige con
 # los mismos rasgos menos el error al prever.
 RASGOS_TEMPERATURA_SENSE_ESTACIO = ["constant", "temperatura", "nuvols", "humitat", "hora_sin",
@@ -106,6 +110,8 @@ def rasgos(d, noms):
         "persistencia": math.log1p(d.get("pluja_1h_emes") or 0) if corto else 0.0,
         # Aire seco al prever, menos lluvia en las horas siguientes.
         "sequedat": (0.0 if not corto else None if deficit is None else min(max(deficit, 0), 15) / 10),
+        # Lo que llovía en Sant Cugat al prever, como la persistencia; sin dato, no hay vector.
+        "sant_cugat": (0.0 if not corto else None if d.get("pluja_1h_xv") is None else math.log1p(d["pluja_1h_xv"])),
         "temperatura": d.get("temperature_2m"),
         "nuvols": None if d.get("cloud_cover") is None else d["cloud_cover"] / 100,
         "vent": None if d.get("wind_speed_10m") is None else d["wind_speed_10m"] / 10,
@@ -268,6 +274,7 @@ def mostres():
                     if obs_pluja is None and obs_temp is None:
                         continue
                     res.append({**h, "emes": linea["emes"], "pluja_1h_emes": max(plujas) if plujas else None,
+                                "pluja_1h_xv": (linea.get("sant_cugat") or {}).get("pluja_1h"),
                                 "obs_pluja": obs_pluja, "obs_temp": obs_temp})
     return res
 
@@ -280,13 +287,13 @@ def grupo_semana(m):
     return (d.isocalendar()[0] * 53 + d.isocalendar()[1]) % SETMANES_VALIDACIO
 
 
-def valida_pluja(ms, arxiu):
-    """Error (Brier) en validación cruzada por semanas del modelo propio y del
-    archivo, con las mismas muestras."""
-    ms = [m for m in ms if m["obs_pluja"] is not None and rasgos(m, RASGOS_PROPIS) is not None]
+def valida_pluja(ms, arxiu, noms=RASGOS_PROPIS):
+    """Error (Brier) en validación cruzada por semanas del modelo propio (con
+    los rasgos noms) y del archivo, con las mismas muestras."""
+    ms = [m for m in ms if m["obs_pluja"] is not None and rasgos(m, noms) is not None]
     if not ms:
         return None
-    x = np.array([rasgos(m, RASGOS_PROPIS) for m in ms])
+    x = np.array([rasgos(m, noms) for m in ms])
     y = np.array([m["obs_pluja"] >= C.UMBRAL_MM for m in ms], dtype=float)
     xa = np.array([rasgos(m, arxiu["rasgos"]) for m in ms])
     grupo = np.array([grupo_semana(m) for m in ms])
@@ -302,7 +309,7 @@ def valida_pluja(ms, arxiu):
     # Horas observadas distintas con lluvia: cada hora se prevé muchas veces y
     # no cuenta más por eso (auditoría del 08-10-2026).
     hores_pluja = len({m["fins"] for m, plou in zip(ms, y) if plou})
-    return {"mostres": len(y), "hores_pluja": hores_pluja,
+    return {"mostres": len(y), "hores_pluja": hores_pluja, "rasgos": noms,
             "error": float(np.mean((p - y) ** 2)),
             "error_abans": float(np.mean((predecir(np.array(arxiu["w"]), xa) - y) ** 2)),
             "w": ajustar(x, y).tolist() if y.sum() else None}
@@ -344,11 +351,16 @@ def millora(v):
 def candidat(ms, arxiu, arxiu_t, avui):
     """El modelo que tocaría usar con los datos de hoy, y los números."""
     vp, vt = valida_pluja(ms, arxiu), valida_temperatura(ms, arxiu_t)
+    # La variante con Sant Cugat, aparte: solo con las muestras que llevan el dato.
+    if vp:
+        vp["xv"] = valida_pluja(ms, arxiu, RASGOS_PROPIS_XV)
     model = {"pluja": arxiu, "temperatura": arxiu_t}
-    if vp and vp["hores_pluja"] >= MIN_HORES_PLUJA and vp["w"] and millora(vp):
+    bons = [v for v in (vp, vp and vp["xv"]) if v and v["hores_pluja"] >= MIN_HORES_PLUJA and v["w"] and millora(v)]
+    if bons:
+        v = min(bons, key=lambda v: v["error"])
         model["pluja"] = {"origen": "local", "des_de": ms[0]["emes"][:10], "fins": avui,
-                          "rasgos": RASGOS_PROPIS, "w": vp["w"], "error": vp["error"],
-                          "error_abans": vp["error_abans"], "mostres": vp["mostres"]}
+                          "rasgos": v["rasgos"], "w": v["w"], "error": v["error"],
+                          "error_abans": v["error_abans"], "mostres": v["mostres"]}
     if vt and vt["dies"] >= MIN_DIES_TEMPERATURA and millora(vt):
         model["temperatura"] = {"origen": "casa", "des_de": ms[0]["emes"][:10], "fins": avui,
                                 "rasgos": RASGOS_TEMPERATURA, "w": vt["w"],
@@ -368,9 +380,11 @@ def explica(abans, nou, vp, vt):
     linies = ["Temps a casa: canvi de mètode d'aprenentatge, s'aplicarà demà."]
     if metode(abans)[0] != metode(nou)[0]:
         if nou["pluja"]["origen"] != "arxiu":
-            linies.append(f"Pluja: passa a aprendre de Montflorit i de l'estació de casa "
-                          f"({vp['hores_pluja']} hores amb pluja). "
-                          f"Error {vp['error']:.4f} en setmanes no vistes, abans {vp['error_abans']:.4f}.")
+            p = nou["pluja"]
+            amb_xv = " i la pluja de Sant Cugat" if "sant_cugat" in p["rasgos"] else ""
+            linies.append(f"Pluja: passa a aprendre de Montflorit i de l'estació de casa{amb_xv} "
+                          f"({p['mostres']} mostres). "
+                          f"Error {p['error']:.4f} en setmanes no vistes, abans {p['error_abans']:.4f}.")
         else:
             linies.append("Pluja: torna al model de l'arxiu; el propi ja no millora.")
     if metode(abans)[1] != metode(nou)[1]:
@@ -401,11 +415,14 @@ def apunta_historial(avui, model, vp, vt):
         w = csv.writer(f)
         if nou:
             w.writerow(["dia", "pluja", "temperatura", "mostres_pluja", "hores_pluja", "error_pluja",
-                        "error_pluja_arxiu", "dies_temperatura", "error_temp", "error_temp_model"])
+                        "error_pluja_arxiu", "dies_temperatura", "error_temp", "error_temp_model",
+                        "hores_pluja_sant_cugat", "error_pluja_sant_cugat"])
+        xv = (vp or {}).get("xv")
         w.writerow([avui, *metode(model),
                     vp and vp["mostres"], vp and vp["hores_pluja"], vp and round(vp["error"], 5),
                     vp and round(vp["error_abans"], 5), vt and vt["dies"],
-                    vt and round(vt["error"], 2), vt and round(vt["error_abans"], 2)])
+                    vt and round(vt["error"], 2), vt and round(vt["error_abans"], 2),
+                    xv and xv["hores_pluja"], xv and round(xv["error"], 5)])
 
 
 def diari(avui=None, avisa=True):
@@ -434,6 +451,13 @@ def diari(avui=None, avisa=True):
     # 2. Lo que tocaría hoy.
     nou, vp, vt = candidat(mostres(), arxiu, arxiu_t, avui)
     apunta_historial(avui, nou, vp, vt)
+    # Una sola vez: cuando haya bastante lluvia con el dato de Sant Cugat, el
+    # resultado medido, para decidir si se pide la clave de AEMET (ADR 0042).
+    text_xv = avis_sant_cugat(vp)
+    if text_xv:
+        print(text_xv)
+        if avisa:
+            subprocess.run(["avisar-juanjo", "--asunto", "meteo-local", text_xv], check=False)
     if metode(nou) == metode(en_us):
         # Mismo método, más datos: se pone al día sin avisar.
         if per_desar(nou) != per_desar(en_us) and not os.path.exists(ATURA):
@@ -448,6 +472,25 @@ def diari(avui=None, avisa=True):
     print(text)
     if avisa:
         subprocess.run(["avisar-juanjo", "--asunto", "meteo-local", text], check=False)
+
+
+def avis_sant_cugat(vp):
+    """El día en que el registro tiene MIN_HORES_PLUJA horas de lluvia con la
+    lluvia de Sant Cugat, una vez: si ese rasgo acierta más o no, con las
+    cifras (Juanjo, 08-10-2026: «¿quién se acordará de mirarlo?»)."""
+    xv = (vp or {}).get("xv")
+    if not xv or xv["hores_pluja"] < MIN_HORES_PLUJA or os.path.exists(AVIS_XV):
+        return None
+    sense = valida_pluja_mateixes = vp
+    ajuda = xv["error"] < sense["error"]
+    text = (f"Temps a casa: el registre ja té {xv['hores_pluja']} hores de pluja amb la dada de Sant Cugat. "
+            f"Error en setmanes no vistes: amb la pluja de Sant Cugat {xv['error']:.4f}, sense {sense['error']:.4f} "
+            f"(model de l'arxiu {sense['error_abans']:.4f}). "
+            + ("Ajuda: si vols, demana la clau d'OpenData de l'AEMET i afegim l'aeroport de Sabadell."
+               if ajuda else "No ajuda: no val la pena afegir l'aeroport de Sabadell."))
+    os.makedirs(DIR, exist_ok=True)
+    open(AVIS_XV, "w").close()
+    return text
 
 
 def estat():

@@ -136,15 +136,18 @@ def completa_estacio_casa(ahora=None):
     print("Estació de casa completada des de", desde.isoformat(timespec="minutes"))
 
 
-def apunta_casa(emes, ara, hores, ara_casa=None):
-    """Una línea por hora de reloj: la primera pasada de cada hora."""
+def apunta_casa(emes, ara, hores, ara_casa=None, sant_cugat=None):
+    """Una línea por hora de reloj: la primera pasada de cada hora. sant_cugat:
+    la lluvia de la última hora en la estación de Meteocat de Sant Cugat, por
+    si lo que llueve cerca ayuda a prever (ADR 0042)."""
     hora = emes.strftime("%Y-%m-%dT%H")
     if os.path.exists(CASA_DARRERA):
         with open(CASA_DARRERA) as f:
             if f.read().strip() == hora:
                 return
     os.makedirs(DIR, exist_ok=True)
-    linea = {"emes": emes.isoformat(timespec="minutes"), "ara": ara, "ara_casa": ara_casa, "hores": hores}
+    linea = {"emes": emes.isoformat(timespec="minutes"), "ara": ara, "ara_casa": ara_casa, "hores": hores,
+             "sant_cugat": sant_cugat}
     with open(os.path.join(DIR, f"casa-{emes.strftime('%Y-%m')}.jsonl"), "a", encoding="utf-8") as f:
         f.write(json.dumps(linea, ensure_ascii=False) + "\n")
     with open(CASA_DARRERA, "w") as f:

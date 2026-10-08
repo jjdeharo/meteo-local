@@ -155,6 +155,7 @@ def calcula(ahora, nc, lector=None, montflorit_3h=None):
     res = {"estacio": C.ESTACIONES.get(C.RIERA_ESTACIO, C.RIERA_ESTACIO),
            "fins": fins.astimezone().isoformat(timespec="minutes"),
            "mm_3h": acumulat(filas, fins, h), "mm_6h": acumulat(filas, fins, 6),
+           "mm_1h": acumulat(filas, fins, 1),     # per al registre de l'aprenentatge (ADR 0042)
            "incomplet": incomplet(filas, fins),
            "radar_1h": previst(nc, fins, (ahora - fins).total_seconds() / 60 + 60) if nc else None,
            "capcalera": None, "montflorit_3h": montflorit_3h}

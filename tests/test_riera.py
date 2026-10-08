@@ -46,6 +46,7 @@ class Index(unittest.TestCase):
         ara = fins + dt.timedelta(minutes=30)
         r = self.calcula(ara, fins, None)
         self.assertEqual(r["mm_3h"], 40.7)
+        self.assertEqual(r["mm_1h"], 13.4)       # 22:00-23:00 UTC, per al registre (ADR 0042)
         self.assertEqual(r["index"], 40.7)
         self.assertEqual(r["index_6h"], 48.7)
         self.assertEqual(r["nivell"], "atencio")

@@ -77,9 +77,10 @@ moja en moto (`UMBRAL_MM` de `config.py`).
 | Fracción del ensemble* | de 0 a 1 | Cuántas de las 40 simulaciones ven lluvia |
 | Lluvia medida al prever* | $\ln(1 + \text{mm de la última hora})$ si $t \le 4$; si no, 0. La mayor de Montflorit y casa | Si ya llueve, es probable que siga |
 | Sequedad del aire al prever* | $\min(T - T_d, 15) / 10$ en casa si $t \le 4$; si no, 0 | Con el aire seco, la lluvia cercana es menos probable |
+| Lluvia en Sant Cugat al prever*† | $\ln(1 + \text{mm de la última hora})$ en la estación de Meteocat de Sant Cugat (4,6 km al oeste, en la cuenca de la riera) si $t \le 4$; si no, 0 | Lo que llueve cerca puede llegar o anticipar. Es una hipótesis: se ajusta en una variante aparte y solo se adopta si acierta más (ADR 0042) |
 
 \* Solo con datos propios: el archivo no las tiene (apartado 2.2). $T_d$ es
-el punto de rocío.
+el punto de rocío. † Registrada desde el 08-10-2026.
 
 ### 2.1 Primer modelo: el archivo de 2024-2026
 
@@ -173,6 +174,14 @@ con todas las señales de la tabla, incluidas las tres que el archivo no tiene. 
 que no ha visto (apartado 4). En otoño llueve unas 25 horas al mes (entre 9 y 48 en
 Sabadell y Sant Cugat desde 2024): puede tardar de uno a varios meses. Si al
 prever falta la estación de casa, se usa el modelo del archivo.
+
+Se ajustan dos variantes, sin y con la lluvia de Sant Cugat, cada una con
+las muestras que tienen sus datos, y se adopta la que menos error tenga de
+las que cumplen las condiciones. El día en que la variante con Sant Cugat
+llegue a las 30 horas de lluvia, el programa avisa a Juanjo por Telegram, una
+sola vez, con el error de las dos: si la estación cercana ayuda, se pedirá
+la clave de OpenData de la AEMET para añadir la del aeropuerto de Sabadell
+(5 km al norte); si no, no se añade.
 
 ### 2.3 Lo que aporta casa con su historial
 

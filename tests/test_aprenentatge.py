@@ -36,6 +36,12 @@ class Rasgos(unittest.TestCase):
         self.assertAlmostEqual(x[A.RASGOS_PROPIS.index("sequedat")], 0.2)
         self.assertEqual(lejos[A.RASGOS_PROPIS.index("sequedat")], 0.0)
         self.assertIsNone(A.rasgos({**d, "deficit_rosada_ara": None}, A.RASGOS_PROPIS))
+        # La lluvia de Sant Cugat al prever, como la persistencia; sin dato, no hay vector (ADR 0042).
+        xv = A.rasgos({**d, "pluja_1h_xv": 2.0}, A.RASGOS_PROPIS_XV)
+        self.assertAlmostEqual(xv[A.RASGOS_PROPIS_XV.index("sant_cugat")], 1.0986, places=3)
+        self.assertEqual(A.rasgos({**d, "pluja_1h_xv": 2.0, "antelacio_h": 10}, A.RASGOS_PROPIS_XV)[-1], 0.0)
+        self.assertIsNone(A.rasgos(d, A.RASGOS_PROPIS_XV))
+        self.assertIsNotNone(A.rasgos(d, A.RASGOS_PROPIS))     # sin el rasgo, el vector de siempre
 
     def test_modelos_que_dan_lluvia_y_coinciden(self):
         # ADR 0021: que un modelo dé algo de lluvia cuenta por sí mismo, y
@@ -129,6 +135,7 @@ class Diari(unittest.TestCase):
         A.DIR = os.path.join(self.dir, "aprenentatge")
         A.MODEL, A.PROPOSAT = os.path.join(A.DIR, "model.json"), os.path.join(A.DIR, "proposat.json")
         A.ATURA, A.HISTORIAL = os.path.join(A.DIR, "atura"), os.path.join(A.DIR, "historial.csv")
+        A.AVIS_XV = os.path.join(A.DIR, "avis-sant-cugat")
         os.makedirs(A.REGISTRE)
 
     def registra(self, dias, error=2.0, com_arxiu=False):
@@ -150,7 +157,7 @@ class Diari(unittest.TestCase):
                 mont.append(f"{fins},0.0,,80,45")
                 casa.append(f"{fins},0.0,{real:.3f},80,15,1013,0")
                 linea = {"emes": t.strftime("%Y-%m-%dT%H:%M") + "+02:00", "ara": {"pluja_1h": 0},
-                         "ara_casa": {"pluja_1h": 0}, "hores": [h]}
+                         "ara_casa": {"pluja_1h": 0}, "hores": [h], "sant_cugat": {"pluja_1h": 0.0} if k % 2 else None}
                 f.write(json.dumps(linea) + "\n")
         for nom, filas in (("montflorit.csv", mont), ("estacio-casa.csv", casa)):
             with open(os.path.join(A.REGISTRE, nom), "w") as f:
@@ -172,6 +179,23 @@ class Diari(unittest.TestCase):
         # La misma hora observada, emitida el domingo o el lunes: mismo grupo.
         g = [A.grupo_semana({"emes": e, "fins": "2026-10-12T01:00"}) for e in ("2026-10-11T23:00+02:00", "2026-10-12T00:00+02:00")]
         self.assertEqual(g[0], g[1])
+
+    def test_sant_cugat_entra_en_las_muestras_y_se_valida_aparte(self):
+        self.registra(20)
+        ms = A.mostres()
+        self.assertEqual({m["pluja_1h_xv"] for m in ms}, {0.0, None})
+        vp = A.valida_pluja(ms, A.modelo_arxiu(), A.RASGOS_PROPIS_XV)
+        self.assertEqual(vp["rasgos"], A.RASGOS_PROPIS_XV)
+        self.assertEqual(vp["mostres"], len([m for m in ms if m["pluja_1h_xv"] is not None]))
+        # El aviso de una vez: solo con bastante lluvia, y deja huella para no repetirse.
+        self.assertIsNone(A.avis_sant_cugat({"error": 0.1, "error_abans": 0.12, "xv": {**vp, "hores_pluja": 5}}))
+        text = A.avis_sant_cugat({"error": 0.1, "error_abans": 0.12, "xv": {**vp, "hores_pluja": 30, "error": 0.09}})
+        self.assertIn("30 hores de pluja amb la dada de Sant Cugat", text)
+        self.assertIn("Ajuda", text)
+        self.assertTrue(os.path.exists(A.AVIS_XV))
+        self.assertIsNone(A.avis_sant_cugat({"error": 0.1, "error_abans": 0.12, "xv": {**vp, "hores_pluja": 30, "error": 0.09}}))
+        os.remove(A.AVIS_XV)
+        self.assertIn("No ajuda", A.avis_sant_cugat({"error": 0.1, "error_abans": 0.12, "xv": {**vp, "hores_pluja": 30, "error": 0.11}}))
 
     def test_propone_avisa_y_aplica_al_dia_siguiente(self):
         self.registra(20)

@@ -464,8 +464,9 @@ def recoger(anterior=None):
             if casa:
                 R.apunta_estacio_casa(E.hores(casa["files"]))
             if salida["hores"] and not salida.get("previsio_de"):
+                r = salida.get("riera")
                 R.apunta_casa(P.AHORA, ara, filas_registro(P.AHORA, h, e, ara, salida["hores"], casa),
-                              salida["ara_casa"])
+                              salida["ara_casa"], {"pluja_1h": r["mm_1h"], "fins": r["fins"]} if r else None)
         except Exception as ex:
             print("No he podido apuntar en el registro:", ex, file=sys.stderr)
         # Lo que daba cada radar, para saber cuál acierta más (ADR 0026).
