@@ -104,9 +104,11 @@ function avalua(mitja, tram, trens, futur) {
   if (mitja === 'cotxe') {
     // Amb pluja el cotxe no surt «bé» per defecte: forta o molt forta segons
     // AEMET, probable, o possible (que no puja el nivell però es diu).
+    // Amb la xifra, no amb «forta»: per a Meteocat la pluja forta comença a 40 mm (ADR 0043).
     const forta = (n) => (f) => (f.pluja_mm || 0) >= PLUJA_COTXE[n];
-    if (viatge.some(forta(1))) puja('no', T`Pluja molt forta prevista ${quan(anada, tornada, forta(1))}: millor no agafar el cotxe.`);
-    else if (viatge.some(forta(0))) puja('compte', T`Pluja forta prevista ${quan(anada, tornada, forta(0))}: condueix amb compte.`);
+    const mmMax = Math.round(Math.max(...viatge.map((f) => f.pluja_mm || 0)));
+    if (viatge.some(forta(1))) puja('no', T`Fins a ${mmMax}\u00a0mm de pluja en una hora ${quan(anada, tornada, forta(1))}: millor no agafar el cotxe.`);
+    else if (viatge.some(forta(0))) puja('compte', T`Fins a ${mmMax}\u00a0mm de pluja en una hora ${quan(anada, tornada, forta(0))}: condueix amb compte.`);
     else if (viatge.some(plouClar)) {
       puja('compte', nomesAvis(plouClar)
         ? T`Avís de l’AEMET per pluja ${quan(anada, tornada, plouClar)}: ni el radar, ni les estacions, ni els models hi veuen pluja. Condueix amb compte.`

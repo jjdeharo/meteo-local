@@ -214,7 +214,7 @@ class Castella(unittest.TestCase):
                          "hasta el viernes a las 06:00")
 
     def test_ara_i_radar(self):
-        self.assertEqual(js("cel({hora: '2026-10-06T12:00', probabilitat: 0.6, pluja_mm: 5, codi: 61})[0]"), "Lluvia fuerte")
+        self.assertEqual(js("cel({hora: '2026-10-06T12:00', probabilitat: 0.6, pluja_mm: 45, codi: 61})[0]"), "Lluvia fuerte")
         self.assertEqual(js("cel({hora: '2026-10-06T12:00', probabilitat: 0.1, pluja_mm: 0, codi: 3, nuvols: 10})[0]"), "Despejado")
         self.assertEqual(js("textPressio({pressio: 1008.2, pressio_3h: -4})"), "Presión 1008\u00a0hPa, bajando rápido (\u22124,0 en 3\u00a0h)")
         self.assertEqual(js("textRadar({arriba: null, possible: null}, false)[1]"), "No se acerca lluvia en 2 horas")

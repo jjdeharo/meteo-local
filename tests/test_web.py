@@ -126,9 +126,21 @@ class Web(unittest.TestCase):
         self.assertEqual(cel(pluja_mm=0.3, probabilitat=0.02), "Cobert")
         self.assertEqual(cel(pluja_mm=0.3, probabilitat=0.2), "Possible pluja")
         self.assertEqual(cel(pluja_mm=0.3, probabilitat=0.5), "Pluja feble")
-        self.assertEqual(cel(pluja_mm=1.3, probabilitat=0.6), "Pluja")
-        self.assertEqual(cel(pluja_mm=5, probabilitat=0.9), "Pluja forta")
+        # Intensitats del manual d'estil de Meteocat, en una hora (ADR 0043).
+        self.assertEqual(cel(pluja_mm=5, probabilitat=0.6), "Pluja feble")
+        self.assertEqual(cel(pluja_mm=8, probabilitat=0.9), "Pluja moderada")
+        self.assertEqual(cel(pluja_mm=45, probabilitat=0.9), "Pluja forta")
+        self.assertEqual(cel(pluja_mm=90, probabilitat=0.9), "Pluja torrencial")
         self.assertEqual(cel(pluja_mm=5, probabilitat=0.9, codi=95), "Tempesta")
+        self.assertEqual(cel(pluja_mm=5, probabilitat=0.9, codi=96), "Tempesta amb calamarsa")
+        self.assertEqual(cel(pluja_mm=1, probabilitat=0.9, codi=73, neu=0.5), "Neu feble")
+        self.assertEqual(cel(pluja_mm=5, probabilitat=0.9, codi=75, neu=3), "Neu moderada")
+        self.assertEqual(cel(pluja_mm=12, probabilitat=0.9, codi=75, neu=12), "Neu forta")
+        self.assertEqual(cel(pluja_mm=1, probabilitat=0.3, codi=71, neu=0.5), "Possible neu")
+        self.assertEqual(cel(pluja_mm=2, probabilitat=0.9, codi=66), "Pluja gelant")
+        self.assertEqual(cel(pluja_mm=0, probabilitat=0.01, nuvols=30), "Poc ennuvolat")
+        self.assertEqual(cel(pluja_mm=0, probabilitat=0.01, nuvols=60), "Mig ennuvolat")
+        self.assertEqual(cel(pluja_mm=0, probabilitat=0.01, nuvols=75), "Molt ennuvolat")
         self.assertEqual(cel(pluja_mm=2, probabilitat=0.3, codi=95), "Possible tempesta")
         self.assertEqual(cel(pluja_mm=2, probabilitat=0.05, codi=95), "Cobert")
         # Amb pluja d'algun model (0,2 mm o més), mai «Serè»: com a mínim núvols
@@ -176,15 +188,15 @@ class Web(unittest.TestCase):
             return {"hora": f"{dia}T{h % 24:02d}:00", "fins": f"{'2026-10-09' if h + 1 >= 24 else dia}T{(h + 1) % 24:02d}:00",
                     "probabilitat": prob, "pluja_mm": mm, "temperatura": t, "ratxa": ratxa, "codi": codi, "neu": neu, "avisos": []}
         hores = ([fila(h, 0.1, 0.2, 17 + h - 9) for h in range(9, 14)]      # matí: 17–21 °C
-                 + [fila(h, 0.8 if h == 16 else 0.3, 25 if h == 16 else 2, 22, 75 if h == 15 else 20, 95 if h == 16 else 0) for h in range(14, 21)]
+                 + [fila(h, 0.8 if h == 16 else 0.3, 45 if h == 16 else 2, 22, 75 if h == 15 else 20, 95 if h == 16 else 0) for h in range(14, 21)]
                  + [fila(h, 0.05, 0, -1 if h == 23 else 5, 10, 0, 0.5 if h == 22 else 0) for h in range(21, 31)]
                  + [fila(31, 0.2, 0.5, 37)])
         r = self.avalua("2026-10-08T09:30:00+02:00", f"resumTrams({json.dumps(hores)}, new Date())")
         self.assertEqual([(t["nom"], t["hores"]) for t in r], [("Matí", "fins a les 14 h"), ("Tarda", "14–21 h"), ("Nit", "21–7 h")])
         self.assertEqual((r[0]["prob"], r[0]["tMin"], r[0]["tMax"], r[0]["fenomens"]), (0.1, 17, 21, []))
         self.assertEqual([f[0] for f in r[1]["fenomens"]], ["tempesta", "pluja forta", "ratxes de 75\u00a0km/h"])
-        self.assertEqual(r[1]["mm"], 37)
-        self.assertEqual([f[0] for f in r[2]["fenomens"]], ["neu", "gel"])
+        self.assertEqual(r[1]["mm"], 57)
+        self.assertEqual([f[0] for f in r[2]["fenomens"]], ["neu", "glaçada"])
         # A la nit, surten la nit i els trams de demà.
         r = self.avalua("2026-10-08T22:30:00+02:00", f"resumTrams({json.dumps(hores)}, new Date())")
         self.assertEqual([t["nom"] for t in r], ["Nit", "Demà matí"])
@@ -221,9 +233,9 @@ class Web(unittest.TestCase):
             return self.avalua("2026-10-08T12:00:00+02:00",
                                f"avalua('cotxe', {json.dumps(tram(mm, prob, t))}, [], false)", "sortir.js")
         self.assertEqual(cotxe(90, 1), {"nivell": "no", "motius": [
-            "Pluja molt forta prevista a l’anada i a la tornada: millor no agafar el cotxe."]})
+            "Fins a 90\u00a0mm de pluja en una hora a l’anada i a la tornada: millor no agafar el cotxe."]})
         self.assertEqual(cotxe(25, 0.9), {"nivell": "compte", "motius": [
-            "Pluja forta prevista a l’anada i a la tornada: condueix amb compte."]})
+            "Fins a 25\u00a0mm de pluja en una hora a l’anada i a la tornada: condueix amb compte."]})
         self.assertEqual(cotxe(2, 0.7), {"nivell": "compte", "motius": [
             "Pluja probable a l’anada i a la tornada: condueix amb compte."]})
         self.assertEqual(cotxe(0.3, 0.25), {"nivell": "be", "motius": ["Pot ploure a l’anada i a la tornada."]})

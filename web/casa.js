@@ -24,17 +24,35 @@ function plujaHora(f) {
 // Descripció del cel i la icona que hi correspon. Els mil·límetres diuen com
 // seria la pluja, no si n'hi haurà: sense prou probabilitat, només els
 // núvols. De nit, la lluna en lloc del sol (a mitja hora del tram).
+// Les paraules són les del manual d'estil de Meteocat (ADR 0043). Intensitat
+// en una hora (el manual la dona per 30 minuts, aquí el doble): pluja
+// moderada des de 6 mm, forta des de 40, torrencial des de 80; neu moderada
+// des de 2 cm, forta des de 10. Tipus pels codis de temps d'Open-Meteo.
+const INTENSITAT_PLUJA = [6, 40, 80];
+const INTENSITAT_NEU = [2, 10];
+const esNeu = (c) => (c >= 71 && c <= 77) || c === 85 || c === 86;
+const esGelant = (c) => c === 56 || c === 57 || c === 66 || c === 67;
+const esCalamarsa = (c) => c === 96 || c === 99;
+
 function cel(f) {
   const nit = alturaSol(new Date(new Date(f.hora).getTime() + 18e5)) < 0;
   const pluja = plujaHora(f);
   const tempesta = f.codi >= 95;
   if (pluja === 'pluja') {
-    if (tempesta) return [T('Tempesta'), 'i-cloud-lightning'];
-    if (f.pluja_mm >= 4) return [T('Pluja forta'), 'i-cloud-rain-wind'];
-    if (f.pluja_mm >= 1) return [T('Pluja'), 'i-cloud-rain'];
+    if (tempesta) return esCalamarsa(f.codi) ? [T('Tempesta amb calamarsa'), 'i-cloud-hail'] : [T('Tempesta'), 'i-cloud-lightning'];
+    if (esNeu(f.codi)) {
+      const cm = f.neu || 0;
+      return [cm >= INTENSITAT_NEU[1] ? T('Neu forta') : cm >= INTENSITAT_NEU[0] ? T('Neu moderada') : T('Neu feble'), 'i-cloud-snow'];
+    }
+    if (esGelant(f.codi)) return [T('Pluja gelant'), 'i-cloud-rain'];
+    const mm = f.pluja_mm || 0;
+    if (mm >= INTENSITAT_PLUJA[2]) return [T('Pluja torrencial'), 'i-cloud-rain-wind'];
+    if (mm >= INTENSITAT_PLUJA[1]) return [T('Pluja forta'), 'i-cloud-rain-wind'];
+    if (mm >= INTENSITAT_PLUJA[0]) return [T('Pluja moderada'), 'i-cloud-rain'];
     return [T('Pluja feble'), 'i-cloud-drizzle'];
   }
   if (pluja === 'possible') {
+    if (esNeu(f.codi)) return [T('Possible neu'), 'i-cloud-snow'];
     return [tempesta ? T('Possible tempesta') : T('Possible pluja'), nit ? 'i-cloud-moon-rain' : 'i-cloud-sun-rain'];
   }
   if (f.codi === 45 || f.codi === 48) return [T('Boira'), 'i-cloud-fog'];
@@ -42,10 +60,11 @@ function cel(f) {
   // Si algun model hi posa pluja (0,2 mm o més, el que ja mulla), el cel no
   // pot sortir serè encara que la probabilitat sigui baixa: com a mínim, núvols.
   const nuvols = (f.pluja_mm || 0) >= 0.2 ? Math.max(f.nuvols, 50) : f.nuvols;
+  // Per vuitens de cel tapat: serè 0, poc 1-2, mig 3-5, molt 6-7, cobert 8.
   if (nuvols < 20) return [T('Serè'), nit ? 'i-moon-cel' : 'i-sun'];
-  // L'escala de Meteocat: serè, poc ennuvolat, mig ennuvolat, cobert (Juanjo, 08-10-2026).
-  if (nuvols < 50) return [T('Poc ennuvolat'), nit ? 'i-cloud-moon' : 'i-cloud-sun'];
-  if (nuvols < 85) return [T('Mig ennuvolat'), 'i-cloud'];
+  if (nuvols < 45) return [T('Poc ennuvolat'), nit ? 'i-cloud-moon' : 'i-cloud-sun'];
+  if (nuvols < 70) return [T('Mig ennuvolat'), 'i-cloud'];
+  if (nuvols < 85) return [T('Molt ennuvolat'), 'i-cloudy'];
   return [T('Cobert'), 'i-cloudy'];
 }
 
@@ -77,13 +96,13 @@ function dada(id, text) {
 // temperatures sempre; els fenòmens, només quan es donen, amb els llindars
 // grocs del Pla Meteoalerta que ja usa config.RISC_LLINDARS, més neu i gel.
 const TRAMS = [[7, 14, 'Matí'], [14, 21, 'Tarda'], [21, 7, 'Nit']];
-const FENOMENS = { pluja_forta: 20, ratxa: 70, calor: 36, gel: 0 };
+const FENOMENS = { pluja_forta: INTENSITAT_PLUJA[1], pluja_torrencial: INTENSITAT_PLUJA[2], ratxa: 70, calor: 36, glaçada: 0 };
 // Els noms, amb T() literal perquè les proves de traducció els trobin.
 const NOM_TRAM = { Matí: () => T('Matí'), Tarda: () => T('Tarda'), Nit: () => T('Nit') };
 const NOM_TRAM_DEMA = { Matí: () => T('Demà matí'), Tarda: () => T('Demà tarda'), Nit: () => T('Demà nit') };
 const NOM_FENOMEN = {
-  tempesta: () => T('tempesta'), pluja_forta: () => T('pluja forta'), neu: () => T('neu'),
-  calor: () => T('calor'), gel: () => T('gel'),
+  tempesta: () => T('tempesta'), pluja_forta: () => T('pluja forta'), pluja_torrencial: () => T('pluja torrencial'),
+  neu: () => T('neu'), calor: () => T('calor'), glaçada: () => T('glaçada'),
 };
 
 function tramDe(f) {
@@ -112,12 +131,13 @@ function resumTrams(hores, ara) {
     const fenomens = [];
     const tempesta = (f) => f.codi >= 95 || (f.avisos || []).some((a) => (a.tipus || []).includes('tempestes'));
     if (g.files.some(tempesta)) fenomens.push([NOM_FENOMEN.tempesta(), 'i-cloud-lightning']);
-    if (g.files.some((f) => (f.pluja_mm || 0) >= FENOMENS.pluja_forta)) fenomens.push([NOM_FENOMEN.pluja_forta(), 'i-cloud-rain-wind']);
+    if (g.files.some((f) => (f.pluja_mm || 0) >= FENOMENS.pluja_torrencial)) fenomens.push([NOM_FENOMEN.pluja_torrencial(), 'i-cloud-rain-wind']);
+    else if (g.files.some((f) => (f.pluja_mm || 0) >= FENOMENS.pluja_forta)) fenomens.push([NOM_FENOMEN.pluja_forta(), 'i-cloud-rain-wind']);
     if (g.files.reduce((s, f) => s + (f.neu || 0), 0) >= 0.1) fenomens.push([NOM_FENOMEN.neu(), 'i-snowflake']);
     const ratxa = Math.max(...g.files.map((f) => f.ratxa || 0));
     if (ratxa >= FENOMENS.ratxa) fenomens.push([T`ratxes de ${Math.round(ratxa)}\u00a0km/h`, 'i-wind']);
     if (temps.length && Math.max(...temps) >= FENOMENS.calor) fenomens.push([NOM_FENOMEN.calor(), 'i-thermometer-sun']);
-    if (temps.length && Math.min(...temps) <= FENOMENS.gel) fenomens.push([NOM_FENOMEN.gel(), 'i-thermometer-snowflake']);
+    if (temps.length && Math.min(...temps) <= FENOMENS.glaçada) fenomens.push([NOM_FENOMEN.glaçada(), 'i-thermometer-snowflake']);
     const esDema = g.dia.toDateString() === dema.toDateString();
     const actual = new Date(g.files[0].hora) <= ara;
     return {
