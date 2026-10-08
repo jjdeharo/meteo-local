@@ -449,6 +449,8 @@ h1 { margin: 0; font-size: 1.6rem; line-height: 1.2; }
 .ajuda .bot .pas .num { background: var(--bot); }
 .ajuda .pas p { margin: .25rem 0 0; }
 .ajuda .pas a { grid-column: 2; }
+/* Les ordres de consulta del bot, a tota l'amplada sota els passos. */
+.ajuda .opcio .preguntes { grid-column: 1 / -1; margin: .6rem 0 0; }
 .ajuda .pas img { width: 100%; max-width: 260px; height: auto; border: 1px solid var(--vora); border-radius: .6rem; }
 @media (min-width: 900px) {
   /* quatre columnes iguals als dos blocs: el canal explica a l'esquerra i els seus
