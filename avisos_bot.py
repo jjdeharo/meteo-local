@@ -145,6 +145,20 @@ def text_riera(riera, nivell):
     return {"ca": f"{ca}\n{ORIENTATIU['ca']}", "es": f"{es}\n{ORIENTATIU['es']}"}
 
 
+def text_riera_fi(riera, episodi):
+    """Final d'un episodi amb avís (Juanjo, 08-10-2026): un sol missatge, i
+    només després de RIERA_FI_H hores per sota del registre."""
+    mm3, h = coma(riera["mm_3h"]), C.RIERA_FI_H
+    perill = bool(episodi["avisos"].get("perill"))
+    ca = (negreta("Riera de Sant Cugat: " + ("ha passat el perill de desbordament" if perill else "ja no hi ha risc de desbordament"))
+          + f"\nA Sant Cugat fa {h} hores que no plou amb força ({mm3} mm en les últimes 3 hores) i el radar no hi veu "
+          "pluja forta. Si torna a ploure fort, tornarà l'avís.")
+    es = (negreta("Riera de Sant Cugat: " + ("ha pasado el peligro de desbordamiento" if perill else "ya no hay riesgo de desbordamiento"))
+          + f"\nEn Sant Cugat lleva {h} horas sin llover con fuerza ({mm3} mm en las últimas 3 horas) y el radar no ve "
+          "lluvia fuerte. Si vuelve a llover fuerte, volverá el aviso.")
+    return {"ca": f"{ca}\n{ORIENTATIU['ca']}", "es": f"{es}\n{ORIENTATIU['es']}"}
+
+
 def text_trens(linia, estacio, estat):
     if estat == "bus":
         return {"ca": negreta(f"Trens: l'{linia} no circula a {estacio}") + "\nHi ha servei per carretera.",
@@ -196,13 +210,17 @@ def decideix(estat, salida, ahora):
     riera = salida.get("riera")
     if riera:
         e = estat.setdefault("riera", {"episodi": None})
-        abans = set((e.get("episodi") or {}).get("avisos", {}))
+        episodi_abans = e.get("episodi")
+        abans = set((episodi_abans or {}).get("avisos", {}))
         RI.compara(e, riera, ahora)
         despres = (e.get("episodi") or {}).get("avisos", {})
         for nivell in ("perill", "atencio"):
             if nivell in despres and nivell not in abans:
                 afegeix("riera", f"{e['episodi']['inici']}:{nivell}", text_riera(riera, nivell), nivell)
                 break
+        # L'episodi s'ha tancat (3 hores de calma) després d'un avís: es diu que ha passat.
+        if episodi_abans and not e.get("episodi") and abans:
+            afegeix("riera", f"{episodi_abans['inici']}:fi", text_riera_fi(riera, episodi_abans), "fi")
     # Trenes: el cambio cuenta si se repite en dos pasadas seguidas.
     trens = estat.setdefault("trens", {})
     for l in ((salida.get("trens") or {}).get("linies") or []):

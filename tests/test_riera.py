@@ -210,6 +210,20 @@ class Avisos(unittest.TestCase):
         self.assertEqual(f["avis_perill"], "")
         self.assertEqual(f["desbordament"], "")
         self.assertIsNone(estat["episodi"])
+        # En tancar-se, un sol missatge de final (Juanjo, 08-10-2026), del nivell que es va avisar.
+        self.assertEqual([t for t in textos if t][-1], "Riera de Sant Cugat: ja no hi ha risc de desbordament. A Sant Cugat fa 3 hores "
+                                     "que no plou amb força (5,0 mm en les últimes 3 hores) i el radar no hi veu pluja forta. "
+                                     "Si torna a ploure fort, tornarà l'avís.")
+        self.assertEqual(sum(bool(t) for t in textos), 2)
+
+    def test_el_final_diu_perill_si_n_hi_va_haver_i_res_sense_avis(self):
+        textos, files, _ = self.passades([55, 60, 10, 5, 5, 5, 5, 5, 5], index_6h=70)
+        self.assertTrue([t for t in textos if t][-1].startswith("Riera de Sant Cugat: ha passat el perill de desbordament."))
+        self.assertEqual(len(files), 1)
+        # Un episodi només de registre (20-35 mm) s'apunta sense cap missatge.
+        textos, files, _ = self.passades([25, 28, 10, 5, 5, 5, 5, 5, 5])
+        self.assertEqual(len(files), 1)
+        self.assertEqual([t for t in textos if t], [])
 
     def test_sense_dades_no_canvia_res(self):
         textos, files, estat = self.passades([38, None, None])

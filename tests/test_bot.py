@@ -354,6 +354,21 @@ class Repartiment(unittest.TestCase):
 
 
 class AvisosPublics(unittest.TestCase):
+    def test_riera_avis_i_final(self):
+        # Atenció una vegada i, 3 hores després de calmar-se, el missatge de final (Juanjo, 08-10-2026).
+        def riera(index):
+            return {"fins": ARA.isoformat(timespec="minutes"), "mm_3h": index, "mm_6h": index + 20,
+                    "radar_1h": 0, "index": index, "index_6h": index + 20}
+        estat, nous = {}, []
+        for i, index in enumerate([38, 30, 10, 5, 5, 5, 5, 5, 5]):
+            nous += AB.decideix(estat, {"riera": riera(index)}, ARA + dt.timedelta(minutes=30 * i))
+        self.assertEqual([(a["nivell"], a["id"].split(":")[-1]) for a in nous], [("atencio", "atencio"), ("fi", "fi")])
+        self.assertTrue(nous[0]["ca"].startswith("<b>Atenció: possible desbordament"))
+        self.assertTrue(nous[1]["ca"].startswith("<b>Riera de Sant Cugat: ja no hi ha risc de desbordament</b>"))
+        self.assertIn("ya no hay riesgo de desbordamiento", nous[1]["es"])
+        self.assertIn("Avís en proves", nous[1]["ca"])
+        self.assertEqual(nous[0]["tipus"], nous[1]["tipus"], "riera")
+
     def test_trens_dues_passades(self):
         estat = {}
         linia = {"linies": [{"linia": "R7", "estacio": "Cerdanyola Universitat", "estat": "sense_trens"}]}

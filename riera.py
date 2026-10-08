@@ -207,6 +207,15 @@ def missatge(riera, nom):
     return cap
 
 
+def missatge_fi(riera, ep):
+    """El final d'un episodi amb avís: 3 hores sense pluja forta a Sant Cugat
+    ni al radar."""
+    que = "ha passat el perill de desbordament" if ep["avisos"].get("perill") else "ja no hi ha risc de desbordament"
+    return (f"Riera de Sant Cugat: {que}. A Sant Cugat fa {C.RIERA_FI_H} hores que no plou amb força "
+            f"({coma(riera['mm_3h'])} mm en les últimes 3 hores) i el radar no hi veu pluja forta. "
+            "Si torna a ploure fort, tornarà l'avís.")
+
+
 def fila_registro(ep):
     fila = dict.fromkeys(CAMPOS, "")
     fila.update({k: ep.get(k, "") for k in ("inici", "hora_max", "index_max", "mm_3h_max",
@@ -230,6 +239,11 @@ def compara(estat, riera, ahora):
     # no se cierra hasta tener las medias horas que faltan.
     if ep and not senyal and not riera.get("incomplet") \
             and ahora - dt.datetime.fromisoformat(ep["vist"]) >= dt.timedelta(hours=C.RIERA_FI_H):
+        # Si es va avisar, es diu que ha passat (Juanjo, 08-10-2026): un sol
+        # missatge per episodi, i només després de 3 hores de calma, perquè
+        # no es converteixi en una successió d'avís i contraavís.
+        if ep["avisos"]:
+            text = missatge_fi(riera, ep)
         fila, ep = fila_registro(ep), None
     if senyal:
         if not ep:

@@ -32,6 +32,18 @@ en Montcada, aguas abajo. Solo queda la lluvia.
   Hay un aviso por nivel y episodio. El episodio acaba tras 3 horas por debajo
   de 20 mm, y entonces se apunta en `/estat/registre/riera.csv` con sus
   máximos y una columna `desbordament` que se rellena a mano con lo que pasó.
+- **El final se dice** (Juanjo, 08-10-2026: «para quitar la ansiedad», sin
+  que «se convierta en una sucesión de mensajes de alerta y contraalerta»):
+  cuando se cierra un episodio en el que hubo aviso, se manda un solo
+  mensaje, por los mismos medios (`missatge_fi` en `riera.py` para Juanjo,
+  `text_riera_fi` en `avisos_bot.py` para el canal y el bot): «ha passat el
+  perill de desbordament» si llegó a peligro, «ja no hi ha risc de
+  desbordament» si solo hubo atención, con la lluvia de las últimas 3 horas
+  y «si torna a ploure fort, tornarà l'avís». Las 3 horas de calma del
+  cierre son las que evitan el vaivén: mientras el episodio sigue abierto no
+  se repite ningún nivel, y si después vuelve a llover fuerte es un episodio
+  nuevo, con sus avisos. Un episodio que solo llegó al registro (20-35 mm)
+  no manda nada, tampoco al acabar.
 - **Lo que se dice pero no decide**: la lluvia de 3 horas del Observatori
   Fabra (D5), en la cresta de Collserola junto a Les Planes, donde nace la
   riera, y la de Montflorit (meteocerdanyola.com), minuto a minuto y sin
