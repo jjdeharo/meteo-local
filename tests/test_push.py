@@ -73,6 +73,16 @@ class Push(unittest.TestCase):
         P.reparteix(estat, ARA + dt.timedelta(minutes=1), envia)
         self.assertEqual(len(envia.enviats), 2)
 
+    def test_pluja_obre_el_radar(self):
+        radar = "https://www.rainviewer.com/map.html?loc=41.482,2.135,9&layer=radar"
+        self.avisos([{**self.avis("pluja"), "url": radar,
+                      "push": {"ca": "<b>Pluja</b>\nAviat. Toca per veure el radar.",
+                               "es": "<b>Lluvia</b>\nPronto. Toca para ver el radar."}}])
+        envia = Envia()
+        P.reparteix({"resums": {CA: ARA.date().isoformat()}}, ARA, envia)
+        self.assertEqual([(d["title"], d["body"], d["url"]) for _, d, _, _ in envia.enviats],
+                         [("Lluvia", "Pronto. Toca para ver el radar.", radar)])
+
     def test_es_reintenta_mentre_es_vigent(self):
         self.avisos([self.avis("pluja")])
         estat = {"resums": {CA: ARA.date().isoformat()}}

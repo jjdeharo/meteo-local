@@ -78,15 +78,29 @@ def text_pluja(salida, ahora):
                  {"ca": " Serà moderada.", "es": " Será moderada."} if mm >= 1 else
                  {"ca": " Serà feble.", "es": " Será débil."})
     if falta <= 2:
-        return {"ca": negreta("Pluja imminent a Montflorit") + "\nEl radar ja veu pluja a sobre del barri: pot "
-                      "començar en qualsevol moment." + forca["ca"],
-                "es": negreta("Lluvia inminente en Montflorit") + "\nEl radar ya ve lluvia encima del barrio: puede "
-                      "empezar en cualquier momento." + forca["es"]}
-    hora = dt.datetime.fromisoformat(r["arriba"]).strftime("%H:%M")
-    return {"ca": negreta(f"Pluja d'aquí a uns {falta} minuts") + f"\nSegons el radar, començarà a ploure a "
-                  f"Montflorit cap a les {hora}." + forca["ca"],
-            "es": negreta(f"Lluvia dentro de unos {falta} minutos") + f"\nSegún el radar, empezará a llover en "
-                  f"Montflorit hacia las {hora}." + forca["es"]}
+        ca = (negreta("Pluja imminent a Montflorit") + "\nEl radar ja veu pluja a sobre del barri: pot "
+              "començar en qualsevol moment." + forca["ca"])
+        es = (negreta("Lluvia inminente en Montflorit") + "\nEl radar ya ve lluvia encima del barrio: puede "
+              "empezar en cualquier momento." + forca["es"])
+    else:
+        hora = dt.datetime.fromisoformat(r["arriba"]).strftime("%H:%M")
+        ca = negreta(f"Pluja d'aquí a uns {falta} minuts") + (f"\nSegons el radar, començarà a ploure a "
+                                                              f"Montflorit cap a les {hora}.") + forca["ca"]
+        es = negreta(f"Lluvia dentro de unos {falta} minutos") + (f"\nSegún el radar, empezará a llover en "
+                                                                 f"Montflorit hacia las {hora}.") + forca["es"]
+    return amb_radar(ca, es, r)
+
+
+def amb_radar(ca, es, r):
+    """El radar en directe, el mateix que ha donat l'avís (Juanjo, 08-10-2026):
+    a Telegram, un enllaç a l'última línia; a la notificació, que no admet
+    enllaços al text, en tocar-la (bot/push.py llegeix «url» i «push»)."""
+    font = "rainviewer" if r.get("imatge") == "rainviewer" else "meteocat"
+    url = C.RADAR_EN_DIRECTE[font]
+    nom = {"rainviewer": "RainViewer", "meteocat": "Meteocat"}[font]
+    enllac = f'<a href="{html.escape(url)}">{nom}</a>'
+    return {"ca": f"{ca}\nRadar en directe: {enllac}", "es": f"{es}\nRadar en directo: {enllac}", "url": url,
+            "push": {"ca": f"{ca} Toca per veure el radar.", "es": f"{es} Toca para ver el radar."}}
 
 
 def quan_es(r, ahora):

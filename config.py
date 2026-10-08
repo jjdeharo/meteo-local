@@ -2,7 +2,7 @@
 """Datos fijos de «Temps a Montflorit»: lugares, horario, fuentes y umbrales.
 Se cambian aquí, no en los programas."""
 
-VERSION = "3.25.0"
+VERSION = "3.25.1"
 
 # Coordenadas con tres decimales (unos 100 m), no las exactas: para el tiempo
 # da igual una calle u otra, y el repositorio es público.
@@ -125,6 +125,11 @@ AVIS_PLUJA_VERIFICA_MIN = 45
 # de lluvia posible.
 UMBRAL_MM = 0.2
 PROB_ATENCION = 0.2
+# El radar en directo, centrado en Montflorit si se puede: el que da el aviso
+# de lluvia lo enlaza (avisos_bot.py, ADR 0048). Los mismos en web/casa.js y
+# bot/bot.py, que las pruebas comparan.
+RADAR_EN_DIRECTE = {"rainviewer": "https://www.rainviewer.com/map.html?loc=41.482,2.135,9&layer=radar",
+                    "meteocat": "https://www.meteo.cat/observacions/radar"}
 
 # «Si surts», lluvia en moto y en bici (web/sortir.js, ADR 0047): solo la
 # probabilidad, desde el 10 % «compte» y desde el 40 % «millor no»; sin

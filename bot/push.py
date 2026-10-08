@@ -170,7 +170,10 @@ def reparteix(estat, moment, envia=envia_push):
             if not sub or e in mortes:
                 continue
             idioma = sub.get("idioma", "ca")
-            dades = notificacio(a[idioma], url(URL.get(a["tipus"], "./"), idioma), clau)
+            # El text propi de la notificació, si en porta, i on porta en tocar-la
+            # (el de pluja, al radar en directe; avisos_bot.py).
+            text = (a.get("push") or a)[idioma]
+            dades = notificacio(text, a.get("url") or url(URL.get(a["tipus"], "./"), idioma), clau)
             r = prova(e, lambda: envia(sub, dades, ttl, a["tipus"] in ("riera", "perill", "pluja")))
             if r is not True:
                 queden.append(e)

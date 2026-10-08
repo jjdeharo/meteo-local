@@ -542,6 +542,30 @@ class AvisosPublics(unittest.TestCase):
         self.assertIn("Viento muy fuerte previsto: rachas de hasta 75 km/h, hoy de 15 a 16 h.", nous[0]["es"])
         self.assertTrue(nous[0]["es"].startswith("<b>Aviso de peligro (amarillo): viento muy fuerte</b>"))
 
+    def test_pluja_amb_el_radar(self):
+        # El radar en directe que ha donat l'avís: enllaç a Telegram; a la
+        # notificació, en tocar-la (Juanjo, 08-10-2026).
+        def salida(imatge, arriba="2026-10-07T07:15+02:00"):
+            return {"radar": {"imatge": imatge, "hora": "2026-10-07T07:00+02:00", "arriba": arriba,
+                              "arriba_mm_h": 5}}
+        with unittest.mock.patch.object(AB.PA, "falta_min", return_value=12):
+            t = AB.text_pluja(salida("rainviewer"), ARA)
+        self.assertEqual(t["url"], AB.C.RADAR_EN_DIRECTE["rainviewer"])
+        self.assertTrue(t["ca"].endswith(f'Radar en directe: <a href="{AB.html.escape(t["url"])}">RainViewer</a>'))
+        self.assertIn("Puede ser fuerte.\nRadar en directo:", t["es"])
+        self.assertTrue(t["push"]["ca"].endswith("Pot ser forta. Toca per veure el radar."))
+        self.assertNotIn("<a ", t["push"]["es"])
+        with unittest.mock.patch.object(AB.PA, "falta_min", return_value=1):
+            t = AB.text_pluja(salida("meteocat"), ARA)
+        self.assertEqual(t["url"], "https://www.meteo.cat/observacions/radar")
+        self.assertIn("Pluja imminent", t["ca"])
+
+    def test_el_radar_en_directe_igual_a_tot_arreu(self):
+        casa_js = open(os.path.join(ARREL, "web", "casa.js"), encoding="utf-8").read()
+        for font, url in AB.C.RADAR_EN_DIRECTE.items():
+            self.assertEqual(B.RADAR_EN_DIRECTE[font], url)
+            self.assertIn(f"{font}: '{url}'", casa_js)
+
     def test_perill_acabat(self):
         # Quan ja no en queda cap, un avís que ho diu (abans només el rebia Juanjo).
         r = {"clau": "previsio:ratxa", "tipus": "ratxa", "origen": "previsio", "nivell": "groc", "valor": 75,

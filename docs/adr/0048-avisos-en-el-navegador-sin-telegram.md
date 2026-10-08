@@ -52,7 +52,11 @@ hace, el envoltorio irá en `android/` de este repositorio.
     tiempo de vida que en Telegram; borra las suscripciones que el servicio da
     por muertas (404 o 410). La notificación lleva como título la línea en
     negrita del mensaje del bot y abre la web en el idioma de cada uno (los
-    trenes, en «Si surts»).
+    trenes, en «Si surts»). Desde la 3.25.1, el de lluvia abre el radar en
+    directo, el mismo que ha dado el aviso (RainViewer o Meteocat), y lo dice
+    al final: «Toca per veure el radar»; en Telegram, el bot lo enlaza en la
+    última línea (`url` y `push` en `avisos.json`; Juanjo, 08-10-2026: «no
+    habría que incluir la url del radar?»).
   - Claves VAPID en `.temps-bot/vapid.json`, creadas una vez por
     `bot/instalar.sh`; la web pide la pública al servidor, no la lleva escrita.
 - **A Juanjo**, como en el bot: cada alta nueva con el total, y los
