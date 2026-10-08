@@ -16,6 +16,14 @@ Al cambiar algo:
 - La web está en catalán y castellano y va dirigida a cualquier vecino.
 - **El repositorio es público**: nada de direcciones exactas ni nombres. Las
   coordenadas van redondeadas.
+- **Si cambias una clave del NAS o de IONOS** (claves SSH, `ecowitt.env`,
+  `ionos.env`, `claude.env`, el token de un bot o el usuario de IONOS),
+  vuelve a cifrar el archivo correspondiente (`claus/claus-nas.tar.gz.gpg` o
+  `claus/claus-ionos.tar.gz.gpg`) en el repositorio privado
+  `meteo-montflorit/meteo-local-registre` y súbelo, con la misma orden de
+  `RESTAURAR.md` al revés (`tar czf - … | gpg --symmetric --cipher-algo AES256`).
+  La contraseña la escribe Juanjo en la ventana de gpg; avísale antes. Nada
+  lo hace solo (ADR 0044 y 0045). Los suscriptores del bot no se copian.
 - Si cambia un umbral, actualiza `config.py`, el texto «Com es decideix» de
   `web/sortir.html` (o «D'on surt» de `web/casa.html`), el README, las pruebas
   y el ADR.
