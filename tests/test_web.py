@@ -327,6 +327,18 @@ class Web(unittest.TestCase):
         self.assertEqual(nou("2026-10-09T10:00:00+02:00", pagina="/es/avisos.html"), [])
         self.assertEqual(nou("2026-10-16T00:00:00+02:00"), [])
 
+    def test_final_de_la_pluja_en_proves(self):
+        # «Pluja a sobre» amb l'hora en què pararia, marcat «en proves» (ADR 0049).
+        r = {"arriba": "2026-10-08T19:00", "fi": "2026-10-08T20:10:00+02:00"}
+        ara = "2026-10-08T19:02:00+02:00"
+        self.assertEqual(self.avalua(ara, f"textRadar({json.dumps(r)}, true)"),
+                         ["arriba", "Pluja a sobre · pararia cap a les\u00a020:10", True])
+        self.assertEqual(self.avalua(ara, f"textRadar({json.dumps({**r, 'fi': None, 'sense_fi': True})}, true)"),
+                         ["arriba", "Pluja a sobre · no s’acaba en 2 hores", True])
+        # Sense dada (dades d'abans), com sempre.
+        self.assertEqual(self.avalua(ara, 'textRadar({"arriba": "2026-10-08T19:00"}, true)'),
+                         ["arriba", "Pluja a sobre", False])
+
     def test_propera_lectura(self):
         horari = {"trams": [["00:00", "23:50"]], "cada_min": 10, "desfase_min": 1}
         expr = f"properaActualitzacio({json.dumps(horari)}).toISOString()"

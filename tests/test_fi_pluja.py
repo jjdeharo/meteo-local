@@ -68,5 +68,40 @@ class Final(unittest.TestCase):
             F.MIN_EPISODIS = 5
 
 
+    def test_fi_radar_per_a_la_pagina(self):
+        nc = {"hora": "2026-10-08T19:00+02:00",
+              "llocs": {"casa": [{"min": 5 * k, "prob": p} for k, p in enumerate([1, 1, 0.9, 0.1, 0.1, 0.1, 0.0])]}}
+        with tempfile.TemporaryDirectory() as d:
+            F.REGLA = os.path.join(d, "fi-pluja.json")
+            self.assertEqual(F.fi_radar(nc, t("19:00", 8)), {"fi": "2026-10-08T19:15+02:00", "sense_fi": False})
+            # La pluja encara no ha arribat: el final es busca des que arriba.
+            self.assertEqual(F.fi_radar(nc, t("18:40", 8), "2026-10-08T19:20+02:00")["fi"], "2026-10-08T19:20+02:00")
+            self.assertTrue(F.fi_radar({**nc, "llocs": {"casa": [{"min": 0, "prob": 1}] * 4}}, t("19:00", 8))["sense_fi"])
+            self.assertIsNone(F.fi_radar(None, t("19:00", 8)))
+
+    def test_apren_la_variant_que_menys_s_equivoca(self):
+        with tempfile.TemporaryDirectory() as d:
+            F.APRENENTATGE, F.REGLA, F.ATURA = d, os.path.join(d, "fi-pluja.json"), os.path.join(d, "atura")
+            # Tres episodis en què la probabilitat baixa al 25 % just quan para la pluja:
+            # amb el 20 % no s'hi veu mai el final; amb el 30 %, sí.
+            pluja, regs = {}, []
+            for dia in (6, 7, 8):
+                for m in (5, 10, 15, 20):
+                    pluja[t(f"20:{m:02d}", dia)] = 0.4
+                pluja[t("21:00", dia)] = 0.0
+                for m in (0, 5):
+                    regs.append({"t": t(f"20:{m:02d}", dia).isoformat(), "triada": "meteocat",
+                                 "fonts": {"meteocat": {"hora": t("20:00", dia).isoformat(),
+                                                        "prob": [1, 1, 1, 1, 0.25, 0.25, 0.25, 0.25, 0.25]}}})
+            text = F.aprèn(pluja, regs, avisa=False)
+            self.assertIn("menys del 30 %", text)
+            self.assertEqual(F.regla()["llindar"], 0.3)
+            self.assertIsNone(F.aprèn(pluja, regs, avisa=False))       # ja és la millor
+            open(F.ATURA, "w").close()
+            os.remove(F.REGLA)
+            self.assertIsNone(F.aprèn(pluja, regs, avisa=False))       # aturat
+
+
+
 if __name__ == "__main__":
     unittest.main()

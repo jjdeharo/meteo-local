@@ -278,6 +278,9 @@ h1 { margin: 0; font-size: 1.6rem; line-height: 1.2; }
 }
 .radar-text { margin: 0; font-size: 1.15rem; line-height: 1.3; }
 .radar-detall { margin: .1rem 0 0; font-size: .9rem; color: var(--suau); }
+/* L'hora de final, mentre es comprova (ADR 0049): la marca, discreta, amb
+   l'explicació en passar-hi per sobre. */
+.radar-text .en-proves { font-size: .85rem; color: var(--suau); cursor: help; }
 
 /* Risc previst, amb el color del nivell de l'AEMET. */
 .risc-previst { --nivell: #ca8a04; border-color: var(--nivell); border-left-width: .4rem; }

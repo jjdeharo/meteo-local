@@ -207,12 +207,18 @@ function blocAra(ara, casa, radarDades, vent, hores) {
   return sec;
 }
 
-// La pluja del radar portada endavant (ADR 0019): quan arribaria a casa.
+// La pluja del radar portada endavant (ADR 0019): quan arribaria a casa i,
+// si ja hi és, quan pararia, «en proves» mentre es comprova (ADR 0049): el
+// tercer valor diu si cal la marca.
 function textRadar(r, plou) {
   if (!r) return null;
   const aviat = (t) => new Date(t) <= new Date(Date.now() + 5 * 60e3);
   if (r.arriba) {
-    if (plou || aviat(r.arriba)) return ['arriba', T('Pluja a sobre')];
+    if (plou || aviat(r.arriba)) {
+      const fi = r.fi ? T` · pararia cap a les\u00a0${horaCurta(r.fi)}`
+        : r.sense_fi ? T(' · no s’acaba en 2 hores') : '';
+      return ['arriba', T('Pluja a sobre') + fi, Boolean(fi)];
+    }
     return ['arriba', T`Arribaria pluja cap a les\u00a0${horaCurta(r.arriba)}`];
   }
   if (r.possible) {
@@ -233,11 +239,17 @@ const RADAR_EN_DIRECTE = {
 function blocRadar(r, plou) {
   const t = textRadar(r, plou);
   if (!t) return null;
-  const [estat, text] = t;
+  const [estat, text, proves] = t;
   const caixa = element('div', `radar-ara ${estat}`);
   caixa.append(icona('i-radar'));
   const cos = element('div');
-  cos.append(element('p', 'radar-text', text));
+  const p = element('p', 'radar-text', text);
+  if (proves) {
+    const marca = element('span', 'en-proves', T(' (en proves)'));
+    marca.title = T('Hora estimada amb el radar. Encara s’està comprovant amb la pluja real i s’ajusta sola: pot fallar.');
+    p.append(marca);
+  }
+  cos.append(p);
   // La font i l'hora de la imatge, com demana Meteocat per reutilitzar-la,
   // amb l'enllaç al radar en directe (Juanjo, 08-10-2026).
   const font = r.imatge === 'rainviewer' ? 'RainViewer' : 'Meteocat';

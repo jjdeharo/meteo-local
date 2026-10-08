@@ -29,6 +29,7 @@ import aprenentatge as A
 import config as C
 import ecowitt as E
 import entorn as EN
+import fi_pluja as FP
 import nowcast as N
 import prevision as P
 import radar_fonts as RF
@@ -424,6 +425,11 @@ def recoger(anterior=None):
             salida["radar"][clau] = t and t.isoformat(timespec="minutes")
         # Cómo sería al llegar, para el aviso de antes de llover (ADR 0022).
         salida["radar"]["arriba_mm_h"] = N.intensitat_arribada(nc, "casa")
+        # A qué hora pararía, «en proves» en la página (fi_pluja.py, ADR 0049).
+        try:
+            salida["radar"].update(FP.fi_radar(nc, P.AHORA, salida["radar"]["arriba"]) or {})
+        except Exception as ex:
+            salida["errors"].append(f"final de la pluja: {ex}")
     # La riera de Sant Cugat: lo que ha llovido en la cuenca y lo que trae el
     # radar, para el aviso por Telegram (ADR 0027).
     try:

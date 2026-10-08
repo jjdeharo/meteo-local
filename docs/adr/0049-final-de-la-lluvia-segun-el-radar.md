@@ -1,6 +1,6 @@
-# 49. Final de la lluvia según el radar: pendiente de datos
+# 49. Final de la lluvia según el radar, en pruebas y aprendiendo
 
-Fecha: 2026-10-08 · Estado: aceptado (se muestra o no cuando haya datos)
+Fecha: 2026-10-08 · Estado: aceptado
 
 ## Contexto
 
@@ -15,19 +15,36 @@ lluvia en casa; solo se usaba para la llegada.
   momento, desde la pasada, en que la probabilidad baja del 20 % durante 15
   minutos seguidos; si no pasa en las 2 horas del radar, «no s'acaba en 2
   hores».
-- **No se muestra hasta comprobarla.** Desde el 08-10-2026 el NAS guarda la
+- **Se muestra ya, «en proves»** (Juanjo, 08-10-2026: «y si pones la
+  estimación actual y pones en fase de entrenamiento… poco a poco irá
+  mejorando»): en «Ara», «Pluja a sobre · pararia cap a les 20:10 (en
+  proves)» o «· no s'acaba en 2 hores», con la explicación al pasar por
+  encima («Hora estimada amb el radar. Encara s'està comprovant amb la pluja
+  real i s'ajusta sola: pot fallar»). `casa.py` lo calcula con la regla
+  vigente (`fi_radar`, en `radar.fi` y `radar.sense_fi`), desde ahora o desde
+  que llegue la lluvia.
+- **Aprende sola**: cada día prueba nueve variantes (umbral del 10, 20 o 30 %
+  durante 10, 15 o 20 minutos) con lo registrado; con 3 episodios o más, si
+  una se equivoca al menos un 5 % menos que la vigente, pasa a usarla
+  (`aprenentatge/fi-pluja.json`) y avisa a Juanjo; el archivo `atura` lo
+  para. El error de cada pasada: con hora de final, la distancia al final
+  real; sin ella, nada si de verdad acababa más allá del radar y, si no, lo
+  que faltaba hasta el horizonte.
+- **Comprobación.** Desde el 08-10-2026 el NAS guarda la
   lluvia de Montflorit cada 5 minutos (`montflorit-5min.csv`, `registre.py`;
   la estación solo ofrece las últimas 24 horas). Cada día, con el ajuste del
   aprendizaje, `fi_pluja.py` compara la regla con lo que pasó en cada pasada
   registrada mientras llovía (`radar-fonts-*.jsonl`, con el radar que usaba la
   página). Con 5 episodios de lluvia, manda a Juanjo las cifras una vez
   (aciertos a 15 minutos o menos, demasiado pronto, demasiado tarde, error
-  medio y aciertos de «no s'acaba en 2 hores») para que decida si se muestra.
+  medio y aciertos de «no s'acaba en 2 hores») para que decida si se quita el
+  «en proves» o se deja de mostrar.
   `python3 fi_pluja.py resum` las da en cualquier momento.
 
 ## Alternativas descartadas
 
-- **Mostrarlo ya**: sería publicar un dato sin comprobar (ver Evidencia).
+- **Esperar a tener datos para enseñarlo**: era la primera propuesta; Juanjo
+  prefirió enseñarlo ya, diciendo que está en pruebas, y que aprenda.
 - **Comprobar con la estación de casa**: su pluviómetro no marca bien la
   lluvia débil (ADR 0017), que es justo la del final de un episodio.
 - **Comprobar con las horas de Montflorit**: no dicen en qué minuto para.
@@ -58,4 +75,5 @@ se puede saber si acierta.
 ## Validación
 
 `tests/test_fi_pluja.py` (tramos de 5 minutos completos, episodios y pausas,
-final previsto, cifras y aviso una sola vez).
+final previsto, el de la página, la variante que se aprende, `atura`, cifras y
+aviso una sola vez) y `tests/test_web.py` (el texto «en proves»).
