@@ -452,8 +452,48 @@ function blocPlans(plans) {
 // el risc calculat (si n'hi ha) i l'AEMET, cadascun amb la franja del seu
 // nivell. Sense cap, res (proposta del 08-10-2026: amb dos avisos, al mòbil
 // la temperatura quedava fora de la pantalla).
+// Incendis forestals en curs a prop (Bombers) i el Pla Alfa de Cerdanyola des
+// del nivell 3, amb els tancaments que toquen Collserola (Agents Rurals). L'accés
+// a Collserola no va aquí: dura mesos i va a «Si surts» (ADR 0046).
+const ALFA_NIVELL_MOSTRAR = 3;
+
+function blocEntorn(entorn) {
+  const items = [];
+  const nouItem = (nivell, titol, resta, href) => {
+    const item = element('p', `avis-item ${nivell}`);
+    item.append(element('strong', null, titol), resta);
+    if (href) {
+      const a = element('a', null, T('Mapa'));
+      a.href = href;
+      a.target = '_blank';
+      a.rel = 'noopener';
+      item.append(' ', a);
+    }
+    return item;
+  };
+  for (const i of (entorn && entorn.incendis) || []) {
+    const km = i.km != null ? T`, a ${coma(i.km)}\u00a0km` : '';
+    items.push(nouItem('vermell', T`Bombers: incendi forestal a ${i.municipi}`,
+      T`${km}, des de les ${horaCurta(i.inici)}.`,
+      'https://interior.gencat.cat/ca/arees_dactuacio/bombers/actuacions-de-bombers/'));
+  }
+  const alfa = (entorn && entorn.pla_alfa) || {};
+  for (const [dia, nom] of [['avui', () => T('avui')], ['dema', () => T('demà')]]) {
+    const n = alfa[dia];
+    if (n != null && n >= ALFA_NIVELL_MOSTRAR) {
+      items.push(nouItem(n >= 4 ? 'vermell' : 'taronja', T`Pla Alfa de Cerdanyola: nivell ${n} ${nom()}`,
+        T(': accés restringit als espais forestals.'),
+        'https://interior.gencat.cat/ca/arees_dactuacio/agents-rurals/pla-alfa/'));
+    }
+  }
+  for (const t of alfa.tancaments || []) {
+    items.push(nouItem('vermell', T`Agents Rurals: tancat ${t.espai}`, '.', null));
+  }
+  return items;
+}
+
 function blocAvisos(dades, extres = [], ara = new Date()) {
-  const items = [...blocPlans(dades.plans), ...extres.filter(Boolean),
+  const items = [...blocPlans(dades.plans), ...blocEntorn(dades.entorn), ...extres.filter(Boolean),
     ...(dades.avisos && dades.avisos.length ? blocAvisosAemet(dades.avisos, ara) : [])];
   if (!items.length) return null;
   const sec = element('section', 'avisos-actius');

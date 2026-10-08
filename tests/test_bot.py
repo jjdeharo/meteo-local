@@ -423,6 +423,29 @@ class Consultes(unittest.TestCase):
         subs["7"]["idioma"] = "es"
         self.assertIn("va hacia el este", self.ordre("/radar", subs))
 
+    def test_entorn_a_avisos_actius(self):
+        # Incendis a prop, Pla Alfa des del 3 i accés a Collserola (ADR 0046).
+        d = json.load(open(os.path.join(self.dir.name, "montflorit.json")))
+        d["entorn"] = {"incendis": [{"id": "x", "municipi": "Sant Cugat del Vallès", "km": 3.2,
+                                     "inici": ARA.isoformat()}],
+                       "pla_alfa": {"avui": 4, "dema": 2, "tancaments": []},
+                       "collserola": [{"id": 1, "titol": "Tancat l’accés al medi natural", "data": "2026-03-12",
+                                       "enllac": "https://parcnaturalcollserola.cat/x/"}]}
+        json.dump(d, open(os.path.join(self.dir.name, "montflorit.json"), "w"))
+        subs = {"7": {"idioma": "ca", "avisos": [], "resum": None}}
+        r = self.ordre("/avisos_actius", subs)
+        self.assertIn("Bombers: incendi forestal a Sant Cugat del Vallès, a 3,2 km", r)
+        self.assertIn("Pla Alfa de Cerdanyola: nivell 4 avui", r)
+        self.assertNotIn("nivell 2", r)
+        self.assertIn("Collserola: «Tancat l’accés al medi natural» (12/03)", r)
+        subs["7"]["idioma"] = "es"
+        self.assertIn("Plan Alfa de Cerdanyola: nivel 4 hoy", self.ordre("/avisos_actius", subs))
+
+    def test_el_menu_cap_en_una_linia(self):
+        # «Situacions de perill», curt (Juanjo, 08-10-2026: amb el parèntesi no hi cabia).
+        self.assertEqual(B.T["ca"]["perill"], "Situacions de perill")
+        self.assertEqual(B.T["es"]["perill"], "Situaciones de peligro")
+
     def test_dades_velles(self):
         subs = {"7": {"idioma": "ca", "avisos": [], "resum": None}}
         with unittest.mock.patch.object(B, "ara", return_value=ARA + dt.timedelta(hours=3)):

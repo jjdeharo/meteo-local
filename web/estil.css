@@ -301,6 +301,8 @@ h1 { margin: 0; font-size: 1.6rem; line-height: 1.2; }
 .avis-item.taronja { --nivell: #fb923c; --nivell-text: #c2410c; }
 .avis-item.vermell { --nivell: var(--vermell); --nivell-text: var(--vermell); }
 .avisos-actius .risc-previst { margin-top: .5rem; }
+.avis-item.compte { --nivell: var(--compte); }
+.collserola { margin: 1rem 0 0; }
 /* Nota de Protecció Civil sobre els veredictes de «Si surts». */
 .avis-pc { border-color: var(--vermell); background: var(--vermell-fons); }
 .taula-hores td.cel { white-space: normal; }

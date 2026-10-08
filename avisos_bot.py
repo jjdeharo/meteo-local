@@ -13,7 +13,10 @@ Tipos:
 - pluja: llueve en Montflorit en unos 15 minutos, según el radar (la lógica
   de pluja_arriba.py, ADR 0022), un aviso por episodio de lluvia.
 - perill: lo medido o previsto llega a los umbrales de aviso de AEMET (la de
-  riscos.py, ADR 0018), al aparecer o subir de nivel.
+  riscos.py, ADR 0018), al aparecer o subir de nivel; y, desde el 08-10-2026,
+  un incendio forestal en curso a menos de 5 km (Bombers) al empezar y al
+  dejar de constar, y una restricción de acceso a Collserola al aparecer o
+  cuando ya no queda ninguna (entorn.py, ADR 0046).
 - riera: riesgo de desbordamiento de la riera de Sant Cugat (la de riera.py,
   ADR 0027), atención y peligro, siempre con el aviso de que es orientativo.
 - trens: una línea de Cerdanyola deja de circular o vuelve (trens.py,
@@ -163,6 +166,48 @@ def text_riera_fi(riera, episodi):
     return {"ca": f"{ca}\n{ORIENTATIU['ca']}", "es": f"{es}\n{ORIENTATIU['es']}"}
 
 
+# --- Incendios cerca y acceso a Collserola (ADR 0046) ---------------------------
+# Van con los de peligro («Situacions de perill»): son datos oficiales, de
+# Bombers y del parque, y se dice de dónde salen.
+
+def hhmm(iso):
+    return dt.datetime.fromisoformat(iso).strftime("%H:%M") if iso else "?"
+
+
+def text_incendi(i, acabat=False):
+    lloc = i.get("municipi") or "?"
+    dist = f", a uns {coma(i['km'])} km" if i.get("km") is not None else ""
+    dist_es = f", a unos {coma(i['km'])} km" if i.get("km") is not None else ""
+    if acabat:
+        return {"ca": negreta(f"Incendi a {lloc}: ja no consta com a actiu")
+                      + "\nBombers de la Generalitat ja no el tenen entre les actuacions en curs.",
+                "es": negreta(f"Incendio en {lloc}: ya no consta como activo")
+                      + "\nBombers de la Generalitat ya no lo tienen entre las actuaciones en curso."}
+    return {"ca": negreta(f"Incendi forestal a prop de Montflorit: {lloc}")
+                  + f"\nBombers de la Generalitat treballen en un incendi de vegetació forestal a {lloc}{dist}, "
+                  f"des de les {hhmm(i.get('inici'))}. Segueix les indicacions de Bombers i de Protecció Civil.",
+            "es": negreta(f"Incendio forestal cerca de Montflorit: {lloc}")
+                  + f"\nBombers de la Generalitat trabajan en un incendio de vegetación forestal en {lloc}{dist_es}, "
+                  f"desde las {hhmm(i.get('inici'))}. Sigue las indicaciones de Bombers y de Protección Civil."}
+
+
+def text_collserola(nous, retirats):
+    """Una restricción nueva del parque (su título, tal cual, en catalán como
+    lo publica) o que ya no queda ninguna."""
+    if nous:
+        a = nous[0]
+        cos = f"«{html.escape(a['titol'], quote=False)}»\n{a['enllac']}"
+        return {"ca": negreta("Collserola: restricció d'accés al parc") + f"\nAvís del Parc Natural del {a['data'][8:10]}/{a['data'][5:7]}: {cos}",
+                "es": negreta("Collserola: restricción de acceso al parque") + f"\nAviso del Parque Natural del {a['data'][8:10]}/{a['data'][5:7]}: {cos}"}
+    a = retirats[0]
+    return {"ca": negreta("Collserola: el parc ja no té cap avís de restricció d'accés")
+                  + f"\nHa retirat l'avís «{html.escape(a['titol'], quote=False)}». Consulta'n les condicions: "
+                  "https://parcnaturalcollserola.cat/actualitat/avisos/",
+            "es": negreta("Collserola: el parque ya no tiene ningún aviso de restricción de acceso")
+                  + f"\nHa retirado el aviso «{html.escape(a['titol'], quote=False)}». Consulta sus condiciones: "
+                  "https://parcnaturalcollserola.cat/actualitat/avisos/"}
+
+
 def text_trens(linia, estacio, estat):
     if estat == "bus":
         return {"ca": negreta(f"Trens: l'{linia} no circula a {estacio}") + "\nHi ha servei per carretera.",
@@ -210,6 +255,31 @@ def decideix(estat, salida, ahora):
     if nous_perill:
         text, pitjor = text_perill(nous_perill, ahora)
         afegeix("perill", hora + ":" + ",".join(r["clau"] for r in nous_perill), text, pitjor)
+    # Incendios forestales cerca y acceso a Collserola (ADR 0046). La primera
+    # vez solo se apunta lo que hay: lo que ya estaba no es una novedad.
+    entorn = salida.get("entorn") or {}
+    e = estat.get("entorn")
+    if entorn.get("incendis") is not None:
+        ara_ids = {i["id"]: i for i in entorn["incendis"]}
+        if e is not None:
+            for i in entorn["incendis"]:
+                if i["id"] not in e["incendis"]:
+                    afegeix("perill", f"incendi:{i['id']}", text_incendi(i), "incendi")
+            for iid, i in e["incendis"].items():
+                if iid not in ara_ids:
+                    afegeix("perill", f"incendi:{iid}:fi", text_incendi(i, acabat=True), "fi")
+        estat.setdefault("entorn", {"incendis": {}, "collserola": {}})["incendis"] = ara_ids
+    if entorn.get("collserola") is not None:
+        ara_c = {str(a["id"]): a for a in entorn["collserola"]}
+        e = estat.get("entorn") if e is not None else None
+        if e is not None and e.get("collserola") is not None:
+            nous_c = [a for k, a in ara_c.items() if k not in e["collserola"]]
+            retirats = [a for k, a in e["collserola"].items() if k not in ara_c]
+            if nous_c:
+                afegeix("perill", f"collserola:{nous_c[0]['id']}", text_collserola(nous_c, []), "collserola")
+            elif retirats and not ara_c:
+                afegeix("perill", f"collserola:{retirats[0]['id']}:fi", text_collserola([], retirats), "fi")
+        estat.setdefault("entorn", {"incendis": {}, "collserola": {}})["collserola"] = ara_c
     # Riera: atención y peligro, una vez cada nivel por episodio.
     riera = salida.get("riera")
     if riera:

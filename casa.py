@@ -28,6 +28,7 @@ import urllib.parse
 import aprenentatge as A
 import config as C
 import ecowitt as E
+import entorn as EN
 import nowcast as N
 import prevision as P
 import radar_fonts as RF
@@ -453,6 +454,9 @@ def recoger(anterior=None):
     except Exception as ex:
         salida["trens"] = None
         salida["errors"].append(f"trens: {ex}")
+    # Incendios cerca, Pla Alfa y acceso a Collserola (ADR 0046).
+    salida["entorn"] = EN.calcula(P.AHORA)
+    salida["errors"] += [f"entorn: {e}" for e in salida["entorn"].pop("errors")]
     # Situaciones de peligro según lo medido y lo previsto (ADR 0018).
     salida["riscos"] = RS.detecta(salida, P.AHORA)
     # Registro para aprender (solo en el NAS, que tiene /estat): lo que medían

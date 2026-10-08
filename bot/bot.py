@@ -68,7 +68,7 @@ T = {
                  "Si també ets al canal (@TempsMontflorit), no et repetiré el que ja t'arriba per allà: els avisos "
                  "de la riera i de perill i la previsió de les 7 h.\n\n"
                  "Només es desa el teu identificador de Telegram i el que triïs aquí. Amb /baixa s'esborra tot."),
-        "riera": "Desbordament de la riera de Sant Cugat (en proves)", "perill": "Temps excepcional (pluja molt forta, vent, neu, calor o fred)",
+        "riera": "Desbordament de la riera de Sant Cugat (en proves)", "perill": "Situacions de perill",
         "pluja": "Pluja a punt de començar (15 min abans)", "trens": "Trens de Cerdanyola (si no circulen)",
         "resum": "Previsió, un cop al dia, a les:", "no": "No vull rebre la previsió", "h": "{} h", "dema": "{} h (per a demà)",
         "baixa": "Fet: s'han esborrat les teves dades i ja no rebràs res. Amb /start pots tornar-hi.",
@@ -91,7 +91,7 @@ T = {
                  "Si también estás en el canal (@TempsMontflorit), no te repetiré lo que ya te llega por allí, en "
                  "catalán: los avisos de la riera y de peligro y la previsión de las 7 h.\n\n"
                  "Solo se guarda tu identificador de Telegram y lo que elijas aquí. Con /baixa se borra todo."),
-        "riera": "Desbordamiento de la riera de Sant Cugat (en pruebas)", "perill": "Tiempo excepcional (lluvia muy fuerte, viento, nieve, calor o frío)",
+        "riera": "Desbordamiento de la riera de Sant Cugat (en pruebas)", "perill": "Situaciones de peligro",
         "pluja": "Lluvia a punto de empezar (15 min antes)", "trens": "Trenes de Cerdanyola (si no circulan)",
         "resum": "Previsión, una vez al día, a las:", "no": "No quiero recibir la previsión", "h": "{} h", "dema": "{} h (para mañana)",
         "baixa": "Hecho: se han borrado tus datos y ya no recibirás nada. Con /start puedes volver.",
@@ -542,6 +542,8 @@ def text_avisos_actius(dades, idioma, moment):
     avui, dema = moment.date(), (moment + dt.timedelta(days=1)).date()
     linies += text_avisos_aemet(dades, idioma, avui, moment)
     linies += [x for x in text_avisos_aemet(dades, idioma, dema, moment) if x not in linies]
+    # Incendis a prop, Pla Alfa des del nivell 3 i accés a Collserola (ADR 0046).
+    linies += linies_entorn(dades.get("entorn") or {}, idioma)
     # El temps excepcional que calcula la pàgina amb els llindars de l'AEMET
     # (el mateix de l'avís «perill», ADR 0018), dit que no és oficial.
     propis = linies_riscos(dades.get("riscos") or [], idioma, moment)
@@ -557,6 +559,34 @@ def text_avisos_actius(dades, idioma, moment):
                  "Temps excepcional (ho calcula Temps a Montflorit amb els llindars de l'AEMET, no és oficial)")
         text += ("\n\n" if text else "") + f"<b>{titol}</b>\n" + "\n".join(html.escape(x, quote=False) for x in propis)
     return text
+
+
+# Des del nivell 3 el Pla Alfa restringeix l'accés (config.ALFA_NIVELL_MOSTRAR;
+# el bot no carrega config).
+ALFA_NIVELL_MOSTRAR = 3
+ALFA = {"ca": "Pla Alfa de Cerdanyola: nivell {n} {quan}: accés restringit als espais forestals.",
+        "es": "Plan Alfa de Cerdanyola: nivel {n} {quan}: acceso restringido a los espacios forestales."}
+
+
+def linies_entorn(entorn, idioma):
+    es = idioma == "es"
+    res = []
+    for i in entorn.get("incendis") or []:
+        h = dt.datetime.fromisoformat(i["inici"]).strftime("%H:%M") if i.get("inici") else "?"
+        dist = f", a {str(i['km']).replace('.', ',')} km" if i.get("km") is not None else ""
+        res.append(f"Bombers: incendio forestal en {i['municipi']}{dist} (desde las {h})." if es
+                   else f"Bombers: incendi forestal a {i['municipi']}{dist} (des de les {h}).")
+    alfa = entorn.get("pla_alfa") or {}
+    for dia in ("avui", "dema"):
+        n = alfa.get(dia)
+        if n is not None and n >= ALFA_NIVELL_MOSTRAR:
+            quan = {"avui": ("hoy" if es else "avui"), "dema": ("mañana" if es else "demà")}[dia]
+            res.append(ALFA[idioma].format(n=n, quan=quan))
+    for t in alfa.get("tancaments") or []:
+        res.append(f"Agents Rurals: cerrado {t['espai']}." if es else f"Agents Rurals: tancat {t['espai']}.")
+    for a in entorn.get("collserola") or []:
+        res.append(f"Collserola: «{a['titol']}» ({a['data'][8:10]}/{a['data'][5:7]}). {a['enllac']}")
+    return res
 
 
 def linies_riscos(riscos, idioma, moment):

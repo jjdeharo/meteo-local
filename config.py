@@ -2,7 +2,7 @@
 """Datos fijos de «Temps a Montflorit»: lugares, horario, fuentes y umbrales.
 Se cambian aquí, no en los programas."""
 
-VERSION = "3.20.4"
+VERSION = "3.21.0"
 
 # Coordenadas con tres decimales (unos 100 m), no las exactas: para el tiempo
 # da igual una calle u otra, y el repositorio es público.
@@ -162,6 +162,17 @@ TRENS = [
     ("R8", "rodalies", "Cerdanyola Universitat"),
     ("S2", "fgc", "Bellaterra i Universitat Autònoma"),
 ]
+# Lo que pasa alrededor (entorn.py, ADR 0046): incendios forestales en curso
+# de Bombers a menos de ENTORN_RADI_KM; el Pla Alfa del municipio
+# (ALFA_MUNICIPI, código de Agents Rurals), solo si la capa se ha editado en
+# las últimas ALFA_ACTUAL_H horas (fuera de campaña se queda con el último
+# valor); se muestra desde el nivel ALFA_NIVELL_MOSTRAR, el que restringe el
+# acceso a los espacios forestales.
+ENTORN_RADI_KM = 5
+ALFA_MUNICIPI = "082665"            # Cerdanyola del Vallès
+ALFA_ACTUAL_H = 36
+ALFA_NIVELL_MOSTRAR = 3
+
 TRENS_ESTACIONS = {"R4": (41.493, 2.148), "R7": (41.497, 2.115), "R8": (41.497, 2.115),
                    "S2": (41.502, 2.091)}
 TRENS_RADI_KM = 6

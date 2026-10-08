@@ -420,6 +420,23 @@ function pintaSortida() {
   cont.replaceChildren(...parts);
 }
 
+// L'accés a Collserola, en una línia: dura mesos, i a «Avisos actius» hi
+// ocuparia lloc cada dia (ADR 0046). El títol, el de l'avís del parc, tal qual.
+function pintaCollserola(entorn) {
+  const p = $('collserola');
+  const avisos = (entorn && entorn.collserola) || [];
+  p.hidden = !avisos.length;
+  if (!avisos.length) return;
+  const a = avisos[0];
+  const enllac = element('a', null, T('avís del parc'));
+  enllac.href = a.enllac;
+  enllac.target = '_blank';
+  enllac.rel = 'noopener';
+  const q = element('q', null, a.titol);
+  q.lang = 'ca';
+  p.replaceChildren(element('strong', null, T('Collserola:')), ' ', q, ` (${a.data.slice(8, 10)}/${a.data.slice(5, 7)}) · `, enllac);
+}
+
 function pintaTrens(trens) {
   const sec = $('trens');
   if (!trens || !trens.linies || !trens.linies.length || amagats().has('public')) {
@@ -476,6 +493,7 @@ function pinta(dades) {
     if (explica) explica.hidden = true;
     $('avisos').replaceChildren();
     $('trens').hidden = true;
+    $('collserola').hidden = true;
     $('sortida').replaceChildren(blocDadesVelles(dades));
     pintaHorari(dades);
     posaVersio(dades.versio);
@@ -488,6 +506,7 @@ function pinta(dades) {
   if (actius) avisos.append(actius);
   if (dades.hores && dades.hores.length >= 2) pintaSelectors(dades.hores, new Date());
   pintaTrens(dades.trens);
+  pintaCollserola(dades.entorn);
   pintaSortida();
   pintaHorari(dades);
   posaVersio(dades.versio);

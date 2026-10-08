@@ -41,9 +41,11 @@ internet en casa, que suele llegar con las tormentas.
     l'Ajuntament»; en el menú, «Desbordament de la riera de Sant Cugat (en
     proves)» (Juanjo, 07-10-2026);
   - **perill**: los umbrales de aviso de AEMET con lo medido o previsto
-    (ADR 0018); en el menú, «Temps excepcional (pluja molt forta, vent, neu,
-    calor o fred)» desde el 08-10-2026 (antes «Perill (pluja forta, vent,
-    calor…)», que no decía la nieve ni el frío);
+    (ADR 0018), y desde el 08-10-2026 también los incendios forestales
+    cerca y el acceso a Collserola (ADR 0046); en el menú, «Situacions de
+    perill» / «Situaciones de peligro» (antes «Perill (pluja forta, vent,
+    calor…)» y, unas horas, «Temps excepcional (…)», que no cabía en la
+    pantalla);
   - **pluja**: lluvia en Montflorit en unos 15 minutos según el radar
     (ADR 0022);
   - **trens**: una línea de Cerdanyola deja de circular o vuelve, si el cambio
