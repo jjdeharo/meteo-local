@@ -35,14 +35,24 @@ NAS ni dónde se autoriza cada una.
 - **Guía de reinstalación**, `nas/RESTAURAR.md`: el programa, la tabla de
   claves con dónde se regenera cada una (sin ningún valor), cómo traer el
   registro de vuelta y cómo arrancar.
+- **Las claves, cifradas, en el mismo repositorio privado**
+  (`claus/claus-nas.tar.gz.gpg`): las claves SSH del NAS y los archivos de
+  configuración con claves, en un tar cifrado con GnuPG (AES-256) y una
+  contraseña que Juanjo escribió en una ventana del escritorio; Claude no la
+  conoce. Juanjo no tenía gestor de contraseñas (solo el llavero del sistema,
+  que se perdería con el portátil) y eligió esta opción entre tres (archivo
+  cifrado, KeePassXC, Bitwarden). No se pone al día solo: si una clave
+  cambia, hay que volver a cifrarlo. Se comprobó que se descifra y contiene
+  los 15 archivos, y se vació la caché de la contraseña del agente gpg.
 
 ## Alternativas descartadas
 
 - **Copia en IONOS con rotación de siete días**: un fallo que no se nota en
   una semana pierde lo bueno; además, otra clave con orden fija y otro
   receptor en el hosting.
-- **Las claves en el repositorio privado**: un repositorio no es un gestor de
-  contraseñas; se regeneran y la guía dice cómo.
+- **Las claves sin cifrar en el repositorio privado**: un repositorio no es
+  un gestor de contraseñas. Cifradas, sí: si el repositorio se filtra, sin la
+  contraseña no sirven.
 - **Copia de todo `estat/`**: las cachés del radar y de la web ocupan más que
   el registro y se regeneran solas.
 

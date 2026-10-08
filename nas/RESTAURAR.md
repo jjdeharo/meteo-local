@@ -20,7 +20,19 @@ común `/volume1/docker/versiones/versiones.env`); si no existe, usa la del
 
 ## 2. Las claves
 
-Ninguna está en los repositorios. Se generan de nuevo y se autorizan:
+Todas están, cifradas con una contraseña que solo sabe Juanjo, en
+`claus/claus-nas.tar.gz.gpg` del repositorio privado `meteo-local-registre`.
+Dentro de `/volume1/docker/meteo-local/home`:
+
+```sh
+git clone git@github.com:meteo-montflorit/meteo-local-registre.git /tmp/registre
+gpg -d /tmp/registre/claus/claus-nas.tar.gz.gpg | tar xzf -
+chmod 700 .ssh && chmod 600 .ssh/id_*
+```
+
+Con eso las claves siguen autorizadas donde estaban y no hay que hacer nada
+más. Si se pierde la contraseña, o si alguna clave se cambia, se generan de
+nuevo y se autorizan así:
 
 | Archivo en `home/` | Para qué | Dónde se autoriza o se obtiene |
 |---|---|---|
