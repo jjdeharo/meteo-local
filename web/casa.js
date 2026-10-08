@@ -201,6 +201,12 @@ function textRadar(r, plou) {
   return ['res', T('No s\u2019acosta pluja en 2 hores')];
 }
 
+// On veure el radar en directe, centrat a Montflorit quan es pot.
+const RADAR_EN_DIRECTE = {
+  rainviewer: 'https://www.rainviewer.com/map.html?loc=41.482,2.135,9&layer=radar',
+  meteocat: 'https://www.meteo.cat/observacions/radar',
+};
+
 // Franja pròpia dins «Ara a casa», amb el color del que diu: ambre si la
 // pluja arriba, blau si és possible, neutre si no se n'acosta.
 function blocRadar(r, plou) {
@@ -211,10 +217,18 @@ function blocRadar(r, plou) {
   caixa.append(icona('i-radar'));
   const cos = element('div');
   cos.append(element('p', 'radar-text', text));
-  // La font i l'hora de la imatge, com demana Meteocat per reutilitzar-la.
+  // La font i l'hora de la imatge, com demana Meteocat per reutilitzar-la,
+  // amb l'enllaç al radar en directe (Juanjo, 08-10-2026).
   const font = r.imatge === 'rainviewer' ? 'RainViewer' : 'Meteocat';
   const mov = r.cap_a ? T` \u00b7 va cap ${TD(r.cap_a)} a ${r.velocitat_kmh}\u00a0km/h` : '';
-  cos.append(element('p', 'radar-detall', T`Radar de ${font} de les ${horaCurta(r.hora)}${mov}`));
+  const detall = element('p', 'radar-detall');
+  const [abans, despres] = T`Radar de ${font} de les ${horaCurta(r.hora)}${mov}`.split(font);
+  const enllac = element('a', null, font);
+  enllac.href = RADAR_EN_DIRECTE[r.imatge === 'rainviewer' ? 'rainviewer' : 'meteocat'];
+  enllac.target = '_blank';
+  enllac.rel = 'noopener';
+  detall.append(abans, enllac, despres);
+  cos.append(detall);
   caixa.append(cos);
   return caixa;
 }
