@@ -320,15 +320,15 @@ class Repartiment(unittest.TestCase):
         self.assertEqual(destins.count("1"), 1)        # sense la previsió de les 7
         self.assertEqual(destins.count("2"), 2)
 
-    def test_qui_te_el_bot_en_castella_ho_rep_encara_que_sigui_al_canal(self):
-        # El canal va en catalán: a quien lee en castellano no le basta.
-        self.escriu([{"id": "riera:1", "tipus": "riera", "hora": ARA.isoformat(), "ca": "R ca", "es": "R es"}])
-        subs = {"1": {"idioma": "es", "avisos": ["riera"], "resum": "7"}}
+    def test_qui_te_el_bot_en_castella_tampoc_ho_rep_dos_cops(self):
+        # El canal va en catalán, pero tampoco se repite a quien lee en castellano (Juanjo, 08-10-2026).
+        self.escriu([{"id": "riera:1", "tipus": "riera", "hora": ARA.isoformat(), "ca": "R ca", "es": "R es"},
+                     {"id": "pluja:1", "tipus": "pluja", "hora": ARA.isoformat(), "ca": "P ca", "es": "P es"}])
+        subs = {"1": {"idioma": "es", "avisos": ["riera", "pluja"], "resum": "7"}}
         api = Api(al_canal=["1"])
         B.reparteix(api, subs, {}, ARA)
         rebut = [p["text"] for _, p in api.enviats if str(p["chat_id"]) == "1"]
-        self.assertEqual(rebut[0], "R es")
-        self.assertTrue(rebut[1].startswith("<b>El tiempo hoy"))
+        self.assertEqual(rebut, ["P es"])      # la pluja sí; la riera i el resum, pel canal
 
     def test_si_el_canal_falla_el_bot_ho_envia(self):
         self.escriu([{"id": "riera:1", "tipus": "riera", "hora": ARA.isoformat(), "ca": "R ca", "es": "R es"}])

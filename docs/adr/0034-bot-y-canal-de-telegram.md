@@ -81,9 +81,11 @@ internet en casa, que suele llegar con las tormentas.
   `~/.temps-bot/subscriptors.json`, fuera del repositorio, y no se tocan.
 - **Sin repetir el canal** (Juanjo, 07-10-2026): a quien sigue el canal, el
   bot no le manda lo que el canal ya le da (avisos de riera y peligro, y la
-  previsión de las 7 si eligió esa hora), salvo que tenga el bot en
-  castellano, porque el canal va en catalán; sí la lluvia, los trenes y la
-  previsión a otra hora. El bot, administrador del canal, lo pregunta a
+  previsión de las 7 si eligió esa hora), también a quien tiene el bot en
+  castellano, aunque el canal vaya en catalán (Juanjo, 08-10-2026: «que el
+  bot en castellano tampoco repita lo ya publicado en el canal»; durante unas
+  horas se le mandaba igualmente); sí la lluvia, los trenes y la previsión a
+  otra hora. El bot, administrador del canal, lo pregunta a
   Telegram (`getChatMember`) una vez por pasada y solo cuando hay algo que
   repartir. Si el canal no ha recibido el aviso o la pregunta falla, el bot lo
   manda igualmente: mejor repetido que perdido. El menú del bot lo dice, con
@@ -116,7 +118,7 @@ internet en casa, que suele llegar con las tormentas.
 - **En la web**: «Avisos a Telegram: com funciona» bajo el menú,
   y en los créditos, qué guarda el bot. «Com funciona» lleva a una página de
   ayuda breve (`web/telegram.html`, también en castellano). Dice que se puede
-  usar solo el canal (en catalán), solo el bot o los dos, y que con los dos, y el bot en catalán, no repite
+  usar solo el canal (en catalán), solo el bot o los dos, y que con los dos el bot no repite
   lo que ya da el canal. Tiene un bloque
   para el canal (igual para todos, como un tablón; azul) y otro para el bot
   (personal; verde, como su icono y su botón). Cada bloque lleva su

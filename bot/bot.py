@@ -86,8 +86,8 @@ T = {
         "inici": "Para empezar, te he activado los avisos de la riera y de peligro.",
         "menu": ("Toca lo que quieras recibir. ✓ quiere decir que sí; si lo vuelves a tocar, se quita.\n"
                  "La previsión llega una vez al día, a la hora que elijas.\n\n"
-                 "El canal (@TempsMontflorit) está en catalán: aunque estés en él, a ti te lo mando todo en "
-                 "castellano.\n\n"
+                 "Si también estás en el canal (@TempsMontflorit), no te repetiré lo que ya te llega por allí, en "
+                 "catalán: los avisos de la riera y de peligro y la previsión de las 7 h.\n\n"
                  "Solo se guarda tu identificador de Telegram y lo que elijas aquí. Con /baixa se borra todo."),
         "riera": "Desbordamiento de la riera de Sant Cugat (en pruebas)", "perill": "Peligro (lluvia fuerte, viento, calor…)",
         "pluja": "Lluvia a punto de empezar (15 min antes)", "trens": "Trenes de Cerdanyola (si no circulan)",
@@ -566,8 +566,8 @@ def a_repartir(avisos, enviats, moment):
 # riera y peligro y la previsión de las 7 (Juanjo, 07-10-2026). El bot, como
 # administrador del canal, puede preguntar quién está; ante la duda o si el
 # canal no lo ha recibido, se manda: mejor un aviso repetido que uno perdido.
-# El canal va solo en catalán: a quien tiene el bot en castellano se le manda
-# igualmente (Juanjo, 08-10-2026). El menú del bot lo explica.
+# El canal va solo en catalán, y aun así no se repite a nadie: quien está en
+# el canal ya lo recibe allí (Juanjo, 08-10-2026). El menú del bot lo explica.
 DINS_CANAL = ("creator", "administrator", "member")
 
 
@@ -618,7 +618,7 @@ def reparteix(api, subs, estat, moment):
         queden, motius = [], []
         for chat in p["chats"]:
             sub = subs.get(chat)
-            if not sub or (al_canal_ok and sub["idioma"] == "ca" and al_canal(api, chat, memoria)):
+            if not sub or (al_canal_ok and al_canal(api, chat, memoria)):
                 continue
             try:
                 envia(api, chat, a[sub["idioma"]], html=True)
@@ -656,7 +656,7 @@ def reparteix(api, subs, estat, moment):
     resums = estat.setdefault("resums", {})
     for chat, sub in list(subs.items()):
         if sub.get("resum") == hora and resums.get(chat) != avui:
-            if canal_resum_ok and sub["idioma"] == "ca" and al_canal(api, chat, memoria):
+            if canal_resum_ok and al_canal(api, chat, memoria):
                 resums[chat] = avui
                 continue
             dades = dades or llegeix(os.path.join(DADES, "montflorit.json"), {})
