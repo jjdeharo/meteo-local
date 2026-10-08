@@ -273,7 +273,10 @@ def mostres():
 
 
 def grupo_semana(m):
-    d = dt.date.fromisoformat(m["emes"][:10])
+    """Grupo de validación por la semana de la hora observada: así todas las
+    previsiones de una misma hora caen en el mismo grupo (auditoría del
+    08-10-2026; antes iba por la fecha de emisión)."""
+    d = dt.date.fromisoformat(m["fins"][:10])
     return (d.isocalendar()[0] * 53 + d.isocalendar()[1]) % SETMANES_VALIDACIO
 
 
@@ -296,7 +299,10 @@ def valida_pluja(ms, arxiu):
             p[~ent] = y[ent].mean()
         else:
             p[~ent] = predecir(ajustar(x[ent], y[ent]), x[~ent])
-    return {"mostres": len(y), "hores_pluja": int(y.sum()),
+    # Horas observadas distintas con lluvia: cada hora se prevé muchas veces y
+    # no cuenta más por eso (auditoría del 08-10-2026).
+    hores_pluja = len({m["fins"] for m, plou in zip(ms, y) if plou})
+    return {"mostres": len(y), "hores_pluja": hores_pluja,
             "error": float(np.mean((p - y) ** 2)),
             "error_abans": float(np.mean((predecir(np.array(arxiu["w"]), xa) - y) ** 2)),
             "w": ajustar(x, y).tolist() if y.sum() else None}

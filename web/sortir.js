@@ -18,9 +18,12 @@ const LLINDARS = {
   peu: { ratxa: [null, 70], fred: [null, null] },
   bici: { ratxa: [40, 50], fred: [3, 1] },
   moto: { ratxa: [50, 70], fred: [3, 1] },
-  cotxe: { ratxa: [90, null], fred: [null, null] },
+  cotxe: { ratxa: [90, null], fred: [1, null] },
   public: { ratxa: [null, null], fred: [null, null] },
 };
+// Pluja en una hora (mm) per al cotxe: els llindars groc i taronja d'AEMET
+// (config.RISC_LLINDARS pluja_1h): compte i millor no (auditoria del 08-10-2026).
+const PLUJA_COTXE = [20, 40];
 const VELOCITAT = { peu: 0, bici: 18, moto: 45, cotxe: 0, public: 0 };
 const CANVI_TEMPERATURA = 6;
 const CALOR = 32;
@@ -98,6 +101,18 @@ function avalua(mitja, tram, trens, futur) {
         : T`Pot ploure ${quan(anada, tornada, mulla)}.`);
     }
   }
+  if (mitja === 'cotxe') {
+    // Amb pluja el cotxe no surt «bé» per defecte: forta o molt forta segons
+    // AEMET, probable, o possible (que no puja el nivell però es diu).
+    const forta = (n) => (f) => (f.pluja_mm || 0) >= PLUJA_COTXE[n];
+    if (viatge.some(forta(1))) puja('no', T`Pluja molt forta prevista ${quan(anada, tornada, forta(1))}: millor no agafar el cotxe.`);
+    else if (viatge.some(forta(0))) puja('compte', T`Pluja forta prevista ${quan(anada, tornada, forta(0))}: condueix amb compte.`);
+    else if (viatge.some(plouClar)) {
+      puja('compte', nomesAvis(plouClar)
+        ? T`Avís de l’AEMET per pluja ${quan(anada, tornada, plouClar)}: ni el radar, ni les estacions, ni els models hi veuen pluja. Condueix amb compte.`
+        : T`Pluja probable ${quan(anada, tornada, plouClar)}: condueix amb compte.`);
+    } else if (viatge.some(mulla)) res.motius.push(T`Pot ploure ${quan(anada, tornada, mulla)}.`);
+  }
   if (ll.ratxa[1] != null && ratxa >= ll.ratxa[1]) puja('no', T`Ratxes de vent de fins a ${Math.round(ratxa)} km/h.`);
   else if (ll.ratxa[0] != null && ratxa >= ll.ratxa[0]) puja('compte', T`Ratxes de vent de fins a ${Math.round(ratxa)} km/h.`);
   if (tMin != null && ll.fred[1] != null && tMin <= ll.fred[1]) puja('no', T`${graus(tMin)}: hi pot haver gel.`);
@@ -123,18 +138,26 @@ function avaluaPublic(trens, futur) {
 }
 
 function estatPublic(trens) {
+  const senseDades = (trens || []).filter((l) => l.estat === 'sense_dades');
   const deDia = (trens || []).filter((l) => l.estat !== 'fora_horari' && l.estat !== 'sense_dades');
+  const noms = (ls) => ls.map((l) => l.linia).join(', ');
   if (!deDia.length) {
     const nit = (trens || []).some((l) => l.estat === 'fora_horari');
     return { nivell: 'neutre', etiqueta: nit ? 'Fora d’horari' : 'Sense dades',
       motius: [nit ? T('A aquesta hora no circulen trens.') : T('Ara no hi ha dades dels trens.')] };
   }
   const malament = deDia.filter((l) => l.estat !== 'circula');
-  if (!malament.length) return { nivell: 'be', motius: [T('Cap incidència als trens de Cerdanyola.')], detall: true };
+  // Si falten dades d'alguna línia, no es pot dir que tot vagi bé (auditoria del 08-10-2026).
+  if (!malament.length) {
+    if (!senseDades.length) return { nivell: 'be', motius: [T('Cap incidència als trens de Cerdanyola.')], detall: true };
+    return { nivell: 'neutre', etiqueta: 'Dades parcials',
+      motius: [T`${noms(deDia)} sense incidències; de ${noms(senseDades)} ara no hi ha dades.`], detall: true };
+  }
   const quines = malament.map((l) => `${l.linia} ${TD(TEXT_ESTAT[l.estat]).toLowerCase()}`).join(', ');
   const cap = deDia.every((l) => l.estat === 'sense_trens' || l.estat === 'bus');
-  return { nivell: cap ? 'no' : 'compte', etiqueta: cap ? 'Sense trens' : 'Amb incidències',
-    motius: [T`Trens: ${quines}.`], detall: true };
+  const motius = [T`Trens: ${quines}.`];
+  if (senseDades.length) motius.push(T`De ${noms(senseDades)} ara no hi ha dades.`);
+  return { nivell: cap ? 'no' : 'compte', etiqueta: cap ? 'Sense trens' : 'Amb incidències', motius, detall: true };
 }
 
 // Peça per a una temperatura que es nota (arrodonida) i un mitjà.
@@ -432,7 +455,15 @@ function pintaTrens(trens) {
   sec.hidden = false;
 }
 
+// Les franges que encara no han acabat: la primera és «Ara». Sense això, amb
+// dades endarrerides (menys de 2 hores) «Ara» podia ser una hora ja passada
+// (auditoria del 08-10-2026).
+function horesVigents(hores, ara) {
+  return (hores || []).filter((f) => new Date(f.fins) > ara);
+}
+
 function pinta(dades) {
+  dades = { ...dades, hores: horesVigents(dades.hores, new Date()) };
   DADES = dades;
   // Dades de fa massa: només l'avís i on mirar (ADR 0031).
   const velles = dadesVelles(dades);

@@ -75,6 +75,7 @@ T = {
                   "/baixa deixa de rebre'n i esborra les teves dades"),
         "velles": "Les dades de Temps a Montflorit no s'actualitzen des de les {}: ara no puc donar la previsió.",
         "velles_ara": "Les dades de Temps a Montflorit no s'actualitzen des de les {}: ara no puc dir el temps que fa.",
+        "sense_previsio": "Ara no hi ha previsió disponible: les dades de les {} no en porten.",
         "mesura": " (mesura de les {})",
     },
     "es": {
@@ -96,6 +97,7 @@ T = {
                   "/baixa deja de recibir y borra tus datos"),
         "velles": "Los datos de Temps a Montflorit no se actualizan desde las {}: ahora no puedo dar la previsión.",
         "velles_ara": "Los datos de Temps a Montflorit no se actualizan desde las {}: ahora no puedo decir el tiempo que hace.",
+        "sense_previsio": "Ahora no hay previsión disponible: los datos de las {} no la traen.",
         "mesura": " (medida de las {})",
     },
 }
@@ -237,6 +239,10 @@ def text_ara(dades, idioma, lloc=""):
     if t is None:
         return None
     plou = (a.get("intensitat") or 0) > 0 or (a.get("pluja_30min") or 0) > 0 or bool(c.get("plou"))
+    # Sense Montflorit, el zero del pluviòmetre de casa no vol dir que no plogui
+    # (ADR 0017): només es diu la temperatura (auditoria del 08-10-2026).
+    if not a and not plou:
+        return f"{'Ahora mismo' if idioma == 'es' else 'Ara mateix'}{lloc and (' en ' if idioma == 'es' else ' a ') + lloc}: {graus(t)}."
     if idioma == "es":
         return f"Ahora mismo{lloc and ' en ' + lloc}: {graus(t)}, {'llueve' if plou else 'no llueve'}."
     return f"Ara mateix{lloc and ' a ' + lloc}: {graus(t)}, {'plou' if plou else 'no plou'}."
@@ -339,8 +345,10 @@ def text_roba(tram, idioma):
 
 def text_avisos_aemet(dades, idioma, dia, moment):
     """Los avisos de AEMET de un día: hoy, «fins a les 20:00»; mañana, «de 10:00 a 20:00»."""
-    avisos = [a for a in dades.get("avisos") or [] if dt.datetime.fromisoformat(a["fin"]) > moment
-              and dt.datetime.fromisoformat(a["inicio"]).date() == dia]
+    # Els que toquen el dia (també els que van començar abans: auditoria del 08-10-2026).
+    inici_dia = dt.datetime.combine(dia, dt.time.min, tzinfo=moment.tzinfo)
+    avisos = [a for a in dades.get("avisos") or [] if dt.datetime.fromisoformat(a["fin"]) > max(moment, inici_dia)
+              and dt.datetime.fromisoformat(a["inicio"]) < inici_dia + dt.timedelta(days=1)]
     res = []
     for nivell in ("vermell", "taronja", "groc"):
         dels = [a for a in avisos if a["nivel"] == nivell]
@@ -378,6 +386,8 @@ def resum(dades, idioma, moment):
         nit = [f for f in hores if hora(f) < dt.datetime.combine(dema, dt.time(6))]
         dia = [f for f in hores if hora(f).date() == dema and hora(f).hour >= 6]
         nom_dia = DIES[idioma][dema.weekday()]
+        if not dia:     # sense hores de demà, no hi ha previsió, i es diu (auditoria del 08-10-2026)
+            return t["sense_previsio"].format(generat.strftime("%H:%M")) + "\n" + WEB
         # Les dades arriben a 24 hores: de nit, demà només fins a la tarda, i es diu.
         fi = dt.datetime.fromisoformat(dia[-1]["fins"]).hour if dia else 0
         fins = (f" (hasta las {fi} h)" if idioma == "es" else f" (fins a les {fi} h)") if 0 < fi < 24 else ""
@@ -394,6 +404,8 @@ def resum(dades, idioma, moment):
         fi_dia = ara_n.replace(hour=23, minute=59)
         tram = [f for f in hores if hora(f) < fi_dia]
         nom_dia = DIES[idioma][moment.weekday()]
+        if not tram:    # sense hores d'avui, no hi ha previsió, i es diu (auditoria del 08-10-2026)
+            return "\n".join(x for x in (text_ara(dades, idioma), t["sense_previsio"].format(generat.strftime("%H:%M")), WEB) if x)
         linies = [f"<b>El tiempo hoy, {nom_dia}, en Montflorit</b>" if idioma == "es"
                   else f"<b>El temps avui, {nom_dia}, a Montflorit</b>",
                   text_ara(dades, idioma),

@@ -36,6 +36,7 @@ Uso:
 import csv
 import datetime as dt
 import json
+import math
 import os
 import sys
 
@@ -121,13 +122,21 @@ def nivell(index, index_6h):
     return None
 
 
-def maxim_amb_radar(filas, fins, hores, nc):
-    """La lluvia de hores horas más alta que se alcanzará en la hora
-    siguiente, y dentro de cuántos minutos."""
+def horitzo(fins, ahora):
+    """Minutos desde el final de lo medido hasta una hora después de ahora,
+    en medias horas enteras hacia arriba. La estación llega con retraso (unos
+    30 minutos; se admiten hasta 2 horas): la «hora siguiente» se cuenta
+    desde ahora, no desde la última medida (auditoría del 08-10-2026)."""
+    return int(math.ceil(((ahora - fins).total_seconds() / 60 + 60) / 30) * 30)
+
+
+def maxim_amb_radar(filas, fins, hores, nc, ahora):
+    """La lluvia de hores horas más alta que se alcanzará de aquí a una hora,
+    y dentro de cuántos minutos (desde ahora)."""
     opcions = []
-    for minuts in (0, 30, 60):
-        mm = acumulat(filas, fins, hores - minuts / 60) + previst(nc, fins, minuts)
-        opcions.append((round(mm, 1), minuts))
+    for minuts in range(0, horitzo(fins, ahora) + 1, 30):
+        mm = acumulat(filas, fins, max(hores - minuts / 60, 0)) + previst(nc, fins, minuts)
+        opcions.append((round(mm, 1), max(0, int(minuts - (ahora - fins).total_seconds() / 60))))
     return max(opcions)
 
 
@@ -147,10 +156,10 @@ def calcula(ahora, nc, lector=None, montflorit_3h=None):
            "fins": fins.astimezone().isoformat(timespec="minutes"),
            "mm_3h": acumulat(filas, fins, h), "mm_6h": acumulat(filas, fins, 6),
            "incomplet": incomplet(filas, fins),
-           "radar_1h": previst(nc, fins, 60) if nc else None,
+           "radar_1h": previst(nc, fins, (ahora - fins).total_seconds() / 60 + 60) if nc else None,
            "capcalera": None, "montflorit_3h": montflorit_3h}
-    res["index"], res["index_d_aqui_a_min"] = maxim_amb_radar(filas, fins, h, nc)
-    res["index_6h"] = maxim_amb_radar(filas, fins, 6, nc)[0]
+    res["index"], res["index_d_aqui_a_min"] = maxim_amb_radar(filas, fins, h, nc, ahora)
+    res["index_6h"] = maxim_amb_radar(filas, fins, 6, nc, ahora)[0]
     res["nivell"] = nivell(res["index"], res["index_6h"])
     try:
         codi, nom = C.RIERA_CAPCALERA
@@ -178,7 +187,7 @@ def missatge(riera, nom):
                f"{coma(riera['mm_3h'])} mm en 3 hores (fins a les {hora})")
     radar = riera.get("radar_1h")
     if radar and radar >= 1:
-        cap += f" i el radar en preveu uns {coma(radar)} més a la conca en la pròxima hora"
+        cap += f" i el radar en preveu uns {coma(radar)} més a la conca des de llavors fins d'aquí a una hora"
     cap += "."
     altres = []
     if riera.get("capcalera"):

@@ -125,6 +125,42 @@ class Resum(unittest.TestCase):
         self.assertIn("Temperatura d'aquí a mitjanit: entre ", r)
         self.assertIn("Temperatura de aquí a medianoche: entre ", B.resum(d, "es", ARA))
 
+    def test_sense_hores_no_hi_ha_previsio(self):
+        # Auditoria del 08-10-2026: amb hores: null deia «Sense pluja prevista».
+        for moment in (ARA, ARA.replace(hour=20)):
+            d = {"generat": moment.isoformat(), "hores": None, "errors": ["previsió: caiguda"]}
+            r = B.resum(d, "ca", moment)
+            self.assertIn(f"Ara no hi ha previsió disponible: les dades de les {moment:%H:%M} no en porten.", r)
+            self.assertNotIn("Sense pluja", r)
+            self.assertIn("Ahora no hay previsión disponible", B.resum(d, "es", moment))
+        # Amb hores només d'avui, a les 20 h tampoc n'hi ha de demà.
+        vespre = ARA.replace(hour=20)
+        d = dades(vespre)
+        d["hores"] = [f for f in d["hores"] if f["hora"][:10] == vespre.date().isoformat()]
+        self.assertIn("no en porten", B.resum(d, "ca", vespre))
+
+    def test_sense_montflorit_el_zero_de_casa_no_diu_que_no_plou(self):
+        self.assertEqual(B.text_ara({"ara": None, "ara_casa": {"temperatura": 20, "plou": False}}, "es"),
+                         "Ahora mismo: 20 °C.")
+        self.assertEqual(B.text_ara({"ara": None, "ara_casa": {"temperatura": 20, "plou": True}}, "ca"),
+                         "Ara mateix: 20 °C, plou.")
+        self.assertEqual(B.text_ara({"ara": {"intensitat": 0}, "ara_casa": {"temperatura": 20, "plou": False}}, "ca"),
+                         "Ara mateix: 20 °C, no plou.")
+
+    def test_avis_aemet_que_ve_d_ahir(self):
+        # Auditoria del 08-10-2026: un avís començat ahir i vigent avui no sortia.
+        migdia = ARA.replace(hour=12)
+        ahir, dema = (migdia - dt.timedelta(days=1)).date(), (migdia + dt.timedelta(days=1)).date()
+        d = {"avisos": [{"inicio": f"{ahir}T23:00:00+02:00", "fin": f"{migdia.date()}T13:59:59+02:00",
+                         "nivel": "taronja", "tipo": "pluja", "zona": "Prelitoral de Barcelona"}]}
+        self.assertEqual(B.text_avisos_aemet(d, "es", migdia.date(), migdia),
+                         ["Aviso naranja de la AEMET por lluvia hasta las 14:00."])
+        self.assertEqual(B.text_avisos_aemet(d, "ca", dema, migdia), [])
+        # I el de demà que comença avui a la nit també compta per a demà.
+        d = {"avisos": [{"inicio": f"{migdia.date()}T22:00:00+02:00", "fin": f"{dema}T05:59:59+02:00",
+                         "nivel": "groc", "tipo": "vent", "zona": "Prelitoral de Barcelona"}]}
+        self.assertEqual(B.text_avisos_aemet(d, "ca", dema, migdia), ["Avís groc de l'AEMET per vent de 22:00 a 06:00."])
+
     def test_a_les_20_la_de_dema(self):
         vespre = ARA.replace(hour=20)
         d = dades(vespre)

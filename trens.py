@@ -50,6 +50,7 @@ ESTAT = os.path.join(os.environ.get("TRENS_DIR", "/estat"), "trens-posicions.jso
 # Moure's més que això entre dues passades és circular (el GPS balla uns metres).
 MOGUT_M = 300
 POSICIONS_MAX_MIN = 40      # posicions més velles: no es comparen
+POSICIONS_VELLES_MIN = 10   # feed de posicions més vell: sense dades
 
 
 def get(url, binari=False):
@@ -124,17 +125,19 @@ def avisos_pb(b):
         for n2, alerta in camps(entitat):
             if n2 != 5:
                 continue
-            rutes, textos, inicis = [], {}, []
+            rutes, textos, inicis, fins = [], {}, [], []
             for n3, v in camps(alerta):
                 if n3 == 1:
                     inicis += [t for n4, t in camps(v) if n4 == 1]
+                    fins += [t for n4, t in camps(v) if n4 == 2]
                 elif n3 == 5:
                     rutes += [r.decode() for n4, r in camps(v) if n4 == 2]
                 elif n3 in (10, 11):
                     for idioma, t in _text(v).items():
                         textos.setdefault(idioma, "")
                         textos[idioma] = (textos[idioma] + " " + t).strip()
-            res.append({"rutes": rutes, "text": textos, "inici": iso(min(inicis)) if inicis else None})
+            res.append({"rutes": rutes, "text": textos, "inici": iso(min(inicis)) if inicis else None,
+                        "fi": iso(max(fins)) if fins and len(fins) == len(inicis) else None})
     return res
 
 
@@ -173,15 +176,28 @@ def avisos_renfe(dades=None):
         a = e.get("alert", {})
         linies = {linia_renfe(i.get("routeId")) for i in a.get("informedEntity", [])} - {None}
         textos = idiomes(t.get("text", "") for t in a.get("descriptionText", {}).get("translation", []))
-        inicis = [p.get("start") for p in a.get("activePeriod") or [] if p.get("start")]
+        periodes = a.get("activePeriod") or []
+        inicis = [p.get("start") for p in periodes if p.get("start")]
+        fins = [p.get("end") for p in periodes if p.get("end")]
         if linies and textos:
-            res.append({"linies": linies, "text": textos, "inici": iso(min(inicis, key=int)) if inicis else None})
+            # Sense final en algun període, l'avís no acaba (GTFS-RT: end absent = obert).
+            res.append({"linies": linies, "text": textos, "inici": iso(min(inicis, key=int)) if inicis else None,
+                        "fi": iso(max(fins, key=int)) if fins and len(fins) == len(periodes) else None})
     return res
 
 
-def trens_renfe():
+def trens_renfe(dades=None, ara=None):
+    """Posicions dels trens de Renfe. Si el feed és de fa més de
+    POSICIONS_VELLES_MIN minuts, no serveix: una resposta correcta no vol dir
+    que sigui actual (auditoria del 08-10-2026)."""
+    dades = dades or get(RENFE + "vehicle_positions.json")
+    marca = (dades.get("header") or {}).get("timestamp")
+    if marca:
+        edat = ((ara or dt.datetime.now().astimezone()) - dt.datetime.fromtimestamp(int(marca), dt.timezone.utc))
+        if edat > dt.timedelta(minutes=POSICIONS_VELLES_MIN):
+            raise ValueError(f"posicions de fa {int(edat.total_seconds() // 60)} min")
     res = []
-    for e in get(RENFE + "vehicle_positions.json").get("entity", []):
+    for e in dades.get("entity", []):
         v = e.get("vehicle", {})
         linia = (v.get("vehicle", {}).get("label") or "").split("-")[0]
         p = v.get("position") or {}
@@ -201,7 +217,7 @@ def avisos_fgc():
         textos = (idiomes(t for idioma, t in a["text"].items() if idioma in ("ca", "es", ""))
                   or idiomes(a["text"].values()))
         if a["rutes"] and textos:
-            res.append({"linies": set(a["rutes"]), "text": textos, "inici": a.get("inici")})
+            res.append({"linies": set(a["rutes"]), "text": textos, "inici": a.get("inici"), "fi": a.get("fi")})
     return res
 
 
@@ -241,6 +257,13 @@ def es_mouen(trens, abans, ara):
 SERVEI = re.compile(r"carretera|circulaci[oó]n? ferrovi", re.I)
 
 
+def vigent(a, ara):
+    """Si l'avís és d'ara: ha començat (o no té data) i no ha acabat."""
+    ara = ara.isoformat(timespec="minutes") if ara.tzinfo else ara.astimezone().isoformat(timespec="minutes")
+    comparable = lambda t: dt.datetime.fromisoformat(t).astimezone().isoformat(timespec="minutes")
+    return (not a.get("inici") or comparable(a["inici"]) <= ara) and (not a.get("fi") or comparable(a["fi"]) > ara)
+
+
 def mes_nous_primer(avisos):
     """Del més recent al més vell; sense data, els últims."""
     return sorted(avisos, key=lambda a: a.get("inici") or "", reverse=True)
@@ -267,9 +290,11 @@ def estat_linia(linia, mouen, vist, avisos, ara):
                             <= dt.timedelta(minutes=C.TRENS_VIST_MIN))
     de_dia = dins_horari(linia, ara)
     # Si l'avís més nou que parla del servei té data, decideix ell; sense
-    # dates, qualsevol avís propi de carretera (com fins ara).
+    # dates, qualsevol avís propi de carretera (com fins ara). Només els
+    # vigents: un avís que encara no ha començat o que ja ha acabat es mostra,
+    # però no decideix (auditoria del 08-10-2026).
     carretera = lambda a: bool(re.search(r"carretera", a["text"]["ca"] + a["text"]["es"], re.I))
-    servei = [a for a in nomes if SERVEI.search(a["text"]["ca"] + a["text"]["es"])]
+    servei = [a for a in nomes if SERVEI.search(a["text"]["ca"] + a["text"]["es"]) and vigent(a, ara)]
     bus = (carretera(servei[0]) if servei[0].get("inici") else any(carretera(a) for a in servei)) if servei else False
     if bus:
         estat = "bus"

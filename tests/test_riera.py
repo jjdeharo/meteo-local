@@ -62,6 +62,25 @@ class Index(unittest.TestCase):
         self.assertGreaterEqual(r["index_6h"], C.RIERA_PERILL_6H_MM)
         self.assertEqual(r["index_d_aqui_a_min"], 60)
 
+    def test_l_hora_seguent_es_compta_des_d_ara(self):
+        # Auditoria del 08-10-2026: amb l'estació mitja hora endarrerida, un xàfec
+        # de 37,5 mm entre d'aquí a 35 i 60 minuts quedava fora de l'«hora següent».
+        from unittest.mock import patch
+        ara = dt.datetime(2026, 10, 8, 10, 0, tzinfo=UTC)
+        fins = ara - dt.timedelta(minutes=30)
+        filas = [(fins - RI.MITJA_HORA * (12 - i), 0.0) for i in range(12)]
+        nc = {"hora": (ara - dt.timedelta(minutes=15)).isoformat(timespec="minutes"),
+              "llocs": {"conca": [{"min": k, "mm_h": 90 if 50 <= k < 75 else 0, "prob": 1 if 50 <= k < 75 else 0}
+                                  for k in range(0, 125, 5)]}}
+        with patch.object(RI, "files", return_value=filas):
+            r = RI.calcula(ara, nc)
+        self.assertEqual(r["index"], 37.5)
+        self.assertEqual(r["nivell"], "atencio")
+        self.assertEqual(r["index_d_aqui_a_min"], 60)
+        self.assertEqual(r["radar_1h"], 37.5)
+        self.assertEqual(RI.horitzo(fins, ara), 90)
+        self.assertIn("des de llavors fins d'aquí a una hora", RI.missatge(r, "atencio"))
+
     def test_forat_entre_estacio_i_radar(self):
         # Imagen 15 minutos más nueva que la estación, 12 mm/h: el hueco
         # cuenta 3 mm y la media hora siguiente, 3 más.

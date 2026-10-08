@@ -166,7 +166,9 @@ recoge casa: el pluviómetro de casa a veces no marca la lluvia débil, pero lo
 que marca es lluvia (ADR 0017). Sin dato de Montflorit, una hora seca en casa
 no se usa.
 
-Cuando el registro reúna **30 horas con lluvia**, se ajusta un modelo propio
+Cuando el registro reúna **30 horas con lluvia** (horas observadas distintas:
+cada hora se prevé muchas veces, con distintas antelaciones, y no cuenta más
+por eso), se ajusta un modelo propio
 con todas las señales de la tabla, incluidas las tres que el archivo no tiene. Sustituye al del archivo solo si acierta mejor en semanas
 que no ha visto (apartado 4). En otoño llueve unas 25 horas al mes (entre 9 y 48 en
 Sabadell y Sant Cugat desde 2024): puede tardar de uno a varios meses. Si al
@@ -272,7 +274,9 @@ Cada día a las 16:00, después de la verificación del trayecto, el NAS ejecuta
    se reparten en cuatro grupos por semanas; cada grupo se predice con un
    modelo ajustado con los otros tres). Las semanas enteras evitan que dos
    días seguidos, muy parecidos, caigan uno en el ajuste y otro en la
-   comprobación.
+   comprobación. El grupo lo fija la hora observada, no el momento en que se
+   hizo la previsión: así todas las previsiones de una misma hora caen en el
+   mismo grupo y ninguna observación se usa a la vez para ajustar y comprobar.
 3. Lo compara con lo que se usa ahora con las mismas horas: el modelo del
    archivo para la lluvia; la corrección del año de casa para la temperatura.
 4. **Solo cambia si el error baja al menos un 5 %**:
@@ -352,15 +356,12 @@ Antes salía de los milímetros del modelo más lluvioso, y la tabla podía deci
   horas de cada pasada: el error al prever puede parecer algo más útil de lo
   que es con la antelación real. El registro propio lo medirá.
 
-## 7. Trayecto (pendiente)
+## 7. Trayecto
 
-La página del trayecto usará el mismo método de lluvia, la regresión
-logística, con las señales que guarda su registro desde el 05-10-2026
-(avisos, radar, estaciones, modelos y ensemble). Se ajustará cuando haya
-bastantes días de lluvia en el trayecto, unos 14 al año en cada trayecto, con
-la misma comprobación en semanas no vistas y el mismo aviso antes de cambiar.
-La calibración de 2026 ya la probó solo con los modelos: mejoraba el error un
-38 % en la ida, frente al 30 % de la regla ([ADR 0003](adr/0003-calibracion-con-datos-reales-se-mantiene-la-regla.md)).
+La página del trayecto («Moto o cotxe?») se retiró el 07-10-2026 ([ADR
+0030](adr/0030-retirada-de-la-pagina-del-trayecto.md)); su aprendizaje no se
+hizo. Lo que decide ahora por medio de transporte es «Si surts», con los
+umbrales del apartado 2 y los de `web/sortir.js`.
 
 ## Dónde está cada cosa
 

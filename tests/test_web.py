@@ -169,6 +169,45 @@ class Web(unittest.TestCase):
         self.assertEqual(self.roba("moto", (16, 26, 5), (21, 15, 5)),
                          "Jaqueta de moto amb folre i guants d’entretemps.")
 
+    def test_les_franges_acabades_no_compten(self):
+        hores = [{"hora": "2026-10-08T06:00", "fins": "2026-10-08T07:00"}, {"hora": "2026-10-08T07:00", "fins": "2026-10-08T08:00"},
+                 {"hora": "2026-10-08T08:00", "fins": "2026-10-08T09:00"}]
+        r = self.avalua("2026-10-08T07:44:00+02:00", f"horesVigents({json.dumps(hores)}, new Date()).map((f) => f.hora)", "sortir.js")
+        self.assertEqual(r, ["2026-10-08T07:00", "2026-10-08T08:00"])
+        self.assertEqual(self.avalua("2026-10-08T07:44:00+02:00", "horesVigents(null, new Date())", "sortir.js"), [])
+
+    def test_public_amb_linies_sense_dades(self):
+        # Auditoria del 08-10-2026: amb Renfe caigut i la S2 circulant deia «cap incidència».
+        def public(linies):
+            return self.avalua("2026-10-08T12:00:00+02:00", f"estatPublic({json.dumps(linies)})", "sortir.js")
+        sd = [{"linia": x, "estat": "sense_dades"} for x in ("R4", "R7", "R8")]
+        r = public(sd + [{"linia": "S2", "estat": "circula"}])
+        self.assertEqual((r["nivell"], r["etiqueta"]), ("neutre", "Dades parcials"))
+        self.assertEqual(r["motius"], ["S2 sense incidències; de R4, R7, R8 ara no hi ha dades."])
+        r = public(sd + [{"linia": "S2", "estat": "incidencies"}])
+        self.assertEqual(r["nivell"], "compte")
+        self.assertEqual(r["motius"], ["Trens: S2 amb incidències.", "De R4, R7, R8 ara no hi ha dades."])
+        self.assertEqual(public(sd)["etiqueta"], "Sense dades")
+        self.assertEqual(public([{"linia": "S2", "estat": "circula"}])["nivell"], "be")
+
+    def test_cotxe_amb_pluja(self):
+        # Auditoria del 08-10-2026: amb 90 mm/h el cotxe sortia «bé, sense pluja».
+        def tram(mm, prob, t=20):
+            return [{"hora": f"2026-10-08T{h:02d}:00", "fins": f"2026-10-08T{h + 1:02d}:00", "temperatura": t,
+                     "ratxa": 10, "pluja_mm": mm, "probabilitat": prob, "avisos": []} for h in (12, 13)]
+        def cotxe(mm, prob, t=20):
+            return self.avalua("2026-10-08T12:00:00+02:00",
+                               f"avalua('cotxe', {json.dumps(tram(mm, prob, t))}, [], false)", "sortir.js")
+        self.assertEqual(cotxe(90, 1), {"nivell": "no", "motius": [
+            "Pluja molt forta prevista a l’anada i a la tornada: millor no agafar el cotxe."]})
+        self.assertEqual(cotxe(25, 0.9), {"nivell": "compte", "motius": [
+            "Pluja forta prevista a l’anada i a la tornada: condueix amb compte."]})
+        self.assertEqual(cotxe(2, 0.7), {"nivell": "compte", "motius": [
+            "Pluja probable a l’anada i a la tornada: condueix amb compte."]})
+        self.assertEqual(cotxe(0.3, 0.25), {"nivell": "be", "motius": ["Pot ploure a l’anada i a la tornada."]})
+        self.assertEqual(cotxe(0, 0.05), {"nivell": "be", "motius": ["Sense pluja ni vent fort."]})
+        self.assertEqual(cotxe(0, 0.05, 0)["motius"], ["0\u00a0°C: compte amb el gel a primera hora."])
+
     def test_roba_bici(self):
         self.assertEqual(self.roba("bici", (9, 22, 0), (11, 22, 0)), "Màniga curta.")
         self.assertEqual(self.roba("bici", (9, 19, 0), (11, 19, 0), pluja=True),

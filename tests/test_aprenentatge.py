@@ -156,6 +156,23 @@ class Diari(unittest.TestCase):
             with open(os.path.join(A.REGISTRE, nom), "w") as f:
                 f.write("\n".join(filas) + "\n")
 
+    def test_horas_de_lluvia_unicas_y_grupos_por_hora_observada(self):
+        # Auditoría del 08-10-2026: dos horas con lluvia previstas 24 veces contaban 48.
+        ms = []
+        for d in (dt.datetime(2026, 9, 7, 18), dt.datetime(2026, 9, 14, 18)):
+            for k in range(24):
+                for plou in (True, False):
+                    fins = d + dt.timedelta(hours=0 if plou else 1)
+                    ms.append({**hora(fins.isoformat(timespec="minutes"), mm=2 if plou else 0, antelacio=k + 1),
+                               "emes": (fins - dt.timedelta(hours=k + 1)).isoformat(timespec="minutes") + "+02:00",
+                               "obs_pluja": 2 if plou else 0, "obs_temp": None, "pluja_1h_emes": 0})
+        v = A.valida_pluja(ms, A.modelo_arxiu())
+        self.assertEqual(v["hores_pluja"], 2)
+        self.assertEqual(v["mostres"], 96)
+        # La misma hora observada, emitida el domingo o el lunes: mismo grupo.
+        g = [A.grupo_semana({"emes": e, "fins": "2026-10-12T01:00"}) for e in ("2026-10-11T23:00+02:00", "2026-10-12T00:00+02:00")]
+        self.assertEqual(g[0], g[1])
+
     def test_propone_avisa_y_aplica_al_dia_siguiente(self):
         self.registra(20)
         A.diari("2026-09-21", avisa=False)

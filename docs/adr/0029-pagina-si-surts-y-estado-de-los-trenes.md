@@ -27,7 +27,11 @@ y otros transportes.
   van por separado, porque uno puede ir bien y el otro no (Juanjo, 07-10-2026).
   Umbrales en `web/sortir.js`: los de lluvia son los del trayecto, comprobados
   con datos; los de viento y frío de bici y moto, una primera propuesta que la
-  página declara sin comprobar.
+  página declara sin comprobar. El coche no sale «bé» con lluvia (auditoría
+  del 08-10-2026, antes solo miraba el viento): lluvia muy fuerte (40 mm en
+  una hora, umbral naranja de AEMET), «no»; fuerte (20 mm, amarillo),
+  probable o hielo (1 °C), «compte»; posible, se dice sin cambiar el nivel.
+  «Sense pluja ni vent fort» solo cuando ninguna hora del viaje la ve.
 - **Avisos de AEMET por lluvia o tormentas**: cuentan como lluvia probable,
   como en el trayecto. Si son lo único que la ve (probabilidad, que ya lleva el
   radar, por debajo del 20 %, menos de 0,2 mm en los modelos y ninguna

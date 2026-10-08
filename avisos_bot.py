@@ -121,8 +121,8 @@ def text_riera(riera, nivell):
     hora = dt.datetime.fromisoformat(riera["fins"]).strftime("%H:%M")
     mm3, mm6 = coma(riera["mm_3h"]), coma(riera["mm_6h"])
     radar = riera.get("radar_1h")
-    mes_ca = f", i el radar en preveu uns {coma(radar)} mm més en la pròxima hora" if radar and radar >= 1 else ""
-    mes_es = f", y el radar prevé unos {coma(radar)} mm más en la próxima hora" if radar and radar >= 1 else ""
+    mes_ca = f", i el radar en preveu uns {coma(radar)} mm més des de llavors fins d'aquí a una hora" if radar and radar >= 1 else ""
+    mes_es = f", y el radar prevé unos {coma(radar)} mm más desde entonces hasta dentro de una hora" if radar and radar >= 1 else ""
     if nivell == "perill":
         ca = (negreta("Perill de desbordament de la riera de Sant Cugat a Montflorit") +
               f"\nHa plogut molt a Sant Cugat, d'on baixa l'aigua de la riera: {mm3} mm en 3 hores i {mm6} en 6 "

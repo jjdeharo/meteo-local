@@ -40,5 +40,6 @@
 | [0036](0036-temperatura-de-ahora-y-de-cada-tramo.md) | Temperatura de ahora y de cada tramo | aceptado |
 | [0037](0037-presion-al-nivel-del-mar-y-viento-de-sant-cugat.md) | Presión al nivel del mar y viento de Sant Cugat | aceptado |
 | [0038](0038-correcciones-de-la-auditoria-del-7-de-octubre.md) | Correcciones de la auditoría del 7 de octubre de 2026 | aceptado |
+| [0039](0039-correcciones-de-la-auditoria-del-8-de-octubre.md) | Correcciones de la auditoría del 8 de octubre de 2026 | aceptado |
 
 Plantilla: [0000-plantilla.md](0000-plantilla.md). Para crear uno: `nuevo-adr "Título"`.
