@@ -73,7 +73,7 @@ function quan(anada, tornada, cond) {
 }
 
 // Veredicte d'un mitjà: {nivell: be|compte|no, motius: [...]}.
-function avalua(mitja, tram, trens) {
+function avalua(mitja, tram, trens, futur) {
   const anada = tram[0];
   const tornada = tram[tram.length - 1];
   const viatge = [anada, tornada];
@@ -107,14 +107,22 @@ function avalua(mitja, tram, trens) {
       ? T('Avís de l’AEMET per pluja mentre ets fora: ni el radar, ni les estacions, ni els models hi veuen pluja. Per si de cas, porta paraigua.')
       : T('Pot ploure mentre ets fora: porta paraigua.'));
   }
-  if (mitja === 'public') return avaluaPublic(trens);
+  if (mitja === 'public') return avaluaPublic(trens, futur);
   if (!res.motius.length) res.motius.push(T('Sense pluja ni vent fort.'));
   return res;
 }
 
 // El transport públic, segons els trens de Cerdanyola: tots circulen, algun
 // té incidències o no en circula cap. Dels busos no hi ha dades en temps real.
-function avaluaPublic(trens) {
+function avaluaPublic(trens, futur) {
+  const res = estatPublic(trens);
+  // Les dades dels trens són les d'ara: si la sortida triada és més tard, es diu
+  // (auditoria del 07-10-2026).
+  if (futur) res.motius.push(T('Són els trens d’ara, no els de l’hora triada.'));
+  return res;
+}
+
+function estatPublic(trens) {
   const deDia = (trens || []).filter((l) => l.estat !== 'fora_horari' && l.estat !== 'sense_dades');
   if (!deDia.length) {
     const nit = (trens || []).some((l) => l.estat === 'fora_horari');
@@ -325,6 +333,18 @@ const COLOR_ESTAT = {
   circula: 'be', incidencies: 'compte', bus: 'compte', sense_trens: 'no', fora_horari: 'neutre', sense_dades: 'neutre',
 };
 
+// Amb un pla de Protecció Civil en alerta o emergència, els veredictes no
+// canvien (surten de la pluja i el vent previstos, ADR 0008), però a sobre es
+// diu ben clar què demana el pla (Juanjo, 07-10-2026). Null si no n'hi ha cap.
+function avisPlaSortida(plans) {
+  const pla = (plans || []).find((p) => p.fase === 'emergència') || (plans || []).find((p) => p.fase === 'alerta');
+  if (!pla) return null;
+  const nom = `${TD(pla.nom)} (${pla.pla})`;
+  return pla.fase === 'emergència'
+    ? T`Protecció Civil té el pla ${nom} en fase d’emergència i demana evitar els desplaçaments que no siguin necessaris. Els veredictes de sota només miren la pluja i el vent previstos.`
+    : T`Protecció Civil té el pla ${nom} en fase d’alerta: segueix les seves indicacions. Els veredictes de sota només miren la pluja i el vent previstos.`;
+}
+
 function pintaSortida() {
   const dades = DADES;
   const ara = new Date();
@@ -342,7 +362,7 @@ function pintaSortida() {
   const fora = amagats();
   for (const [clau, nom, icon] of MITJANS) {
     if (fora.has(clau)) continue;
-    const v = avalua(clau, tram, trens);
+    const v = avalua(clau, tram, trens, i > 0);
     const li = element('li', 'mitja ' + v.nivell);
     const cap = element('p', 'mitja-cap');
     const titol = element('span', 'mitja-nom');
@@ -363,6 +383,8 @@ function pintaSortida() {
   }
   const parts = llista.children.length ? [llista]
     : [element('p', 'nota', T('Tria a dalt els mitjans que vols veure.'))];
+  const pla = avisPlaSortida(dades.plans);
+  if (pla) parts.unshift(element('p', 'avis avis-pc', pla));
   const cs = consells(tram, ara);
   if (cs.length) {
     const ul = element('ul', 'consells');

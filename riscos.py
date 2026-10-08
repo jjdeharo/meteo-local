@@ -22,9 +22,9 @@ Uso:
 import datetime as dt
 import json
 import os
-import subprocess
 import sys
 
+import avis_privat as AP
 import config as C
 
 NIVELLS = ("groc", "taronja", "vermell")
@@ -231,7 +231,7 @@ def avisa(ruta, ahora=None, envia=True):
     if text:
         print(text)
         if envia:
-            subprocess.run(["avisar-juanjo", "--asunto", "meteo-local", text], check=False)
+            AP.envia(text)
     return text
 
 

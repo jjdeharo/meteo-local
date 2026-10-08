@@ -36,6 +36,16 @@ for (const f of ['comu.js', pagina]) vm.runInContext(fs.readFileSync(`${web}/${f
 console.log(JSON.stringify(vm.runInContext(expr, ctx)));
 """
 
+# Lo mismo, pero la expresión puede devolver una promesa, «fetch» se puede
+# sustituir desde la expresión y los temporizadores largos de la página (un
+# minuto o más) se disparan enseguida, para seguir el ciclo de «carrega» sin
+# esperar; los cortos (los de la propia prueba) se respetan.
+ARNES_ASYNC = ARNES.replace("fetch: () => new Promise(() => {}), setTimeout: () => 0, clearTimeout() {},",
+                            "fetch: () => new Promise(() => {}), setTimeout: (f, ms) => setTimeout(f, ms >= 1000 ? 0 : ms),"
+                            " clearTimeout() {},") \
+    .replace("console.log(JSON.stringify(vm.runInContext(expr, ctx)));",
+             "Promise.resolve(vm.runInContext(expr, ctx)).then((v) => console.log(JSON.stringify(v)));")
+
 
 def avis(inicio, fin, tipo, nivel="groc"):
     return {"inicio": inicio, "fin": fin, "tipo": tipo, "nivel": nivel,
@@ -44,10 +54,19 @@ def avis(inicio, fin, tipo, nivel="groc"):
 
 @unittest.skipUnless(shutil.which("node"), "cal Node")
 class Web(unittest.TestCase):
-    def avalua(self, ara, expr, pagina="casa.js"):
-        r = subprocess.run(["node", "-e", ARNES, WEB, ara, expr, pagina], capture_output=True,
+    def avalua(self, ara, expr, pagina="casa.js", arnes=ARNES):
+        r = subprocess.run(["node", "-e", arnes, WEB, ara, expr, pagina], capture_output=True,
                            text=True, check=True, env={**os.environ, "TZ": "Europe/Madrid"})
         return json.loads(r.stdout)
+
+    # Un «fetch» de mentira: a cada petición (por orden) le toca una respuesta:
+    # un objeto (JSON con 200), «null» (error de red) o «'penja'» (no contesta).
+    def fetch_fals(self, respostes):
+        return (f"peticions = []; respostes = {json.dumps(respostes)};"
+                "fetch = (url) => { peticions.push(url.split('?')[0]); const r = respostes.shift();"
+                " if (r === 'penja') return new Promise(() => {});"
+                " if (r === null) return Promise.reject(new Error('xarxa'));"
+                " return Promise.resolve({ ok: true, json: () => Promise.resolve(r) }); };")
 
     def text(self, ara, avisos):
         return self.avalua(ara, f"textAvisos({json.dumps(avisos)}, new Date())")
@@ -200,6 +219,57 @@ class Web(unittest.TestCase):
         expr = ("[dadesVelles({generat: '2026-10-07T06:50:00+02:00'}), "
                 "dadesVelles({generat: '2026-10-07T07:10:00+02:00'})]")
         self.assertEqual(self.avalua("2026-10-07T09:00:00+02:00", expr), [True, False])
+
+    def test_copia_de_github_si_ionos_serveix_dades_velles(self):
+        # Auditoria del 07-10-2026: IONOS contestava amb dades de fa 3 hores i
+        # la còpia de GitHub, més nova, no es mirava.
+        ara = "2026-10-08T09:00:00+02:00"
+        velles, noves = {"generat": "2026-10-08T06:00+02:00"}, {"generat": "2026-10-08T08:51+02:00"}
+        expr = self.fetch_fals([velles, noves]) + "llegeixDades('casa.json').then((d) => [d.generat, peticions])"
+        self.assertEqual(self.avalua(ara, expr, arnes=ARNES_ASYNC),
+                         [noves["generat"], ["https://bilateria.org/app/meteo-local/casa.json", "casa.json"]])
+        # Si la còpia és més vella, es queden les d'IONOS; si falla, també.
+        expr = self.fetch_fals([noves, velles]) + "llegeixDades('casa.json').then((d) => d.generat)"
+        self.assertEqual(self.avalua(ara, expr, arnes=ARNES_ASYNC), noves["generat"])
+        expr = self.fetch_fals([velles, None]) + "llegeixDades('casa.json').then((d) => d.generat)"
+        self.assertEqual(self.avalua(ara, expr, arnes=ARNES_ASYNC), velles["generat"])
+        # Amb dades d'IONOS de fa menys de 45 minuts, una sola petició.
+        recents = {"generat": "2026-10-08T08:30+02:00"}
+        expr = self.fetch_fals([recents, noves]) + "llegeixDades('casa.json').then((d) => [d.generat, peticions.length])"
+        self.assertEqual(self.avalua(ara, expr, arnes=ARNES_ASYNC), [recents["generat"], 1])
+        # Si IONOS no respon, la còpia, com sempre.
+        expr = self.fetch_fals([None, noves]) + "llegeixDades('casa.json').then((d) => d.generat)"
+        self.assertEqual(self.avalua(ara, expr, arnes=ARNES_ASYNC), noves["generat"])
+
+    def test_en_fallar_una_lectura_es_torna_a_pintar(self):
+        # Auditoria del 07-10-2026: amb la pestanya oberta i la xarxa caiguda,
+        # les dades velles es quedaven a la pantalla. Ara cada lectura fallida
+        # torna a pintar el que hi ha (i dadesVelles decideix).
+        # Lectura bona (dades recents: una sola petició), dues lectures fallides
+        # (IONOS i la còpia) i la següent que no contesta: dues pintades.
+        dades = {"generat": "2026-10-08T08:40+02:00", "horari": {"trams": [["00:00", "23:50"]], "cada_min": 15}}
+        expr = (self.fetch_fals([dades, None, None, 'penja']) + "pintats = 0;"
+                "carrega('casa.json', () => { pintats += 1; }, () => {});"
+                "new Promise((r) => setTimeout(() => r([pintats, peticions.length]), 50))")
+        self.assertEqual(self.avalua("2026-10-08T09:00:00+02:00", expr, arnes=ARNES_ASYNC), [2, 4])
+
+    def test_si_surts_trens_d_ara_i_pla_de_proteccio_civil(self):
+        trens = [{"linia": "R4", "estat": "circula"}, {"linia": "S2", "estat": "circula"}]
+        ara = "2026-10-08T09:00:00+02:00"
+        self.assertEqual(self.avalua(ara, f"avaluaPublic({json.dumps(trens)}, false).motius", "sortir.js"),
+                         ["Cap incidència als trens de Cerdanyola."])
+        self.assertEqual(self.avalua(ara, f"avaluaPublic({json.dumps(trens)}, true).motius", "sortir.js"),
+                         ["Cap incidència als trens de Cerdanyola.", "Són els trens d’ara, no els de l’hora triada."])
+        plans = [{"pla": "INUNCAT", "nom": "d'inundacions", "fase": "emergència"}]
+        self.assertEqual(self.avalua(ara, f"avisPlaSortida({json.dumps(plans)})", "sortir.js"),
+                         "Protecció Civil té el pla d'inundacions (INUNCAT) en fase d’emergència i demana evitar els "
+                         "desplaçaments que no siguin necessaris. Els veredictes de sota només miren la pluja i el vent previstos.")
+        plans[0]["fase"] = "alerta"
+        self.assertTrue(self.avalua(ara, f"avisPlaSortida({json.dumps(plans)})", "sortir.js").startswith(
+            "Protecció Civil té el pla d'inundacions (INUNCAT) en fase d’alerta: segueix"))
+        plans[0]["fase"] = "prealerta"
+        self.assertIsNone(self.avalua(ara, f"avisPlaSortida({json.dumps(plans)})", "sortir.js"))
+        self.assertIsNone(self.avalua(ara, "avisPlaSortida(undefined)", "sortir.js"))
 
 
 if __name__ == "__main__":

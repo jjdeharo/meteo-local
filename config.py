@@ -2,7 +2,7 @@
 """Datos fijos de «Temps a Montflorit»: lugares, horario, fuentes y umbrales.
 Se cambian aquí, no en los programas."""
 
-VERSION = "3.11.1"
+VERSION = "3.12.0"
 
 # Coordenadas con tres decimales (unos 100 m), no las exactas: para el tiempo
 # da igual una calle u otra, y el repositorio es público.
@@ -149,7 +149,13 @@ RIERA_FI_H = 3                      # horas por debajo del registro para cerrar 
 # Trenes de cerca (trens.py, ADR 0029): línea, operador y dónde para en
 # Cerdanyola. Una línea circula si se ha visto un tren suyo moviéndose a
 # TRENS_RADI_KM o menos de su estación (TRENS_ESTACIONS) en los últimos
-# TRENS_VIST_MIN minutos; fuera de TRENS_HORARI, sin trenes es lo normal.
+# TRENS_VIST_MIN minutos; fuera de su horario, sin trenes es lo normal. El
+# horario es el de cada línea en Cerdanyola (TRENS_HORARI_LINIA: primer y
+# último tren, del GTFS de Renfe y de FGC del 08-10-2026, con el primero del
+# tipo de día que empieza más tarde), y hasta TRENS_MARGE_INICI_MIN minutos
+# después del primer tren no se dice que no circula: el 08-10-2026 a las 05:39
+# el bot avisó de que la R7 no circulaba, y su primer tren es a las 06:40
+# (ADR 0038). Sin horario propio, TRENS_HORARI.
 TRENS = [
     ("R4", "rodalies", "Cerdanyola del Vallès"),
     ("R7", "rodalies", "Cerdanyola Universitat"),
@@ -161,3 +167,6 @@ TRENS_ESTACIONS = {"R4": (41.493, 2.148), "R7": (41.497, 2.115), "R8": (41.497, 
 TRENS_RADI_KM = 6
 TRENS_VIST_MIN = 60
 TRENS_HORARI = ("05:30", "23:30")
+TRENS_HORARI_LINIA = {"R4": ("05:20", "23:59"), "R7": ("06:35", "22:40"), "R8": ("06:49", "21:50"),
+                      "S2": ("05:14", "23:59")}
+TRENS_MARGE_INICI_MIN = 30

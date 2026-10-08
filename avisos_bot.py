@@ -139,6 +139,9 @@ def text_riera(riera, nivell):
         es = (negreta("Atención: posible desbordamiento de la riera de Sant Cugat") +
               f"\nLlueve fuerte en Sant Cugat, de donde baja el agua de la riera: {mm3} mm en 3 horas (hasta las "
               f"{hora}){mes_es}. Si continúa, la riera se puede desbordar en Montflorit. No te acerques a la riera.")
+    if riera.get("incomplet"):
+        ca += " A l'estació li falten mesures: la pluja real pot ser més alta."
+        es += " A la estación le faltan medidas: la lluvia real puede ser más alta."
     return {"ca": f"{ca}\n{ORIENTATIU['ca']}", "es": f"{es}\n{ORIENTATIU['es']}"}
 
 

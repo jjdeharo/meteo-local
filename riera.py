@@ -37,9 +37,9 @@ import csv
 import datetime as dt
 import json
 import os
-import subprocess
 import sys
 
+import avis_privat as AP
 import config as C
 import nowcast as N
 
@@ -71,6 +71,26 @@ def acumulat(filas, fins, hores):
     """mm de las medias horas que caen enteras entre fins - hores y fins."""
     desde = fins - dt.timedelta(hours=hores)
     return round(sum(mm for t, mm in filas if t >= desde and t + MITJA_HORA <= fins), 1)
+
+
+# Medias horas que pueden faltar en una ventana sin que el cálculo se dé por
+# incompleto: una en 3 horas (5 de 6) y dos en 6 (10 de 12). Una media hora
+# ausente cuenta como cero y rebaja el índice: con más huecos no se puede
+# decir que el riesgo haya bajado (auditoría del 07-10-2026, ADR 0038).
+FORATS_MAX = {3: 1, 6: 2}
+
+
+def cobertura(filas, fins, hores):
+    """Medias horas presentes entre fins - hores y fins, de las hores * 2 que
+    debería haber."""
+    desde = fins - dt.timedelta(hours=hores)
+    return sum(1 for t, _ in filas if t >= desde and t + MITJA_HORA <= fins)
+
+
+def incomplet(filas, fins):
+    """True si a alguna de las dos ventanas (3 y 6 horas) le faltan más
+    medias horas de las admitidas."""
+    return any(hores * 2 - cobertura(filas, fins, hores) > forats for hores, forats in FORATS_MAX.items())
 
 
 def previst(nc, desde, minuts):
@@ -126,6 +146,7 @@ def calcula(ahora, nc, lector=None, montflorit_3h=None):
     res = {"estacio": C.ESTACIONES.get(C.RIERA_ESTACIO, C.RIERA_ESTACIO),
            "fins": fins.astimezone().isoformat(timespec="minutes"),
            "mm_3h": acumulat(filas, fins, h), "mm_6h": acumulat(filas, fins, 6),
+           "incomplet": incomplet(filas, fins),
            "radar_1h": previst(nc, fins, 60) if nc else None,
            "capcalera": None, "montflorit_3h": montflorit_3h}
     res["index"], res["index_d_aqui_a_min"] = maxim_amb_radar(filas, fins, h, nc)
@@ -172,6 +193,8 @@ def missatge(riera, nom):
     else:
         cap += (f" S'ha desbordat amb {C.RIERA_PERILL_MM} mm o més en 3 hores i "
                 f"{C.RIERA_PERILL_6H_MM} en 6.")
+    if riera.get("incomplet"):
+        cap += " A l'estació li falten mesures: la pluja real pot ser més alta."
     return cap
 
 
@@ -194,7 +217,10 @@ def compara(estat, riera, ahora):
     ara = ahora.isoformat(timespec="minutes")
     senyal = riera["index"] >= C.RIERA_REGISTRE_MM
     text = fila = None
-    if ep and not senyal and ahora - dt.datetime.fromisoformat(ep["vist"]) >= dt.timedelta(hours=C.RIERA_FI_H):
+    # Con huecos en la estación, lo medido puede quedarse corto: el episodio
+    # no se cierra hasta tener las medias horas que faltan.
+    if ep and not senyal and not riera.get("incomplet") \
+            and ahora - dt.datetime.fromisoformat(ep["vist"]) >= dt.timedelta(hours=C.RIERA_FI_H):
         fila, ep = fila_registro(ep), None
     if senyal:
         if not ep:
@@ -259,7 +285,7 @@ def avisa(ruta, ahora=None, envia=True):
     if text:
         print(text)
         if envia:
-            subprocess.run(["avisar-juanjo", "--asunto", "meteo-local", text], check=False)
+            AP.envia(text)
     return text
 
 

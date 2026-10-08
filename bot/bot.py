@@ -74,6 +74,8 @@ T = {
         "ajuda": ("/avisos tria què reps · /resum la previsió · /ara el temps ara · "
                   "/baixa deixa de rebre'n i esborra les teves dades"),
         "velles": "Les dades de Temps a Montflorit no s'actualitzen des de les {}: ara no puc donar la previsió.",
+        "velles_ara": "Les dades de Temps a Montflorit no s'actualitzen des de les {}: ara no puc dir el temps que fa.",
+        "mesura": " (mesura de les {})",
     },
     "es": {
         "benvinguda": ("<b>Bot Temps a Montflorit</b>\nTe enviaré, solo a ti, los avisos del tiempo en Montflorit "
@@ -93,6 +95,8 @@ T = {
         "ajuda": ("/avisos elige qué recibes · /resum la previsión · /ara el tiempo ahora · "
                   "/baixa deja de recibir y borra tus datos"),
         "velles": "Los datos de Temps a Montflorit no se actualizan desde las {}: ahora no puedo dar la previsión.",
+        "velles_ara": "Los datos de Temps a Montflorit no se actualizan desde las {}: ahora no puedo decir el tiempo que hace.",
+        "mesura": " (medida de las {})",
     },
 }
 
@@ -113,6 +117,25 @@ def desa(ruta, dades):
     with open(ruta + ".tmp", "w", encoding="utf-8") as f:
         json.dump(dades, f, ensure_ascii=False)
     os.replace(ruta + ".tmp", ruta)
+
+
+# Lo que falla queda apuntado (errors.log, junto al estado), sin
+# identificadores de nadie: solo el aviso, cuántos chats y el motivo. Hasta la
+# auditoría del 07-10-2026 los fallos de Telegram se silenciaban y un aviso
+# podía caducar sin dejar rastro (ADR 0038).
+REGISTRE_MAX = 500_000
+
+
+def registra(text):
+    ruta = os.path.join(BASE, "errors.log")
+    try:
+        os.makedirs(BASE, exist_ok=True)
+        if os.path.exists(ruta) and os.path.getsize(ruta) > REGISTRE_MAX:
+            os.replace(ruta, ruta + ".1")
+        with open(ruta, "a", encoding="utf-8") as f:
+            f.write(f"{ara():%F %T}  {text}\n")
+    except OSError:
+        pass
 
 
 # --- Telegram ------------------------------------------------------------------
@@ -217,6 +240,25 @@ def text_ara(dades, idioma, lloc=""):
     if idioma == "es":
         return f"Ahora mismo{lloc and ' en ' + lloc}: {graus(t)}, {'llueve' if plou else 'no llueve'}."
     return f"Ara mateix{lloc and ' a ' + lloc}: {graus(t)}, {'plou' if plou else 'no plou'}."
+
+
+def text_ara_bot(dades, idioma, moment):
+    """La respuesta a /ara: como text_ara, pero con el mismo límite de edad
+    que el resumen, también para la propia medida, y diciendo de qué hora es
+    (auditoría del 07-10-2026)."""
+    t = T[idioma]
+    generat = dades.get("generat") and dt.datetime.fromisoformat(dades["generat"])
+    if not generat or moment - generat > dt.timedelta(hours=DADES_VELLES_H):
+        return t["velles_ara"].format(generat.strftime("%H:%M") if generat else "?")
+    a, c = dades.get("ara") or {}, dades.get("ara_casa") or {}
+    hora = (c if c.get("temperatura") is not None else a).get("hora")
+    mesura = hora and dt.datetime.fromisoformat(hora)
+    if mesura and moment - mesura > dt.timedelta(hours=DADES_VELLES_H):
+        return t["velles_ara"].format(mesura.strftime("%H:%M"))
+    text = text_ara(dades, idioma, "Montflorit")
+    if not text:
+        return t["ajuda"]
+    return text + (t["mesura"].format(mesura.strftime("%H:%M")) if mesura else "")
 
 
 DIES = {"ca": ("dilluns", "dimarts", "dimecres", "dijous", "divendres", "dissabte", "diumenge"),
@@ -393,8 +435,8 @@ def avisa_juanjo(text):
     if propi.get("token") and propi.get("chat_id"):
         try:
             Api(propi["token"])("sendMessage", chat_id=propi["chat_id"], text=text)
-        except Exception:
-            pass
+        except Exception as ex:
+            registra(f"no se ha podido avisar a Juanjo: {ex}")
 
 
 def alta(subs, chat, usuari):
@@ -406,7 +448,26 @@ def alta(subs, chat, usuari):
     return subs[chat]
 
 
-def atén(api, subs, update):
+def esborra(estat, chat):
+    """La baja borra el chat de todo el estado: la fecha del último resumen y
+    los avisos pendientes de entregarle (auditoría del 07-10-2026)."""
+    if estat is None:
+        return
+    estat.get("resums", {}).pop(chat, None)
+    for p in estat.get("pendents", {}).values():
+        p["chats"] = [c for c in p["chats"] if c != chat]
+
+
+def neteja(subs, estat):
+    """Quita del estado los restos de chats que ya no están suscritos."""
+    resums = estat.get("resums") or {}
+    for chat in [c for c in resums if c not in subs]:
+        del resums[chat]
+    for p in (estat.get("pendents") or {}).values():
+        p["chats"] = [c for c in p["chats"] if c in subs]
+
+
+def atén(api, subs, update, estat=None):
     if "callback_query" in update:
         q = update["callback_query"]
         chat = str(q["message"]["chat"]["id"])
@@ -423,6 +484,7 @@ def atén(api, subs, update):
     ordre = m["text"].split()[0].split("@")[0].lower()
     if ordre == "/baixa":
         idioma = (subs.pop(chat, None) or nou_subscriptor(m.get("from", {})))["idioma"]
+        esborra(estat, chat)
         envia(api, chat, T[idioma]["baixa"])
         return
     nou = chat not in subs
@@ -442,7 +504,7 @@ def atén(api, subs, update):
         envia(api, chat, resum(llegeix(os.path.join(DADES, "montflorit.json"), {}), sub["idioma"], ara()), html=True)
     elif ordre == "/ara":
         dades = llegeix(os.path.join(DADES, "montflorit.json"), {})
-        envia(api, chat, (text_ara(dades, sub["idioma"], "Montflorit") or t["ajuda"]) + "\n" + WEB)
+        envia(api, chat, text_ara_bot(dades, sub["idioma"], ara()) + "\n" + WEB)
     else:
         envia(api, chat, t["ajuda"])
 
@@ -495,17 +557,25 @@ def reparteix(api, subs, estat, moment):
                              "chats": [c for c, s in subs.items() if a["tipus"] in s["avisos"]]}
     for clau, p in list(pendents.items()):
         a = p["avis"]
-        if not a_repartir([a], {}, moment):     # ya no está vigente: se deja estar
+        if not a_repartir([a], {}, moment):
+            # Ya no está vigente: se deja estar, pero con rastro, y si era de
+            # riera o de peligro, Juanjo se entera (auditoría del 07-10-2026).
+            if p["canal"] or p["chats"]:
+                on = (["el canal"] if p["canal"] else []) + ([f"{len(p['chats'])} chat(s)"] if p["chats"] else [])
+                registra(f"aviso {clau} caducado sin entregar a {' y '.join(on)}")
+                if a["tipus"] in CANAL_TIPUS:
+                    avisa_juanjo(f"Temps a Montflorit: el aviso {clau} ha caducado sin llegar a {' y '.join(on)}. "
+                                 "Telegram lo ha rechazado durante toda su vigencia: mira errors.log del bot.")
             del pendents[clau]
             continue
         if p["canal"]:
             try:
                 envia(api, CANAL, f"{a['ca']}\n\n{a['es']}", html=True)
                 p["canal"] = False
-            except Exception:
-                pass
+            except Exception as ex:
+                registra(f"aviso {clau}: el canal no lo acepta: {ex}")
         al_canal_ok = a["tipus"] in CANAL_TIPUS and not p["canal"]
-        queden = []
+        queden, motius = [], []
         for chat in p["chats"]:
             sub = subs.get(chat)
             if not sub or (al_canal_ok and al_canal(api, chat, memoria)):
@@ -514,10 +584,14 @@ def reparteix(api, subs, estat, moment):
                 envia(api, chat, a[sub["idioma"]], html=True)
             except Bloquejat:
                 subs.pop(chat, None)
-            except Exception:
+                esborra(estat, chat)
+            except Exception as ex:
                 queden.append(chat)
+                motius.append(str(ex))
             time.sleep(0.05)
         p["chats"] = queden
+        if queden:
+            registra(f"aviso {clau}: {len(queden)} chat(s) sin entregar: {'; '.join(sorted(set(motius)))}")
         if not p["canal"] and not queden:
             del pendents[clau]
     # Lo repartido hace más de 3 días ya no hace falta recordarlo.
@@ -537,8 +611,8 @@ def reparteix(api, subs, estat, moment):
             envia(api, CANAL, resum(dades, "ca", moment).removesuffix("\n" + WEB) + "\n\n" + resum(dades, "es", moment),
                   html=True)
             estat["canal_resum"] = avui
-        except Exception:
-            pass
+        except Exception as ex:
+            registra(f"el resumen del canal no ha entrado: {ex}")
     canal_resum_ok = hora == CANAL_RESUM and estat.get("canal_resum") == avui
     resums = estat.setdefault("resums", {})
     for chat, sub in list(subs.items()):
@@ -552,17 +626,29 @@ def reparteix(api, subs, estat, moment):
                 resums[chat] = avui
             except Bloquejat:
                 subs.pop(chat, None)
-            except Exception:
-                pass
+                esborra(estat, chat)
+            except Exception as ex:
+                registra(f"un resumen de las {hora} h no ha entrado: {ex}")
 
 
 def actualitza_repo(estat):
-    """git pull, com a molt un cop per hora: el bot es posa al dia sol."""
-    if time.time() - estat.get("pull", 0) < 3600:
+    """Pone al día la copia del repositorio, como mucho una vez por hora, y
+    solo hasta el último commit con las pruebas de GitHub en verde
+    (desplegament.py, ADR 0038); mientras se espera a unas pruebas, cada
+    vuelta. Si la copia es tan vieja que no trae desplegament.py, git pull."""
+    pendent = estat.get("desplegament", {}).get("proves_pendents")
+    if not pendent and time.time() - estat.get("pull", 0) < 3600:
         return
     estat["pull"] = time.time()
-    subprocess.run(["git", "-C", REPO, "pull", "-q", "--ff-only"], check=False, timeout=120,
-                   stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    try:
+        sys.path.insert(0, REPO)
+        import desplegament
+        desplegament.actualitza(REPO, estat.setdefault("desplegament", {}), registra)
+    except ImportError:
+        subprocess.run(["git", "-C", REPO, "pull", "-q", "--ff-only"], check=False, timeout=120,
+                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    except Exception as ex:
+        registra(f"no se ha podido poner al día el repositorio: {ex}")
 
 
 def volta():
@@ -575,6 +661,7 @@ def volta():
     api = Api(llegeix(os.path.join(BASE, "config.json"), {})["token"])
     subs = llegeix(SUBS, {})
     estat = llegeix(ESTAT, {})
+    neteja(subs, estat)
     actualitza_repo(estat)
     fi = time.time() + DURADA_S
     while True:
@@ -587,15 +674,16 @@ def volta():
         try:
             updates = api("getUpdates", temps=queda + 10, offset=estat.get("offset"),
                           timeout=min(queda, 25), allowed_updates=["message", "callback_query"]) or []
-        except Exception:
+        except Exception as ex:
+            registra(f"getUpdates: {ex}")
             time.sleep(5)
             continue
         for u in updates:
             estat["offset"] = u["update_id"] + 1
             try:
-                atén(api, subs, u)
-            except Exception:
-                pass
+                atén(api, subs, u, estat)
+            except Exception as ex:
+                registra(f"al atender un mensaje: {ex}")
         desa(SUBS, subs)
         desa(ESTAT, estat)
 
@@ -608,6 +696,15 @@ def mostra_estat():
         print(f"  {x}: {sum(x in s['avisos'] for s in subs.values())}")
     print(f"  resum: {sum(bool(s.get('resum')) for s in subs.values())}")
     print(f"Avisos repartits (3 dies): {len(estat.get('enviats', {}))}")
+    pendents = estat.get("pendents") or {}
+    if pendents:
+        print(f"Pendents d'entregar: {', '.join(pendents)}")
+    try:
+        with open(os.path.join(BASE, "errors.log"), encoding="utf-8") as f:
+            darrers = f.readlines()[-5:]
+        print("Últims errors:\n" + "".join(darrers), end="")
+    except OSError:
+        pass
 
 
 def informe():

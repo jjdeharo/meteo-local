@@ -19,7 +19,12 @@
 # riera de Sant Cugat llega al umbral de atención o de peligro, avisa una vez
 # cada nivel por episodio (riera.py, ADR 0027).
 # Además, cada minuto mira si main tiene commits nuevos y, si los tiene,
-# publica enseguida: es el único que publica la web (ADR 0005).
+# publica enseguida: es el único que publica la web (ADR 0005). Solo se
+# despliega un commit cuyas pruebas de GitHub han pasado (desplegament.py,
+# ADR 0038): si están pendientes se espera, si han fallado se queda el
+# anterior, y si GitHub no responde se despliega como antes. Y en cada vuelta
+# reintenta los avisos privados a Juanjo que Telegram no aceptó
+# (avis_privat.py, ADR 0038).
 # La página del trayecto, su registro de aciertos y el agente diario con IA se
 # retiraron el 07-10-2026 (ADR 0030).
 #
@@ -37,8 +42,22 @@ prepara() {
   if [ ! -d "$REPO/.git" ]; then
     git clone -q "$URL_REPO" "$REPO" || { registro "no he podido clonar"; return 1; }
   fi
-  git -C "$REPO" fetch -q origin main && git -C "$REPO" reset -q --hard origin/main \
-    || { registro "no he podido poner al día el repositorio"; return 1; }
+  if [ -f "$REPO/desplegament.py" ]; then
+    # Solo hasta el último commit con las pruebas en verde; lo que apunta,
+    # con la fecha, al registro.
+    python3 "$REPO/desplegament.py" actualitza "$REPO" "$ESTAT_DIR/desplegament.json" 2>&1 >/dev/null \
+      | while IFS= read -r linia; do registro "$linia"; done
+    [ "${PIPESTATUS[0]}" = 0 ] || { registro "no he podido poner al día el repositorio"; return 1; }
+  else
+    git -C "$REPO" fetch -q origin main && git -C "$REPO" reset -q --hard origin/main \
+      || { registro "no he podido poner al día el repositorio"; return 1; }
+  fi
+}
+
+# Los avisos privados que Telegram no aceptó, mientras tengan sentido.
+reintenta_avisos() {
+  [ -s "$ESTAT_DIR/avisos-pendents.jsonl" ] || return 0
+  (cd "$REPO" && python3 avis_privat.py reintenta) | while IFS= read -r linia; do registro "$linia"; done
 }
 
 riscos() {
@@ -63,13 +82,15 @@ pasada() {
 }
 
 verificacion() {
-  prepara || return
+  prepara || return 1
+  fallos=0
   # Las horas que falten de la estación de casa, con su historial (ADR 0017).
   (cd "$REPO" && python3 registre.py estacio >/dev/null) \
-    || registro "no he podido completar la estación de casa"
+    || { registro "no he podido completar la estación de casa"; fallos=1; }
   # La página de casa aprende de lo que pasó (ADR 0012).
   (cd "$REPO" && python3 aprenentatge.py diari >/dev/null) \
-    && registro "aprendizaje de casa hecho" || registro "ha fallado el aprendizaje de casa"
+    && registro "aprendizaje de casa hecho" || { registro "ha fallado el aprendizaje de casa"; fallos=1; }
+  return $fallos
 }
 
 
@@ -95,18 +116,24 @@ while true; do
   else
     [ "$(cd "$REPO" && python3 que_toca.py "$ahora" "$ESTAT_DIR/casa.json")" = casa ] && pasada
   fi
-  # Código nuevo en main: se publica ya, sin esperar a la próxima hora.
+  # Código nuevo en main: se publica ya, sin esperar a la próxima hora, si
+  # sus pruebas han pasado (prepara solo mueve la copia entonces).
   if [ -d "$REPO/.git" ] && hay_cambios; then
-    registro "hay código nuevo en main"
-    pasada
+    antes=$(git -C "$REPO" rev-parse HEAD)
+    if prepara && [ "$(git -C "$REPO" rev-parse HEAD)" != "$antes" ]; then
+      registro "hay código nuevo en main"
+      pasada
+    fi
   fi
   # A la hora de verificación o después, una vez al día: una pasada larga
-  # que cruce la hora en punto no la deja sin hacer.
+  # que cruce la hora en punto no la deja sin hacer. Si falla, queda dicho:
+  # se vuelve a intentar al día siguiente.
   if [ -d "$REPO/.git" ] && [[ "$ahora" > "$(hora_verificacion)" || "$ahora" = "$(hora_verificacion)" ]] \
       && [ "$(cat "$ESTAT_DIR/verificacio-feta" 2>/dev/null)" != "$(date +%F)" ]; then
     date +%F > "$ESTAT_DIR/verificacio-feta"
-    verificacion
+    verificacion || registro "la verificación de las $(hora_verificacion) ha fallado: se repetirá mañana"
   fi
+  [ -d "$REPO/.git" ] && reintenta_avisos
   if [ -d "$REPO/.git" ] && [ "${ahora#*:}" = "05" ] && [ -f /estat/vigila-pluviometre.json ]; then
     (cd "$REPO" && python3 pluviometre.py vigila) || registro "ha fallado la vigilancia del pluviómetro"
   fi

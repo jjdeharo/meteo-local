@@ -17,6 +17,11 @@ programa vive en el hosting de IONOS, fuera de casa, y lo ejecuta el cron cada
   resultado; si falla, avisa. Así una reserva rota no se descubre el día que
   hace falta.
 
+Los avisos a Juanjo pasan por avis_privat.py: si Telegram no los acepta, se
+reintentan en cada vuelta mientras tengan sentido (ADR 0038). Y la copia del
+repositorio solo avanza hasta el último commit con las pruebas de GitHub en
+verde (desplegament.py, ADR 0038).
+
 Sin la estación de casa (sus claves están en el NAS) ni el modelo aprendido
 (usa el del archivo, que va en el repositorio). numpy, con un solo hilo: el
 hosting limita la memoria.
@@ -50,6 +55,12 @@ ESTAT_RESERVA = os.path.join(ESTAT, "reserva.json")
 REGISTRE = os.path.join(BASE, "registre.log")
 PYTHON = sys.executable
 AVISA = os.path.join(BASE, "bin", "avisar-juanjo")
+sys.path.insert(0, REPO)
+try:
+    import avis_privat as AP
+    AP.ORDRE, AP.PENDENTS = AVISA, os.path.join(ESTAT, "avisos-pendents.jsonl")
+except ImportError:            # copia del repositorio anterior a la cola
+    AP = None
 ENTORN = dict(os.environ,
               OPENBLAS_NUM_THREADS="1", OMP_NUM_THREADS="1",
               REGISTRE_DIR=os.path.join(ESTAT, "registre"),
@@ -88,7 +99,20 @@ def avisa(text):
     if os.environ.get("RESERVA_SENSE_AVISOS"):
         print("(sense avisar)", text)
         return
-    subprocess.run([AVISA, "--asunto", "meteo-local", text], check=False)
+    if AP is None:
+        subprocess.run([AVISA, "--asunto", "meteo-local", text], check=False)
+    elif not AP.envia(text):
+        apunta("Telegram no ha acceptat l'avís: queda pendent")
+
+
+def reintenta_avisos():
+    if AP is None or os.environ.get("RESERVA_SENSE_AVISOS"):
+        return
+    entregats, caducats, queden = AP.reintenta()
+    for p in entregats:
+        apunta(f"avís entregat en reintentar (de les {p['hora'][11:16]}): {p['text'][:60]}")
+    for p in caducats:
+        apunta(f"avís caducat sense entregar (de les {p['hora'][11:16]}): {p['text'][:60]}")
 
 
 def llegeix_estat():
@@ -132,12 +156,21 @@ def calcula(carpeta):
 
 
 def actualitza_repo(estat):
-    """git pull, com a molt un cop per hora."""
-    if time.time() - estat.get("pull", 0) < 3600:
+    """Posa al dia la còpia del repositori, com a molt un cop per hora, i
+    només fins a l'últim commit amb les proves de GitHub en verd
+    (desplegament.py); mentre s'espera unes proves, a cada volta."""
+    pendent = estat.get("desplegament", {}).get("proves_pendents")
+    if not pendent and time.time() - estat.get("pull", 0) < 3600:
         return
-    subprocess.run(["git", "-C", REPO, "pull", "-q", "--ff-only"], check=False, timeout=120,
-                   stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     estat["pull"] = time.time()
+    try:
+        import desplegament
+        desplegament.actualitza(REPO, estat.setdefault("desplegament", {}), apunta)
+    except ImportError:
+        subprocess.run(["git", "-C", REPO, "pull", "-q", "--ff-only"], check=False, timeout=120,
+                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    except Exception as ex:
+        apunta(f"no s'ha pogut posar al dia el repositori: {ex}")
 
 
 def vigila():
@@ -145,6 +178,7 @@ def vigila():
     if pany is None:
         return          # la vuelta anterior aún no ha acabado
     os.makedirs(os.path.join(ESTAT, "registre"), exist_ok=True)
+    reintenta_avisos()
     estat = llegeix_estat()
     dades, edat = dades_publicades()
     nas_viu = dades is not None and not dades.get("reserva") and edat <= LLINDAR_MIN

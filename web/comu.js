@@ -191,9 +191,12 @@ function properaActualitzacio(horari, ara = new Date()) {
 
 // Les dades les puja el NAS a IONOS a cada actualització; la còpia de GitHub
 // (al costat de la pàgina) es renova cada mitja hora com a molt i és la
-// reserva si IONOS no respon (ADR 0020).
+// reserva si IONOS no respon (ADR 0020) o si el que serveix és vell: quan la
+// pujada a IONOS falla, publica.sh publica a GitHub, i IONOS es queda amb les
+// dades d'abans (auditoria del 07-10-2026, ADR 0038).
 const DADES_URL = 'https://bilateria.org/app/meteo-local/';
 const ESPERA_DADES_MS = 6000;
+const DADES_RESERVA_MIN = 45;
 
 function baixa(url) {
   const control = new AbortController();
@@ -207,7 +210,13 @@ function baixa(url) {
 }
 
 function llegeixDades(nom) {
-  return baixa(DADES_URL + nom).catch(() => baixa(ARREL + nom));
+  return baixa(DADES_URL + nom).then((dades) => {
+    if (Date.now() - new Date(dades.generat) <= DADES_RESERVA_MIN * 60000) return dades;
+    // IONOS respon, però amb dades velles: es mira la còpia de GitHub i es
+    // fa servir la més nova de les dues.
+    return baixa(ARREL + nom)
+      .then((copia) => (new Date(copia.generat) > new Date(dades.generat) ? copia : dades), () => dades);
+  }, () => baixa(ARREL + nom));
 }
 
 function carrega(url, pinta, error) {
@@ -243,15 +252,22 @@ function carrega(url, pinta, error) {
           temporitzador = setTimeout(llegeix, 60000);
           return;
         }
+        // Les d'abans es tornen a pintar: si ja tenen massa hores, la pàgina
+        // ho diu i amaga la previsió (dadesVelles) encara que no arribi res
+        // de nou (auditoria del 07-10-2026).
+        pinta(dades);
         reintents += 1;
         programa();
       });
   }
 
   // Amb la pestanya amagada (sobretot al mòbil) els temporitzadors s'aturen:
-  // en tornar-hi, es mira si ja tocava (o si encara no hi ha dades).
+  // en tornar-hi, es mira si ja tocava (o si encara no hi ha dades) i, si no,
+  // es torna a pintar el que hi ha, perquè l'edat de les dades es comprovi.
   document.addEventListener('visibilitychange', () => {
-    if (!document.hidden && (!dades || Date.now() >= previst)) llegeix();
+    if (document.hidden) return;
+    if (!dades || Date.now() >= previst) llegeix();
+    else pinta(dades);
   });
   llegeix();
 }

@@ -20,6 +20,9 @@ echo "Carpeta, candado y aviso…"
 ssh "$IONOS" "mkdir -p $DIR/bin $DIR/estat && chmod 700 $DIR"
 cat "$BASE/htaccess" | ssh "$IONOS" "cat > $DIR/.htaccess"
 cat "$BASE/avisar-juanjo" | ssh "$IONOS" "cat > $DIR/bin/avisar-juanjo && chmod 700 $DIR/bin/avisar-juanjo"
+# El receptor de los datos que sube el NAS (la orden fija de su clave en
+# ~/.ssh/authorized_keys de IONOS, ADR 0038).
+cat "$BASE/rep-dades.sh" | ssh "$IONOS" "cat > $DIR/bin/rep-dades && chmod 700 $DIR/bin/rep-dades"
 
 echo "Repositorio…"
 ssh "$IONOS" "[ -d $DIR/repo/.git ] && git -C $DIR/repo pull -q --ff-only || git clone -q $URL_REPO $DIR/repo"

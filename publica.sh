@@ -49,8 +49,10 @@ if [ -n "$ESTAT_DIR" ]; then
     || echo "$(date '+%F %T')  han fallat els avisos del bot" >&2
 fi
 
-# Los datos, a IONOS: una conexión con una clave que solo puede dejar .json
-# en su carpeta (la orden la fija IONOS en authorized_keys).
+# Los datos, a IONOS: una conexión con una clave que solo puede ejecutar
+# reserva/rep-dades.sh (la orden la fija IONOS en authorized_keys), que acepta
+# únicamente montflorit.json y avisos.json, archivos normales con JSON válido
+# (ADR 0038).
 # El usuario y el servidor están en el NAS, fuera del repositorio, que es
 # público: ~/.config/meteo-local/ionos.env (IONOS=usuario@servidor).
 CLAU_IONOS=${CLAU_IONOS:-$HOME/.ssh/id_ionos}

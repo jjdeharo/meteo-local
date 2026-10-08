@@ -75,6 +75,52 @@ class Index(unittest.TestCase):
         fins = dt.datetime(2026, 10, 3, 23, 0, tzinfo=UTC)
         self.assertIsNone(self.calcula(fins + dt.timedelta(hours=3), fins, None))
 
+    def test_forats_a_l_estacio(self):
+        # Auditoría del 07-10-2026: las medias horas que faltan contaban como
+        # cero. Con todas, completo; sin una de las 6 de 3 h, aún; sin dos, no.
+        fins = dt.datetime(2026, 10, 4, 0, 0, tzinfo=UTC)
+        # La tabla de Meteocat trae todas las medias horas, con 0,0 si no llueve.
+        filas = [(dt.datetime(2026, 10, 3, 18, m, tzinfo=UTC), 0.0) for m in (0, 30)] \
+            + [(dt.datetime(2026, 10, 3, 19, 0, tzinfo=UTC), 0.0)] + files_xv(fins)
+        self.assertEqual(RI.cobertura(filas, fins, 3), 6)
+        self.assertEqual(RI.cobertura(filas, fins, 6), 12)
+        self.assertFalse(RI.incomplet(filas, fins))
+        sense_una = [f for f in filas if f[0].hour != 22 or f[0].minute != 0]
+        self.assertFalse(RI.incomplet(sense_una, fins))
+        sense_dues = [f for f in sense_una if f[0].hour != 21 or f[0].minute != 30]
+        self.assertTrue(RI.incomplet(sense_dues, fins))
+        # En 6 horas se admiten dos huecos; tres, no.
+        sense_dues_de_6h = [f for f in filas if (f[0].hour, f[0].minute) not in ((18, 30), (19, 30))]
+        self.assertFalse(RI.incomplet(sense_dues_de_6h, fins))
+        sense_tres_de_6h = [f for f in sense_dues_de_6h if (f[0].hour, f[0].minute) != (20, 30)]
+        self.assertTrue(RI.incomplet(sense_tres_de_6h, fins))
+
+    def test_calcula_marca_incomplet_i_el_missatge_ho_diu(self):
+        fins = dt.datetime(2026, 10, 3, 23, 0, tzinfo=UTC)
+        ara = fins + dt.timedelta(minutes=30)
+        import prevision as P
+        original = P.taula_meteocat
+        # Faltan las medias horas de las 21:30 y las 22:00: 2 huecos en 3 h.
+        P.taula_meteocat = lambda codi, dia=None, lector=None: [
+            f for f in files_xv(fins) if f[0].date() == dia and (f[0].hour, f[0].minute) not in ((21, 30), (22, 0))
+        ] if codi == C.RIERA_ESTACIO else []
+        try:
+            r = RI.calcula(ara, None)
+        finally:
+            P.taula_meteocat = original
+        self.assertTrue(r["incomplet"])
+        self.assertEqual(r["mm_3h"], 22.7)      # 40,7 menos las dos medias horas que faltan (9,1 y 8,9)
+        self.assertIn("li falten mesures", RI.missatge(r, "registre"))
+
+    def test_canvi_de_dia_utc_sense_forats(self):
+        # Ventana de 3 h que cruza la medianoche UTC (filas de dos días): completa.
+        fins = dt.datetime(2026, 10, 4, 1, 0, tzinfo=UTC)
+        filas = files_xv(dt.datetime(2026, 10, 4, 0, 0, tzinfo=UTC)) + [
+            (dt.datetime(2026, 10, 4, 0, 0, tzinfo=UTC), 3.0), (dt.datetime(2026, 10, 4, 0, 30, tzinfo=UTC), 1.0)]
+        self.assertEqual(RI.cobertura(filas, fins, 3), 6)
+        self.assertFalse(RI.incomplet(filas, fins))
+        self.assertEqual(RI.acumulat(filas, fins, 3), 47.0)   # 22:00-01:00 UTC
+
     def calcula(self, ara, fins, nc):
         import prevision as P
         original = P.taula_meteocat
@@ -151,6 +197,21 @@ class Avisos(unittest.TestCase):
         self.assertEqual(sum(bool(t) for t in textos), 1)
         self.assertIsNotNone(estat["episodi"])
         self.assertEqual(files, [])
+
+    def test_amb_forats_l_episodi_no_es_tanca(self):
+        # Tras el aviso, 4 horas de índice bajo pero con huecos en la estación:
+        # el episodio sigue abierto; con los datos completos, se cierra.
+        estat, files = {"episodi": None}, []
+        for i, (index, forats) in enumerate([(38, False), (5, True), (5, True), (5, True), (5, True), (5, True),
+                                             (5, True), (5, True), (5, True), (5, False)]):
+            riera = dict(self.riera(index), incomplet=forats)
+            _, fila = RI.compara(estat, riera, self.T0 + dt.timedelta(minutes=30 * i))
+            if fila:
+                files.append(fila)
+            if i == 8:
+                self.assertIsNotNone(estat["episodi"])
+        self.assertIsNone(estat["episodi"])
+        self.assertEqual(len(files), 1)
 
     def test_pluja_feble_no_obre_episodi(self):
         _, files, estat = self.passades([5, 12, 19, 8])

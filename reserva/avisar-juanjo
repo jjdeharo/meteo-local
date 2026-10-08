@@ -13,7 +13,9 @@ leer() {
 }
 token=$(leer token); chat=$(leer chat_id)
 [ -n "$token" ] && [ -n "$chat" ] || { echo "sense credencials del bot" >&2; exit 1; }
-curl -s -m 30 -o /dev/null \
+# -f: si Telegram contesta con error, el código de salida lo dice, y quien
+# llama (avis_privat.py) lo deja pendiente para reintentarlo.
+curl -sf -m 30 -o /dev/null \
   --data-urlencode "chat_id=$chat" \
   --data-urlencode "text=${asunto:+[$asunto, reserva] }$texto" \
   "https://api.telegram.org/bot$token/sendMessage"

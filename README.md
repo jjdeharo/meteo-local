@@ -83,7 +83,8 @@ Fuentes de la previsión:
 4. **Avisos de AEMET** del Prelitoral de Barcelona y **planes de Protección
    Civil** (ADR 0008).
 5. **Trenes**: avisos y posición en tiempo real de Renfe (R4, R7 y R8) y de FGC
-   (S2), para «Si surts» (`trens.py`, ADR 0029).
+   (S2), para «Si surts» (`trens.py`, ADR 0029), con el horario de cada línea
+   en Cerdanyola sacado de sus GTFS (ADR 0038).
 
 Umbrales y lugares, en `config.py`. El porqué, en los ADR.
 
@@ -98,9 +99,11 @@ Umbrales y lugares, en `config.py`. El porqué, en los ADR.
 | `montflorit.py`, `montflorit/` | Genera la web pública a partir de `web/` y sus datos sin lo privado; manifiesto, iconos y README propios (ADR 0024), y `es.js`, los textos del programa en castellano (ADR 0025) |
 | `i18n/` | `es.json`, la traducción de los textos fijos, y `claus.js`, que saca del programa los textos por traducir (ADR 0025) |
 | `publica.sh` | Calcula y publica (lo usa el NAS) |
+| `desplegament.py` | Pone al día la copia del repositorio (NAS, reserva y bot) solo hasta el último commit con las pruebas de GitHub en verde (ADR 0038) |
+| `avis_privat.py` | Avisos privados a Juanjo por Telegram con cola de reintento si Telegram no los acepta (ADR 0038) |
 | `avisos_bot.py` | Decide los avisos públicos para el bot y el canal y los deja en `avisos.json` (ADR 0034) |
 | `bot/` | El bot de Telegram, que vive en IONOS: `bot.py` (menú, suscripciones, reparto y resumen) e `instalar.sh` (ADR 0034) |
-| `reserva/` | Servidor de reserva en IONOS: `reserva.py` (vigila, calcula y avisa si el NAS no publica), `avisar-juanjo` e `instalar.sh` (ADR 0032) |
+| `reserva/` | Servidor de reserva en IONOS: `reserva.py` (vigila, calcula y avisa si el NAS no publica), `avisar-juanjo`, `rep-dades.sh` (recibe los datos que sube el NAS: la orden fija de su clave, ADR 0038) e `instalar.sh` (ADR 0032) |
 | `que_toca.py` | Si toca actualizar en este minuto, según el horario publicado |
 | `nas/` | Contenedor del NAS: `compose.yml`, `Dockerfile` y `reloj.sh` |
 | `trens.py` | Estado de las líneas de tren de Cerdanyola con los datos en tiempo real de Renfe y FGC (ADR 0029) |

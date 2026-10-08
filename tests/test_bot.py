@@ -75,8 +75,19 @@ class Menu(unittest.TestCase):
         B.atén(api, subs, {"callback_query": {"id": "q", "data": "t:trens", "from": {},
                                               "message": {"chat": {"id": 5}, "message_id": 9}}})
         self.assertIn("trens", subs["5"]["avisos"])
-        B.atén(api, subs, {"message": {"chat": {"id": 5, "type": "private"}, "from": {}, "text": "/baixa"}})
+        estat = {"resums": {"5": "2026-10-07", "6": "2026-10-07"},
+                 "pendents": {"riera:1": {"avis": {}, "canal": False, "chats": ["5", "6"]}}}
+        B.atén(api, subs, {"message": {"chat": {"id": 5, "type": "private"}, "from": {}, "text": "/baixa"}}, estat)
         self.assertNotIn("5", subs)
+        # La baja borra el chat de todo el estado (auditoría del 07-10-2026).
+        self.assertEqual(estat["resums"], {"6": "2026-10-07"})
+        self.assertEqual(estat["pendents"]["riera:1"]["chats"], ["6"])
+        self.assertEqual(json.dumps(estat).count('"5"'), 0)
+
+    def test_neteja_de_restes(self):
+        estat = {"resums": {"1": "d", "9": "d"}, "pendents": {"x": {"avis": {}, "canal": False, "chats": ["1", "9"]}}}
+        B.neteja({"1": {}}, estat)
+        self.assertEqual(estat, {"resums": {"1": "d"}, "pendents": {"x": {"avis": {}, "canal": False, "chats": ["1"]}}})
 
     def test_alta_avisa_a_juanjo_sense_nom(self):
         avisos, original = [], B.avisa_juanjo
@@ -154,6 +165,20 @@ class Resum(unittest.TestCase):
     def test_dades_velles(self):
         r = B.resum(dades(ARA - dt.timedelta(hours=3)), "ca", ARA)
         self.assertIn("no s'actualitzen des de les", r)
+
+    def test_ara_amb_el_mateix_limit_i_l_hora_de_la_mesura(self):
+        # Auditoría del 07-10-2026: /ara contestaba con medidas de hace horas.
+        d = dades()
+        d["ara"]["hora"] = (ARA - dt.timedelta(minutes=9)).isoformat(timespec="minutes")
+        self.assertEqual(B.text_ara_bot(d, "ca", ARA), "Ara mateix a Montflorit: 16 °C, no plou. (mesura de les 06:51)")
+        self.assertEqual(B.text_ara_bot(d, "es", ARA), "Ahora mismo en Montflorit: 16 °C, no llueve. (medida de las 06:51)")
+        vell = dades(ARA - dt.timedelta(hours=3))
+        self.assertIn("ara no puc dir el temps que fa", B.text_ara_bot(vell, "ca", ARA))
+        self.assertIn("ahora no puedo decir el tiempo que hace", B.text_ara_bot(vell, "es", ARA))
+        # Medida congelada con un generat reciente: tampoco.
+        d["ara"]["hora"] = (ARA - dt.timedelta(hours=5)).isoformat(timespec="minutes")
+        self.assertIn("des de les 02:00", B.text_ara_bot(d, "ca", ARA))
+        self.assertEqual(B.text_ara_bot({}, "ca", ARA), B.T["ca"]["velles_ara"].format("?"))
 
 
 class Repartiment(unittest.TestCase):
@@ -279,6 +304,65 @@ class AvisosPublics(unittest.TestCase):
         self.assertIn("Viento muy fuerte previsto: rachas de hasta 75 km/h, hoy de 15 a 16 h.", nous[0]["es"])
         self.assertTrue(nous[0]["es"].startswith("<b>Aviso de peligro (amarillo): viento muy fuerte</b>"))
 
+
+
+class Registre(unittest.TestCase):
+    """Los fallos de Telegram dejan rastro y un aviso que caduca sin
+    entregarse se dice (auditoría del 07-10-2026)."""
+
+    def setUp(self):
+        self.dir = tempfile.TemporaryDirectory()
+        B.DADES = B.BASE = self.dir.name
+        self.avisos, self.original = [], B.avisa_juanjo
+        B.avisa_juanjo = self.avisos.append
+
+    def tearDown(self):
+        B.avisa_juanjo = self.original
+        self.dir.cleanup()
+
+    def registre(self):
+        try:
+            with open(os.path.join(self.dir.name, "errors.log")) as f:
+                return f.read()
+        except FileNotFoundError:
+            return ""
+
+    def test_un_avis_que_caduca_queda_apuntat_i_avisa(self):
+        ara = ARA.replace(hour=10)
+        with open(os.path.join(self.dir.name, "avisos.json"), "w") as f:
+            json.dump({"avisos": [{"id": "riera:1", "tipus": "riera", "hora": ara.isoformat(timespec="minutes"),
+                                   "ca": "R ca", "es": "R es"}]}, f)
+        with open(os.path.join(self.dir.name, "montflorit.json"), "w") as f:
+            json.dump(dades(), f)
+        subs = {"1": {"idioma": "ca", "avisos": ["riera"], "resum": None}}
+        api, estat = Api(canal_falla=True), {}
+        api.falla_tot = True
+
+        class Tot(Api):
+            def __call__(self, metode, temps=30, **p):
+                if metode == "sendMessage":
+                    raise RuntimeError("Too Many Requests")
+                return super().__call__(metode, temps, **p)
+        api = Tot()
+        B.reparteix(api, subs, estat, ara + dt.timedelta(minutes=1))
+        self.assertIn("el canal no lo acepta: Too Many Requests", self.registre())
+        self.assertIn("1 chat(s) sin entregar: Too Many Requests", self.registre())
+        self.assertNotIn('"1"', self.registre())      # sin identificadores
+        self.assertEqual(self.avisos, [])
+        B.reparteix(api, subs, estat, ara + dt.timedelta(hours=4))
+        self.assertIn("aviso riera:1 caducado sin entregar a el canal y 1 chat(s)", self.registre())
+        self.assertEqual(len(self.avisos), 1)
+        self.assertIn("ha caducado sin llegar", self.avisos[0])
+        self.assertEqual(estat["pendents"], {})
+        # Un aviso de lluvia caducado deja rastro, pero no molesta a Juanjo.
+        with open(os.path.join(self.dir.name, "avisos.json"), "w") as f:
+            json.dump({"avisos": [{"id": "pluja:1", "tipus": "pluja", "hora": ara.isoformat(timespec="minutes"),
+                                   "ca": "P", "es": "P"}]}, f)
+        subs = {"1": {"idioma": "ca", "avisos": ["pluja"], "resum": None}}
+        B.reparteix(api, subs, estat, ara + dt.timedelta(minutes=5))
+        B.reparteix(api, subs, estat, ara + dt.timedelta(minutes=40))
+        self.assertIn("aviso pluja:1 caducado", self.registre())
+        self.assertEqual(len(self.avisos), 1)
 
 
 class RepartimentAmbReintents(unittest.TestCase):

@@ -40,7 +40,23 @@ class Protobuf(unittest.TestCase):
                   + camp(11, traduccio("Obres a Bellaterra.", "ca") + traduccio("Obras en Bellaterra.", "es")))
         feed = camp(1, camp(1, "2.0")) + camp(2, camp(1, "a1") + camp(5, alerta))
         self.assertEqual(T.avisos_pb(feed), [{"rutes": ["S2", "S1"], "text": {
-            "ca": "Obres a Bellaterra.", "es": "Obras en Bellaterra."}}])
+            "ca": "Obres a Bellaterra.", "es": "Obras en Bellaterra."}, "inici": T.iso(1791350000)}])
+        self.assertEqual(T.iso(1791350000), "2026-10-07T07:13+02:00")
+        self.assertIsNone(T.iso(None))
+
+    def test_avisos_renfe_amb_inici(self):
+        # Formato real de alerts.json (08-10-2026): activePeriod con start en segundos.
+        dades = {"entity": [{"alert": {"activePeriod": [{"start": "1791354540"}],
+                                       "informedEntity": [{"routeId": "51T0036R8"}],
+                                       "descriptionText": {"translation": [
+                                           {"text": "Circulació ferroviària a tot el recorregut.", "language": "es"},
+                                           {"text": "Circulación ferroviaria en todo su recorrido.", "language": "es"}]}}},
+                            {"alert": {"informedEntity": [{"routeId": "51T0036R8"}],
+                                       "descriptionText": {"translation": [{"text": "Sense data.", "language": "es"}]}}}]}
+        r = T.avisos_renfe(dades)
+        self.assertEqual([a["linies"] for a in r], [{"R8"}, {"R8"}])
+        self.assertEqual(r[0]["inici"], "2026-10-07T08:29+02:00")
+        self.assertIsNone(r[1]["inici"])
 
 
 class Idiomes(unittest.TestCase):
@@ -80,8 +96,8 @@ class Estat(unittest.TestCase):
         abans = {"hora": (ARA - dt.timedelta(minutes=15)).isoformat(), "posicions": {"1": (41.48, 2.12)}}
         self.assertEqual(len(T.es_mouen([tren("R7", *R7)], abans, ARA)), 1)
 
-    def avis(self, linies, ca, es=None):
-        return {"linies": set(linies), "text": {"ca": ca, "es": es or ca}}
+    def avis(self, linies, ca, es=None, inici=None):
+        return {"linies": set(linies), "text": {"ca": ca, "es": es or ca}, "inici": inici}
 
     def test_estats(self):
         bus = self.avis(["R8"], "Servei alternatiu per carretera en tot el seu recorregut.")
@@ -93,6 +109,24 @@ class Estat(unittest.TestCase):
         self.assertEqual(T.estat_linia("R4", [], None, [general], ARA)["estat"], "sense_trens")
         nit = ARA.replace(hour=2)
         self.assertEqual(T.estat_linia("R4", [], None, [], nit)["estat"], "fora_horari")
+
+    def test_horari_de_cada_linia(self):
+        # 08-10-2026, 05:39: «l'R7 no circula», però el primer tren és a les 06:40.
+        general = self.avis(["R4", "R7", "R8"], "No es pot garantir la prestació del servei.")
+        matinada = ARA.replace(hour=5, minute=39)
+        self.assertEqual(T.estat_linia("R7", [], None, [general], matinada)["estat"], "fora_horari")
+        self.assertEqual(T.estat_linia("R8", [], None, [], matinada)["estat"], "fora_horari")
+        self.assertEqual(T.estat_linia("R4", [], None, [], matinada)["estat"], "fora_horari")   # 05:20 + 30 min
+        self.assertEqual(T.estat_linia("R4", [], None, [], ARA.replace(hour=5, minute=50))["estat"], "sense_trens")
+        self.assertEqual(T.estat_linia("S2", [], None, [], ARA.replace(hour=5, minute=45))["estat"], "sense_trens")
+        # Mitja hora després del primer tren de l'R7 (06:35 a Cerdanyola), ja compta.
+        self.assertEqual(T.estat_linia("R7", [], None, [], ARA.replace(hour=7, minute=4))["estat"], "fora_horari")
+        self.assertEqual(T.estat_linia("R7", [], None, [], ARA.replace(hour=7, minute=5))["estat"], "sense_trens")
+        # I després de l'últim (22:40), tampoc; l'R4 fins a mitjanit.
+        self.assertEqual(T.estat_linia("R7", [], None, [], ARA.replace(hour=22, minute=50))["estat"], "fora_horari")
+        self.assertEqual(T.estat_linia("R4", [], None, [], ARA.replace(hour=23, minute=50))["estat"], "sense_trens")
+        # Una línia que es mou circula a qualsevol hora.
+        self.assertEqual(T.estat_linia("R7", [tren("R7", *R7)], None, [], matinada)["estat"], "circula")
 
     def test_vist_fa_poc_circula(self):
         # Amb trens cada 30 minuts, en una passada pot no haver-n'hi cap a prop.
@@ -107,6 +141,27 @@ class Estat(unittest.TestCase):
         r = T.estat_linia("R8", [], None, [general, bus, bus], ARA)
         self.assertEqual([a["ca"] for a in r["avisos"]], ["Servei alternatiu per carretera.",
                                                           "No es pot garantir el servei."])
+
+    def test_l_avis_mes_recent_mana(self):
+        # 07-10-2026, 20:21: l'R8 tenia un avís vell de servei per carretera i
+        # un de nou de circulació ferroviària, i sortia «bus» (auditoria).
+        bus = self.avis(["R8"], "Servei alternatiu per carretera en tot el seu recorregut.", inici="2026-10-06T18:33+02:00")
+        tren = self.avis(["R8"], "Circulació ferroviària a tot el recorregut.", inici="2026-10-07T09:49+02:00")
+        general = self.avis(["R4", "R7", "R8"], "No es pot garantir la prestació del servei.", inici="2026-10-07T09:02+02:00")
+        r = T.estat_linia("R8", [], None, [bus, general, tren], ARA)
+        self.assertEqual(r["estat"], "sense_trens")
+        # Del més nou al més vell: primer el propi nou, després el propi vell, i el general.
+        self.assertEqual([a["ca"][:12] for a in r["avisos"]], ["Circulació f", "Servei alter"])
+        # Al revés (el de carretera és el nou), bus.
+        bus["inici"], tren["inici"] = tren["inici"], bus["inici"]
+        self.assertEqual(T.estat_linia("R8", [], None, [tren, general, bus], ARA)["estat"], "bus")
+        # Un avís nou que no parla del servei (obres) no treu el bus.
+        obres = self.avis(["R8"], "Obres a l'estació de Mollet.", inici="2026-10-07T12:00+02:00")
+        self.assertEqual(T.estat_linia("R8", [], None, [tren, general, bus, obres], ARA)["estat"], "bus")
+        # Sense dates, com abans: qualsevol avís propi de carretera.
+        for a in (bus, tren, general):
+            a["inici"] = None
+        self.assertEqual(T.estat_linia("R8", [], None, [tren, bus], ARA)["estat"], "bus")
 
 
 if __name__ == "__main__":

@@ -28,9 +28,12 @@ Al cambiar algo:
   (`bilateria.org/app/meteo-local/`) y la web, cada media hora como mucho
   (ADR 0020). Este repositorio no publica ninguna web: las direcciones
   antiguas (`jjdeharo.github.io/meteo-local/…`) las redirige
-  `jjdeharo/jjdeharo.github.io` (ADR 0035). La clave del NAS para IONOS solo puede dejar `.json` en esa
-  carpeta (orden fija en el `authorized_keys` de IONOS); la carpeta tiene un
-  `.htaccess` que permite leer los datos desde `meteo-montflorit.github.io`.
+  `jjdeharo/jjdeharo.github.io` (ADR 0035). La clave del NAS para IONOS solo
+  puede ejecutar `reserva/rep-dades.sh` (orden fija en el `authorized_keys` de
+  IONOS, instalado en `.meteo-reserva/bin/rep-dades` por `reserva/instalar.sh`),
+  que solo acepta `montflorit.json` y `avisos.json` como archivos normales con
+  JSON válido (ADR 0038); la carpeta tiene un `.htaccess` que permite leer los
+  datos desde `meteo-montflorit.github.io`.
 - La web pública (repositorio `meteo-montflorit/meteo-montflorit.github.io`;
   ADR 0024, 0028 y 0029) la genera `montflorit.py` a partir de
   `web/casa.html`, `web/sortir.html` y `web/fonts.html`, y no puede decir

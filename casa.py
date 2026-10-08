@@ -419,6 +419,8 @@ def recoger(anterior=None):
         salida["riera"] = RI.calcula(P.AHORA, nc, montflorit_3h=m3)
         if salida["riera"] is None:
             salida["errors"].append("riera: Sant Cugat (Meteocat) sense dades recents")
+        elif salida["riera"].get("incomplet"):
+            salida["errors"].append("riera: a Sant Cugat (Meteocat) li falten mitges hores de pluja")
     except Exception as ex:
         salida["riera"] = None
         salida["errors"].append(f"riera: {ex}")
