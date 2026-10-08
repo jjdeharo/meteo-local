@@ -409,6 +409,7 @@ class Consultes(unittest.TestCase):
         self.assertIn("Tiempo excepcional (lo calcula Temps a Montflorit", r)
         subs["7"]["idioma"] = "ca"
         self.assertIn("Ara bufa vent molt fort: ratxes de 75\u00a0km/h.", self.ordre("/avisos_actius", subs))
+        subs["7"]["idioma"] = "es"
         self.assertIn("va hacia el este", self.ordre("/radar", subs))
 
     def test_dades_velles(self):
