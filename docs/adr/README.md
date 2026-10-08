@@ -45,5 +45,6 @@
 | [0041](0041-trams-del-dia-en-la-tarjeta-de-ahora.md) | Tramos del día en la tarjeta de ahora | aceptado |
 | [0042](0042-lluvia-de-sant-cugat-como-senal-del-modelo-propio.md) | Lluvia de Sant Cugat como señal del modelo propio | aceptado |
 | [0043](0043-terminologia-del-manual-de-estilo-de-meteocat.md) | Terminología del manual de estilo de Meteocat | aceptado |
+| [0044](0044-copia-del-registro-en-github.md) | Copia del registro en un repositorio privado de GitHub | aceptado |
 
 Plantilla: [0000-plantilla.md](0000-plantilla.md). Para crear uno: `nuevo-adr "Título"`.

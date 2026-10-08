@@ -25,6 +25,8 @@
 # anterior, y si GitHub no responde se despliega como antes. Y en cada vuelta
 # reintenta los avisos privados a Juanjo que Telegram no aceptó
 # (avis_privat.py, ADR 0038).
+# Una vez al día, a HORA_COPIA, copia el registro y el aprendizaje en un
+# repositorio privado de GitHub (nas/copia-registre.sh, ADR 0044).
 # La página del trayecto, su registro de aciertos y el agente diario con IA se
 # retiraron el 07-10-2026 (ADR 0030).
 #
@@ -35,6 +37,7 @@ set -u
 REPO=/proyecto
 URL_REPO=git@github.com:meteo-montflorit/meteo-local.git
 ESTAT_DIR=/estat
+HORA_COPIA=04:15
 
 registro() { printf '%s  %s\n' "$(date '+%F %T')" "$*"; }
 
@@ -134,6 +137,13 @@ while true; do
     verificacion || registro "la verificación de las $(hora_verificacion) ha fallado: se repetirá mañana"
   fi
   [ -d "$REPO/.git" ] && reintenta_avisos
+  # La copia del registro, una vez al día a partir de HORA_COPIA.
+  if [ -f "$REPO/nas/copia-registre.sh" ] && [[ "$ahora" > "$HORA_COPIA" || "$ahora" = "$HORA_COPIA" ]] \
+      && [ "$(cat "$ESTAT_DIR/copia-feta" 2>/dev/null)" != "$(date +%F)" ]; then
+    date +%F > "$ESTAT_DIR/copia-feta"
+    ESTAT_DIR="$ESTAT_DIR" REPO="$REPO" bash "$REPO/nas/copia-registre.sh" \
+      | while IFS= read -r linia; do registro "$linia"; done
+  fi
   if [ -d "$REPO/.git" ] && [ "${ahora#*:}" = "05" ] && [ -f /estat/vigila-pluviometre.json ]; then
     (cd "$REPO" && python3 pluviometre.py vigila) || registro "ha fallado la vigilancia del pluviómetro"
   fi
