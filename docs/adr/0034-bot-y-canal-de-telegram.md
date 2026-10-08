@@ -41,7 +41,9 @@ internet en casa, que suele llegar con las tormentas.
     l'Ajuntament»; en el menú, «Desbordament de la riera de Sant Cugat (en
     proves)» (Juanjo, 07-10-2026);
   - **perill**: los umbrales de aviso de AEMET con lo medido o previsto
-    (ADR 0018);
+    (ADR 0018); en el menú, «Temps excepcional (pluja molt forta, vent, neu,
+    calor o fred)» desde el 08-10-2026 (antes «Perill (pluja forta, vent,
+    calor…)», que no decía la nieve ni el frío);
   - **pluja**: lluvia en Montflorit en unos 15 minutos según el radar
     (ADR 0022);
   - **trens**: una línea de Cerdanyola deja de circular o vuelve, si el cambio
@@ -61,7 +63,8 @@ internet en casa, que suele llegar con las tormentas.
   /avisos, /resum, /ara y /baixa, que borra sus datos; desde el 08-10-2026,
   también /dema (la previsión de mañana a cualquier hora), /radar (lo que ve
   el radar y el enlace en directo), /trens (cada línea y su último aviso) y
-  /avisos_actius (AEMET y Protección Civil), que solo leen los datos públicos
+  /avisos_actius (AEMET, Protección Civil y el tiempo excepcional que calcula
+  la página, dicho que no es oficial), que solo leen los datos públicos
   y no tocan la lista de suscriptores. Cada descripción del menú cabe en una
   línea, para que Telegram lo muestre entero. Solo se guardan su
   identificador de Telegram y lo que elige; si bloquea el bot, se le da de

@@ -100,6 +100,15 @@ QUE_ES = {"pluja_1h": "lluvia muy fuerte", "pluja_12h": "mucha lluvia", "ratxa":
           "calor": "calor extremo", "fred": "frío intenso", "neu_24h": "nieve"}
 
 
+def linia_risc_es(r, ahora):
+    """El text d'un risc en castellà (el català ja ve fet a les dades)."""
+    previst, mesura = RISCOS_ES[r["tipus"]]
+    plantilla = previst if r["origen"] == "previsio" else mesura
+    if not plantilla:
+        return r["text"]
+    return plantilla.format(v=RS.num(r["valor"]), q=quan_es(r, ahora) if r.get("des_de") else "")
+
+
 def text_perill(nous, ahora):
     pitjor = max(nous, key=lambda r: RS.NIVELLS.index(r["nivell"]))["nivell"]
     tipus = list(dict.fromkeys(r["tipus"] for r in nous))
@@ -107,12 +116,7 @@ def text_perill(nous, ahora):
     ca += [html.escape(r["text"], quote=False) for r in nous]
     ca.append("Ho calcula Temps a Montflorit amb els llindars de l'AEMET: no és un avís oficial.")
     es = [negreta(f"Aviso de peligro ({NIVELLS_ES[pitjor]}): " + " y ".join(QUE_ES[t] for t in tipus))]
-    for r in nous:
-        previst, mesura = RISCOS_ES[r["tipus"]]
-        plantilla = previst if r["origen"] == "previsio" else mesura
-        es.append(html.escape(plantilla.format(v=RS.num(r["valor"]),
-                                               q=quan_es(r, ahora) if r.get("des_de") else "")
-                              if plantilla else r["text"], quote=False))
+    es += [html.escape(linia_risc_es(r, ahora), quote=False) for r in nous]
     es.append("Lo calcula Temps a Montflorit con los umbrales de la AEMET: no es un aviso oficial.")
     return {"ca": "\n".join(ca), "es": "\n".join(es)}, pitjor
 

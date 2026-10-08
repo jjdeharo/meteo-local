@@ -68,7 +68,7 @@ T = {
                  "Si també ets al canal (@TempsMontflorit), no et repetiré el que ja t'arriba per allà: els avisos "
                  "de la riera i de perill i la previsió de les 7 h.\n\n"
                  "Només es desa el teu identificador de Telegram i el que triïs aquí. Amb /baixa s'esborra tot."),
-        "riera": "Desbordament de la riera de Sant Cugat (en proves)", "perill": "Perill (pluja forta, vent, calor…)",
+        "riera": "Desbordament de la riera de Sant Cugat (en proves)", "perill": "Temps excepcional (pluja molt forta, vent, neu, calor o fred)",
         "pluja": "Pluja a punt de començar (15 min abans)", "trens": "Trens de Cerdanyola (si no circulen)",
         "resum": "Previsió, un cop al dia, a les:", "no": "No vull rebre la previsió", "h": "{} h", "dema": "{} h (per a demà)",
         "baixa": "Fet: s'han esborrat les teves dades i ja no rebràs res. Amb /start pots tornar-hi.",
@@ -91,7 +91,7 @@ T = {
                  "Si también estás en el canal (@TempsMontflorit), no te repetiré lo que ya te llega por allí, en "
                  "catalán: los avisos de la riera y de peligro y la previsión de las 7 h.\n\n"
                  "Solo se guarda tu identificador de Telegram y lo que elijas aquí. Con /baixa se borra todo."),
-        "riera": "Desbordamiento de la riera de Sant Cugat (en pruebas)", "perill": "Peligro (lluvia fuerte, viento, calor…)",
+        "riera": "Desbordamiento de la riera de Sant Cugat (en pruebas)", "perill": "Tiempo excepcional (lluvia muy fuerte, viento, nieve, calor o frío)",
         "pluja": "Lluvia a punto de empezar (15 min antes)", "trens": "Trenes de Cerdanyola (si no circulan)",
         "resum": "Previsión, una vez al día, a las:", "no": "No quiero recibir la previsión", "h": "{} h", "dema": "{} h (para mañana)",
         "baixa": "Hecho: se han borrado tus datos y ya no recibirás nada. Con /start puedes volver.",
@@ -531,11 +531,34 @@ def text_avisos_actius(dades, idioma, moment):
     avui, dema = moment.date(), (moment + dt.timedelta(days=1)).date()
     linies += text_avisos_aemet(dades, idioma, avui, moment)
     linies += [x for x in text_avisos_aemet(dades, idioma, dema, moment) if x not in linies]
-    if not linies:
-        return ("No hay avisos de la AEMET ni planes de Protección Civil activos." if idioma == "es"
-                else "No hi ha avisos de l'AEMET ni plans de Protecció Civil activats.")
+    # El temps excepcional que calcula la pàgina amb els llindars de l'AEMET
+    # (el mateix de l'avís «perill», ADR 0018), dit que no és oficial.
+    propis = linies_riscos(dades.get("riscos") or [], idioma, moment)
+    if not linies and not propis:
+        return ("No hay avisos de la AEMET ni planes de Protección Civil activos, ni se prevé tiempo excepcional."
+                if idioma == "es" else
+                "No hi ha avisos de l'AEMET ni plans de Protecció Civil activats, ni es preveu temps excepcional.")
     cap = "Avisos activos" if idioma == "es" else "Avisos actius"
-    return f"<b>{cap}</b>\n" + "\n".join(html.escape(x, quote=False) for x in linies)
+    text = f"<b>{cap}</b>\n" + "\n".join(html.escape(x, quote=False) for x in linies) if linies else ""
+    if propis:
+        titol = ("Tiempo excepcional (lo calcula Temps a Montflorit con los umbrales de la AEMET, no es oficial)"
+                 if idioma == "es" else
+                 "Temps excepcional (ho calcula Temps a Montflorit amb els llindars de l'AEMET, no és oficial)")
+        text += ("\n\n" if text else "") + f"<b>{titol}</b>\n" + "\n".join(html.escape(x, quote=False) for x in propis)
+    return text
+
+
+def linies_riscos(riscos, idioma, moment):
+    """Una línia per risc, en l'idioma de qui pregunta. Els textos en castellà
+    són els de l'avís (avisos_bot.py); si no es pot carregar, el català de les dades."""
+    if idioma == "es":
+        try:
+            sys.path.insert(0, REPO)
+            import avisos_bot as AB
+            return [AB.linia_risc_es(r, moment) for r in riscos]
+        except Exception:
+            pass
+    return [r.get("text", "") for r in riscos]
 
 
 # --- Mensajes recibidos -------------------------------------------------------------

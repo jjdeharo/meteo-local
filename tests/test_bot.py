@@ -400,6 +400,15 @@ class Consultes(unittest.TestCase):
         self.assertTrue(self.ordre("/dema", subs).startswith("<b>Previsió per a demà"))
         subs["7"]["idioma"] = "es"
         self.assertIn("en fase de emergencia", self.ordre("/avisos_actius", subs))
+        # El temps excepcional calculat també hi surt, dit que no és oficial.
+        d = json.load(open(os.path.join(self.dir.name, "montflorit.json")))
+        d["riscos"] = [{"tipus": "ratxa", "nivell": "groc", "origen": "mesura", "valor": 75, "llindar": 70,
+                        "unitat": "km/h", "text": "Ara bufa vent molt fort: ratxes de 75 km/h."}]
+        json.dump(d, open(os.path.join(self.dir.name, "montflorit.json"), "w"))
+        r = self.ordre("/avisos_actius", subs)
+        self.assertIn("Tiempo excepcional (lo calcula Temps a Montflorit", r)
+        subs["7"]["idioma"] = "ca"
+        self.assertIn("Ara bufa vent molt fort: ratxes de 75\u00a0km/h.", self.ordre("/avisos_actius", subs))
         self.assertIn("va hacia el este", self.ordre("/radar", subs))
 
     def test_dades_velles(self):
