@@ -61,12 +61,18 @@ internet en casa, que suele llegar con las tormentas.
   /avisos, /resum, /ara y /baixa, que borra sus datos. Solo se guardan su
   identificador de Telegram y lo que elige; si bloquea el bot, se le da de
   baja. Solo en chats privados.
-- **Canal**: los avisos de riera y peligro, y el resumen del día a las 7, en
-  catalán y castellano en el mismo mensaje.
+- **Canal**: los avisos de riera y peligro, y el resumen del día a las 7,
+  solo en catalán (Juanjo, 08-10-2026). Hasta entonces iban en catalán y
+  castellano en el mismo mensaje; Telegram no permite que cada lector de un
+  canal vea una versión distinta, y dos canales por idioma eran más
+  mantenimiento para un mensaje al día. Quien quiera el castellano lo tiene en
+  el bot, que toma el idioma de su Telegram.
 - **Ropa en la previsión** (Juanjo, 07-10-2026: que la indique «para todo el
   día», también en la de las 20 h para el día siguiente): la de ir a pie, con
   los tramos de «Si surts» (ADR 0029) y el viento previsto, entre las 7 y las
-  21 h. Si el momento más frío y el más caluroso piden prendas distintas, se
+  21 h, al final del mensaje y separada del resto por una línea en blanco
+  (Juanjo, 08-10-2026: con la ropa en medio, «la información está muy
+  desordenada»). Si el momento más frío y el más caluroso piden prendas distintas, se
   dicen las dos por orden de hora («jaqueta a les 7 h (14 °C); màniga curta o
   màniga llarga fina a les 15 h (23 °C)»); si no, una sola. La tabla está
   repetida en `bot/bot.py`, porque el bot no usa el JavaScript de la web, y
@@ -75,7 +81,8 @@ internet en casa, que suele llegar con las tormentas.
   `~/.temps-bot/subscriptors.json`, fuera del repositorio, y no se tocan.
 - **Sin repetir el canal** (Juanjo, 07-10-2026): a quien sigue el canal, el
   bot no le manda lo que el canal ya le da (avisos de riera y peligro, y la
-  previsión de las 7 si eligió esa hora); sí la lluvia, los trenes y la
+  previsión de las 7 si eligió esa hora), salvo que tenga el bot en
+  castellano, porque el canal va en catalán; sí la lluvia, los trenes y la
   previsión a otra hora. El bot, administrador del canal, lo pregunta a
   Telegram (`getChatMember`) una vez por pasada y solo cuando hay algo que
   repartir. Si el canal no ha recibido el aviso o la pregunta falla, el bot lo
@@ -102,7 +109,7 @@ internet en casa, que suele llegar con las tormentas.
 - **En la web**: «Avisos a Telegram: com funciona» bajo el menú,
   y en los créditos, qué guarda el bot. «Com funciona» lleva a una página de
   ayuda breve (`web/telegram.html`, también en castellano). Dice que se puede
-  usar solo el canal, solo el bot o los dos, y que con los dos el bot no repite
+  usar solo el canal (en catalán), solo el bot o los dos, y que con los dos, y el bot en catalán, no repite
   lo que ya da el canal. Tiene un bloque
   para el canal (igual para todos, como un tablón; azul) y otro para el bot
   (personal; verde, como su icono y su botón). Cada bloque lleva su

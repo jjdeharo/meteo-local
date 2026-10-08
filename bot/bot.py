@@ -9,7 +9,7 @@ reparte:
 
 - los avisos que el NAS (o la reserva) deja en avisos.json (avisos_bot.py), a
   quien los haya elegido, y los de riera y peligro también al canal
-  @TempsMontflorit;
+  @TempsMontflorit (solo en catalán);
 - el resumen del día, a la hora que elija cada uno, y al canal a las 7.
 
 Cada persona elige en un menú con botones qué avisos quiere (riera, peligro,
@@ -85,8 +85,8 @@ T = {
         "inici": "Para empezar, te he activado los avisos de la riera y de peligro.",
         "menu": ("Toca lo que quieras recibir. ✓ quiere decir que sí; si lo vuelves a tocar, se quita.\n"
                  "La previsión llega una vez al día, a la hora que elijas.\n\n"
-                 "Si también estás en el canal (@TempsMontflorit), no te repetiré lo que ya te llega por allí: los "
-                 "avisos de la riera y de peligro y la previsión de las 7 h.\n\n"
+                 "El canal (@TempsMontflorit) está en catalán: aunque estés en él, a ti te lo mando todo en "
+                 "castellano.\n\n"
                  "Solo se guarda tu identificador de Telegram y lo que elijas aquí. Con /baixa se borra todo."),
         "riera": "Desbordamiento de la riera de Sant Cugat (en pruebas)", "perill": "Peligro (lluvia fuerte, viento, calor…)",
         "pluja": "Lluvia a punto de empezar (15 min antes)", "trens": "Trenes de Cerdanyola (si no circulan)",
@@ -387,8 +387,8 @@ def resum(dades, idioma, moment):
             linies.append(("Esta noche: " if idioma == "es" else "Aquesta nit: ")
                           + text_pluja(nit, idioma).split(": ", 1)[1])
         linies.append(text_temperatura(dia, idioma, "Temperatura"))
-        linies.append(text_roba(dia, idioma))
         linies.append(text_pluja(dia, idioma))
+        roba = text_roba(dia, idioma)
         linies += text_avisos_aemet(dades, idioma, dema, moment)
     else:
         fi_dia = ara_n.replace(hour=23, minute=59)
@@ -399,12 +399,13 @@ def resum(dades, idioma, moment):
                   text_ara(dades, idioma),
                   text_temperatura(tram, idioma, "Temperatura de aquí a medianoche" if idioma == "es"
                                    else "Temperatura d'aquí a mitjanit"),
-                  text_roba(tram, idioma),
                   text_pluja(tram, idioma)]
+        roba = text_roba(tram, idioma)
         linies += text_avisos_aemet(dades, idioma, moment.date(), moment)
         linies.append(text_trens_resum(dades, idioma))
-    linies.append(WEB)
-    return "\n".join(x for x in linies if x)
+    # La ropa, al final y aparte (Juanjo, 08-10-2026: «muy desordenado»).
+    text = "\n".join(x for x in linies if x)
+    return text + (f"\n\n{roba}" if roba else "") + "\n" + WEB
 
 
 def text_trens_resum(dades, idioma):
@@ -527,7 +528,8 @@ def a_repartir(avisos, enviats, moment):
 # riera y peligro y la previsión de las 7 (Juanjo, 07-10-2026). El bot, como
 # administrador del canal, puede preguntar quién está; ante la duda o si el
 # canal no lo ha recibido, se manda: mejor un aviso repetido que uno perdido.
-# El menú del bot lo explica.
+# El canal va solo en catalán: a quien tiene el bot en castellano se le manda
+# igualmente (Juanjo, 08-10-2026). El menú del bot lo explica.
 DINS_CANAL = ("creator", "administrator", "member")
 
 
@@ -570,7 +572,7 @@ def reparteix(api, subs, estat, moment):
             continue
         if p["canal"]:
             try:
-                envia(api, CANAL, f"{a['ca']}\n\n{a['es']}", html=True)
+                envia(api, CANAL, a["ca"], html=True)
                 p["canal"] = False
             except Exception as ex:
                 registra(f"aviso {clau}: el canal no lo acepta: {ex}")
@@ -578,7 +580,7 @@ def reparteix(api, subs, estat, moment):
         queden, motius = [], []
         for chat in p["chats"]:
             sub = subs.get(chat)
-            if not sub or (al_canal_ok and al_canal(api, chat, memoria)):
+            if not sub or (al_canal_ok and sub["idioma"] == "ca" and al_canal(api, chat, memoria)):
                 continue
             try:
                 envia(api, chat, a[sub["idioma"]], html=True)
@@ -607,9 +609,8 @@ def reparteix(api, subs, estat, moment):
     if hora == CANAL_RESUM and estat.get("canal_resum") != avui:
         dades = llegeix(os.path.join(DADES, "montflorit.json"), {})
         try:
-            # En el canal, en catalán y en castellano; el enlace, una vez al final.
-            envia(api, CANAL, resum(dades, "ca", moment).removesuffix("\n" + WEB) + "\n\n" + resum(dades, "es", moment),
-                  html=True)
+            # El canal, solo en catalán (Juanjo, 08-10-2026).
+            envia(api, CANAL, resum(dades, "ca", moment), html=True)
             estat["canal_resum"] = avui
         except Exception as ex:
             registra(f"el resumen del canal no ha entrado: {ex}")
@@ -617,7 +618,7 @@ def reparteix(api, subs, estat, moment):
     resums = estat.setdefault("resums", {})
     for chat, sub in list(subs.items()):
         if sub.get("resum") == hora and resums.get(chat) != avui:
-            if canal_resum_ok and al_canal(api, chat, memoria):
+            if canal_resum_ok and sub["idioma"] == "ca" and al_canal(api, chat, memoria):
                 resums[chat] = avui
                 continue
             dades = dades or llegeix(os.path.join(DADES, "montflorit.json"), {})

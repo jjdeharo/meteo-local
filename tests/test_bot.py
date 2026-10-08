@@ -147,6 +147,16 @@ class Resum(unittest.TestCase):
         self.assertIn("Ropa para ir a pie: chaqueta ligera o jersey a las 7 h (15 °C); "
                       "manga corta o manga larga fina a las 16 h (24 °C).", B.resum(dades(), "es", ARA))
 
+    def test_la_roba_al_final_i_apart(self):
+        # Juanjo, 08-10-2026: la ropa, al final y separada del resto.
+        for moment in (ARA, ARA.replace(hour=20)):
+            for idioma in ("ca", "es"):
+                linies = B.resum(dades(moment), idioma, moment).split("\n")
+                self.assertEqual(linies[-1], B.WEB)
+                self.assertTrue(linies[-2].startswith(("Roba per anar a peu", "Ropa para ir a pie")))
+                self.assertEqual(linies[-3], "")
+                self.assertNotIn("", linies[:-3])
+
     def test_roba_amb_vent_i_una_sola_peca(self):
         hora = lambda h, t, v=0: {"hora": f"2026-10-08T{h:02d}:00", "temperatura": t, "vent": v}
         # 8 °C amb 30 km/h es noten com 4 °C; fora de les 7-21 h no compta.
@@ -207,7 +217,7 @@ class Repartiment(unittest.TestCase):
         enviats = [(p["chat_id"], p["text"]) for _, p in api.enviats]
         self.assertIn(("1", "R ca"), enviats)
         self.assertIn(("2", "R es"), enviats)
-        self.assertIn((B.CANAL, "R ca\n\nR es"), enviats)
+        self.assertIn((B.CANAL, "R ca"), enviats)            # el canal, solo en catalán
         self.assertNotIn(("2", "P es"), enviats)
         # Una sola vez.
         api.enviats.clear()
@@ -229,6 +239,8 @@ class Repartiment(unittest.TestCase):
         self.assertEqual(sorted(map(str, destins)), sorted(["1", B.CANAL]))
         canal = [p["text"] for _, p in api.enviats if p["chat_id"] == B.CANAL][0]
         self.assertEqual(canal.count(B.WEB), 1)
+        self.assertTrue(canal.startswith("<b>El temps avui"))
+        self.assertNotIn("El tiempo hoy", canal)              # el canal, solo en catalán
         api.enviats.clear()
         B.reparteix(api, subs, estat, ARA + dt.timedelta(minutes=20))
         self.assertEqual(api.enviats, [])
@@ -249,6 +261,16 @@ class Repartiment(unittest.TestCase):
         destins = [d for d, _ in enviats]
         self.assertEqual(destins.count("1"), 1)        # sense la previsió de les 7
         self.assertEqual(destins.count("2"), 2)
+
+    def test_qui_te_el_bot_en_castella_ho_rep_encara_que_sigui_al_canal(self):
+        # El canal va en catalán: a quien lee en castellano no le basta.
+        self.escriu([{"id": "riera:1", "tipus": "riera", "hora": ARA.isoformat(), "ca": "R ca", "es": "R es"}])
+        subs = {"1": {"idioma": "es", "avisos": ["riera"], "resum": "7"}}
+        api = Api(al_canal=["1"])
+        B.reparteix(api, subs, {}, ARA)
+        rebut = [p["text"] for _, p in api.enviats if str(p["chat_id"]) == "1"]
+        self.assertEqual(rebut[0], "R es")
+        self.assertTrue(rebut[1].startswith("<b>El tiempo hoy"))
 
     def test_si_el_canal_falla_el_bot_ho_envia(self):
         self.escriu([{"id": "riera:1", "tipus": "riera", "hora": ARA.isoformat(), "ca": "R ca", "es": "R es"}])
@@ -422,7 +444,7 @@ class RepartimentAmbReintents(unittest.TestCase):
         api.canal_falla = False
         api.enviats.clear()
         B.reparteix(api, subs, estat, ara + dt.timedelta(minutes=11))
-        self.assertEqual([(p["chat_id"], p["text"]) for _, p in api.enviats], [(B.CANAL, "R ca\n\nR es")])
+        self.assertEqual([(p["chat_id"], p["text"]) for _, p in api.enviats], [(B.CANAL, "R ca")])
         self.assertEqual(estat["pendents"], {})
         # Si el aviso caduca antes de que el canal responda, se deja de intentar.
         api, estat = Api(canal_falla=True), {}
