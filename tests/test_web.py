@@ -300,12 +300,11 @@ class Web(unittest.TestCase):
         self.assertEqual(self.avalua(ara, f"avaluaPublic({json.dumps(trens)}, true).motius", "sortir.js"),
                          ["Cap incidència als trens de Cerdanyola.", "Són els trens d’ara, no els de l’hora triada."])
         plans = [{"pla": "INUNCAT", "nom": "d'inundacions", "fase": "emergència"}]
+        # El pla ja surt a «Avisos actius»: aquí, una línia sense repetir-lo (08-10-2026).
         self.assertEqual(self.avalua(ara, f"avisPlaSortida({json.dumps(plans)})", "sortir.js"),
-                         "Protecció Civil té el pla d'inundacions (INUNCAT) en fase d’emergència i demana evitar els "
-                         "desplaçaments que no siguin necessaris. Els veredictes de sota només miren la pluja i el vent previstos.")
+                         "El consell de cada mitjà surt només de la pluja i el vent previstos: no té en compte l’emergència de Protecció Civil (vegeu l’avís de dalt).")
         plans[0]["fase"] = "alerta"
-        self.assertTrue(self.avalua(ara, f"avisPlaSortida({json.dumps(plans)})", "sortir.js").startswith(
-            "Protecció Civil té el pla d'inundacions (INUNCAT) en fase d’alerta: segueix"))
+        self.assertIn("no té en compte l’alerta de Protecció Civil", self.avalua(ara, f"avisPlaSortida({json.dumps(plans)})", "sortir.js"))
         plans[0]["fase"] = "prealerta"
         self.assertIsNone(self.avalua(ara, f"avisPlaSortida({json.dumps(plans)})", "sortir.js"))
         self.assertIsNone(self.avalua(ara, "avisPlaSortida(undefined)", "sortir.js"))

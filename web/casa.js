@@ -98,6 +98,7 @@ function blocAra(ara, casa, radarDades, vent) {
   sec.append(llista);
   const radar = blocRadar(radarDades, plou);
   if (radar) sec.append(radar);
+  sec.append(elementHorari());    // «Actualitzat a les…», al peu de la targeta
   return sec;
 }
 
@@ -324,25 +325,23 @@ function pinta(dades) {
   // Dades de fa massa: només l'avís i on mirar (ADR 0031).
   if (dadesVelles(dades)) {
     $('avisos').replaceChildren();
-    cont.append(blocDadesVelles(dades));
+    cont.append(blocDadesVelles(dades), elementHorari());
     pintaHorari(dades);
     posaVersio(dades.versio);
     return;
   }
-  // Tots els avisos junts, a dalt; després, l'hora d'actualització.
+  // Tots els avisos vigents en un sol bloc, a dalt; les notes, després.
   const avisos = $('avisos');
   avisos.replaceChildren();
-  const plans = blocPlans(dades.plans);
-  if (plans) avisos.append(plans);
-  const riscos = blocRiscos(dades.riscos);
-  if (riscos) avisos.append(riscos);
-  if (dades.avisos && dades.avisos.length) avisos.append(blocAvisosAemet(dades.avisos));
+  const actius = blocAvisos(dades, [blocRiscos(dades.riscos)]);
+  if (actius) avisos.append(actius);
   if (dades.previsio_de) avisos.append(element('p', 'avis', textPrevisioAnterior(dades)));
   if (dades.models && dades.models.no_encerten) {
     const m = dades.models;
     avisos.append(element('p', 'avis', T`Avui els models no veuen aquesta pluja: en les darreres ${m.hores} hores han caigut ${coma(m.mesurada_mm)}\u00a0mm a Montflorit i en preveien ${coma(m.prevista_mm)}. Les primeres hores de la taula parteixen del que mesura l\u2019estació; per a la resta, fes més cas dels avisos.`));
   }
   if (dades.ara || dades.ara_casa) cont.append(blocAra(dades.ara, dades.ara_casa, dades.radar, dades.vent));
+  else cont.append(elementHorari());
   if (dades.hores) {
     cont.append(taula(dades.hores, dades.aprenentatge));
     ajustaFranges();

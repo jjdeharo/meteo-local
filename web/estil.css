@@ -110,7 +110,7 @@ h1 { margin: 0; font-size: 1.6rem; line-height: 1.2; }
   stroke-linejoin: round;
 }
 .nota { margin: 0; color: var(--suau); font-size: .9rem; }
-.horari { margin: 1rem 0 0; }
+.horari { margin: 1rem 0 0; font-size: .95rem; }
 .horari:empty { display: none; }
 .horari .mode { color: var(--suau); font-size: .9rem; }
 
@@ -165,6 +165,11 @@ h1 { margin: 0; font-size: 1.6rem; line-height: 1.2; }
 .contingut h2 { font-size: 1.1rem; margin: 1.4rem 0 .4rem; }
 
 /* Navegació entre les pàgines, sempre al mateix lloc. */
+/* Navegació i enllaç de Telegram a la mateixa fila (al mòbil, el segon baixa). */
+.barra { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: .4rem .8rem; margin: .8rem 0 0; }
+.barra .pagines, .barra .avisos-telegram { margin: 0; }
+.avisos-telegram a { display: inline-flex; align-items: center; gap: .3rem; }
+.avisos-telegram svg { width: 1.1rem; height: 1.1rem; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .pagines { display: flex; gap: .4rem; margin: .8rem 0 0; flex-wrap: wrap; }
 .pagines a {
   padding: .3rem .8rem;
@@ -187,7 +192,9 @@ h1 { margin: 0; font-size: 1.6rem; line-height: 1.2; }
 }
 
 /* Pàgina de casa */
-.targeta.ara { --color: var(--enllac); }
+.targeta.ara { --color: var(--enllac); border-left: 1px solid var(--vora); }
+.targeta .horari { margin: .8rem 0 0; padding-top: .6rem; border-top: 1px solid var(--vora); font-size: .9rem; color: var(--suau); }
+.targeta .horari strong { color: var(--text); }
 .targeta.fora { --color: var(--suau); }
 .previsio { margin-top: 1rem; }
 .taula-contenidor { overflow-x: auto; }
@@ -266,9 +273,24 @@ h1 { margin: 0; font-size: 1.6rem; line-height: 1.2; }
 .risc-previst ul { margin: .3rem 0 0; padding-left: 1.3rem; }
 .risc-previst .detall { color: var(--suau); font-size: .9rem; }
 
+/* Avisos actius: un sol bloc, cada avís amb la franja del seu nivell. */
+.avisos-actius {
+  margin: 1rem 0 0;
+  padding: .6rem .9rem .7rem;
+  background: var(--superficie);
+  border: 1px solid var(--vora);
+  border-radius: .6rem;
+}
+.avisos-actius .seccio { margin: 0 0 .4rem; }
+.avis-item { margin: 0; padding: .15rem 0 .15rem .7rem; border-left: .3rem solid var(--nivell, var(--compte)); }
+.avis-item + .avis-item, .avis-item + .risc-previst, .risc-previst + .avis-item { margin-top: .5rem; }
+.avis-item strong { color: var(--nivell-text, inherit); }
+.avis-item.groc { --nivell: #eab308; }
+.avis-item.taronja { --nivell: #fb923c; --nivell-text: #c2410c; }
+.avis-item.vermell { --nivell: var(--vermell); --nivell-text: var(--vermell); }
+.avisos-actius .risc-previst { margin-top: .5rem; }
+/* Nota de Protecció Civil sobre els veredictes de «Si surts». */
 .avis-pc { border-color: var(--vermell); background: var(--vermell-fons); }
-.avis-pc p { margin: 0; }
-.avis-pc p + p { margin-top: .4rem; }
 .taula-hores td.cel { white-space: normal; }
 .cel-text { display: inline-flex; align-items: center; gap: .3rem; white-space: nowrap; }
 .cel-text svg {
@@ -394,7 +416,7 @@ h1 { margin: 0; font-size: 1.6rem; line-height: 1.2; }
 .trens .nota { margin-top: .5rem; }
 
 /* El text dels avisos de l'AEMET, citat tal com el publica (ADR 0033). */
-.avis q { quotes: "«" "»"; font-style: italic; }
+.avis q, .avis-item q { quotes: "«" "»"; font-style: italic; }
 .avisos-telegram { margin: .5rem 0 0; }
 
 /* Pàgina «Avisos a Telegram» (ADR 0034): un bloc per al canal i un per al bot,

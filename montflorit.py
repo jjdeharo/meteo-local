@@ -48,16 +48,16 @@ INDEXABLE = True
 # (Juanjo, 07-10-2026) y la versión del pie enlaza sus notas (NOTES).
 PROHIBIDES = ("casa", "cotxe", "moto", "trajecte")
 
-NAV = re.compile(r'\n  <nav class="pagines".*?</nav>', re.S)
+NAV = re.compile(r'\n( *)<nav class="pagines".*?</nav>', re.S)   # amb el sagnat que tingui
 # El menú de la web pública: el temps ara i «Si surts» (ADR 0029).
 PAGINES_PUBLIQUES = [("./", "El temps ara", "i-cloud-sun"), ("sortir.html", "Si surts", "i-door-open")]
 
 
-def nav_publica(actual):
-    enllacos = "".join(f'\n    <a href="{href}"' + (' aria-current="page"' if href == actual else "")
+def nav_publica(actual, sagnat="  "):
+    enllacos = "".join(f'\n{sagnat}  <a href="{href}"' + (' aria-current="page"' if href == actual else "")
                        + f'><svg aria-hidden="true"><use href="#{icona}"></use></svg>{text}</a>'
                        for href, text, icona in PAGINES_PUBLIQUES)
-    return f'\n  <nav class="pagines" aria-label="Pàgines">{enllacos}\n  </nav>'
+    return f'\n{sagnat}<nav class="pagines" aria-label="Pàgines">{enllacos}\n{sagnat}</nav>'
 ROBOTS = '  <meta name="robots" content="noindex">\n'
 
 CANVIS_INDEX = [
@@ -235,7 +235,7 @@ def comprova(nom, text, prohibides=PROHIBIDES):
 
 
 def menu(text, actual, nom):
-    text, n = NAV.subn(lambda m: nav_publica(actual), text)
+    text, n = NAV.subn(lambda m: nav_publica(actual, m.group(1)), text)
     if n != 1:
         raise ValueError(f"{nom}: no trobo el menú de pàgines")
     return text

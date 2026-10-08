@@ -362,10 +362,11 @@ const COLOR_ESTAT = {
 function avisPlaSortida(plans) {
   const pla = (plans || []).find((p) => p.fase === 'emergència') || (plans || []).find((p) => p.fase === 'alerta');
   if (!pla) return null;
-  const nom = `${TD(pla.nom)} (${pla.pla})`;
+  // El pla ja surt sencer a «Avisos actius»: aquí només el que cal saber
+  // dels veredictes (Juanjo, 08-10-2026: «sale repetido»).
   return pla.fase === 'emergència'
-    ? T`Protecció Civil té el pla ${nom} en fase d’emergència i demana evitar els desplaçaments que no siguin necessaris. Els veredictes de sota només miren la pluja i el vent previstos.`
-    : T`Protecció Civil té el pla ${nom} en fase d’alerta: segueix les seves indicacions. Els veredictes de sota només miren la pluja i el vent previstos.`;
+    ? T('El consell de cada mitjà surt només de la pluja i el vent previstos: no té en compte l’emergència de Protecció Civil (vegeu l’avís de dalt).')
+    : T('El consell de cada mitjà surt només de la pluja i el vent previstos: no té en compte l’alerta de Protecció Civil (vegeu l’avís de dalt).');
 }
 
 function pintaSortida() {
@@ -481,9 +482,8 @@ function pinta(dades) {
   if (explica) explica.hidden = explicat() || amagats().size > 0;
   const avisos = $('avisos');
   avisos.replaceChildren();
-  const plans = blocPlans(dades.plans);
-  if (plans) avisos.append(plans);
-  if (dades.avisos && dades.avisos.length) avisos.append(blocAvisosAemet(dades.avisos));
+  const actius = blocAvisos(dades);
+  if (actius) avisos.append(actius);
   if (dades.hores && dades.hores.length >= 2) pintaSelectors(dades.hores, new Date());
   pintaTrens(dades.trens);
   pintaSortida();

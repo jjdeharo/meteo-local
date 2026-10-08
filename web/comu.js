@@ -146,6 +146,14 @@ function textHorari(horari) {
 
 // «Dades en directe… Darrera: 07:07 · propera: 07:30.» i, si cal, l'avís de
 // retard quan una actualització prevista no ha arribat.
+// L'element de l'hora d'actualització, per posar-lo on toqui (a casa, al peu
+// de la targeta d'ara).
+function elementHorari() {
+  const p = element('p', 'horari');
+  p.id = 'horari';
+  return p;
+}
+
 function pintaHorari(dades) {
   const ara = new Date();
   const generat = new Date(dades.generat);
@@ -307,33 +315,41 @@ function textFranja(inici, fi, ara) {
 // Una frase per nivell i tipus d'avís, amb totes les franges i el dia de
 // cadascuna: «Avís groc de l'AEMET per pluja i tempestes al Vallès: avui fins
 // a les 20:00; demà de 09:00 a 18:00 i de 22:00 a mitjanit.»
-// L'avís de l'AEMET i el seu text, tal com el publica: en castellà, citat i
-// marcat com a tal, agrupat per dia (ADR 0033).
+// Els avisos de l'AEMET, un element per nivell i tipus, amb el seu text tal
+// com el publica: en castellà, citat i marcat com a tal, agrupat per dia
+// (ADR 0033). El dia només es diu si n'hi ha més d'un.
 function blocAvisosAemet(avisos, ara = new Date()) {
-  const p = element('p', 'avis', textAvisos(avisos, ara));
-  const perDia = [];
-  for (const a of [...avisos].sort((x, y) => new Date(x.inicio) - new Date(y.inicio))) {
-    if (!a.descripcio || new Date(a.fin).getTime() + 1000 <= ara.getTime()) continue;
-    const dia = nomDiaCurt(new Date(Math.max(new Date(a.inicio).getTime(), ara.getTime())), ara);
-    let d = perDia.find((x) => x.dia === dia);
-    if (!d) perDia.push(d = { dia, textos: [] });
-    if (!d.textos.includes(a.descripcio)) d.textos.push(a.descripcio);
-  }
-  if (perDia.length) {
-    p.append(' ', T('L’AEMET hi afegeix —'), ' ');
+  return frasesAvisos(avisos, ara).map((f) => {
+    const item = element('p', `avis-item ${f.nivell}`);
+    item.append(element('strong', null, f.titol), `: ${f.quan}.`);
+    const perDia = [];
+    for (const a of [...avisos].sort((x, y) => new Date(x.inicio) - new Date(y.inicio))) {
+      if (a.nivel !== f.nivell || !f.tipus.has(a.tipo) || !a.descripcio) continue;
+      if (new Date(a.fin).getTime() + 1000 <= ara.getTime()) continue;
+      const dia = nomDiaCurt(new Date(Math.max(new Date(a.inicio).getTime(), ara.getTime())), ara);
+      let d = perDia.find((x) => x.dia === dia);
+      if (!d) perDia.push(d = { dia, textos: [] });
+      if (!d.textos.includes(a.descripcio)) d.textos.push(a.descripcio);
+    }
     perDia.forEach((d, n) => {
-      p.append(`${n ? '; ' : ''}${d.dia}: `);
+      item.append(n ? '; ' : ' ', ...(perDia.length > 1 ? [`${d.dia}: `] : []));
       d.textos.forEach((t, m) => {
         const cita = element('q', null, t);
         cita.lang = 'es';
-        p.append(...(m ? [' ', cita] : [cita]));
+        item.append(...(m ? [' ', cita] : [cita]));
       });
     });
-  }
-  return p;
+    return item;
+  });
 }
 
 function textAvisos(avisos, ara = new Date()) {
+  return frasesAvisos(avisos, ara).map((f) => `${f.titol}: ${f.quan}.`).join(' ');
+}
+
+// Una frase per nivell i tipus: {nivell, tipus (Set), titol, quan}, del més
+// greu al més lleu.
+function frasesAvisos(avisos, ara = new Date()) {
   // 1. Franges de cada nivell i tipus, ajuntant les que es toquen. Els avisos
   // acaben a «hh:59:59»: un segon més dona l'hora en punt.
   const perTipus = {};
@@ -362,10 +378,12 @@ function textAvisos(avisos, ara = new Date()) {
   // 3. Una frase per nivell i tipus, amb les franges en ordre i agrupades
   // per dia.
   const frases = {};
+  const tipusDe = {};
   for (const [k, tipus] of Object.entries(perFranja)) {
     const [nivell, inici, fi] = k.split('|');
     const clau = `${nivell}|${[...tipus].sort().map((x) => TD(x)).join(T(' i '))}`;
     (frases[clau] = frases[clau] || []).push([Number(inici), Number(fi)]);
+    (tipusDe[clau] = tipusDe[clau] || new Set()); tipus.forEach((t) => tipusDe[clau].add(t));
   }
   const ordre = { vermell: 0, taronja: 1, groc: 2 };
   return Object.entries(frases)
@@ -387,8 +405,8 @@ function textAvisos(avisos, ara = new Date()) {
         }
       }
       const quan = dies.map((d) => d.parts.join(T(' i '))).join('; ');
-      return T`Avís ${TD(nivell)} de l’AEMET per ${tipus} al Vallès: ${quan}.`;
-    }).join(' ');
+      return { nivell, tipus: tipusDe[clau], titol: T`Avís ${TD(nivell)} de l’AEMET per ${tipus} al Vallès`, quan };
+    });
 }
 
 // Quan Open-Meteo no respon, la previsió és l'última bona (ADR 0016).
@@ -409,26 +427,39 @@ function deFase(fase) {
   return /^[aeiouàèéíòóúh]/i.test(fase) ? `d’${fase}` : `de ${fase}`;
 }
 
+// Els plans de Protecció Civil, un element per pla (vermell).
 function blocPlans(plans) {
-  if (!plans || !plans.length) return null;
-  const caixa = element('section', 'avis avis-pc');
-  caixa.setAttribute('aria-label', T('Avís de Protecció Civil'));
-  for (const p of plans) {
-    const par = element('p', null,
-      T`Protecció Civil: pla ${TD(p.nom)} (${p.pla}) en fase ${deFase(TD(NOM_FASE[p.fase] || p.fase))}.`);
+  return (plans || []).map((p) => {
+    const item = element('p', 'avis-item vermell');
+    item.setAttribute('aria-label', T('Avís de Protecció Civil'));
+    item.append(element('strong', null,
+      T`Protecció Civil: pla ${TD(p.nom)} (${p.pla}) en fase ${deFase(TD(NOM_FASE[p.fase] || p.fase))}.`));
     if (p.fase === 'emergència') {
-      par.append(T(' Evita els desplaçaments que no siguin necessaris.'));
+      item.append(T(' Evita els desplaçaments que no siguin necessaris.'));
     }
     if (p.comunicat) {
       const a = element('a', null, T('Comunicat (PDF)'));
       a.href = p.comunicat;
       a.target = '_blank';
       a.rel = 'noopener';
-      par.append(' ', a);
+      item.append(' ', a);
     }
-    caixa.append(par);
-  }
-  return caixa;
+    return item;
+  });
+}
+
+// Tots els avisos vigents en un sol bloc, «Avisos actius»: Protecció Civil,
+// el risc calculat (si n'hi ha) i l'AEMET, cadascun amb la franja del seu
+// nivell. Sense cap, res (proposta del 08-10-2026: amb dos avisos, al mòbil
+// la temperatura quedava fora de la pantalla).
+function blocAvisos(dades, extres = [], ara = new Date()) {
+  const items = [...blocPlans(dades.plans), ...extres.filter(Boolean),
+    ...(dades.avisos && dades.avisos.length ? blocAvisosAemet(dades.avisos, ara) : [])];
+  if (!items.length) return null;
+  const sec = element('section', 'avisos-actius');
+  sec.setAttribute('aria-label', T('Avisos actius'));
+  sec.append(element('h2', 'seccio', T('Avisos actius')), ...items);
+  return sec;
 }
 
 function posaVersio(versio) {

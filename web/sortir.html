@@ -25,6 +25,7 @@
 <body>
   <svg width="0" height="0" style="position:absolute" aria-hidden="true">
     <!-- Icones de Lucide (ISC) -->
+    <symbol id="i-bell" viewBox="0 0 24 24"><path d="M10.268 21a2 2 0 0 0 3.464 0"/><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"/></symbol>
     <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"/></symbol>
     <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2m-7.07-17.07 1.41 1.41m11.32 11.32 1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></symbol>
     <symbol id="i-cloud-sun" viewBox="0 0 24 24"><path d="M12 2v2m-7.07.93 1.41 1.41M20 12h2m-2.93-7.07-1.41 1.41M15.947 12.65a4 4 0 0 0-5.925-4.128"/><path d="M13 22H7a5 5 0 1 1 4.9-6H13a3 3 0 0 1 0 6Z"/></symbol>
@@ -45,11 +46,13 @@
       <svg aria-hidden="true"><use href="#i-moon"></use></svg>
     </button>
   </header>
-  <nav class="pagines" aria-label="Pàgines">
-    <a href="casa.html"><svg aria-hidden="true"><use href="#i-cloud-sun"></use></svg>Temps a casa</a>
-    <a href="sortir.html" aria-current="page"><svg aria-hidden="true"><use href="#i-door-open"></use></svg>Si surts</a>
-  </nav>
-  <aside aria-label="Avisos a Telegram"><p class="nota avisos-telegram">Avisos a Telegram: <a href="telegram.html">com funciona</a></p></aside>
+  <div class="barra">
+    <nav class="pagines" aria-label="Pàgines">
+      <a href="casa.html"><svg aria-hidden="true"><use href="#i-cloud-sun"></use></svg>Temps a casa</a>
+      <a href="sortir.html" aria-current="page"><svg aria-hidden="true"><use href="#i-door-open"></use></svg>Si surts</a>
+    </nav>
+    <aside aria-label="Avisos a Telegram"><p class="nota avisos-telegram"><a href="telegram.html"><svg aria-hidden="true"><use href="#i-bell"></use></svg>Avisos a Telegram</a></p></aside>
+  </div>
 
   <main>
     <p id="avis-dades" class="avis" hidden></p>

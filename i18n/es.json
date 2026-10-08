@@ -77,7 +77,7 @@
  "Canal Temps a Montflorit": "Canal Temps a Montflorit",
  "Bot Temps a Montflorit": "Bot Temps a Montflorit",
  "Per canviar-ho, toca el botó de menú de baix a l'esquerra i tria <span class=\"nom\">/avisos</span>. Per deixar-ho, <span class=\"nom\">/baixa</span>.": "Para cambiarlo, toca el botón de menú de abajo a la izquierda y elige <span class=\"nom\">/avisos</span>. Para dejarlo, <span class=\"nom\">/baixa</span>.",
- "Avisos a Telegram: <a href=\"telegram.html\">com funciona</a>": "Avisos en Telegram: <a href=\"telegram.html\">cómo funciona</a>",
+ "<a href=\"telegram.html\"><svg aria-hidden=\"true\"><use href=\"#i-bell\"></use></svg>Avisos a Telegram</a>": "<a href=\"telegram.html\"><svg aria-hidden=\"true\"><use href=\"#i-bell\"></use></svg>Avisos en Telegram</a>",
  "O escriu-lo al cercador de Telegram: <span class=\"nom\">@TempsMontflorit</span>": "O escríbelo en el buscador de Telegram: <span class=\"nom\">@TempsMontflorit</span>",
  "O escriu-lo al cercador de Telegram: <span class=\"nom\">@TempsMontfloritBot</span>": "O escríbelo en el buscador de Telegram: <span class=\"nom\">@TempsMontfloritBot</span>",
  "Codi font i decisions": "Código fuente y decisiones",
