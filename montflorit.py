@@ -50,7 +50,8 @@ PROHIBIDES = ("casa", "cotxe", "moto", "trajecte")
 
 NAV = re.compile(r'\n( *)<nav class="pagines".*?</nav>', re.S)   # amb el sagnat que tingui
 # El menú de la web pública: el temps ara i «Si surts» (ADR 0029).
-PAGINES_PUBLIQUES = [("./", "El temps ara", "i-cloud-sun"), ("sortir.html", "Si surts", "i-door-open")]
+# «El temps», sense «ara»: la pàgina també porta la previsió (Juanjo, 08-10-2026).
+PAGINES_PUBLIQUES = [("./", "El temps", "i-cloud-sun"), ("sortir.html", "Si surts", "i-door-open")]
 
 
 def nav_publica(actual, sagnat="  "):
@@ -157,7 +158,7 @@ CANVIS_ES_SORTIR = [
     (">Mitjans que vols veure</legend>", ">Medios que quieres ver</legend>"),
 ]
 # El menú público: lo que no traduce la tabla de bloques (los enlaces).
-CANVIS_ES_NAV = [(">El temps ara</a>", ">El tiempo ahora</a>"), (">Si surts</a>", ">Si sales</a>")]
+CANVIS_ES_NAV = [(">El temps</a>", ">El tiempo</a>"), (">Si surts</a>", ">Si sales</a>")]
 # La traducción es automática: se dice en los créditos.
 CREDIT_TRADUCCIO = ('</a>, licencia ISC.</li>',
                     '</a>, licencia ISC.</li>\n      <li>Versión en castellano traducida con IA, sin revisión profesional.</li>')

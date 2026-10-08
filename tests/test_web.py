@@ -169,6 +169,28 @@ class Web(unittest.TestCase):
         self.assertEqual(self.roba("moto", (16, 26, 5), (21, 15, 5)),
                          "Jaqueta de moto amb folre i guants d’entretemps.")
 
+    def test_resum_per_trams_del_dia(self):
+        # Juanjo, 08-10-2026: probabilitat de pluja i fenòmens destacables per matí, tarda i nit.
+        def fila(h, prob, mm, t, ratxa=10, codi=0, neu=0):
+            dia = "2026-10-08" if h < 24 else "2026-10-09"
+            return {"hora": f"{dia}T{h % 24:02d}:00", "fins": f"{'2026-10-09' if h + 1 >= 24 else dia}T{(h + 1) % 24:02d}:00",
+                    "probabilitat": prob, "pluja_mm": mm, "temperatura": t, "ratxa": ratxa, "codi": codi, "neu": neu, "avisos": []}
+        hores = ([fila(h, 0.1, 0.2, 17 + h - 9) for h in range(9, 14)]      # matí: 17–21 °C
+                 + [fila(h, 0.8 if h == 16 else 0.3, 25 if h == 16 else 2, 22, 75 if h == 15 else 20, 95 if h == 16 else 0) for h in range(14, 21)]
+                 + [fila(h, 0.05, 0, -1 if h == 23 else 5, 10, 0, 0.5 if h == 22 else 0) for h in range(21, 31)]
+                 + [fila(31, 0.2, 0.5, 37)])
+        r = self.avalua("2026-10-08T09:30:00+02:00", f"resumTrams({json.dumps(hores)}, new Date())")
+        self.assertEqual([(t["nom"], t["hores"]) for t in r], [("Matí", "fins a les 14 h"), ("Tarda", "14–21 h"), ("Nit", "21–7 h")])
+        self.assertEqual((r[0]["prob"], r[0]["tMin"], r[0]["tMax"], r[0]["fenomens"]), (0.1, 17, 21, []))
+        self.assertEqual([f[0] for f in r[1]["fenomens"]], ["tempesta", "pluja forta", "ratxes de 75\u00a0km/h"])
+        self.assertEqual(r[1]["mm"], 37)
+        self.assertEqual([f[0] for f in r[2]["fenomens"]], ["neu", "gel"])
+        # A la nit, surten la nit i els trams de demà.
+        r = self.avalua("2026-10-08T22:30:00+02:00", f"resumTrams({json.dumps(hores)}, new Date())")
+        self.assertEqual([t["nom"] for t in r], ["Nit", "Demà matí"])
+        self.assertEqual([f[0] for f in r[1]["fenomens"]], ["calor"])
+        self.assertEqual(self.avalua("2026-10-08T22:30:00+02:00", f"resumTrams({json.dumps(hores)}, new Date())", "casa.js", ARNES)[0]["hores"], "fins a les 7 h")
+
     def test_les_franges_acabades_no_compten(self):
         hores = [{"hora": "2026-10-08T06:00", "fins": "2026-10-08T07:00"}, {"hora": "2026-10-08T07:00", "fins": "2026-10-08T08:00"},
                  {"hora": "2026-10-08T08:00", "fins": "2026-10-08T09:00"}]

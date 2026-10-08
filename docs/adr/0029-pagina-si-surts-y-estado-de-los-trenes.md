@@ -14,7 +14,7 @@ y otros transportes.
 ## Decisión
 
 - **Una página nueva en Temps a Montflorit**, «Si surts» (`web/sortir.html` y
-  `web/sortir.js`), en catalán y castellano, con un menú «El temps ara · Si
+  `web/sortir.js`), en catalán y castellano, con un menú «El temps · Si
   surts» con iconos. Todo se calcula en el navegador a partir de la previsión
   hora a hora que ya se publica; el servidor solo añade el índice UV y el
   estado de los trenes. No hay destino: los datos de Montflorit valen para

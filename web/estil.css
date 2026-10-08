@@ -237,6 +237,18 @@ h1 { margin: 0; font-size: 1.6rem; line-height: 1.2; }
 }
 .dades-ara svg { color: var(--enllac); }
 
+/* Trams del dia a la targeta d'ara: matí, tarda i nit, en fitxes. */
+.trams-dia { list-style: none; margin: .7rem 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: .4rem .6rem; }
+.tram {
+  display: flex; flex-wrap: wrap; align-items: center; gap: .2rem .6rem;
+  padding: .35rem .7rem; border: 1px solid var(--vora); border-radius: .5rem; font-size: .95rem;
+}
+.tram .quan { color: var(--suau); margin-left: -.4rem; }
+.tram .dada { display: inline-flex; align-items: center; gap: .3rem; }
+.tram svg { width: 1.15em; height: 1.15em; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; color: var(--enllac); }
+.tram .fenomen { color: var(--compte); font-weight: 600; }
+.tram .fenomen svg { color: var(--compte); }
+
 /* Radar a «Ara a casa»: franja pròpia, amb el color del que diu. */
 .radar-ara {
   --to: var(--suau);

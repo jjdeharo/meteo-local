@@ -42,5 +42,6 @@
 | [0038](0038-correcciones-de-la-auditoria-del-7-de-octubre.md) | Correcciones de la auditoría del 7 de octubre de 2026 | aceptado |
 | [0039](0039-correcciones-de-la-auditoria-del-8-de-octubre.md) | Correcciones de la auditoría del 8 de octubre de 2026 | aceptado |
 | [0040](0040-cabecera-compacta-y-bloque-de-avisos.md) | Cabecera compacta y bloque único de avisos | aceptado |
+| [0041](0041-trams-del-dia-en-la-tarjeta-de-ahora.md) | Tramos del día en la tarjeta de ahora | aceptado |
 
 Plantilla: [0000-plantilla.md](0000-plantilla.md). Para crear uno: `nuevo-adr "Título"`.

@@ -4,9 +4,11 @@ Calcula y publica **Temps a Montflorit** (<https://meteo-montflorit.github.io/>)
 la web del tiempo del barrio de Montflorit (Cerdanyola del Vallès), en catalán
 y en [castellano](https://meteo-montflorit.github.io/es/). Tiene dos páginas:
 
-- **El temps ara**: lo que miden ahora una estación particular del barrio y la
-  de Montflorit, y la previsión hora a hora para las 24 horas siguientes, con
-  los avisos de AEMET y los planes de Protección Civil (ADR 0007 y 0024).
+- **El temps**: lo que miden ahora una estación particular del barrio y la
+  de Montflorit, un resumen de la mañana, la tarde y la noche (probabilidad
+  de lluvia, temperaturas y fenómenos destacables; ADR 0041) y la previsión
+  hora a hora para las 24 horas siguientes, con los avisos de AEMET y los
+  planes de Protección Civil (ADR 0007 y 0024).
 - **Si surts**: para quien sale a una hora y vuelve a otra, cómo irá cada
   medio (a pie, bici o patinete, moto, coche y transporte público), qué ropa
   ponerse, consejos (lluvia, sol, noche, calor) y si circulan los trenes que

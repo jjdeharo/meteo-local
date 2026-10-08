@@ -71,7 +71,89 @@ function dada(id, text) {
   return li;
 }
 
-function blocAra(ara, casa, radarDades, vent) {
+// Resum del que ve per trams del dia (matí 7–14, tarda 14–21, nit 21–7), per
+// a la targeta d'ara (Juanjo, 08-10-2026): probabilitat de pluja i
+// temperatures sempre; els fenòmens, només quan es donen, amb els llindars
+// grocs del Pla Meteoalerta que ja usa config.RISC_LLINDARS, més neu i gel.
+const TRAMS = [[7, 14, 'Matí'], [14, 21, 'Tarda'], [21, 7, 'Nit']];
+const FENOMENS = { pluja_forta: 20, ratxa: 70, calor: 36, gel: 0 };
+// Els noms, amb T() literal perquè les proves de traducció els trobin.
+const NOM_TRAM = { Matí: () => T('Matí'), Tarda: () => T('Tarda'), Nit: () => T('Nit') };
+const NOM_TRAM_DEMA = { Matí: () => T('Demà matí'), Tarda: () => T('Demà tarda'), Nit: () => T('Demà nit') };
+const NOM_FENOMEN = {
+  tempesta: () => T('tempesta'), pluja_forta: () => T('pluja forta'), neu: () => T('neu'),
+  calor: () => T('calor'), gel: () => T('gel'),
+};
+
+function tramDe(f) {
+  const d = new Date(f.hora);
+  const h = d.getHours();
+  const [ini, fi, nom] = TRAMS.find(([a, b]) => (a < b ? h >= a && h < b : h >= a || h < b));
+  // La nit comença el dia anterior si som a la matinada.
+  const dia = new Date(d);
+  if (nom === 'Nit' && h < 7) dia.setDate(dia.getDate() - 1);
+  return { clau: `${dia.toDateString()}|${nom}`, nom, ini, fi, dia };
+}
+
+function resumTrams(hores, ara) {
+  const grups = [];
+  for (const f of hores || []) {
+    if (new Date(f.fins) <= ara) continue;
+    const t = tramDe(f);
+    let g = grups.find((x) => x.clau === t.clau);
+    if (!g) grups.push(g = { ...t, files: [] });
+    g.files.push(f);
+  }
+  const dema = new Date(ara);
+  dema.setDate(dema.getDate() + 1);
+  return grups.slice(0, 3).map((g) => {
+    const temps = g.files.map((f) => f.temperatura).filter((t) => t != null);
+    const fenomens = [];
+    const tempesta = (f) => f.codi >= 95 || (f.avisos || []).some((a) => (a.tipus || []).includes('tempestes'));
+    if (g.files.some(tempesta)) fenomens.push([NOM_FENOMEN.tempesta(), 'i-cloud-lightning']);
+    if (g.files.some((f) => (f.pluja_mm || 0) >= FENOMENS.pluja_forta)) fenomens.push([NOM_FENOMEN.pluja_forta(), 'i-cloud-rain-wind']);
+    if (g.files.reduce((s, f) => s + (f.neu || 0), 0) >= 0.1) fenomens.push([NOM_FENOMEN.neu(), 'i-snowflake']);
+    const ratxa = Math.max(...g.files.map((f) => f.ratxa || 0));
+    if (ratxa >= FENOMENS.ratxa) fenomens.push([T`ratxes de ${Math.round(ratxa)}\u00a0km/h`, 'i-wind']);
+    if (temps.length && Math.max(...temps) >= FENOMENS.calor) fenomens.push([NOM_FENOMEN.calor(), 'i-thermometer-sun']);
+    if (temps.length && Math.min(...temps) <= FENOMENS.gel) fenomens.push([NOM_FENOMEN.gel(), 'i-thermometer-snowflake']);
+    const esDema = g.dia.toDateString() === dema.toDateString();
+    const actual = new Date(g.files[0].hora) <= ara;
+    return {
+      nom: (esDema ? NOM_TRAM_DEMA : NOM_TRAM)[g.nom](),
+      hores: actual ? T`fins a les ${g.fi} h` : `${g.ini}–${g.fi} h`,
+      prob: Math.max(...g.files.map((f) => f.probabilitat || 0)),
+      mm: g.files.reduce((s, f) => s + (f.pluja_mm || 0), 0),
+      tMin: temps.length ? Math.min(...temps) : null, tMax: temps.length ? Math.max(...temps) : null,
+      fenomens,
+    };
+  });
+}
+
+function blocTrams(hores, ara) {
+  const trams = resumTrams(hores, ara);
+  if (!trams.length) return null;
+  const cont = element('ul', 'trams-dia');
+  cont.setAttribute('aria-label', T('Pròxims trams del dia'));
+  for (const t of trams) {
+    const li = element('li', 'tram');
+    li.append(element('strong', null, t.nom), element('span', 'quan', ` (${t.hores})`));
+    const pluja = element('span', 'dada');
+    const mm = t.mm >= 1 ? T`, uns ${coma(t.mm, 0)} mm` : '';
+    pluja.append(icona('i-umbrella'), `${Math.round(t.prob * 100)} %${mm}`);
+    li.append(pluja);
+    for (const [text, id] of t.fenomens) {
+      const s = element('span', 'dada fenomen');
+      s.append(icona(id), text);
+      li.append(s);
+    }
+    if (t.tMin != null) li.append(element('span', 'dada', `${Math.round(t.tMin)}–${Math.round(t.tMax)} °C`));
+    cont.append(li);
+  }
+  return cont;
+}
+
+function blocAra(ara, casa, radarDades, vent, hores) {
   const base = casa || ara;
   const sec = element('section', 'decisio targeta ara');
   const lloc = casa ? LLOC : 'Montflorit';
@@ -98,6 +180,8 @@ function blocAra(ara, casa, radarDades, vent) {
   sec.append(llista);
   const radar = blocRadar(radarDades, plou);
   if (radar) sec.append(radar);
+  const trams = blocTrams(hores, new Date());
+  if (trams) sec.append(trams);
   sec.append(elementHorari());    // «Actualitzat a les…», al peu de la targeta
   return sec;
 }
@@ -340,7 +424,7 @@ function pinta(dades) {
     const m = dades.models;
     avisos.append(element('p', 'avis', T`Avui els models no veuen aquesta pluja: en les darreres ${m.hores} hores han caigut ${coma(m.mesurada_mm)}\u00a0mm a Montflorit i en preveien ${coma(m.prevista_mm)}. Les primeres hores de la taula parteixen del que mesura l\u2019estació; per a la resta, fes més cas dels avisos.`));
   }
-  if (dades.ara || dades.ara_casa) cont.append(blocAra(dades.ara, dades.ara_casa, dades.radar, dades.vent));
+  if (dades.ara || dades.ara_casa) cont.append(blocAra(dades.ara, dades.ara_casa, dades.radar, dades.vent, dades.hores));
   else cont.append(elementHorari());
   if (dades.hores) {
     cont.append(taula(dades.hores, dades.aprenentatge));

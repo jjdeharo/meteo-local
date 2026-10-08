@@ -82,7 +82,7 @@ class Web(unittest.TestCase):
         index = self.llegeix("index.html")
         self.assertIn("<h1>Temps a Montflorit</h1>", index)
         # El menú público: el tiempo ahora y «Si surts», sin el trayecto (ADR 0029).
-        self.assertIn('<a href="./" aria-current="page"><svg aria-hidden="true"><use href="#i-cloud-sun"></use></svg>El temps ara</a>', index)
+        self.assertIn('<a href="./" aria-current="page"><svg aria-hidden="true"><use href="#i-cloud-sun"></use></svg>El temps</a>', index)
         self.assertNotIn("Trajecte", index)
         self.assertIn('data-dades="montflorit.json"', index)
         for nom in ("index.html", "manifest.webmanifest"):
