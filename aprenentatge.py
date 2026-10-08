@@ -448,6 +448,15 @@ def diari(avui=None, avisa=True):
         radar_fonts.verifica(dt.date.fromisoformat(avui), avisa)
     except Exception as ex:
         print("No he pogut comparar els radars:", ex)
+    # A qué hora para la lluvia, según el radar: con 5 episodios, el resultado
+    # a Juanjo, una vez (ADR 0049).
+    try:
+        import fi_pluja
+        text_fi = fi_pluja.verifica(avisa)
+        if text_fi:
+            print(text_fi)
+    except Exception as ex:
+        print("No he pogut comprovar el final de la pluja:", ex)
     # Qué dijo la regla de la moto de «Si surts» y si llovió (ADR 0047).
     try:
         print("Moto: hores noves verificades:", verifica_moto())

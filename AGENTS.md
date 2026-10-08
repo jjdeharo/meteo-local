@@ -78,4 +78,6 @@ Al cambiar algo:
   `docker exec meteo-local python3 /proyecto/pluja_arriba.py resum`,
   `docker exec meteo-local python3 /proyecto/riera.py resum` y, la regla de
   lluvia de la moto de «Si surts», `docker exec meteo-local python3
-  /proyecto/aprenentatge.py moto` (ADR 0047).
+  /proyecto/aprenentatge.py moto` (ADR 0047); el final de la lluvia según el
+  radar, `docker exec meteo-local python3 /proyecto/fi_pluja.py resum`
+  (ADR 0049).

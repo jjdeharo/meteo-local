@@ -479,6 +479,7 @@ def recoger(anterior=None):
     if R.hay_registro():
         try:
             R.apunta_montflorit(filas_estacion)
+            R.apunta_montflorit_5min(filas_estacion)
             if casa:
                 R.apunta_estacio_casa(E.hores(casa["files"]))
             if salida["hores"] and not salida.get("previsio_de"):

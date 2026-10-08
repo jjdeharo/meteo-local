@@ -89,6 +89,50 @@ def apunta_montflorit(filas):
     os.replace(MONTFLORIT + ".tmp", MONTFLORIT)
 
 
+# La lluvia de Montflorit cada 5 minutos, el paso del radar: para comprobar a
+# qué hora para la lluvia que se ve encima (fi_pluja.py, ADR 0049). La
+# estación solo ofrece las últimas 24 horas; aquí se van quedando.
+MONTFLORIT_5MIN = os.path.join(DIR, "montflorit-5min.csv")
+CAMPOS_MONTFLORIT_5MIN = ["fins", "pluja_mm"]
+
+
+def cincs_montflorit(filas):
+    """La lluvia de cada tramo completo de 5 minutos ({fin: mm}), de los datos
+    minuto a minuto («PREC», acumulada del día)."""
+    res = {}
+    for antes, despues in zip(filas, filas[1:]):
+        t = dt.datetime.fromisoformat(despues["dt_local"])
+        # El tramo que acaba en «fin» va de fin - 5 min (sin incluir) a fin.
+        base = t.replace(minute=t.minute - t.minute % 5, second=0, microsecond=0)
+        fin = base if t == base else base + dt.timedelta(minutes=5)
+        salto = despues["PREC"] - antes["PREC"]
+        res[fin] = res.get(fin, 0.0) + (despues["PREC"] if salto < 0 else salto)
+    if not filas:
+        return {}
+    primera = dt.datetime.fromisoformat(filas[0]["dt_local"])
+    ultima = dt.datetime.fromisoformat(filas[-1]["dt_local"])
+    return {fin: mm for fin, mm in res.items() if fin <= ultima and fin - dt.timedelta(minutes=5) >= primera}
+
+
+def apunta_montflorit_5min(filas):
+    nuevas = cincs_montflorit(filas)
+    if not nuevas:
+        return
+    os.makedirs(DIR, exist_ok=True)
+    guardadas = {}
+    if os.path.exists(MONTFLORIT_5MIN):
+        with open(MONTFLORIT_5MIN, encoding="utf-8") as f:
+            guardadas = {r["fins"]: r for r in csv.DictReader(f)}
+    for fin, mm in nuevas.items():
+        clave = fin.strftime("%Y-%m-%dT%H:%M")
+        guardadas[clave] = {"fins": clave, "pluja_mm": round(mm, 1)}
+    with open(MONTFLORIT_5MIN + ".tmp", "w", newline="", encoding="utf-8") as f:
+        w = csv.DictWriter(f, fieldnames=CAMPOS_MONTFLORIT_5MIN)
+        w.writeheader()
+        w.writerows(guardadas[k] for k in sorted(guardadas))
+    os.replace(MONTFLORIT_5MIN + ".tmp", MONTFLORIT_5MIN)
+
+
 ESTACIO_CASA = os.path.join(DIR, "estacio-casa.csv")
 CAMPOS_ESTACIO_CASA = ["fins", "pluja_mm", "temperatura", "humitat", "rosada", "pressio", "solar"]
 # Cuánto se rellena hacia atrás como mucho: Ecowitt guarda 90 días cada 5 minutos.
