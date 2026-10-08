@@ -81,7 +81,7 @@ done
 [ -f "$DIR/README.md" ] || printf '%s\n' "# Registre de meteo-local" "" \
   "Còpia diària, des del NAS, de \`/estat/registre\` i \`/estat/aprenentatge\` de" \
   "[meteo-local](https://github.com/meteo-montflorit/meteo-local). Privat." \
-  "Com es recupera: \`nas/RESTAURAR.md\` del repositori del programa (ADR 0044)." > "$DIR/README.md"
+  "Com es recupera: \`RESTAURAR.md\` del repositori del programa (ADR 0044)." > "$DIR/README.md"
 
 git -C "$DIR" add -A
 if git -C "$DIR" diff --cached --quiet; then

@@ -1,7 +1,14 @@
-# Volver a montar meteo-local en otro NAS
+# Volver a montar meteo-local en otro NAS u otro hosting
 
-Lo que hace falta si el NAS se pierde (ADR 0044). Mientras tanto, la reserva
-de IONOS calcula, publica y avisa sola (ADR 0032): no hay prisa.
+Lo que hace falta si se pierde el NAS (primera parte) o IONOS (segunda
+parte). Las claves de los dos, cifradas, y el registro del NAS están en el
+repositorio privado `meteo-montflorit/meteo-local-registre` (ADR 0044 y
+0045).
+
+# Parte 1. El NAS
+
+Mientras tanto, la reserva de IONOS calcula, publica y avisa sola (ADR 0032):
+no hay prisa.
 
 ## 1. El programa
 
@@ -69,3 +76,67 @@ docker compose logs -f        # «reloj en marcha» y, a la pasada siguiente, «
 ```
 
 Cuando el NAS vuelve a publicar, la reserva de IONOS se aparta sola.
+
+# Parte 2. IONOS (u otro hosting)
+
+## Qué pasa mientras falta
+
+- **La web sigue**: si IONOS no responde, la página lee la copia de los datos
+  que el NAS publica en GitHub (cada 30 minutos como mucho; ADR 0038).
+- **El NAS sigue** calculando y avisando a Juanjo; la subida a IONOS falla y
+  solo queda apuntada.
+- **Se paran el bot y los mensajes del canal** (el programa vive en IONOS) y
+  **la reserva** (la que releva al NAS). El canal, el bot y sus nombres son
+  de Telegram: no se pierden.
+
+## Qué necesita el hosting nuevo
+
+SSH con clave, cron, Python 3 con `venv`, `git` y una carpeta servida por la
+web donde se pueda poner un `.htaccess` (o la cabecera CORS equivalente).
+
+## 1. Las claves
+
+En `claus/claus-ionos.tar.gz.gpg` del repositorio privado, con la misma
+contraseña:
+
+```sh
+gpg -d claus-ionos.tar.gz.gpg | tar xzf -    # en el $HOME del hosting nuevo
+```
+
+Deja `.temps-bot/config.json` (el token del bot «Temps a Montflorit») y
+`.vigilancia-nas/config.json` (el del bot de avisos a Juanjo, que usa la
+reserva). El primero también está en el portátil de Juanjo
+(`~/.config/credenciales/temps-montflorit-bot.json`, el que lee
+`bot/instalar.sh`).
+
+## 2. Instalar
+
+Desde el portátil, con el alias `ionos-webspace` apuntando al hosting nuevo
+(o con `IONOS_HOST=…`):
+
+```sh
+reserva/instalar.sh     # carpeta .meteo-reserva, receptor rep-dades, entorno de Python,
+                        # app/meteo-local con su .htaccess, prueba y cron
+bot/instalar.sh         # carpeta .temps-bot, configuración y cron del bot
+```
+
+Y en `~/.ssh/authorized_keys` del hosting, la clave del NAS
+(`id_ionos.pub`, en `claus-nas.tar.gz.gpg`) con la orden fija:
+
+```
+command="sh .meteo-reserva/bin/rep-dades",restrict ssh-ed25519 … meteo-local NAS -> IONOS
+```
+
+## 3. La dirección de los datos
+
+Si cambia el dominio, en dos sitios: `DADES_URL` de `web/comu.js` (la web) y
+`IONOS=` de `.config/meteo-local/ionos.env` del NAS (adónde sube). Y en
+`reserva/htaccess-dades`, el origen permitido si cambia la web.
+
+## 4. Los suscriptores del bot
+
+No tienen copia: son datos personales y no salen del hosting (AGENTS.md;
+`/baixa` los borra). En un cambio de hosting voluntario se pasa
+`.temps-bot/subscriptors.json` directamente de un servidor al otro. Si el
+hosting desaparece de golpe, el bot vuelve con su mismo nombre pero sin la
+lista: se anuncia en el canal que quien lo usaba vuelva a escribir `/start`.

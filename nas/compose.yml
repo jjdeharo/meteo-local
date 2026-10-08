@@ -19,7 +19,7 @@
 #           aprenentatge/: el modelo que usa la página (ADR 0012). Estos dos
 #           se copian cada día en el repositorio privado meteo-local-registre
 #           (nas/copia-registre.sh, ADR 0044); cómo volver a montarlo todo en
-#           otro NAS, en nas/RESTAURAR.md
+#           otro NAS, en RESTAURAR.md
 services:
   meteo-local:
     # La versión de Claude Code sale del archivo común del NAS

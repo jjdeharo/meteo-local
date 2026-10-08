@@ -32,7 +32,7 @@ NAS ni dónde se autoriza cada una.
   repositorio. Apunta el resultado en `estat/copia.json`; si lleva más de dos
   días sin poder copiar (contando desde el primer intento si aún no hubo
   ninguno bueno), avisa a Juanjo una vez por Telegram, por `avis_privat.py`.
-- **Guía de reinstalación**, `nas/RESTAURAR.md`: el programa, la tabla de
+- **Guía de reinstalación**, `RESTAURAR.md` (al principio, `nas/RESTAURAR.md`; desde el ADR 0045, también para IONOS): el programa, la tabla de
   claves con dónde se regenera cada una (sin ningún valor), cómo traer el
   registro de vuelta y cómo arrancar.
 - **Las claves, cifradas, en el mismo repositorio privado**

@@ -23,6 +23,10 @@ cat "$BASE/avisar-juanjo" | ssh "$IONOS" "cat > $DIR/bin/avisar-juanjo && chmod 
 # El receptor de los datos que sube el NAS (la orden fija de su clave en
 # ~/.ssh/authorized_keys de IONOS, ADR 0038).
 cat "$BASE/rep-dades.sh" | ssh "$IONOS" "cat > $DIR/bin/rep-dades && chmod 700 $DIR/bin/rep-dades"
+# La carpeta pública de los datos y su .htaccess: que la web de GitHub Pages
+# los pueda leer (CORS) y sin caché (ADR 0020 y 0045).
+ssh "$IONOS" "mkdir -p app/meteo-local"
+cat "$BASE/htaccess-dades" | ssh "$IONOS" "cat > app/meteo-local/.htaccess"
 
 echo "Repositorio…"
 ssh "$IONOS" "[ -d $DIR/repo/.git ] && git -C $DIR/repo pull -q --ff-only || git clone -q $URL_REPO $DIR/repo"

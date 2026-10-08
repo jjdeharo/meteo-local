@@ -1,0 +1,9 @@
+# meteo-local: datos que sube el NAS (ADR 0020). Los lee la web pública Temps
+# a Montflorit (meteo-montflorit.github.io, ADR 0028); la web antigua de
+# jjdeharo.github.io/meteo-local ya solo redirige (ADR 0030).
+<IfModule mod_headers.c>
+  Header set Access-Control-Allow-Origin "https://meteo-montflorit.github.io"
+  Header merge Vary Origin
+  Header set Cache-Control "no-cache, max-age=0"
+</IfModule>
+Options -Indexes

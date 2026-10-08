@@ -107,7 +107,8 @@ Umbrales y lugares, en `config.py`. El porqué, en los ADR.
 | `bot/` | El bot de Telegram, que vive en IONOS: `bot.py` (menú, suscripciones, reparto y resumen) e `instalar.sh` (ADR 0034) |
 | `reserva/` | Servidor de reserva en IONOS: `reserva.py` (vigila, calcula y avisa si el NAS no publica), `avisar-juanjo`, `rep-dades.sh` (recibe los datos que sube el NAS: la orden fija de su clave, ADR 0038) e `instalar.sh` (ADR 0032) |
 | `que_toca.py` | Si toca actualizar en este minuto, según el horario publicado |
-| `nas/` | Contenedor del NAS: `compose.yml`, `Dockerfile` y `reloj.sh`; `copia-registre.sh`, la copia diaria del registro en el repositorio privado `meteo-local-registre`, y `RESTAURAR.md`, cómo montarlo todo en otro NAS (ADR 0044) |
+| `nas/` | Contenedor del NAS: `compose.yml`, `Dockerfile` y `reloj.sh`; `copia-registre.sh`, la copia diaria del registro en el repositorio privado `meteo-local-registre`, (ADR 0044) |
+| `RESTAURAR.md` | Cómo volver a montarlo todo en otro NAS o en otro hosting, con las claves y el registro de la copia privada (ADR 0044 y 0045) |
 | `trens.py` | Estado de las líneas de tren de Cerdanyola con los datos en tiempo real de Renfe y FGC (ADR 0029) |
 | `nowcast.py` | La lluvia del radar llevada hacia delante hasta 2 horas (ADR 0019 y 0023) |
 | `ecowitt.py` | La estación particular con la API oficial de Ecowitt; las claves, fuera del repositorio (ADR 0017) |
