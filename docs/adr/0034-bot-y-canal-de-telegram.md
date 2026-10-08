@@ -41,7 +41,10 @@ internet en casa, que suele llegar con las tormentas.
     l'Ajuntament»; en el menú, «Desbordament de la riera de Sant Cugat (en
     proves)» (Juanjo, 07-10-2026);
   - **perill**: los umbrales de aviso de AEMET con lo medido o previsto
-    (ADR 0018), y desde el 08-10-2026 también los incendios forestales
+    (ADR 0018), al aparecer o subir de nivel y, desde el 08-10-2026, también
+    cuando ya no queda ninguno («Ja no hi ha cap situació de perill a
+    Montflorit», tras `RISC_FI_H` horas sin verlo; antes solo lo recibía
+    Juanjo), y desde el 08-10-2026 también los incendios forestales
     cerca (ADR 0046); en el menú, «Situacions de
     perill» / «Situaciones de peligro» (antes «Perill (pluja forta, vent,
     calor…)» y, unas horas, «Temps excepcional (…)», que no cabía en la

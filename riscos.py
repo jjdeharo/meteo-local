@@ -10,13 +10,15 @@ frío y nieve. Los avisos de AEMET y los planes de Protección Civil no cuentan
 aquí: ya salen en la página, y Juanjo solo quiere el aviso cuando la previsión
 propia ve el peligro.
 
-El NAS, tras publicar la página de casa, avisa por Telegram cuando aparece un
-riesgo o sube de nivel, y una vez cuando ya no queda ninguno (un riesgo se da
-por acabado tras RISC_FI_H horas sin verlo, para que el vaivén de los modelos
-no repita mensajes).
+Hay aviso cuando aparece un riesgo o sube de nivel, y una vez cuando ya no
+queda ninguno (un riesgo se da por acabado tras RISC_FI_H horas sin verlo,
+para que el vaivén de los modelos no repita mensajes). Lo reciben los
+suscriptores del bot, el canal y las notificaciones (avisos_bot.py, con la
+misma detección). Hasta el 08-10-2026 el NAS lo mandaba además a Juanjo por
+Telegram; ahora «avisa» solo lo apunta en el registro del NAS.
 
 Uso:
-  python3 riscos.py avisa CASA.json   compara con lo ya avisado y, si toca, avisa
+  python3 riscos.py avisa CASA.json   compara con lo ya visto y, si toca, lo dice
   python3 riscos.py estat             lo que se tiene por activo
 """
 import datetime as dt
@@ -24,7 +26,6 @@ import json
 import os
 import sys
 
-import avis_privat as AP
 import config as C
 
 NIVELLS = ("groc", "taronja", "vermell")
@@ -221,7 +222,7 @@ def compara(estat, salida, ahora):
     return None
 
 
-def avisa(ruta, ahora=None, envia=True):
+def avisa(ruta, ahora=None):
     ahora = ahora or dt.datetime.now().astimezone()
     with open(ruta, encoding="utf-8") as f:
         salida = json.load(f)
@@ -229,9 +230,7 @@ def avisa(ruta, ahora=None, envia=True):
     text = compara(estat, salida, ahora)
     desa_estat(estat)
     if text:
-        print(text)
-        if envia:
-            AP.envia(text)
+        print(text)         # al registro del NAS; ya no se manda a Juanjo (ADR 0018)
     return text
 
 

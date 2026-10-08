@@ -542,6 +542,23 @@ class AvisosPublics(unittest.TestCase):
         self.assertIn("Viento muy fuerte previsto: rachas de hasta 75 km/h, hoy de 15 a 16 h.", nous[0]["es"])
         self.assertTrue(nous[0]["es"].startswith("<b>Aviso de peligro (amarillo): viento muy fuerte</b>"))
 
+    def test_perill_acabat(self):
+        # Quan ja no en queda cap, un avís que ho diu (abans només el rebia Juanjo).
+        r = {"clau": "previsio:ratxa", "tipus": "ratxa", "origen": "previsio", "nivell": "groc", "valor": 75,
+             "text": "Vent molt fort previst."}
+        dades = {"hores": [{}], "ara": {"temperatura": 18}}
+        estat = {}
+        AB.decideix(estat, {**dades, "riscos": [r]}, ARA)
+        self.assertEqual(AB.decideix(estat, dades, ARA + dt.timedelta(hours=1)), [])
+        fi = AB.decideix(estat, dades, ARA + dt.timedelta(hours=3))
+        self.assertEqual([(a["tipus"], a["nivell"]) for a in fi], [("perill", "fi")])
+        self.assertTrue(fi[0]["ca"].startswith("<b>Ja no hi ha cap situació de perill a Montflorit</b>"))
+        self.assertEqual(AB.decideix(estat, dades, ARA + dt.timedelta(hours=4)), [])
+        # Sense previsió no es pot saber: no es dona per acabat.
+        estat = {}
+        AB.decideix(estat, {**dades, "riscos": [r]}, ARA)
+        self.assertEqual(AB.decideix(estat, {}, ARA + dt.timedelta(hours=3)), [])
+
 
 
 class Registre(unittest.TestCase):

@@ -3,16 +3,16 @@
 """Avisos privados a Juanjo por Telegram (avisar-juanjo) con reintento (ADR
 0038).
 
-Los avisos de peligro (riscos.py) y de la riera (riera.py) se mandan con
-avisar-juanjo, y cada programa apunta el episodio como avisado antes de
-enviarlo (el de lluvia inminente, pluja_arriba.py, ya no se manda: ADR 0048). Hasta la auditoría del 07-10-2026,
-si Telegram o la red fallaban en ese momento, el aviso se perdía: el episodio
-ya constaba como avisado. Ahora el envío pasa por aquí: si avisar-juanjo no
-devuelve 0, el aviso queda en una cola (avisos-pendents.jsonl, junto al
-estado) y el reloj del NAS (nas/reloj.sh) y la reserva de IONOS
+Los avisos que el NAS o la reserva mandan a Juanjo (por ejemplo, la reserva
+cuando toma el relevo) salen con avisar-juanjo. Hasta el 08-10-2026 también
+los de peligro, lluvia inminente y riera, que ahora le llegan como a cualquier
+suscriptor (ADR 0048). Hasta la auditoría del 07-10-2026, si Telegram o la red
+fallaban en ese momento, el aviso se perdía. Ahora el envío pasa por aquí: si
+avisar-juanjo no devuelve 0, el aviso queda en una cola (avisos-pendents.jsonl,
+junto al estado) y el reloj del NAS (nas/reloj.sh) y la reserva de IONOS
 (reserva/reserva.py) la reintentan en cada pasada mientras el aviso tenga
-sentido (su vigencia: 3 horas; el de lluvia en unos minutos, 20). Lo que
-caduca sin entregarse se apunta en el registro de la pasada.
+sentido (su vigencia, 3 horas si no se dice otra). Lo que caduca sin
+entregarse se apunta en el registro de la pasada.
 
 Uso:
   python3 avis_privat.py reintenta     reenvía los pendientes (lo hacen el reloj y la reserva)

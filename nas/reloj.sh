@@ -11,14 +11,12 @@
 # (aprenentatge.py). Mientras exista /estat/vigila-pluviometre.json, cada hora
 # comprueba si el pluviómetro de casa marca la lluvia débil; al tener
 # resultado avisa y lo borra (pluviometre.py, ADR 0017).
-# Tras cada publicación, si lo que miden las estaciones o lo que prevé la
-# página llega a un umbral de peligro, avisa por Telegram: al aparecer o subir
-# de nivel y cuando ya no queda ninguno (riscos.py, ADR 0018). Si el radar
-# dice que la lluvia llega a casa en unos minutos, apunta el episodio y luego
-# si acertó (pluja_arriba.py, ADR 0022; desde el 08-10-2026 el aviso solo va
-# a los suscriptores, ADR 0048). Y si la lluvia en la cuenca de la
-# riera de Sant Cugat llega al umbral de atención o de peligro, avisa una vez
-# cada nivel por episodio (riera.py, ADR 0027).
+# Tras cada publicación apunta en el registro las situaciones de peligro
+# (riscos.py, ADR 0018), la lluvia que el radar anuncia y si acertó
+# (pluja_arriba.py, ADR 0022) y los episodios de la riera de Sant Cugat
+# (riera.py, ADR 0027). Los avisos de los tres solo van a los suscriptores
+# (avisos_bot.py, ADR 0034 y 0048): desde el 08-10-2026 ya no se mandan aparte
+# a Juanjo.
 # Además, cada minuto mira si main tiene commits nuevos y, si los tiene,
 # publica enseguida: es el único que publica la web (ADR 0005). Solo se
 # despliega un commit cuyas pruebas de GitHub han pasado (desplegament.py,
@@ -72,7 +70,7 @@ riscos() {
   [ -z "${aviso:-}" ] || registro "lluvia anunciada: $aviso"
   aviso=$(cd "$REPO" && python3 riera.py avisa /estat/casa.json) \
     || registro "ha fallado el aviso de la riera"
-  [ -z "${aviso:-}" ] || registro "aviso de la riera: $aviso"
+  [ -z "${aviso:-}" ] || registro "riera: $aviso"
 }
 
 pasada() {

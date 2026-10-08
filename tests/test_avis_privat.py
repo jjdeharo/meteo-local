@@ -77,9 +77,9 @@ class Cua(unittest.TestCase):
         self.assertFalse(AP.envia("Riera", ara=ARA))
         self.assertEqual(len(AP.pendents()), 1)
 
-    def test_la_riera_passa_per_la_cua(self):
-        # El episodio queda apuntado como avisado y el aviso, pendiente: no se pierde.
-        self.falla(1)
+    def test_la_riera_ja_no_envia_res_a_juanjo(self):
+        # Des del 08-10-2026 l'avís de la riera arriba pel bot, el canal i les
+        # notificacions; riera.py només apunta l'episodi.
         RI.ESTADO = os.path.join(self.dir.name, "riera.json")
         casa = os.path.join(self.dir.name, "casa.json")
         riera = {"fins": ARA.isoformat(timespec="minutes"), "mm_3h": 40, "mm_6h": 55, "radar_1h": 0,
@@ -87,12 +87,9 @@ class Cua(unittest.TestCase):
         with open(casa, "w") as f:
             f.write('{"generat": "%s", "riera": %s}' % (ARA.isoformat(timespec="minutes"),
                                                         __import__("json").dumps(riera)))
-        text = RI.avisa(casa, ARA)
-        self.assertIn("atenció", text)
+        self.assertIn("atenció", RI.avisa(casa, ARA))
         self.assertEqual(self.rebuts(), [])
-        self.assertEqual(AP.pendents()[0]["text"], text)
-        AP.reintenta(ARA + dt.timedelta(minutes=6))
-        self.assertEqual(len(self.rebuts()), 1)
+        self.assertEqual(AP.pendents(), [])
 
 
 if __name__ == "__main__":

@@ -20,7 +20,9 @@ esas 3 horas en la estación de Meteocat de Sant Cugat (29-04-2024) y con 67
   últimas 2,5 más la media hora prevista o en las últimas 2 más la hora
   prevista. Lo mismo con 6 horas.
 
-Con RIERA_ATENCIO_MM en 3 horas avisa por Telegram, y con RIERA_PERILL_MM en
+Con RIERA_ATENCIO_MM en 3 horas hay aviso (a los suscriptores, al canal y en
+las notificaciones, avisos_bot.py; hasta el 08-10-2026, también a Juanjo
+aparte), y con RIERA_PERILL_MM en
 3 horas y RIERA_PERILL_6H_MM en 6, otra vez: el 13-09-2025 cayeron 52 mm en
 3 horas sobre suelo seco, sin más lluvia antes, y no se desbordó. Una sola vez
 cada nivel por episodio. Un episodio empieza con RIERA_REGISTRE_MM
@@ -29,7 +31,7 @@ y acaba tras RIERA_FI_H horas por debajo; al acabar se apunta en el registro
 
 Uso:
   python3 riera.py ara                  el índice ahora (con red)
-  python3 riera.py avisa CASA.json      mira los datos y, si toca, avisa
+  python3 riera.py avisa CASA.json      mira los datos y apunta el episodio
   python3 riera.py estat                el episodio en curso
   python3 riera.py resum                los episodios apuntados
 """
@@ -40,7 +42,6 @@ import math
 import os
 import sys
 
-import avis_privat as AP
 import config as C
 import nowcast as N
 
@@ -294,7 +295,7 @@ def apunta(fila):
         w.writerow(fila)
 
 
-def avisa(ruta, ahora=None, envia=True):
+def avisa(ruta, ahora=None):
     ahora = ahora or dt.datetime.now().astimezone()
     with open(ruta, encoding="utf-8") as f:
         salida = json.load(f)
@@ -307,9 +308,7 @@ def avisa(ruta, ahora=None, envia=True):
     if fila:
         apunta(fila)
     if text:
-        print(text)
-        if envia:
-            AP.envia(text)
+        print(text)         # al registro del NAS; ya no se manda a Juanjo (ADR 0027)
     return text
 
 

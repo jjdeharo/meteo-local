@@ -97,8 +97,8 @@ class Avis(unittest.TestCase):
         import json
         with open(ruta, "w") as f:
             json.dump(salida(hores({3: {"ratxa": 75}})), f)
-        self.assertIn("risc groc", RS.avisa(ruta, AHORA, envia=False))
-        self.assertIsNone(RS.avisa(ruta, AHORA, envia=False))
+        self.assertIn("risc groc", RS.avisa(ruta, AHORA))
+        self.assertIsNone(RS.avisa(ruta, AHORA))
 
 
 

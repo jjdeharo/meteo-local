@@ -231,7 +231,8 @@ def vigila():
                       check=False, timeout=120, stdout=subprocess.DEVNULL).returncode == 0:
         os.chmod(nou, 0o604)
         os.replace(nou, DADES.replace("montflorit.json", "avisos.json"))
-    # Els avisos per Telegram, en lloc del NAS.
+    # El registre dels avisos (perill, pluja i riera), en lloc del NAS: des del
+    # 08-10-2026 ja no s'envien a Juanjo (ADR 0048).
     for programa in ("riscos.py", "pluja_arriba.py", "riera.py"):
         subprocess.run([PYTHON, programa, "avisa", os.path.join(ESTAT, "casa.json")], cwd=REPO, env=ENTORN,
                        check=False, timeout=120, stdout=subprocess.DEVNULL)

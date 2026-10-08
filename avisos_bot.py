@@ -123,6 +123,19 @@ def text_perill(nous, ahora):
     return {"ca": "\n".join(ca), "es": "\n".join(es)}, pitjor
 
 
+def text_perill_fi():
+    """Ja no queda cap risc: el mateix que rebia abans només Juanjo (Juanjo,
+    08-10-2026), perquè qui ha rebut l'avís sàpiga que ha passat."""
+    h = C.RISC_FI_H
+    ca = (negreta("Ja no hi ha cap situació de perill a Montflorit") +
+          f"\nFa {h} hores que ni el que mesuren les estacions ni la previsió arriben als llindars d'avís de "
+          "l'AEMET. Si hi tornen, hi haurà un avís nou.")
+    es = (negreta("Ya no hay ninguna situación de peligro en Montflorit") +
+          f"\nHace {h} horas que ni lo que miden las estaciones ni la previsión llegan a los umbrales de aviso de "
+          "la AEMET. Si vuelven, habrá un aviso nuevo.")
+    return {"ca": ca, "es": es}
+
+
 def text_riera(riera, nivell):
     hora = dt.datetime.fromisoformat(riera["fins"]).strftime("%H:%M")
     mm3, mm6 = coma(riera["mm_3h"]), coma(riera["mm_6h"])
@@ -231,12 +244,17 @@ def decideix(estat, salida, ahora):
     # Sin previsión o sin estación no se ha podido mirar: el riesgo no caduca,
     # para no repetirlo al canal cuando vuelvan los datos.
     sense = not salida.get("hores") or not salida.get("ara")
+    acabats = []
     for clau, a in list(actius.items()):
         if not sense and ahora - dt.datetime.fromisoformat(a["vist"]) >= dt.timedelta(hours=C.RISC_FI_H):
+            acabats.append(clau)
             del actius[clau]
     if nous_perill:
         text, pitjor = text_perill(nous_perill, ahora)
         afegeix("perill", hora + ":" + ",".join(r["clau"] for r in nous_perill), text, pitjor)
+    elif acabats and not actius:
+        # Quan ja no en queda cap, es diu (abans, només a Juanjo).
+        afegeix("perill", hora + ":fi", text_perill_fi(), "fi")
     # Incendios forestales cerca (ADR 0046). La primera vez solo se apunta lo
     # que hay: lo que ya estaba no es una novedad.
     entorn = salida.get("entorn") or {}

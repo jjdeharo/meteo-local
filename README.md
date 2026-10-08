@@ -33,10 +33,11 @@ riera, el peligro y la previsión de las 7. La web tiene una página de ayuda
 con capturas, «Avisos a Telegram». El bot y el envío de las notificaciones
 viven en IONOS (ADR 0034 y 0048).
 
-Además, solo para Juanjo, el NAS avisa por Telegram si lo medido o lo previsto
-llega a los umbrales de aviso de AEMET (ADR 0018), unos 15 minutos antes de que
-llueva en casa (ADR 0022) y si la lluvia en la cuenca de la riera de Sant Cugat
-llega al umbral de atención o de peligro de desbordamiento (ADR 0027).
+Los avisos de peligro (umbrales de AEMET con lo medido o lo previsto, ADR
+0018), de lluvia en unos 15 minutos (ADR 0022) y de la riera de Sant Cugat (ADR
+0027) los recibe todo el mundo igual, por las notificaciones, el bot o el canal.
+Hasta el 08-10-2026 el NAS los mandaba además a Juanjo por Telegram; ahora solo
+le escribe para lo que es de mantenimiento.
 
 Hasta el 07-10-2026 el repositorio publicaba también la página «Moto o cotxe?»,
 que recomendaba un medio para un trayecto fijo, con un agente diario con IA.
@@ -107,7 +108,7 @@ Umbrales y lugares, en `config.py`. El porqué, en los ADR.
 | `publica.sh` | Calcula y publica (lo usa el NAS) |
 | `entorn.py` | Incendios forestales en curso cerca (Bombers) y nivel del Pla Alfa de Cerdanyola (Agents Rurals), para la web y los avisos de peligro (ADR 0046) |
 | `desplegament.py` | Pone al día la copia del repositorio (NAS, reserva y bot) hasta el último commit con las pruebas de GitHub en verde; si GitHub no responde o las pruebas llevan más de 20 minutos sin acabar, despliega igualmente y lo apunta (ADR 0038) |
-| `avis_privat.py` | Avisos privados a Juanjo por Telegram con cola de reintento si Telegram no los acepta (ADR 0038) |
+| `avis_privat.py` | Avisos de mantenimiento a Juanjo por Telegram con cola de reintento si Telegram no los acepta (ADR 0038) |
 | `avisos_bot.py` | Decide los avisos públicos para el bot y el canal y los deja en `avisos.json` (ADR 0034) |
 | `bot/` | Lo que vive en IONOS para repartir avisos: el bot de Telegram, `bot.py` (menú, suscripciones, reparto y resumen, ADR 0034); los avisos en el navegador, `push.py` (envío) y `subscripcio.php` (altas y bajas, ADR 0048); e `instalar.sh` |
 | `reserva/` | Servidor de reserva en IONOS: `reserva.py` (vigila, calcula y avisa si el NAS no publica), `avisar-juanjo`, `rep-dades.sh` (recibe los datos que sube el NAS: la orden fija de su clave, ADR 0038) e `instalar.sh` (ADR 0032) |
@@ -118,7 +119,7 @@ Umbrales y lugares, en `config.py`. El porqué, en los ADR.
 | `nowcast.py` | La lluvia del radar llevada hacia delante hasta 2 horas (ADR 0019 y 0023) |
 | `ecowitt.py` | La estación particular con la API oficial de Ecowitt; las claves, fuera del repositorio (ADR 0017) |
 | `pluviometre.py` | Comprueba una vez, tras limpiarlo, si el pluviómetro marca la lluvia débil y avisa por Telegram (ADR 0017) |
-| `riscos.py` | Situaciones de peligro y aviso por Telegram (ADR 0018) |
+| `riscos.py` | Situaciones de peligro según lo medido y lo previsto, que usan la página y los avisos (ADR 0018) |
 | `pluja_arriba.py` | Cuándo llegará la lluvia que ve el radar (la usa el aviso público de lluvia) y registro de sus aciertos (ADR 0022) |
 | `riera.py` | Lluvia en la cuenca de la riera de Sant Cugat y aviso de atención o peligro de desbordamiento, con registro de episodios (ADR 0027) |
 | `radar_fonts.py` | Apunta lo que daba cada radar y, cada día, elige el que acierta más (ADR 0026) |

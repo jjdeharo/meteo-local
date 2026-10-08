@@ -1,6 +1,12 @@
 # 18. Situaciones de peligro y aviso por Telegram
 
-Fecha: 2026-10-06 · Estado: aceptado
+Fecha: 2026-10-06 · Estado: aceptado; el envío a Juanjo, retirado el 08-10-2026
+
+**08-10-2026:** el aviso ya no se manda aparte a Juanjo por Telegram (lo pidió
+al ver que le llegaba repetido): lo reciben todos por las notificaciones, el
+bot y el canal (`avisos_bot.py`, ADR 0034 y 0048), con la misma detección.
+Este programa sigue llevando el estado y el registro. Desde entonces el aviso
+público dice también cuándo ya no queda ningún peligro, como hacía el privado.
 
 ## Contexto
 
