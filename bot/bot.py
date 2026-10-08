@@ -468,13 +468,15 @@ def text_trens_bot(dades, idioma, moment):
     linies = ((dades.get("trens") or {}).get("linies")) or []
     if not linies:
         return "Ahora no hay datos de los trenes." if idioma == "es" else "Ara no hi ha dades dels trens."
-    files = [f"<b>{html.escape(l['linia'])}</b> ({html.escape(l.get('estacio', ''))}): {ESTAT_TREN[idioma].get(l['estat'], l['estat'])}"
-             for l in linies]
-    # El aviso más nuevo de cada línea, en su idioma original (Juanjo, 07-10-2026).
+    # Cada línia una sola vegada, amb el seu avís més nou al costat, en
+    # l'idioma original de l'operador (Juanjo, 07-10-2026 i 08-10-2026).
+    files = []
     for l in linies:
+        fila = f"<b>{html.escape(l['linia'])}</b> ({html.escape(l.get('estacio', ''))}): {ESTAT_TREN[idioma].get(l['estat'], l['estat'])}"
         if l.get("avisos"):
             a = l["avisos"][0]
-            files.append(f"{l['linia']}: {html.escape(a.get(idioma) or a.get('ca') or a.get('es') or '')}")
+            fila += f". «{html.escape(a.get(idioma) or a.get('ca') or a.get('es') or '')}»"
+        files.append(fila)
     cap = "Trenes de Cerdanyola" if idioma == "es" else "Trens de Cerdanyola"
     return f"<b>{cap}</b>\n" + "\n".join(files)
 

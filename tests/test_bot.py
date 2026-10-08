@@ -394,8 +394,10 @@ class Consultes(unittest.TestCase):
         self.assertIn("No s'acosta pluja en 2 hores.", self.ordre("/radar", subs))
         self.assertIn("https://www.rainviewer.com/map.html", self.ordre("/radar", subs))
         trens = self.ordre("/trens", subs)
-        self.assertIn("<b>R4</b> (Cerdanyola del Vallès): amb incidències", trens)
-        self.assertIn("R4: Obres &lt;a Montcada&gt;.", trens)          # el text de l'operador, escapat
+        # Cada línia una sola vegada, amb el seu avís al costat i el text de l'operador escapat.
+        self.assertIn("<b>R4</b> (Cerdanyola del Vallès): amb incidències. «Obres &lt;a Montcada&gt;.»", trens)
+        self.assertEqual(trens.count("R4"), 1)
+        self.assertIn("<b>S2</b> (Bellaterra): sense incidències\n", trens)
         self.assertIn("pla d'inundacions (INUNCAT) en fase d'emergència", self.ordre("/avisos_actius", subs))
         self.assertTrue(self.ordre("/dema", subs).startswith("<b>Previsió per a demà"))
         subs["7"]["idioma"] = "es"
