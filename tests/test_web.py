@@ -239,6 +239,9 @@ class Web(unittest.TestCase):
         self.assertEqual(cotxe(2, 0.7), {"nivell": "compte", "motius": [
             "Pluja probable a l’anada i a la tornada: condueix amb compte."]})
         self.assertEqual(cotxe(0.3, 0.25), {"nivell": "be", "motius": ["Pot ploure a l’anada i a la tornada."]})
+        # Un sol model amb 1 mm i poca probabilitat: el nivell no canvia, però no és «probable» (ADR 0047).
+        self.assertEqual(cotxe(1.7, 0.25), {"nivell": "compte", "motius": [
+            "Pot ploure a l’anada i a la tornada: condueix amb compte."]})
         self.assertEqual(cotxe(0, 0.05), {"nivell": "be", "motius": ["Sense pluja ni vent fort."]})
         self.assertEqual(cotxe(0, 0.05, 0)["motius"], ["0\u00a0°C: compte amb el gel a primera hora."])
 
@@ -274,7 +277,11 @@ class Web(unittest.TestCase):
         moto = avalua("moto", 0.01)
         self.assertEqual(moto["nivell"], "compte")
         self.assertTrue(moto["motius"][0].endswith("Per si de cas, porta l’impermeable."))
-        self.assertEqual(avalua("cotxe", 0.01)["nivell"], "compte")
+        cotxe = avalua("cotxe", 0.01)
+        self.assertEqual(cotxe["nivell"], "compte")
+        self.assertTrue(cotxe["motius"][0].startswith("Avís de l’AEMET per pluja a l’anada (18\u00a0h)"))
+        # El cas del 08-10-2026 a les 17 h: avís i un 10 %. Com la moto, «pot ploure».
+        self.assertEqual(avalua("cotxe", 0.1)["motius"], ["Pot ploure a l’anada i a la tornada: condueix amb compte."])
         self.assertTrue(avalua("peu", 0.01)["motius"][0].startswith("Avís de l’AEMET per pluja mentre ets fora"))
         # Si els models també hi veuen pluja, com sempre.
         self.assertEqual(avalua("bici", 0.6)["motius"], ["Pluja probable a l’anada i a la tornada."])

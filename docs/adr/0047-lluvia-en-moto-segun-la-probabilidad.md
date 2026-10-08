@@ -38,8 +38,12 @@ lleve a «compte» y que el programa aprenda también de los avisos.
   l'impermeable»). Sustituye para estos dos medios lo decidido el 07-10-2026
   (ADR 0029: «seguir recomendando coche pero indicando bien claro que no hay
   motivo aparente para no ir en moto»).
-- **A pie y en coche no cambia nada**: allí una falsa alarma solo añade un
-  paraguas o un «condueix amb compte», y no se ha medido.
+- **A pie y en coche no cambia el nivel**: allí una falsa alarma solo añade un
+  paraguas o un «condueix amb compte», y no se ha medido. **El texto del coche
+  sí se iguala al de la moto** (3.23.1, Juanjo, 08-10-2026): «Pluja probable»
+  solo desde el 40 %, «Pot ploure» desde el 10 %, y el texto del aviso cuando
+  es lo único que ve lluvia. Antes, con el aviso, un 10 % y 0,3 mm, el coche
+  decía «Pluja probable» y la moto «Pot ploure».
 - **El modelo aprende el peso de lo oficial**: cada hora del registro lleva
   desde hoy `avis_pluja` (aviso de AEMET por lluvia o tormentas) y
   `pla_inuncat` (INUNCAT en alerta o emergencia), y `aprenentatge.py` ajusta

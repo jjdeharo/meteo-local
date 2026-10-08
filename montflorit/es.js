@@ -166,6 +166,7 @@ var IDIOMA = {
     "Fins a {0}\u00a0mm de pluja en una hora {1}: millor no agafar el cotxe.": "Hasta {0}\u00a0mm de lluvia en una hora {1}: mejor no coger el coche.",
     "Fins a {0}\u00a0mm de pluja en una hora {1}: condueix amb compte.": "Hasta {0}\u00a0mm de lluvia en una hora {1}: conduce con cuidado.",
     "Pluja probable {0}: condueix amb compte.": "Lluvia probable {0}: conduce con cuidado.",
+    "Pot ploure {0}: condueix amb compte.": "Puede llover {0}: conduce con cuidado.",
     "Avís de l\u2019AEMET per pluja {0}: ni el radar, ni les estacions, ni els models hi veuen pluja. Condueix amb compte.": "Aviso de la AEMET por lluvia {0}: ni el radar, ni las estaciones, ni los modelos ven lluvia. Conduce con cuidado.",
     "Roba de moto d\u2019hivern tèrmica, guants d\u2019hivern i tub de coll.": "Ropa de moto de invierno térmica, guantes de invierno y braga de cuello.",
     "Jaqueta de moto d\u2019hivern, guants d\u2019hivern i tub de coll.": "Chaqueta de moto de invierno, guantes de invierno y braga de cuello.",

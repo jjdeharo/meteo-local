@@ -138,10 +138,15 @@ function avalua(mitja, tram, trens, futur) {
     if (viatge.some(forta(1))) puja('no', T`Fins a ${mmMax}\u00a0mm de pluja en una hora ${quan(anada, tornada, forta(1))}: millor no agafar el cotxe.`);
     else if (viatge.some(forta(0))) puja('compte', T`Fins a ${mmMax}\u00a0mm de pluja en una hora ${quan(anada, tornada, forta(0))}: condueix amb compte.`);
     else if (viatge.some(plouClar)) {
-      puja('compte', nomesAvis(plouClar)
-        ? T`Avís de l’AEMET per pluja ${quan(anada, tornada, plouClar)}: ni el radar, ni les estacions, ni els models hi veuen pluja. Condueix amb compte.`
-        : T`Pluja probable ${quan(anada, tornada, plouClar)}: condueix amb compte.`);
-    } else if (viatge.some(mulla)) res.motius.push(T`Pot ploure ${quan(anada, tornada, mulla)}.`);
+      // El nivell, el de sempre; el text, el mateix que en moto (ADR 0047): «Pluja
+      // probable» només si la probabilitat ho diu, i l'avís, si és l'únic que la veu.
+      const dades = (f) => sobre(f, PROB_RISC_RODES, MM_RISC) || f.plou_ara;
+      if (viatge.some(plouRodes)) puja('compte', T`Pluja probable ${quan(anada, tornada, plouRodes)}: condueix amb compte.`);
+      else if (viatge.some(dades)) puja('compte', T`Pot ploure ${quan(anada, tornada, dades)}: condueix amb compte.`);
+      else if (viatge.some(avisPluja)) {
+        puja('compte', T`Avís de l’AEMET per pluja ${quan(anada, tornada, avisPluja)}: ni el radar, ni les estacions, ni els models hi veuen pluja. Condueix amb compte.`);
+      } else puja('compte', T`Pot ploure ${quan(anada, tornada, plouClar)}: condueix amb compte.`);
+    } else if (viatge.some(mullaRodes)) res.motius.push(T`Pot ploure ${quan(anada, tornada, mullaRodes)}.`);
   }
   if (ll.ratxa[1] != null && ratxa >= ll.ratxa[1]) puja('no', T`Ratxes de vent de fins a ${Math.round(ratxa)} km/h.`);
   else if (ll.ratxa[0] != null && ratxa >= ll.ratxa[0]) puja('compte', T`Ratxes de vent de fins a ${Math.round(ratxa)} km/h.`);
