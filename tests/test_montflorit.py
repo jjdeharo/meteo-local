@@ -33,10 +33,10 @@ const el = () => ({ setAttribute() {}, addEventListener() {}, append() {}, repla
   querySelector: () => ({ setAttribute() {} }), dataset: {}, style: { setProperty() {} } });
 const ctx = vm.createContext({
   Date: FakeDate, Math, JSON, Number, Object, Set, String, console,
-  document: { getElementById: el, createElement: el, addEventListener() {},
+  document: { querySelectorAll: () => [], getElementById: el, createElement: el, addEventListener() {},
     documentElement: { dataset: { lloc: 'Montflorit', estacio: 'la estación particular' } } },
   matchMedia: () => ({ matches: false, addEventListener() {} }), addEventListener() {}, AbortController,
-  localStorage: { getItem: () => null }, navigator: {},
+  localStorage: { getItem: () => null, setItem() {} }, navigator: {}, location: { pathname: '/' },
   fetch: () => new Promise(() => {}), setTimeout: () => 0, clearTimeout() {},
 });
 for (const f of ['montflorit/es.js', 'web/comu.js', 'web/casa.js']) {

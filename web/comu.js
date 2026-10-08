@@ -569,5 +569,29 @@ document.addEventListener('click', (e) => {
   obreVisor(enllac);
 });
 
+// «Nou!» al costat d'«Avisos al mòbil» (ADR 0048): fins que s'entra a la
+// pàgina «Avisos» (ho recorda el navegador) i, per a tothom, fins al 15-10-2026,
+// una setmana després de publicar-la. El «Nou:» de la pàgina, igual
+// (Juanjo, 08-10-2026).
+const NOU_AVISOS_FINS = new Date('2026-10-16T00:00:00+02:00');
+
+function marcaNouAvisos(ara = new Date()) {
+  let vist = false;
+  try {
+    if (/(^|\/)avisos\.html$/.test(location.pathname)) localStorage.setItem('meteo.avisos-vist', '1');
+    vist = localStorage.getItem('meteo.avisos-vist') === '1';
+  } catch (_) {}
+  if (ara >= NOU_AVISOS_FINS) {
+    document.querySelectorAll('.novetat').forEach((p) => {
+      p.classList.remove('novetat');
+      p.querySelector('.nou')?.remove();
+    });
+  }
+  if (vist || ara >= NOU_AVISOS_FINS) return;
+  for (const a of document.querySelectorAll('.enllac-avisos a')) a.append(element('span', 'xip-nou', T('Nou!')));
+}
+
+marcaNouAvisos();
+
 // Per poder instal·lar la web com a aplicació (sw.js).
 if ('serviceWorker' in navigator) navigator.serviceWorker.register(ARREL + 'sw.js').catch(() => {});

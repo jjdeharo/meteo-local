@@ -14,6 +14,7 @@ var IDIOMA = {
   codi: 'es',
   textos: {
     'Tanca': 'Cerrar',
+    "Nou!": "¡Nuevo!",
     "Situacions de perill": "Situaciones de peligro",
     "Desbordament de la riera de Sant Cugat (en proves)": "Desbordamiento de la riera de Sant Cugat (en pruebas)",
     "Pluja a punt de començar (15 min abans)": "Lluvia a punto de empezar (15 min antes)",

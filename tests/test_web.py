@@ -26,10 +26,10 @@ const el = () => ({ setAttribute() {}, addEventListener() {}, append() {}, after
   querySelector: () => ({ setAttribute() {} }), dataset: {}, style: { setProperty() {} } });
 const ctx = vm.createContext({
   Date: FakeDate, Math, JSON, Number, Object, Set, console,
-  document: { getElementById: el, createElement: el, createElementNS: el, addEventListener() {},
+  document: { querySelectorAll: () => [], getElementById: el, createElement: el, createElementNS: el, addEventListener() {},
     documentElement: { dataset: {} } },
   matchMedia: () => ({ matches: false, addEventListener() {} }), addEventListener() {}, AbortController,
-  localStorage: { getItem: () => null }, navigator: {},
+  localStorage: { getItem: () => null, setItem() {} }, navigator: {}, location: { pathname: '/' },
   fetch: () => new Promise(() => {}), setTimeout: () => 0, clearTimeout() {},
 });
 for (const f of ['comu.js', pagina]) vm.runInContext(fs.readFileSync(`${web}/${f}`, 'utf8'), ctx);
@@ -310,6 +310,22 @@ class Web(unittest.TestCase):
         self.assertEqual(avalua("bici", viatge(None, 1.2, []))["nivell"], "no")
         # El cotxe no canvia: un sol model amb 1 mm o més és pluja probable.
         self.assertEqual(avalua("cotxe", viatge(0.25, 1.7, []))["nivell"], "compte")
+
+    def test_nou_al_costat_dels_avisos(self):
+        # «Nou!» fins que s'entra a la pàgina «Avisos» i, per a tothom, fins al
+        # 15-10-2026 (ADR 0048).
+        def nou(ara, vist=None, pagina="/"):
+            expr = ("posats = []; enllac = { append: (e) => posats.push(e.textContent) };"
+                    "document.querySelectorAll = (s) => s === '.enllac-avisos a' ? [enllac] : [];"
+                    f"location.pathname = {json.dumps(pagina)};"
+                    f"desat = {json.dumps(vist)}; localStorage.getItem = () => desat;"
+                    "localStorage.setItem = (k, v) => { desat = v; };"
+                    "element = (e, c, t) => ({ textContent: t }); marcaNouAvisos(new Date()); posats")
+            return self.avalua(ara, expr)
+        self.assertEqual(nou("2026-10-09T10:00:00+02:00"), ["Nou!"])
+        self.assertEqual(nou("2026-10-09T10:00:00+02:00", "1"), [])
+        self.assertEqual(nou("2026-10-09T10:00:00+02:00", pagina="/es/avisos.html"), [])
+        self.assertEqual(nou("2026-10-16T00:00:00+02:00"), [])
 
     def test_propera_lectura(self):
         horari = {"trams": [["00:00", "23:50"]], "cada_min": 10, "desfase_min": 1}
