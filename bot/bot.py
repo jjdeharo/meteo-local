@@ -504,7 +504,23 @@ def text_radar_bot(dades, idioma, moment):
     if not r:
         return "Ahora no hay datos del radar." if idioma == "es" else "Ara no hi ha dades del radar."
     h = lambda t: dt.datetime.fromisoformat(t).strftime("%H:%M")
-    if r.get("arriba"):
+    es = idioma == "es"
+    # El que es mesura mana, com a la web: si ja plou, «pluja a sobre», amb
+    # l'hora en què pararia si el radar la veu (ADR 0049).
+    ara_m, casa = dades.get("ara") or {}, dades.get("ara_casa") or {}
+    plou = (ara_m.get("intensitat") or 0) > 0 or (ara_m.get("pluja_30min") or 0) > 0 or bool(casa.get("plou"))
+    aviat = r.get("arriba") and dt.datetime.fromisoformat(r["arriba"]) <= moment + dt.timedelta(minutes=5)
+    if (plou and (r.get("arriba") or r.get("possible"))) or aviat:
+        que = "Lluvia encima." if es else "Pluja a sobre."
+        if r.get("fi"):
+            que += (f" Pararía hacia las {h(r['fi'])} (en entrenamiento: puede fallar)." if es
+                    else f" Pararia cap a les {h(r['fi'])} (en entrenament: pot fallar).")
+        elif r.get("sense_fi"):
+            que += (" No acaba en 2 horas (en entrenamiento: puede fallar)." if es
+                    else " No s'acaba en 2 hores (en entrenament: pot fallar).")
+    elif plou:
+        que = "Lluvia encima." if es else "Pluja a sobre."
+    elif r.get("arriba"):
         que = (f"Llegaría lluvia hacia las {h(r['arriba'])}." if idioma == "es" else f"Arribaria pluja cap a les {h(r['arriba'])}.")
     elif r.get("possible"):
         que = (f"Puede llegar lluvia hacia las {h(r['possible'])}." if idioma == "es" else f"Pot arribar pluja cap a les {h(r['possible'])}.")

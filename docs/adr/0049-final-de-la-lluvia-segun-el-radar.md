@@ -24,6 +24,12 @@ lluvia en casa; solo se usaba para la llegada.
   real: pot fallar»). `casa.py` lo calcula con la regla
   vigente (`fi_radar`, en `radar.fi` y `radar.sense_fi`), desde ahora o desde
   que llegue la lluvia.
+- **Lo medido manda** (Juanjo, 08-10-2026, ante «Pluja a prop: pot arribar»
+  sin hora mientras Montflorit medía 0,8 mm/h): si Montflorit o la estación
+  de casa miden lluvia, la página dice «Pluja a sobre» aunque el radar solo
+  vea lluvia posible, con la hora de final; si el radar no ve ninguna, sin
+  hora. El `/radar` del bot, igual, con «(en entrenament: pot fallar)» en el
+  texto, porque Telegram no tiene dónde poner la explicación.
 - **Aprende sola**: cada día prueba nueve variantes (umbral del 10, 20 o 30 %
   durante 10, 15 o 20 minutos) con lo registrado; con 3 episodios o más, si
   una se equivoca al menos un 5 % menos que la vigente, pasa a usarla

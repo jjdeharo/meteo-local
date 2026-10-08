@@ -213,14 +213,15 @@ function blocAra(ara, casa, radarDades, vent, hores) {
 function textRadar(r, plou) {
   if (!r) return null;
   const aviat = (t) => new Date(t) <= new Date(Date.now() + 5 * 60e3);
-  if (r.arriba) {
-    if (plou || aviat(r.arriba)) {
-      const fi = r.fi ? T` · pararia cap a les\u00a0${horaCurta(r.fi)}`
-        : r.sense_fi ? T(' · no s’acaba en 2 hores') : '';
-      return ['arriba', T('Pluja a sobre') + fi, Boolean(fi)];
-    }
-    return ['arriba', T`Arribaria pluja cap a les\u00a0${horaCurta(r.arriba)}`];
+  // El que es mesura mana: si ja plou, «Pluja a sobre», encara que el radar
+  // només en vegi una part; si no en veu gens, sense hora (Juanjo, 08-10-2026).
+  if ((plou && (r.arriba || r.possible)) || (r.arriba && aviat(r.arriba))) {
+    const fi = r.fi ? T` · pararia cap a les\u00a0${horaCurta(r.fi)}`
+      : r.sense_fi ? T(' · no s’acaba en 2 hores') : '';
+    return ['arriba', T('Pluja a sobre') + fi, Boolean(fi)];
   }
+  if (plou) return ['arriba', T('Pluja a sobre'), false];
+  if (r.arriba) return ['arriba', T`Arribaria pluja cap a les\u00a0${horaCurta(r.arriba)}`];
   if (r.possible) {
     if (aviat(r.possible)) return ['possible', T('Pluja a prop: pot arribar')];
     return ['possible', T`Pot arribar pluja cap a les\u00a0${horaCurta(r.possible)}`];

@@ -205,6 +205,22 @@ class Resum(unittest.TestCase):
         self.assertNotIn("Aquesta nit", r)
         self.assertTrue(B.resum(d, "es", vespre).startswith("<b>Previsión para mañana, jueves, en Montflorit</b> (hasta las 20 h)"))
 
+    def test_radar_quan_ja_plou(self):
+        # El que es mesura mana: si ja plou i el radar en veu una mica, «pluja a sobre» i quan pararia.
+        d = dades()
+        d["radar"] = {"hora": ARA.isoformat(timespec="minutes"), "imatge": "rainviewer", "arriba": None,
+                      "possible": ARA.isoformat(timespec="minutes"), "fi": (ARA + dt.timedelta(minutes=10)).isoformat(),
+                      "sense_fi": False}
+        d["ara"]["intensitat"] = 0.8
+        self.assertTrue(B.text_radar_bot(d, "ca", ARA).startswith(
+            "Pluja a sobre. Pararia cap a les 07:10 (en entrenament: pot fallar)."))
+        self.assertTrue(B.text_radar_bot(d, "es", ARA).startswith(
+            "Lluvia encima. Pararía hacia las 07:10 (en entrenamiento: puede fallar)."))
+        d["radar"].update(possible=None, fi=None)
+        self.assertTrue(B.text_radar_bot(d, "ca", ARA).startswith("Pluja a sobre.\n"))
+        d["ara"]["intensitat"] = 0
+        self.assertTrue(B.text_radar_bot(d, "ca", ARA).startswith("No s'acosta pluja en 2 hores."))
+
     def test_pluja_aquesta_nit(self):
         # El 08-10-2026 deia «Esta noche: posible de 20 a 23 h»: hi faltava la pluja.
         vespre = ARA.replace(hour=20)
