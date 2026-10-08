@@ -525,68 +525,92 @@ FASE_ES = {"prealerta": "prealerta", "alerta": "alerta", "emergència": "emergen
 PLA_ES = {"d'inundacions": "de inundaciones", "de vent": "de viento", "de neu": "de nieve"}
 
 
+def enllac(url, text):
+    return f'<a href="{html.escape(url)}">{html.escape(text, quote=False)}</a>'
+
+
 def text_avisos_actius(dades, idioma, moment):
+    """Cada font en un bloc, amb el nom en negreta i els enllaços curts, separats
+    per una línia en blanc (Juanjo, 08-10-2026: «sale todo muy seguido»)."""
     vell = dades_velles(dades, idioma, moment)
     if vell:
         return vell
-    linies = []
+    es = idioma == "es"
+    blocs = []                     # (títol, [línies en HTML])
     for p in dades.get("plans") or []:
-        if idioma == "es":
-            linies.append(f"Protección Civil: plan {PLA_ES.get(p['nom'], p['nom'])} ({p['pla']}) en fase de "
-                          f"{FASE_ES.get(p['fase'], p['fase'])}." + (f" {p['comunicat']}" if p.get("comunicat") else ""))
+        if es:
+            frase = (f"Plan {PLA_ES.get(p['nom'], p['nom'])} ({p['pla']}) en fase de "
+                     f"{FASE_ES.get(p['fase'], p['fase'])}.")
         else:
             # «d'alerta», «d'emergència», però «de prealerta», com a la web.
             de = "d'" if p["fase"][:1] in "aeiouàèéíòóú" else "de "
-            linies.append(f"Protecció Civil: pla {p['nom']} ({p['pla']}) en fase {de}{p['fase']}."
-                          + (f" {p['comunicat']}" if p.get("comunicat") else ""))
+            frase = f"Pla {p['nom']} ({p['pla']}) en fase {de}{p['fase']}."
+        linia = html.escape(frase, quote=False)
+        if p.get("comunicat"):
+            linia += " " + enllac(p["comunicat"], "Comunicado (PDF)" if es else "Comunicat (PDF)")
+        blocs.append(("Protección Civil" if es else "Protecció Civil", [linia]))
     avui, dema = moment.date(), (moment + dt.timedelta(days=1)).date()
-    linies += text_avisos_aemet(dades, idioma, avui, moment)
-    linies += [x for x in text_avisos_aemet(dades, idioma, dema, moment) if x not in linies]
+    aemet = text_avisos_aemet(dades, idioma, avui, moment)
+    aemet += [x for x in text_avisos_aemet(dades, idioma, dema, moment) if x not in aemet]
+    if aemet:
+        # «Avís groc de l'AEMET per pluja…» → «Avís groc per pluja…»: l'AEMET ja és el títol.
+        net = [x.replace(" de l'AEMET", "").replace(" de la AEMET", "") for x in aemet]
+        blocs.append(("AEMET", [html.escape(x, quote=False) for x in net]))
     # Incendis a prop, Pla Alfa des del nivell 3 i accés a Collserola (ADR 0046).
-    linies += linies_entorn(dades.get("entorn") or {}, idioma)
+    blocs += blocs_entorn(dades.get("entorn") or {}, idioma)
     # El temps excepcional que calcula la pàgina amb els llindars de l'AEMET
     # (el mateix de l'avís «perill», ADR 0018), dit que no és oficial.
     propis = linies_riscos(dades.get("riscos") or [], idioma, moment)
-    if not linies and not propis:
-        return ("No hay avisos de la AEMET ni planes de Protección Civil activos, ni se prevé tiempo excepcional."
-                if idioma == "es" else
-                "No hi ha avisos de l'AEMET ni plans de Protecció Civil activats, ni es preveu temps excepcional.")
-    cap = "Avisos activos" if idioma == "es" else "Avisos actius"
-    text = f"<b>{cap}</b>\n" + "\n".join(html.escape(x, quote=False) for x in linies) if linies else ""
     if propis:
-        titol = ("Tiempo excepcional (lo calcula Temps a Montflorit con los umbrales de la AEMET, no es oficial)"
-                 if idioma == "es" else
-                 "Temps excepcional (ho calcula Temps a Montflorit amb els llindars de l'AEMET, no és oficial)")
-        text += ("\n\n" if text else "") + f"<b>{titol}</b>\n" + "\n".join(html.escape(x, quote=False) for x in propis)
-    return text
+        blocs.append(("Tiempo excepcional" if es else "Temps excepcional",
+                      [("<i>Lo calcula Temps a Montflorit con los umbrales de la AEMET: no es oficial.</i>" if es else
+                        "<i>Ho calcula Temps a Montflorit amb els llindars de l'AEMET: no és oficial.</i>")]
+                      + [html.escape(x, quote=False) for x in propis]))
+    if not blocs:
+        return ("No hay avisos de la AEMET ni planes de Protección Civil activos, ni se prevé tiempo excepcional."
+                if es else
+                "No hi ha avisos de l'AEMET ni plans de Protecció Civil activats, ni es preveu temps excepcional.")
+    cap = "Avisos activos" if es else "Avisos actius"
+    return f"<b>{cap}</b>\n\n" + "\n\n".join(f"<b>{t}</b>\n" + "\n".join(ls) for t, ls in blocs) + "\n"
 
 
 # Des del nivell 3 el Pla Alfa restringeix l'accés (config.ALFA_NIVELL_MOSTRAR;
 # el bot no carrega config).
 ALFA_NIVELL_MOSTRAR = 3
-ALFA = {"ca": "Pla Alfa de Cerdanyola: nivell {n} {quan}: accés restringit als espais forestals.",
-        "es": "Plan Alfa de Cerdanyola: nivel {n} {quan}: acceso restringido a los espacios forestales."}
+ALFA = {"ca": "Nivell {n} {quan} a Cerdanyola: accés restringit als espais forestals.",
+        "es": "Nivel {n} {quan} en Cerdanyola: acceso restringido a los espacios forestales."}
+BOMBERS = "https://interior.gencat.cat/ca/arees_dactuacio/bombers/actuacions-de-bombers/"
+PLA_ALFA = "https://interior.gencat.cat/ca/arees_dactuacio/agents-rurals/pla-alfa/"
 
 
-def linies_entorn(entorn, idioma):
+def blocs_entorn(entorn, idioma):
     es = idioma == "es"
-    res = []
+    blocs = []
+    focs = []
     for i in entorn.get("incendis") or []:
         h = dt.datetime.fromisoformat(i["inici"]).strftime("%H:%M") if i.get("inici") else "?"
         dist = f", a {str(i['km']).replace('.', ',')} km" if i.get("km") is not None else ""
-        res.append(f"Bombers: incendio forestal en {i['municipi']}{dist} (desde las {h})." if es
-                   else f"Bombers: incendi forestal a {i['municipi']}{dist} (des de les {h}).")
+        focs.append(html.escape(f"Incendio forestal en {i['municipi']}{dist}, desde las {h}." if es
+                                else f"Incendi forestal a {i['municipi']}{dist}, des de les {h}.", quote=False))
+    if focs:
+        blocs.append(("Bombers", focs + [enllac(BOMBERS, "Mapa")]))
     alfa = entorn.get("pla_alfa") or {}
+    nivells = []
     for dia in ("avui", "dema"):
         n = alfa.get(dia)
         if n is not None and n >= ALFA_NIVELL_MOSTRAR:
             quan = {"avui": ("hoy" if es else "avui"), "dema": ("mañana" if es else "demà")}[dia]
-            res.append(ALFA[idioma].format(n=n, quan=quan))
-    for t in alfa.get("tancaments") or []:
-        res.append(f"Agents Rurals: cerrado {t['espai']}." if es else f"Agents Rurals: tancat {t['espai']}.")
-    for a in entorn.get("collserola") or []:
-        res.append(f"Collserola: «{a['titol']}» ({a['data'][8:10]}/{a['data'][5:7]}). {a['enllac']}")
-    return res
+            nivells.append(html.escape(ALFA[idioma].format(n=n, quan=quan), quote=False))
+    nivells += [html.escape(f"Cerrado: {t['espai']}." if es else f"Tancat: {t['espai']}.", quote=False)
+                for t in alfa.get("tancaments") or []]
+    if nivells:
+        blocs.append(("Plan Alfa" if es else "Pla Alfa", nivells + [enllac(PLA_ALFA, "Mapa")]))
+    coll = [html.escape(f"«{a['titol']}» ({a['data'][8:10]}/{a['data'][5:7]}).", quote=False) + " "
+            + enllac(a["enllac"], "Aviso del parque" if es else "Avís del parc")
+            for a in entorn.get("collserola") or []]
+    if coll:
+        blocs.append(("Collserola", coll))
+    return blocs
 
 
 def linies_riscos(riscos, idioma, moment):

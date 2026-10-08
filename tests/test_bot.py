@@ -398,7 +398,7 @@ class Consultes(unittest.TestCase):
         self.assertIn("<b>R4</b> (Cerdanyola del Vallès): amb incidències. «Obres &lt;a Montcada&gt;.»", trens)
         self.assertEqual(trens.count("R4"), 1)
         self.assertIn("<b>S2</b> (Bellaterra): sense incidències\n", trens)
-        self.assertIn("pla d'inundacions (INUNCAT) en fase d'emergència", self.ordre("/avisos_actius", subs))
+        self.assertIn("<b>Protecció Civil</b>\nPla d'inundacions (INUNCAT) en fase d'emergència.", self.ordre("/avisos_actius", subs))
         self.assertTrue(self.ordre("/dema", subs).startswith("<b>Previsió per a demà"))
         # /resum, sempre la d'avui, també de vespre; el resum programat de les 20 h, la de demà.
         with unittest.mock.patch.object(B, "ara", return_value=ARA.replace(hour=20)):
@@ -417,7 +417,7 @@ class Consultes(unittest.TestCase):
                         "unitat": "km/h", "text": "Ara bufa vent molt fort: ratxes de 75 km/h."}]
         json.dump(d, open(os.path.join(self.dir.name, "montflorit.json"), "w"))
         r = self.ordre("/avisos_actius", subs)
-        self.assertIn("Tiempo excepcional (lo calcula Temps a Montflorit", r)
+        self.assertIn("<b>Tiempo excepcional</b>\n<i>Lo calcula Temps a Montflorit", r)
         subs["7"]["idioma"] = "ca"
         self.assertIn("Ara bufa vent molt fort: ratxes de 75\u00a0km/h.", self.ordre("/avisos_actius", subs))
         subs["7"]["idioma"] = "es"
@@ -434,12 +434,14 @@ class Consultes(unittest.TestCase):
         json.dump(d, open(os.path.join(self.dir.name, "montflorit.json"), "w"))
         subs = {"7": {"idioma": "ca", "avisos": [], "resum": None}}
         r = self.ordre("/avisos_actius", subs)
-        self.assertIn("Bombers: incendi forestal a Sant Cugat del Vallès, a 3,2 km", r)
-        self.assertIn("Pla Alfa de Cerdanyola: nivell 4 avui", r)
+        self.assertIn("<b>Bombers</b>\nIncendi forestal a Sant Cugat del Vallès, a 3,2 km", r)
+        self.assertIn("<b>Pla Alfa</b>\nNivell 4 avui a Cerdanyola", r)
         self.assertNotIn("nivell 2", r)
-        self.assertIn("Collserola: «Tancat l’accés al medi natural» (12/03)", r)
+        self.assertIn("<b>Collserola</b>\n«Tancat l’accés al medi natural» (12/03). <a href=\"https://parcnaturalcollserola.cat/x/\">Avís del parc</a>", r)
+        self.assertNotIn("de l'AEMET per", r)          # l'AEMET ja és el títol del bloc
+        self.assertIn("\n\n<b>", r)                     # un bloc per font
         subs["7"]["idioma"] = "es"
-        self.assertIn("Plan Alfa de Cerdanyola: nivel 4 hoy", self.ordre("/avisos_actius", subs))
+        self.assertIn("<b>Plan Alfa</b>\nNivel 4 hoy en Cerdanyola", self.ordre("/avisos_actius", subs))
 
     def test_el_menu_cap_en_una_linia(self):
         # «Situacions de perill», curt (Juanjo, 08-10-2026: amb el parèntesi no hi cabia).
