@@ -2,7 +2,7 @@
 """Datos fijos de «Temps a Montflorit»: lugares, horario, fuentes y umbrales.
 Se cambian aquí, no en los programas."""
 
-VERSION = "3.24.1"
+VERSION = "3.24.2"
 
 # Coordenadas con tres decimales (unos 100 m), no las exactas: para el tiempo
 # da igual una calle u otra, y el repositorio es público.
@@ -108,7 +108,8 @@ RISC_LLINDARS = {
 # entre una pasada y otra no repite el aviso por Telegram.
 RISC_FI_H = 3
 
-# Aviso de antes de llover en casa (pluja_arriba.py, ADR 0022): se manda
+# Aviso de antes de llover (pluja_arriba.py, ADR 0022; el público, avisos_bot.py,
+# ADR 0034 y 0048; desde el 08-10-2026 no hay uno aparte para Juanjo): sale
 # cuando el radar llevado hacia delante dice que faltan AVIS_PLUJA_MIN minutos
 # más una pasada del modo aviso (entre 15 y 21 minutos antes): lo que importa
 # es que llegue con margen, no el minuto exacto. Un episodio de

@@ -3,9 +3,9 @@
 """Avisos privados a Juanjo por Telegram (avisar-juanjo) con reintento (ADR
 0038).
 
-Los avisos de peligro (riscos.py), de lluvia inminente (pluja_arriba.py) y de
-la riera (riera.py) se mandan con avisar-juanjo, y cada programa apunta el
-episodio como avisado antes de enviarlo. Hasta la auditoría del 07-10-2026,
+Los avisos de peligro (riscos.py) y de la riera (riera.py) se mandan con
+avisar-juanjo, y cada programa apunta el episodio como avisado antes de
+enviarlo (el de lluvia inminente, pluja_arriba.py, ya no se manda: ADR 0048). Hasta la auditoría del 07-10-2026,
 si Telegram o la red fallaban en ese momento, el aviso se perdía: el episodio
 ya constaba como avisado. Ahora el envío pasa por aquí: si avisar-juanjo no
 devuelve 0, el aviso queda en una cola (avisos-pendents.jsonl, junto al

@@ -119,7 +119,7 @@ Umbrales y lugares, en `config.py`. El porqué, en los ADR.
 | `ecowitt.py` | La estación particular con la API oficial de Ecowitt; las claves, fuera del repositorio (ADR 0017) |
 | `pluviometre.py` | Comprueba una vez, tras limpiarlo, si el pluviómetro marca la lluvia débil y avisa por Telegram (ADR 0017) |
 | `riscos.py` | Situaciones de peligro y aviso por Telegram (ADR 0018) |
-| `pluja_arriba.py` | Aviso por Telegram unos 15 minutos antes de que llueva en casa, con registro de aciertos (ADR 0022) |
+| `pluja_arriba.py` | Cuándo llegará la lluvia que ve el radar (la usa el aviso público de lluvia) y registro de sus aciertos (ADR 0022) |
 | `riera.py` | Lluvia en la cuenca de la riera de Sant Cugat y aviso de atención o peligro de desbordamiento, con registro de episodios (ADR 0027) |
 | `radar_fonts.py` | Apunta lo que daba cada radar y, cada día, elige el que acierta más (ADR 0026) |
 | `registre.py` | Registro en el NAS de lo medido en Montflorit y en la estación particular, y de lo que daban los modelos, para aprender (ADR 0006 y 0012) |

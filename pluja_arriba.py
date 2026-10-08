@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: AGPL-3.0-or-later
-"""Aviso por Telegram unos minutos antes de que empiece a llover en casa
-(ADR 0022).
+"""Aviso unos minutos antes de que empiece a llover en casa (ADR 0022).
+
+Desde el 08-10-2026 ya no se manda a Juanjo por Telegram: le llega el aviso
+público de lluvia como notificación del navegador (ADR 0048), que sale de la
+misma cuenta (avisos_bot.py usa compara). Aquí queda el registro de cada
+episodio, para saber cuánto acierta.
 
 Sale del radar llevado hacia delante (nowcast.py, ADR 0019), que la página de
 casa ya calcula en cada pasada: cuándo llegaría a casa la lluvia que hay
@@ -17,7 +21,7 @@ avisó, para cuándo y cuándo empezó a llover de verdad, para saber cuánto
 acierta y ajustarlo.
 
 Uso:
-  python3 pluja_arriba.py avisa CASA.json   mira los datos y, si toca, avisa
+  python3 pluja_arriba.py avisa CASA.json   mira los datos y apunta el episodio
   python3 pluja_arriba.py estat             el episodio en curso
   python3 pluja_arriba.py resum             aciertos y fallos del registro
 """
@@ -27,7 +31,6 @@ import json
 import os
 import sys
 
-import avis_privat as AP
 import config as C
 
 DIR = os.environ.get("REGISTRE_DIR", "/estat/registre")
@@ -149,7 +152,7 @@ def apunta(fila):
         w.writerow(fila)
 
 
-def avisa(ruta, ahora=None, envia=True):
+def avisa(ruta, ahora=None):
     ahora = ahora or dt.datetime.now().astimezone()
     with open(ruta, encoding="utf-8") as f:
         salida = json.load(f)
@@ -162,9 +165,7 @@ def avisa(ruta, ahora=None, envia=True):
     if fila:
         apunta(fila)
     if text:
-        print(text)
-        if envia:
-            AP.envia(text, vigencia_min=20)
+        print(text)         # al registro del NAS; ya no se manda a Juanjo
     return text
 
 

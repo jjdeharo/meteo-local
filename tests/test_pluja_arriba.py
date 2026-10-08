@@ -118,7 +118,7 @@ class AlNas(unittest.TestCase):
         ruta = os.path.join(self.tmp.name, "casa.json")
         with open(ruta, "w", encoding="utf-8") as f:
             json.dump(salida(a(generat if generat is not None else minut), arriba, plou), f)
-        return PA.avisa(ruta, a(minut), envia=False)
+        return PA.avisa(ruta, a(minut))
 
     def test_estat_registre_i_resum(self):
         self.assertTrue(self.passada(18, 30))

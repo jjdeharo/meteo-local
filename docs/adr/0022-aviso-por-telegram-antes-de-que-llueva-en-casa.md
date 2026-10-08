@@ -1,6 +1,13 @@
 # 22. Aviso por Telegram antes de que llueva en casa
 
-Fecha: 2026-10-06 · Estado: aceptado
+Fecha: 2026-10-06 · Estado: aceptado; el envío a Juanjo, retirado el 08-10-2026
+
+**08-10-2026:** Juanjo recibía este aviso dos veces, por Telegram y como
+notificación del navegador (ADR 0048), que sale de la misma cuenta
+(`avisos_bot.py` usa `pluja_arriba.compara`). Pidió quitar el de Telegram.
+`pluja_arriba.py` ya no lo manda; sigue apuntando cada episodio y si acertó.
+Lo que sigue describe cómo se decidía el aviso, que es el mismo de los
+suscriptores.
 
 ## Contexto
 
