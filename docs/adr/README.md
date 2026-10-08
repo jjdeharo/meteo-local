@@ -47,6 +47,6 @@
 | [0043](0043-terminologia-del-manual-de-estilo-de-meteocat.md) | Terminología del manual de estilo de Meteocat | aceptado |
 | [0044](0044-copia-del-registro-en-github.md) | Copia del registro en un repositorio privado de GitHub | aceptado |
 | [0045](0045-reinstalar-lo-de-ionos-en-otro-hosting.md) | Reinstalar lo de IONOS en otro hosting | aceptado |
-| [0046](0046-incendios-cerca-pla-alfa-y-acceso-a-collserola.md) | Incendios cerca, Pla Alfa y acceso a Collserola | aceptado |
+| [0046](0046-incendios-cerca-pla-alfa-y-acceso-a-collserola.md) | Incendios cerca y Pla Alfa | aceptado |
 
 Plantilla: [0000-plantilla.md](0000-plantilla.md). Para crear uno: `nuevo-adr "Título"`.

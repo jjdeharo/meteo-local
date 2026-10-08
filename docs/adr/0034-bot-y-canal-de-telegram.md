@@ -42,7 +42,7 @@ internet en casa, que suele llegar con las tormentas.
     proves)» (Juanjo, 07-10-2026);
   - **perill**: los umbrales de aviso de AEMET con lo medido o previsto
     (ADR 0018), y desde el 08-10-2026 también los incendios forestales
-    cerca y el acceso a Collserola (ADR 0046); en el menú, «Situacions de
+    cerca (ADR 0046); en el menú, «Situacions de
     perill» / «Situaciones de peligro» (antes «Perill (pluja forta, vent,
     calor…)» y, unas horas, «Temps excepcional (…)», que no cabía en la
     pantalla);

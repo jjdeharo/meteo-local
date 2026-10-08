@@ -1,4 +1,4 @@
-# 46. Incendios cerca, Pla Alfa y acceso a Collserola
+# 46. Incendios cerca y Pla Alfa (y por qué no el acceso a Collserola)
 
 Fecha: 2026-10-08 · Estado: aceptado
 
@@ -25,29 +25,40 @@ el 12-03-2026 por la peste porcina africana, sin fecha de reapertura.
     blanco del 0: es «sin nivel» y se trata como tal. Fuera de campaña la
     capa municipal de hoy se queda con el último valor (el 08-10-2026, sin
     editar desde el 18-08): solo vale si se ha editado en las últimas 36 h.
-  - **Collserola**: la API de WordPress del parque, categoría de avisos
-    vigentes (`avisos-ca`, 877; los caducados van a otra). Cuenta como
-    restricción un aviso cuyo título habla de cerrar, limitar o restringir el
-    acceso o el paso al medio natural; su título se muestra tal cual.
-- **Dónde va** (Juanjo, 08-10-2026): lo que dura poco, en «Avisos actius» de
+  - **Dónde va** (Juanjo, 08-10-2026): lo que dura poco, en «Avisos actius» de
   las dos páginas y en `/avisos_actius` del bot: el incendio forestal cerca
   (franja roja) y el Pla Alfa de Cerdanyola desde el nivel 3, que restringe el
   acceso a los espacios forestales (naranja el 3, rojo el 4), con los cierres
-  que tocan Collserola. El acceso a Collserola, que dura meses, en una línea
-  de «Si surts» encima de los trenes, con el enlace al aviso del parque, y en
-  `/avisos_actius`; en «Avisos actius» de la web ocuparía sitio cada día.
+  que tocan Collserola.
 - **Avisos por Telegram, dentro de «Situacions de perill»** (el antiguo
   «Temps excepcional»), sin botón nuevo: Juanjo no quería que el menú
   `/avisos` creciera, y pidió un nombre corto que quepa en la pantalla
   («Situacions de perill» / «Situaciones de peligro», sin paréntesis). Se
   avisa de un incendio forestal a menos de 5 km al aparecer y cuando deja de
-  constar, y de Collserola cuando aparece una restricción nueva o cuando ya
-  no queda ninguna. Van al canal (como todo «perill») y a quien lo tenga
-  marcado. La primera vez solo se apunta lo que hay, para no avisar del
-  cierre de marzo como si fuera nuevo, y si una fuente no responde no se
-  toca su estado (no se dice «ha acabado» por un fallo de Bombers).
+  constar. Van al canal (como todo «perill») y a quien lo tenga marcado. La
+  primera vez solo se apunta lo que hay, y si Bombers no responde no se toca
+  el estado (no se dice «ha acabado» por un fallo de la fuente).
+- **`/avisos_actius` del bot, sin título**: un bloque por fuente con su
+  nombre en negrita; «Avisos actius» encima era redundante, porque la orden
+  ya dice qué es (Juanjo, 08-10-2026).
 - **Sin aviso del Pla Alfa por Telegram**: es oficial, cambia a diario y en
   campaña saldría casi cada día; con el incendio cerca basta.
+
+## Collserola, retirado el mismo día
+
+La primera versión (3.21.0) leía también las restricciones de acceso a
+Collserola de los avisos vigentes de la web del parque (API de WordPress,
+categoría `avisos-ca`), las mostraba en una línea de «Si surts» y en
+`/avisos_actius`, y avisaba al cerrarse o reabrirse. Juanjo vio en la web el
+aviso del 12-03-2026 y preguntó cómo se retiraría: el parque pasa los avisos
+a «caducats» a mano y a veces meses tarde (el de horarios de Navidad, el
+16-03), y una reapertura anunciada con «s'aixequen les restriccions d'accés»
+se habría tomado por otra restricción. Se buscó una fuente oficial: la tabla
+de municipios de la página de la peste porcina del Departament d'Agricultura
+(Cerdanyola, «Zona infectada d'alt risc», con la prohibición de entrar en
+bosques, rieras, prados, campos y caminos fuera del núcleo urbano, y el
+cierre del parque desde el 12-03-2026). Juanjo decidió quitar todo lo del
+cierre de Collserola (3.21.2): ni los avisos del parque ni la tabla.
 
 ## Alternativas descartadas
 
@@ -63,20 +74,14 @@ el 12-03-2026 por la peste porcina africana, sin fecha de reapertura.
 - Las capas de ArcGIS son las de los visores oficiales, no conjuntos de
   datos documentados: pueden cambiar sin aviso. Si fallan, la página no
   muestra esa parte y el error queda en los datos.
-- La detección de restricciones de Collserola va por el título del aviso: un
-  título con otras palabras no se detectaría. Los avisos de marzo y febrero
-  de 2026 se reconocen; los de obras, horarios o caza, no.
 
 ## Validación
 
 - `tests/test_entorn.py`: incendios (solo forestales y en curso, distancia),
-  Pla Alfa (el 5 no es nivel, capa vieja no vale), Collserola (qué títulos
-  cuentan) y los avisos (primera vez sin aviso, incendio al empezar y al
-  acabar, Collserola al cerrar y reabrir, fuente caída sin cambios);
-  `tests/test_bot.py`: `/avisos_actius` y el nombre corto. 231 pruebas.
+  Pla Alfa (el 5 no es nivel, capa vieja no vale) y los avisos (primera vez
+  sin aviso, incendio al empezar y al acabar, fuente caída sin cambios);
+  `tests/test_bot.py`: `/avisos_actius` sin título y el nombre corto.
 - Datos reales el 08-10-2026: ningún incendio a menos de 5 km, Pla Alfa sin
-  nivel (5 mañana, capa de hoy sin editar desde agosto), Collserola con el
-  aviso de cierre del 12-03-2026.
-- Web con datos de ejemplo (incendio a 3,2 km, Pla Alfa 4 y 3, Collserola
-  cerrado) en Chromium, Firefox y WebKit, escritorio, móvil y tableta, claro
+  nivel (5 mañana, capa de hoy sin editar desde agosto).
+- Web con datos de ejemplo (incendio a 3,2 km, Pla Alfa 4 y 3) en Chromium, Firefox y WebKit, escritorio, móvil y tableta, claro
   y oscuro, en catalán y castellano, y axe-core sin incidencias.

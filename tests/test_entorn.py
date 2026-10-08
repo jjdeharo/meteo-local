@@ -1,6 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-"""Incendios cerca, Pla Alfa y acceso a Collserola (entorn.py, ADR 0046), y sus
-avisos (sin red)."""
+"""Incendios cerca y Pla Alfa (entorn.py, ADR 0046), y sus avisos (sin red)."""
 import datetime as dt
 import os
 import sys
@@ -19,11 +18,6 @@ def feature(desc, municipi, y, x, fi=None, gid="g1"):
     return {"attributes": {"GlobalID": gid, "TAL_DESC_ALARMA2": desc, "MUNICIPI_SIG": municipi,
                            "ACT_DAT_INICI": int(ARA.timestamp() * 1000), "ACT_DAT_FI": fi,
                            "ACT_NUM_VEH": 4, "COM_FASE": None}, "geometry": {"x": x, "y": y}}
-
-
-def post(pid, titol, data="2026-03-12"):
-    return {"id": pid, "date": data + "T18:51:00", "link": f"https://parcnaturalcollserola.cat/{pid}/",
-            "title": {"rendered": titol}}
 
 
 class Fonts(unittest.TestCase):
@@ -57,52 +51,35 @@ class Fonts(unittest.TestCase):
         with mock.patch.object(EN, "get", get):
             self.assertEqual(EN.pla_alfa(ARA), {"avui": None, "dema": None, "tancaments": []})
 
-    def test_collserola_nomes_restriccions_d_acces(self):
-        posts = [post(1, "Tancat l&#8217;accés al medi natural al Parc Natural de la Serra de Collserola"),
-                 post(2, "Es limita l’accès al Parc Natural per risc alt de ventades"),
-                 post(3, "Tancament temporal per mal estat de conservació de la passera"),
-                 post(4, "Horaris d’estiu dels equipaments del Parc Natural 2026")]
-        self.assertEqual([a["id"] for a in EN.collserola(posts)], [1, 2])
-
 
 class Avisos(unittest.TestCase):
-    def passada(self, estat, incendis, collserola, minuts=0):
-        salida = {"entorn": {"incendis": incendis, "collserola": collserola, "pla_alfa": {}}}
+    def passada(self, estat, incendis, minuts=0):
+        salida = {"entorn": {"incendis": incendis, "pla_alfa": {}}}
         return [a for a in AB.decideix(estat, salida, ARA + dt.timedelta(minutes=minuts)) if a["tipus"] == "perill"]
 
     def test_la_primera_vegada_nomes_s_apunta(self):
         estat = {}
-        tancat = [{"id": 131489, "titol": "Tancat l’accés al medi natural", "data": "2026-03-12", "enllac": "u"}]
-        self.assertEqual(self.passada(estat, [], tancat), [])
-        self.assertEqual(self.passada(estat, [], tancat, 15), [])
+        foc = [{"id": "x", "municipi": "Ripollet", "km": 2.0, "inici": ARA.isoformat()}]
+        self.assertEqual(self.passada(estat, foc), [])
+        self.assertEqual(self.passada(estat, foc, 15), [])
 
     def test_incendi_a_prop_i_quan_s_acaba(self):
         estat = {}
-        self.passada(estat, [], [])
+        self.passada(estat, [])
         foc = [{"id": "x", "municipi": "Sant Cugat del Vallès", "km": 3.2, "inici": ARA.isoformat(), "vehicles": 4}]
-        nous = self.passada(estat, foc, [], 6)
+        nous = self.passada(estat, foc, 6)
         self.assertEqual(len(nous), 1)
         self.assertTrue(nous[0]["ca"].startswith("<b>Incendi forestal a prop de Montflorit: Sant Cugat del Vallès</b>"))
         self.assertIn("a unos 3,2 km", nous[0]["es"])
-        self.assertEqual(self.passada(estat, foc, [], 12), [])          # una sola vegada
-        fi = self.passada(estat, [], [], 18)
+        self.assertEqual(self.passada(estat, foc, 12), [])          # una sola vegada
+        fi = self.passada(estat, [], 18)
         self.assertIn("ja no consta com a actiu", fi[0]["ca"])
-
-    def test_collserola_tanca_i_reobre(self):
-        estat = {}
-        self.passada(estat, [], [])
-        tancat = [{"id": 7, "titol": "Tancat l’accés al medi natural", "data": "2026-11-02", "enllac": "u7"}]
-        nous = self.passada(estat, [], tancat, 6)
-        self.assertIn("Collserola: restricció d'accés al parc", nous[0]["ca"])
-        self.assertIn("«Tancat l’accés al medi natural»", nous[0]["ca"])
-        obre = self.passada(estat, [], [], 12)
-        self.assertIn("el parc ja no té cap avís de restricció d'accés", obre[0]["ca"])
 
     def test_si_una_font_falla_no_es_toca_l_estat(self):
         estat = {}
         foc = [{"id": "x", "municipi": "Cerdanyola del Vallès", "km": 1.0, "inici": ARA.isoformat()}]
-        self.passada(estat, foc, [])
-        self.assertEqual(self.passada(estat, None, None, 6), [])     # Bombers no respon: no «s'ha acabat»
+        self.passada(estat, foc)
+        self.assertEqual(self.passada(estat, None, 6), [])     # Bombers no respon: no «s'ha acabat»
         self.assertIn("x", estat["entorn"]["incendis"])
 
 

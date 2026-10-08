@@ -101,7 +101,7 @@ Umbrales y lugares, en `config.py`. El porqué, en los ADR.
 | `montflorit.py`, `montflorit/` | Genera la web pública a partir de `web/` y sus datos sin lo privado; manifiesto, iconos y README propios (ADR 0024), y `es.js`, los textos del programa en castellano (ADR 0025) |
 | `i18n/` | `es.json`, la traducción de los textos fijos, y `claus.js`, que saca del programa los textos por traducir (ADR 0025) |
 | `publica.sh` | Calcula y publica (lo usa el NAS) |
-| `entorn.py` | Incendios forestales en curso cerca (Bombers), nivel del Pla Alfa de Cerdanyola (Agents Rurals) y restricciones de acceso a Collserola (avisos del parque), para la web y los avisos de peligro (ADR 0046) |
+| `entorn.py` | Incendios forestales en curso cerca (Bombers) y nivel del Pla Alfa de Cerdanyola (Agents Rurals), para la web y los avisos de peligro (ADR 0046) |
 | `desplegament.py` | Pone al día la copia del repositorio (NAS, reserva y bot) hasta el último commit con las pruebas de GitHub en verde; si GitHub no responde o las pruebas llevan más de 20 minutos sin acabar, despliega igualmente y lo apunta (ADR 0038) |
 | `avis_privat.py` | Avisos privados a Juanjo por Telegram con cola de reintento si Telegram no los acepta (ADR 0038) |
 | `avisos_bot.py` | Decide los avisos públicos para el bot y el canal y los deja en `avisos.json` (ADR 0034) |

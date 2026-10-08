@@ -556,7 +556,7 @@ def text_avisos_actius(dades, idioma, moment):
         # «Avís groc de l'AEMET per pluja…» → «Avís groc per pluja…»: l'AEMET ja és el títol.
         net = [x.replace(" de l'AEMET", "").replace(" de la AEMET", "") for x in aemet]
         blocs.append(("AEMET", [html.escape(x, quote=False) for x in net]))
-    # Incendis a prop, Pla Alfa des del nivell 3 i accés a Collserola (ADR 0046).
+    # Incendis a prop i Pla Alfa des del nivell 3 (ADR 0046).
     blocs += blocs_entorn(dades.get("entorn") or {}, idioma)
     # El temps excepcional que calcula la pàgina amb els llindars de l'AEMET
     # (el mateix de l'avís «perill», ADR 0018), dit que no és oficial.
@@ -570,8 +570,8 @@ def text_avisos_actius(dades, idioma, moment):
         return ("No hay avisos de la AEMET ni planes de Protección Civil activos, ni se prevé tiempo excepcional."
                 if es else
                 "No hi ha avisos de l'AEMET ni plans de Protecció Civil activats, ni es preveu temps excepcional.")
-    cap = "Avisos activos" if es else "Avisos actius"
-    return f"<b>{cap}</b>\n\n" + "\n\n".join(f"<b>{t}</b>\n" + "\n".join(ls) for t, ls in blocs) + "\n"
+    # Sense títol: l'ordre ja diu què és (Juanjo, 08-10-2026).
+    return "\n\n".join(f"<b>{t}</b>\n" + "\n".join(ls) for t, ls in blocs) + "\n"
 
 
 # Des del nivell 3 el Pla Alfa restringeix l'accés (config.ALFA_NIVELL_MOSTRAR;
@@ -605,11 +605,6 @@ def blocs_entorn(entorn, idioma):
                 for t in alfa.get("tancaments") or []]
     if nivells:
         blocs.append(("Plan Alfa" if es else "Pla Alfa", nivells + [enllac(PLA_ALFA, "Mapa")]))
-    coll = [html.escape(f"«{a['titol']}» ({a['data'][8:10]}/{a['data'][5:7]}).", quote=False) + " "
-            + enllac(a["enllac"], "Aviso del parque" if es else "Avís del parc")
-            for a in entorn.get("collserola") or []]
-    if coll:
-        blocs.append(("Collserola", coll))
     return blocs
 
 

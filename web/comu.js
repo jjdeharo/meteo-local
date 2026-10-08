@@ -453,8 +453,7 @@ function blocPlans(plans) {
 // nivell. Sense cap, res (proposta del 08-10-2026: amb dos avisos, al mòbil
 // la temperatura quedava fora de la pantalla).
 // Incendis forestals en curs a prop (Bombers) i el Pla Alfa de Cerdanyola des
-// del nivell 3, amb els tancaments que toquen Collserola (Agents Rurals). L'accés
-// a Collserola no va aquí: dura mesos i va a «Si surts» (ADR 0046).
+// del nivell 3, amb els tancaments que toquen Collserola (Agents Rurals, ADR 0046).
 const ALFA_NIVELL_MOSTRAR = 3;
 
 function blocEntorn(entorn) {

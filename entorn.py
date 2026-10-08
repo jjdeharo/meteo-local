@@ -5,9 +5,11 @@
   de actuaciones urgentes de Bombers de la Generalitat (ArcGIS);
 - el nivel del Pla Alfa de Cerdanyola hoy y mañana, y los cierres de espacios
   naturales que tocan Collserola, de las capas públicas de Agents Rurals
-  (ArcGIS);
-- las restricciones de acceso al Parc Natural de la Serra de Collserola, de
-  los avisos vigentes de su web (API de WordPress).
+  (ArcGIS).
+
+Las restricciones de acceso a Collserola por la peste porcina se leían de los
+avisos de la web del parque; se quitaron el mismo día, por frágiles (dependían
+de cómo y cuándo los redactaran: ADR 0046).
 
 Las dos fuentes de ArcGIS son las que usan los visores oficiales, no conjuntos
 de datos documentados: si una falla, su parte queda en None y se dice.
@@ -15,10 +17,8 @@ de datos documentados: si una falla, su parte queda en None y se dice.
     python3 entorn.py        lo que hay ahora, en JSON
 """
 import datetime as dt
-import html
 import json
 import math
-import re
 import sys
 import urllib.parse
 import urllib.request
@@ -31,16 +31,7 @@ ALFA_MUNICIPAL = {"avui": ARCGIS + "/Pla_Alfa_Municipal_Avui_FL_2_view/FeatureSe
                   "dema": ARCGIS + "/pla_alfa_municipal_dema_FL_VW/FeatureServer/5"}
 ALFA_TANCAMENTS = {"avui": ARCGIS + "/tancaments_pla_alfa_avui_VW/FeatureServer/2",
                    "dema": ARCGIS + "/tancaments_pla_alfa_dema_VW/FeatureServer/2"}
-COLLSEROLA_AVISOS = "https://parcnaturalcollserola.cat/wp-json/wp/v2/posts"
-COLLSEROLA_CATEGORIA = 877          # «avisos-ca»: los vigentes (los caducados van a otra)
 UA = {"User-Agent": "Temps a Montflorit (https://meteo-montflorit.github.io/)"}
-
-# Un aviso del parque es de acceso si su título habla de cerrar, limitar o
-# restringir el acceso o el paso (el 12-03-2026: «Tancat l'accés al medi
-# natural…»; el 12-02-2026: «Es limita l'accès al Parc Natural…»).
-ACCES = re.compile(r"(tanca|limita|restring|restricci|prohib).{0,60}(acc[eè]s|pas\b|medi natural)"
-                   r"|(acc[eè]s|medi natural).{0,40}(tancat|limitat|restringit|prohibit)", re.I)
-
 
 def get(url, params=None):
     if params:
@@ -112,23 +103,11 @@ def pla_alfa(ara):
     return res
 
 
-def collserola(dades=None):
-    """Los avisos vigentes del parque que restringen el acceso."""
-    posts = dades if dades is not None else get(COLLSEROLA_AVISOS, {
-        "categories": COLLSEROLA_CATEGORIA, "per_page": 30, "_fields": "id,date,link,title"})
-    res = []
-    for p in posts:
-        titol = html.unescape(re.sub(r"<[^>]+>", "", p["title"]["rendered"])).strip()
-        if ACCES.search(titol):
-            res.append({"id": p["id"], "titol": titol, "data": p["date"][:10], "enllac": p["link"]})
-    return res
-
-
 def calcula(ara=None):
     """Para casa.json y los datos públicos. Cada parte, None si su fuente falla."""
     ara = ara or dt.datetime.now().astimezone()
     res = {"hora": ara.isoformat(timespec="minutes"), "errors": []}
-    for clau, funcio in (("incendis", incendis), ("pla_alfa", lambda: pla_alfa(ara)), ("collserola", collserola)):
+    for clau, funcio in (("incendis", incendis), ("pla_alfa", lambda: pla_alfa(ara))):
         try:
             res[clau] = funcio()
         except Exception as ex:

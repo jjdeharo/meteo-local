@@ -424,20 +424,18 @@ class Consultes(unittest.TestCase):
         self.assertIn("va hacia el este", self.ordre("/radar", subs))
 
     def test_entorn_a_avisos_actius(self):
-        # Incendis a prop, Pla Alfa des del 3 i accés a Collserola (ADR 0046).
+        # Incendis a prop i Pla Alfa des del 3 (ADR 0046).
         d = json.load(open(os.path.join(self.dir.name, "montflorit.json")))
         d["entorn"] = {"incendis": [{"id": "x", "municipi": "Sant Cugat del Vallès", "km": 3.2,
                                      "inici": ARA.isoformat()}],
-                       "pla_alfa": {"avui": 4, "dema": 2, "tancaments": []},
-                       "collserola": [{"id": 1, "titol": "Tancat l’accés al medi natural", "data": "2026-03-12",
-                                       "enllac": "https://parcnaturalcollserola.cat/x/"}]}
+                       "pla_alfa": {"avui": 4, "dema": 2, "tancaments": []}}
         json.dump(d, open(os.path.join(self.dir.name, "montflorit.json"), "w"))
         subs = {"7": {"idioma": "ca", "avisos": [], "resum": None}}
         r = self.ordre("/avisos_actius", subs)
         self.assertIn("<b>Bombers</b>\nIncendi forestal a Sant Cugat del Vallès, a 3,2 km", r)
         self.assertIn("<b>Pla Alfa</b>\nNivell 4 avui a Cerdanyola", r)
         self.assertNotIn("nivell 2", r)
-        self.assertIn("<b>Collserola</b>\n«Tancat l’accés al medi natural» (12/03). <a href=\"https://parcnaturalcollserola.cat/x/\">Avís del parc</a>", r)
+        self.assertNotIn("Avisos actius", r)             # sense títol: l'ordre ja diu què és
         self.assertNotIn("de l'AEMET per", r)          # l'AEMET ja és el títol del bloc
         self.assertIn("\n\n<b>", r)                     # un bloc per font
         subs["7"]["idioma"] = "es"

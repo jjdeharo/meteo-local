@@ -153,8 +153,6 @@ var IDIOMA = {
     ": accés restringit als espais forestals.": ": acceso restringido a los espacios forestales.",
     "Agents Rurals: tancat {0}": "Agents Rurals: cerrado {0}",
     "avui": "hoy", "demà": "mañana",
-    "Collserola:": "Collserola:",
-    "avís del parc": "aviso del parque",
     "Pròxims trams del dia": "Próximos tramos del día",
     "Matí": "Mañana", "Tarda": "Tarde", "Nit": "Noche",
     "Demà matí": "Mañana por la mañana", "Demà tarda": "Mañana por la tarde", "Demà nit": "Mañana por la noche",
