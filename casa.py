@@ -31,6 +31,7 @@ import ecowitt as E
 import entorn as EN
 import fi_pluja as FP
 import nowcast as N
+import pluja_arriba as PA
 import prevision as P
 import radar_fonts as RF
 import registre as R
@@ -72,6 +73,7 @@ def montflorit():
     # 0 (config.VENT_ESTACIO, ADR 0037).
     ara = {"hora": hora.isoformat(), "temperatura": u.get("TEMP"), "humitat": u.get("HUM"),
            "vent": None, "pluja_avui": u.get("PREC"),
+           "pluja_15min": lluvia_entre(filas, hora - dt.timedelta(minutes=C.PLOU_ARA_MIN), hora),
            "pluja_30min": lluvia_entre(filas, hora - dt.timedelta(minutes=30), hora),
            "pluja_1h": lluvia_entre(filas, hora - dt.timedelta(hours=1), hora),
            "pluja_12h": lluvia_entre(filas, hora - dt.timedelta(hours=12), hora),
@@ -128,8 +130,7 @@ def estacio_casa():
 
 def llueve_ahora_en(ara, casa):
     """Llueve ahora en Montflorit o en casa (en casa, solo cuenta el sí)."""
-    return (bool(ara) and ((ara.get("intensitat") or 0) > 0 or (ara.get("pluja_30min") or 0) > 0)
-            or bool(casa and casa.get("plou")))
+    return PA.plou_estacio(ara) or bool(casa and casa.get("plou"))
 
 
 def temperatura_model_ara(h, ahora):

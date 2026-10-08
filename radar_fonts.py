@@ -28,6 +28,7 @@ import subprocess
 import sys
 
 import nowcast as N
+import pluja_arriba as PA
 
 DIR = os.environ.get("REGISTRE_DIR", "/estat/registre")
 DIES = 30
@@ -41,7 +42,7 @@ MILLORA = 0.95                  # error de la otra, como mucho este factor del a
 def plou(ara, ara_casa):
     """Llueve en este momento en Montflorit o en casa (en casa, solo cuenta
     el sí: su pluviómetro no marca la lluvia débil)."""
-    return bool((ara and (ara.get("intensitat") or 0) > 0) or (ara_casa and ara_casa.get("plou")))
+    return PA.plou_estacio(ara) or bool(ara_casa and ara_casa.get("plou"))
 
 
 def apunta(ahora, nc, ara, ara_casa):

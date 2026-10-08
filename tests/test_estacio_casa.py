@@ -58,6 +58,9 @@ class Casa(unittest.TestCase):
         self.assertTrue(casa.llueve_ahora_en({"intensitat": 0, "pluja_30min": 0}, {"plou": True}))
         self.assertTrue(casa.llueve_ahora_en(None, {"plou": True}))
         self.assertTrue(casa.llueve_ahora_en({"intensitat": 2.0}, None))
+        # Amb el valor nou, només la pluja dels últims 15 minuts (08-10-2026).
+        self.assertFalse(casa.llueve_ahora_en({"pluja_15min": 0, "intensitat": 0.8, "pluja_30min": 0.6}, None))
+        self.assertTrue(casa.llueve_ahora_en({"pluja_15min": 0.2, "intensitat": 0}, None))
 
     def test_error_del_modelo_al_prever(self):
         h = {"time": ["2026-10-05T10:00", "2026-10-05T11:00"],

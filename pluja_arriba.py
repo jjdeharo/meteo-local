@@ -41,11 +41,21 @@ CAMPOS = ["inici", "avisat", "arribada_prevista", "minuts_previstos", "imatge", 
 FONTS = {"meteocat": "Meteocat", "rainviewer": "RainViewer"}
 
 
+def plou_estacio(ara):
+    """Llueve en Montflorit: ha recogido lluvia en los últimos PLOU_ARA_MIN
+    minutos (config.py). Con datos de antes de la 3.27.4, sin ese dato, como
+    entonces: la intensidad o la última media hora."""
+    if not ara:
+        return False
+    if "pluja_15min" in ara:
+        return (ara["pluja_15min"] or 0) > 0
+    return (ara.get("intensitat") or 0) > 0 or (ara.get("pluja_30min") or 0) > 0
+
+
 def plou(salida):
     """Llueve ahora en Montflorit o en casa (en casa, solo cuenta el sí)."""
-    ara, casa = salida.get("ara"), salida.get("ara_casa")
-    return (bool(ara) and ((ara.get("intensitat") or 0) > 0 or (ara.get("pluja_30min") or 0) > 0)
-            or bool(casa and casa.get("plou")))
+    casa = salida.get("ara_casa")
+    return plou_estacio(salida.get("ara")) or bool(casa and casa.get("plou"))
 
 
 def falta_min(salida, ahora):

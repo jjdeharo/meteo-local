@@ -234,6 +234,14 @@ def franges(hores):
     return res
 
 
+def plou_montflorit(a):
+    """Com la web (pluja_arriba.plou_estacio): pluja en els últims 15 minuts;
+    amb dades d'abans, la intensitat o l'última mitja hora."""
+    if "pluja_15min" in a:
+        return (a["pluja_15min"] or 0) > 0
+    return (a.get("intensitat") or 0) > 0 or (a.get("pluja_30min") or 0) > 0
+
+
 def text_ara(dades, idioma, lloc=""):
     """Como la web: la temperatura, de la estación particular (la de Montflorit
     marca de más por la tarde); la lluvia, de cualquiera de las dos."""
@@ -241,7 +249,7 @@ def text_ara(dades, idioma, lloc=""):
     t = c["temperatura"] if c.get("temperatura") is not None else a.get("temperatura")
     if t is None:
         return None
-    plou = (a.get("intensitat") or 0) > 0 or (a.get("pluja_30min") or 0) > 0 or bool(c.get("plou"))
+    plou = plou_montflorit(a) or bool(c.get("plou"))
     # Sense Montflorit, el zero del pluviòmetre de casa no vol dir que no plogui
     # (ADR 0017): només es diu la temperatura (auditoria del 08-10-2026).
     if not a and not plou:
@@ -508,7 +516,7 @@ def text_radar_bot(dades, idioma, moment):
     # El que es mesura mana, com a la web: si ja plou, «pluja a sobre», amb
     # l'hora en què pararia si el radar la veu (ADR 0049).
     ara_m, casa = dades.get("ara") or {}, dades.get("ara_casa") or {}
-    plou = (ara_m.get("intensitat") or 0) > 0 or (ara_m.get("pluja_30min") or 0) > 0 or bool(casa.get("plou"))
+    plou = plou_montflorit(ara_m) or bool(casa.get("plou"))
     aviat = r.get("arriba") and dt.datetime.fromisoformat(r["arriba"]) <= moment + dt.timedelta(minutes=5)
     if (plou and (r.get("arriba") or r.get("possible"))) or aviat:
         que = "Lluvia encima." if es else "Pluja a sobre."

@@ -129,9 +129,11 @@ class Compara(unittest.TestCase):
             RF.DIR = vell
 
     def test_que_plou(self):
-        self.assertTrue(RF.plou({"intensitat": 1.2}, None))
-        self.assertTrue(RF.plou({"intensitat": 0}, {"plou": True}))
-        self.assertFalse(RF.plou({"intensitat": 0, "pluja_30min": 0.4}, {"plou": False}))
+        # Plou si ha caigut res en els últims 15 minuts; la intensitat i la
+        # mitja hora, que triguen a tornar a zero, ja no compten (08-10-2026).
+        self.assertTrue(RF.plou({"pluja_15min": 0.2}, None))
+        self.assertTrue(RF.plou({"pluja_15min": 0}, {"plou": True}))
+        self.assertFalse(RF.plou({"pluja_15min": 0, "intensitat": 0.8, "pluja_30min": 0.4}, {"plou": False}))
 
 
 class Resum(unittest.TestCase):

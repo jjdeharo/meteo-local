@@ -2,7 +2,7 @@
 """Datos fijos de «Temps a Montflorit»: lugares, horario, fuentes y umbrales.
 Se cambian aquí, no en los programas."""
 
-VERSION = "3.27.3"
+VERSION = "3.27.4"
 
 # Coordenadas con tres decimales (unos 100 m), no las exactas: para el tiempo
 # da igual una calle u otra, y el repositorio es público.
@@ -125,6 +125,12 @@ AVIS_PLUJA_VERIFICA_MIN = 45
 # de lluvia posible.
 UMBRAL_MM = 0.2
 PROB_ATENCION = 0.2
+# Llueve ahora si una de las dos estaciones ha recogido lluvia en estos
+# minutos. Ni la intensidad que dan (tarda en volver a cero) ni la media hora:
+# el 08-10-2026 las dos pararon a las 19:50 y la página aún decía «Pluja a
+# sobre» a las 20:15. Con 15, una llovizna de 0,8 mm/h (una marca de 0,2 mm
+# cada 15 minutos) sigue contando como lluvia.
+PLOU_ARA_MIN = 15
 # El radar en directo, centrado en Montflorit si se puede: el que da el aviso
 # de lluvia lo enlaza (avisos_bot.py, ADR 0048). Los mismos en web/casa.js y
 # bot/bot.py, que las pruebas comparan.

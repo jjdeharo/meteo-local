@@ -185,7 +185,10 @@ function blocAra(ara, casa, radarDades, vent, hores) {
   termometre.classList.add('vehicle');
   temp.append(termometre, `${coma(base.temperatura)} °C`);
   sec.append(temp);
-  const plouMont = !!ara && ((ara.intensitat || 0) > 0 || (ara.pluja_30min || 0) > 0);
+  // Plou si ha caigut res en els últims 15 minuts (config.PLOU_ARA_MIN); amb
+  // dades d'abans, sense aquest valor, com llavors.
+  const plouMont = !!ara && ('pluja_15min' in ara ? (ara.pluja_15min || 0) > 0
+    : (ara.intensitat || 0) > 0 || (ara.pluja_30min || 0) > 0);
   const plou = plouMont || !!(casa && casa.plou);
   const intensitat = Math.max((ara && ara.intensitat) || 0, (casa && casa.plou && casa.intensitat) || 0);
   const llista = element('ul', 'dades-ara');

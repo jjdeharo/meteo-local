@@ -30,6 +30,12 @@ lluvia en casa; solo se usaba para la llegada.
   vea lluvia posible, con la hora de final; si el radar no ve ninguna, sin
   hora. El `/radar` del bot, igual, con «(en entrenament: pot fallar)» en el
   texto, porque Telegram no tiene dónde poner la explicación.
+- **Qué es «llueve ahora»** (3.27.4, en toda la web, el NAS, la reserva y
+  el bot; `config.PLOU_ARA_MIN`): que una de las dos estaciones haya recogido
+  lluvia en los últimos 15 minutos. Antes contaban la intensidad que dan
+  (tarda en volver a cero: la de casa daba 1,8 mm/h a las 19:55 sin lluvia
+  desde las 19:45) y la última media hora: el 08-10-2026 las dos pararon a
+  las 19:50 y la página dijo «Pluja a sobre» hasta las 20:15.
 - **Aprende sola**: cada día prueba nueve variantes (umbral del 10, 20 o 30 %
   durante 10, 15 o 20 minutos) con lo registrado; con 3 episodios o más, si
   una se equivoca al menos un 5 % menos que la vigente, pasa a usarla
