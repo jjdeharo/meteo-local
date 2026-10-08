@@ -189,6 +189,16 @@ def avisos_del_tramo(ini, fin, avisos):
     return [{"nivell": n, "tipus": sorted(t)} for n, t in res.items()]
 
 
+def senyals_avis(ini, fin, avisos, planes):
+    """Lo que dice lo oficial de la hora, para que el modelo aprenda cuánto
+    pesa (ADR 0047): si había aviso de AEMET por lluvia o tormentas y si el
+    INUNCAT estaba en alerta o emergencia. None si no se pudieron leer."""
+    tipus = {t for a in avisos_del_tramo(ini, fin, avisos) for t in a["tipus"]}
+    return {"avis_pluja": None if avisos is None else float(bool(tipus & {"pluja", "tempestes"})),
+            "pla_inuncat": None if planes is None else float(any(
+                p["pla"] == "INUNCAT" and p["fase"] in ("alerta", "emergència") for p in planes))}
+
+
 def prob_ensemble(e):
     """Fracción de miembros del ensemble con lluvia, por hora."""
     miembros = [k for k in e if k.startswith("precipitation")]
@@ -215,7 +225,7 @@ def variables_hora(desde, h, prob, i, prever):
     return d
 
 
-def previsio(desde, h, e, ara, avisos, model=None, casa=None, nc=None):
+def previsio(desde, h, e, ara, avisos, model=None, casa=None, nc=None, planes=None):
     """Una fila por tramo de una hora («de 10 a 11»), de la hora actual a 24
     horas después. Open-Meteo da la lluvia acumulada en la hora anterior: el
     tramo de 10 a 11 se lee en la hora 11:00, y los demás valores también."""
@@ -236,6 +246,7 @@ def previsio(desde, h, e, ara, avisos, model=None, casa=None, nc=None):
         ini = fin - dt.timedelta(hours=1)
         n = len(filas)
         d = variables_hora(desde, h, prob, i, prever)
+        d.update(senyals_avis(ini, fin, avisos, planes))
         # Probabilidad aprendida con lo que llovió de verdad; sin modelo, la
         # fracción del ensemble.
         p = A.prob_pluja(model, d)
@@ -289,7 +300,7 @@ def previsio(desde, h, e, ara, avisos, model=None, casa=None, nc=None):
     return filas
 
 
-def filas_registro(desde, h, e, ara, mostradas, casa=None):
+def filas_registro(desde, h, e, ara, mostradas, casa=None, avisos=None, planes=None):
     """Todo lo que los modelos daban para cada hora de la tabla, junto a lo que
     mostró la página: lo que hace falta para aprender de los fallos (ADR 0012)."""
     prob = prob_ensemble(e)
@@ -299,9 +310,12 @@ def filas_registro(desde, h, e, ara, mostradas, casa=None):
     for f in mostradas:
         d = variables_hora(desde, h, prob, indice[f["fins"]], prever)
         d.pop("pluja_1h_emes")      # ya va en «ara» y «ara_casa», una vez por línea
+        fin = dt.datetime.fromisoformat(f["fins"]).astimezone()
+        d.update(senyals_avis(fin - dt.timedelta(hours=1), fin, avisos, planes))
+        # «plou_ara», para saber qué veredicto dio «Si surts» (ADR 0047).
         d["mostrat"] = {"pluja_mm": f["pluja_mm"], "probabilitat": f["probabilitat"],
                         "temperatura": f["temperatura"], "segons_estacio": f["segons_estacio"],
-                        "segons_radar": f.get("segons_radar", False)}
+                        "segons_radar": f.get("segons_radar", False), "plou_ara": f.get("plou_ara", False)}
         # Lo que daba el radar llevado hacia delante, para aprender (ADR 0019).
         d["radar_mm"] = (f.get("radar") or {}).get("mm")
         d["radar_prob"] = (f.get("radar") or {}).get("prob")
@@ -431,7 +445,7 @@ def recoger(anterior=None):
         h, e = modelos(P.AHORA, salida["errors"])
         model = A.carrega()
         salida["aprenentatge"] = A.resum_pagina(model)
-        salida["hores"] = previsio(P.AHORA, h, e, ara, avisos, model, casa, nc)
+        salida["hores"] = previsio(P.AHORA, h, e, ara, avisos, model, casa, nc, planes)
         salida["models"] = comprobacion_modelos(P.AHORA, h, filas_estacion)
     except Exception as ex:
         salida["hores"] = salida["models"] = None
@@ -469,7 +483,8 @@ def recoger(anterior=None):
                 R.apunta_estacio_casa(E.hores(casa["files"]))
             if salida["hores"] and not salida.get("previsio_de"):
                 r = salida.get("riera")
-                R.apunta_casa(P.AHORA, ara, filas_registro(P.AHORA, h, e, ara, salida["hores"], casa),
+                R.apunta_casa(P.AHORA, ara, filas_registro(P.AHORA, h, e, ara, salida["hores"], casa,
+                                                           avisos, planes),
                               salida["ara_casa"], {"pluja_1h": r["mm_1h"], "fins": r["fins"]} if r else None)
         except Exception as ex:
             print("No he podido apuntar en el registro:", ex, file=sys.stderr)

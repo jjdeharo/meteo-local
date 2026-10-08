@@ -133,6 +133,7 @@ python3 montflorit.py web /tmp/web             # la web pública
 python3 montflorit.py dades /tmp/casa.json /tmp/web/montflorit.json
 python3 trens.py                               # el estado de los trenes
 python3 riera.py ara                           # el índice de la riera
+python3 calibracio/regla_moto.py               # la regla de lluvia de la moto, con el archivo
 python3 -m unittest discover -s tests          # pruebas
 ```
 

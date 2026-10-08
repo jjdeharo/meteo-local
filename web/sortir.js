@@ -13,6 +13,11 @@ const PROB_RISC = 0.2;
 const PROB_PLUJA = 0.5;
 const MM_RISC = 0.2;
 const MM_PLUJA = 1;
+// Moto i bici: només la probabilitat, que ja porta els models, el radar, les
+// estacions i el que aprèn el programa; un sol model plujós no decideix.
+// Comprovat amb l'arxiu del 2024 al 2026 (calibracio/regla_moto.py, ADR 0047).
+const PROB_RISC_RODES = 0.1;
+const PROB_PLUJA_RODES = 0.4;
 // Vent (ratxes, km/h) i fred (°C) per mitjà: [compte, millor no].
 const LLINDARS = {
   peu: { ratxa: [null, 70], fred: [null, null] },
@@ -48,6 +53,24 @@ function senseDades(f) {
 
 function plouClar(f) {
   return (f.probabilitat || 0) >= PROB_PLUJA || (f.pluja_mm || 0) >= MM_PLUJA || f.plou_ara || avisPluja(f);
+}
+
+// Moto i bici (ADR 0047). Sense probabilitat, manen els mil·límetres, com a
+// la pàgina del temps. L'avís de l'AEMET tot sol porta a «compte», no a «no».
+function sobre(f, prob, mm) {
+  return f.probabilitat == null ? (f.pluja_mm || 0) >= mm : f.probabilitat >= prob;
+}
+
+function plouRodes(f) {
+  return sobre(f, PROB_PLUJA_RODES, MM_PLUJA) || f.plou_ara;
+}
+
+function mullaRodes(f) {
+  return sobre(f, PROB_RISC_RODES, MM_RISC) || f.plou_ara || avisPluja(f);
+}
+
+function nomesAvisRodes(f) {
+  return !sobre(f, PROB_RISC_RODES, MM_RISC) && !f.plou_ara;
 }
 
 function hora(f) {
@@ -92,13 +115,18 @@ function avalua(mitja, tram, trens, futur) {
 
   const nomesAvis = (cond) => viatge.filter(cond).every(senseDades);
   if (mitja === 'bici' || mitja === 'moto') {
-    if (viatge.some(plouClar)) {
-      puja('no', nomesAvis(plouClar)
-        ? T`Avís de l’AEMET per pluja ${quan(anada, tornada, plouClar)}: ni el radar, ni les estacions, ni els models hi veuen pluja.`
-        : T`Pluja probable ${quan(anada, tornada, plouClar)}.`);
-    } else if (viatge.some(mulla)) {
-      puja('compte', mitja === 'moto' ? T`Pot ploure ${quan(anada, tornada, mulla)}: porta l’impermeable.`
-        : T`Pot ploure ${quan(anada, tornada, mulla)}.`);
+    if (viatge.some(plouRodes)) {
+      puja('no', T`Pluja probable ${quan(anada, tornada, plouRodes)}.`);
+    } else if (viatge.some(mullaRodes)) {
+      const moto = mitja === 'moto';
+      if (viatge.filter(mullaRodes).every(nomesAvisRodes)) {
+        puja('compte', moto
+          ? T`Avís de l’AEMET per pluja ${quan(anada, tornada, mullaRodes)}: ni el radar, ni les estacions, ni els models hi veuen pluja. Per si de cas, porta l’impermeable.`
+          : T`Avís de l’AEMET per pluja ${quan(anada, tornada, mullaRodes)}: ni el radar, ni les estacions, ni els models hi veuen pluja.`);
+      } else {
+        puja('compte', moto ? T`Pot ploure ${quan(anada, tornada, mullaRodes)}: porta l’impermeable.`
+          : T`Pot ploure ${quan(anada, tornada, mullaRodes)}.`);
+      }
     }
   }
   if (mitja === 'cotxe') {
@@ -403,7 +431,8 @@ function pintaSortida() {
       p.append(a);
       li.append(p);
     }
-    const r = roba(clau, tram, v.nivell !== 'be' && [tram[0], tram[tram.length - 1]].some(mulla));
+    const plujaViatge = clau === 'moto' || clau === 'bici' ? mullaRodes : mulla;
+    const r = roba(clau, tram, v.nivell !== 'be' && [tram[0], tram[tram.length - 1]].some(plujaViatge));
     if (r) li.append(element('p', 'mitja-roba', T`Roba: ${r}`));
     llista.append(li);
   }

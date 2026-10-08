@@ -26,7 +26,8 @@ y otros transportes.
   público, en verde, ámbar o rojo con el motivo. Coche y transporte público
   van por separado, porque uno puede ir bien y el otro no (Juanjo, 07-10-2026).
   Umbrales en `web/sortir.js`: los de lluvia son los del trayecto, comprobados
-  con datos; los de viento y frío de bici y moto, una primera propuesta que la
+  con datos, salvo en moto y en bici, que desde el 08-10-2026 deciden solo por
+  la probabilidad (40 % y 10 %, ADR 0047); los de viento y frío de bici y moto, una primera propuesta que la
   página declara sin comprobar. El coche no sale «bé» con lluvia (auditoría
   del 08-10-2026, antes solo miraba el viento): lluvia muy fuerte (40 mm en
   una hora, umbral naranja de AEMET), «no»; fuerte (20 mm, amarillo),
@@ -40,7 +41,10 @@ y otros transportes.
   models hi veuen pluja», y los consejos hablan del aviso y no del riesgo de
   lluvia. Es el criterio del ADR 0008 para los planes de Protección Civil. Lo
   pidió Juanjo el 07-10-2026, con un aviso amarillo hasta las 20 h, el cielo
-  despejado y un 1 %: la página decía «Pluja probable».
+  despejado y un 1 %: la página decía «Pluja probable». **Desde el
+  08-10-2026, en moto y en bici el aviso solo lleva a «compte»**, con el mismo
+  motivo y «porta l'impermeable» en moto (ADR 0047): ese día desaconsejó la
+  moto y no llovió.
 - **Transporte público según los trenes**: «Bé» si circulan todos, «Amb
   incidències» si alguno no circula, va por carretera o tiene avisos, «Sense
   trens» si no circula ninguno; con un enlace al bloque «Trens ara» de debajo,

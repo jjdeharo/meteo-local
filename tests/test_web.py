@@ -266,16 +266,43 @@ class Web(unittest.TestCase):
         def avalua(mitja, prob):
             return self.avalua("2026-10-07T18:10:00+02:00",
                                f"avalua({json.dumps(mitja)}, {json.dumps(tram(prob))}, [])", "sortir.js")
+        # En bici i en moto, l'avís tot sol és «compte», no «no» (08-10-2026, ADR 0047).
         bici = avalua("bici", 0.01)
-        self.assertEqual(bici["nivell"], "no")
+        self.assertEqual(bici["nivell"], "compte")
         self.assertEqual(bici["motius"], ["Avís de l’AEMET per pluja a l’anada (18\u00a0h): ni el radar, "
                                           "ni les estacions, ni els models hi veuen pluja."])
+        moto = avalua("moto", 0.01)
+        self.assertEqual(moto["nivell"], "compte")
+        self.assertTrue(moto["motius"][0].endswith("Per si de cas, porta l’impermeable."))
+        self.assertEqual(avalua("cotxe", 0.01)["nivell"], "compte")
         self.assertTrue(avalua("peu", 0.01)["motius"][0].startswith("Avís de l’AEMET per pluja mentre ets fora"))
         # Si els models també hi veuen pluja, com sempre.
         self.assertEqual(avalua("bici", 0.6)["motius"], ["Pluja probable a l’anada i a la tornada."])
         consells = self.avalua("2026-10-07T18:10:00+02:00",
                                f"consells({json.dumps(tram(0.01))}, new Date())", "sortir.js")
         self.assertIn("Cap a les 20\u00a0h s’acaba l’avís de l’AEMET.", consells)
+
+    def test_pluja_en_moto_per_la_probabilitat(self):
+        # El cas del 08-10-2026: avís groc des de les 10 h, cap dada hi veia pluja
+        # a les 10 i a les 17 h només ICON-EU donava 1,7 mm (un 25 %). Va dir «no»
+        # i no va ploure. Ara, en moto i en bici, decideix la probabilitat (ADR 0047).
+        avis = [{"nivell": "groc", "tipus": ["pluja"]}]
+        def viatge(prob, mm, avisos=avis):
+            return [{"hora": f"2026-10-08T{h:02d}:00", "probabilitat": p, "pluja_mm": m,
+                     "temperatura": 18, "avisos": avisos} for h, p, m in ((10, 0.0, 0.0), (17, prob, mm))]
+        def avalua(mitja, tram):
+            return self.avalua("2026-10-08T09:50:00+02:00",
+                               f"avalua({json.dumps(mitja)}, {json.dumps(tram)}, [])", "sortir.js")
+        moto = avalua("moto", viatge(0.25, 1.7))
+        self.assertEqual(moto["nivell"], "compte")
+        self.assertEqual(moto["motius"], ["Pot ploure a l’anada i a la tornada: porta l’impermeable."])
+        self.assertEqual(avalua("moto", viatge(0.45, 0.3))["nivell"], "no")
+        self.assertEqual(avalua("moto", viatge(0.12, 0.0, []))["nivell"], "compte")
+        self.assertEqual(avalua("moto", viatge(0.05, 0.6, []))["nivell"], "be")
+        # Sense probabilitat, manen els mil·límetres.
+        self.assertEqual(avalua("bici", viatge(None, 1.2, []))["nivell"], "no")
+        # El cotxe no canvia: un sol model amb 1 mm o més és pluja probable.
+        self.assertEqual(avalua("cotxe", viatge(0.25, 1.7, []))["nivell"], "compte")
 
     def test_propera_lectura(self):
         horari = {"trams": [["00:00", "23:50"]], "cada_min": 10, "desfase_min": 1}

@@ -2,7 +2,7 @@
 """Datos fijos de «Temps a Montflorit»: lugares, horario, fuentes y umbrales.
 Se cambian aquí, no en los programas."""
 
-VERSION = "3.22.0"
+VERSION = "3.23.0"
 
 # Coordenadas con tres decimales (unos 100 m), no las exactas: para el tiempo
 # da igual una calle u otra, y el repositorio es público.
@@ -124,6 +124,16 @@ AVIS_PLUJA_VERIFICA_MIN = 45
 # de lluvia posible.
 UMBRAL_MM = 0.2
 PROB_ATENCION = 0.2
+
+# «Si surts», lluvia en moto y en bici (web/sortir.js, ADR 0047): solo la
+# probabilidad, desde el 10 % «compte» y desde el 40 % «millor no»; sin
+# probabilidad, la lluvia de los modelos. Un aviso de AEMET solo, «compte».
+# Comprobado con el archivo (calibracio/regla_moto.py); las pruebas miran que
+# coincidan con los de la página.
+MOTO_PROB_RISC = 0.1
+MOTO_PROB_PLUJA = 0.4
+MOTO_MM_RISC = 0.2
+MOTO_MM_PLUJA = 1.0
 
 # Riera de Sant Cugat (riera.py, ADR 0027): nace en Collserola y pasa por
 # Montflorit. Se desbordó con 53 mm en 3 horas en Sant Cugat (29-04-2024, el

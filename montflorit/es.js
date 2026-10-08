@@ -141,6 +141,7 @@ var IDIOMA = {
     "Pot ploure mentre ets fora: porta paraigua.": "Puede llover mientras estás fuera: lleva paraguas.",
     "Avís de l\u2019AEMET per pluja mentre ets fora: ni el radar, ni les estacions, ni els models hi veuen pluja. Per si de cas, porta paraigua.": "Aviso de la AEMET por lluvia mientras estás fuera: ni el radar, ni las estaciones, ni los modelos ven lluvia. Por si acaso, lleva paraguas.",
     "Avís de l\u2019AEMET per pluja {0}: ni el radar, ni les estacions, ni els models hi veuen pluja.": "Aviso de la AEMET por lluvia {0}: ni el radar, ni las estaciones, ni los modelos ven lluvia.",
+    "Avís de l\u2019AEMET per pluja {0}: ni el radar, ni les estacions, ni els models hi veuen pluja. Per si de cas, porta l\u2019impermeable.": "Aviso de la AEMET por lluvia {0}: ni el radar, ni las estaciones, ni los modelos ven lluvia. Por si acaso, lleva el impermeable.",
     "A partir de les {0}\u00a0h, avís de l\u2019AEMET per pluja.": "A partir de las {0}\u00a0h, aviso de la AEMET por lluvia.",
     "Cap a les {0}\u00a0h s\u2019acaba l\u2019avís de l\u2019AEMET.": "Hacia las {0}\u00a0h se acaba el aviso de la AEMET.",
     "Sense pluja ni vent fort.": "Sin lluvia ni viento fuerte.",

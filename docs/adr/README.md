@@ -48,5 +48,6 @@
 | [0044](0044-copia-del-registro-en-github.md) | Copia del registro en un repositorio privado de GitHub | aceptado |
 | [0045](0045-reinstalar-lo-de-ionos-en-otro-hosting.md) | Reinstalar lo de IONOS en otro hosting | aceptado |
 | [0046](0046-incendios-cerca-pla-alfa-y-acceso-a-collserola.md) | Incendios cerca y Pla Alfa | aceptado |
+| [0047](0047-lluvia-en-moto-segun-la-probabilidad.md) | Lluvia en moto y en bici según la probabilidad | aceptado |
 
 Plantilla: [0000-plantilla.md](0000-plantilla.md). Para crear uno: `nuevo-adr "Título"`.

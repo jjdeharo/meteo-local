@@ -31,7 +31,11 @@ En cada pasada, el NAS guarda en `/estat/registre/`:
   (AROME HD, AROME e ICON-EU), la fracción de las 40 simulaciones de
   ICON-EU-EPS con lluvia, la temperatura, las nubes, el viento, la humedad,
   la radiación, la antelación, lo que medían las estaciones al prever y lo que
-  mostró la página.
+  mostró la página. Desde el 08-10-2026, también lo oficial de cada hora: si
+  había aviso de AEMET por lluvia o tormentas y si el INUNCAT estaba en
+  alerta o emergencia (ADR 0047).
+- **El veredicto de lluvia de la moto en «Si surts»** (`moto.csv`, desde el
+  08-10-2026): ver el apartado 7.
 
 Al cruzar las dos cosas se obtiene, para cada hora prevista, qué se dijo y qué
 pasó. Con eso se ajustan dos regresiones.
@@ -182,6 +186,13 @@ llegue a las 30 horas de lluvia, el programa avisa a Juanjo por Telegram, una
 sola vez, con el error de las dos: si la estación cercana ayuda, se pedirá
 la clave de OpenData de la AEMET para añadir la del aeropuerto de Sabadell
 (5 km al norte); si no, no se añade.
+
+Una tercera variante añade lo oficial de cada hora (ADR 0047): $a$, 1 si hay
+aviso de AEMET por lluvia o tormentas en el Prelitoral de Barcelona, y $c$, 1
+si el INUNCAT está en alerta o emergencia. Así el peso de un aviso sale de lo
+que pasa en Montflorit en lugar de fijarse a mano. Como se registran desde el
+08-10-2026, se valida solo con esas horas y se adopta con las mismas
+condiciones que las otras.
 
 ### 2.3 Lo que aporta casa con su historial
 
@@ -365,18 +376,75 @@ Antes salía de los milímetros del modelo más lluvioso, y la tabla podía deci
   horas de cada pasada: el error al prever puede parecer algo más útil de lo
   que es con la antelación real. El registro propio lo medirá.
 
-## 7. Trayecto
+## 7. «Si surts»: la lluvia en moto y en bici
 
 La página del trayecto («Moto o cotxe?») se retiró el 07-10-2026 ([ADR
-0030](adr/0030-retirada-de-la-pagina-del-trayecto.md)); su aprendizaje no se
-hizo. Lo que decide ahora por medio de transporte es «Si surts», con los
-umbrales del apartado 2 y los de `web/sortir.js`.
+0030](adr/0030-retirada-de-la-pagina-del-trayecto.md)). Lo que decide ahora
+por medio de transporte es «Si surts», con los umbrales de `web/sortir.js`.
+
+### La regla
+
+Desde el 08-10-2026 ([ADR 0047](adr/0047-lluvia-en-moto-segun-la-probabilidad.md)),
+en moto y en bici decide **solo la probabilidad** $p$ de cada hora, la de la
+tabla, que ya reúne los modelos, el ensemble, el radar, las estaciones y lo
+aprendido (apartado 2). Para la hora de ida y la de vuelta:
+
+$$
+\text{nivel} =
+\begin{cases}
+\text{millor no} & \text{si } p \ge 0{,}40 \text{ o llueve ahora} \\
+\text{compte} & \text{si } p \ge 0{,}10 \text{ o hay aviso de AEMET} \\
+\text{bé} & \text{en otro caso}
+\end{cases}
+$$
+
+y el nivel del viaje es el peor de las dos horas. Sin probabilidad, se usa la
+lluvia del modelo más lluvioso: 1 mm, «millor no»; 0,2 mm, «compte».
+
+Antes mandaba también la lluvia del modelo más lluvioso (1 mm, «millor no»;
+0,2 mm, «compte») junto a una probabilidad del 50 % y del 20 %, y un aviso de
+AEMET solo daba «millor no». El 08-10-2026 eso desaconsejó la moto a las 10 y
+a las 17 h por el aviso amarillo y por 1,7 mm de ICON-EU (los dos AROME daban
+0 y la probabilidad, un 25 %), y no llovió.
+
+### Comprobación con el archivo
+
+`calibracio/regla_moto.py` aplica las dos reglas a cada hora del archivo
+(1-1-2024 a 5-10-2026), con la probabilidad del modelo del archivo ajustado
+sin la semana que se juzga, y a un viaje de cada día a las 10 y a las 17 h.
+Verdad: 0,2 mm o más en Sabadell o Sant Cugat. Viaje, previsión a corto
+plazo (992 días, 80 con lluvia):
+
+| Regla | Días secos con «no» | Días secos con «compte» | Días de lluvia con «bé» | con «compte» | con «no» |
+|---|---|---|---|---|---|
+| Antes (50 % o 1 mm; 20 % o 0,2 mm) | 25 | 53 | 14 | 22 | 44 |
+| Solo la probabilidad, 50 % y 20 % | 8 | 34 | 23 | 27 | 30 |
+| **Solo la probabilidad, 40 % y 10 %** | **11** | 72 | **13** | 26 | 41 |
+
+Con la previsión de un día antes (971 días, 78 con lluvia), la elegida da 14
+días secos con «no» (antes, 21) y 17 de lluvia con «bé» (antes, 22). Quitar
+los milímetros con los umbrales de siempre reducía las falsas alarmas, pero
+dejaba sin aviso nueve días más de lluvia: por eso se bajaron los umbrales.
+El precio es recomendar el impermeable unos 19 días secos más de cada 900. El
+archivo no tiene avisos de AEMET, radar ni ensemble: esas partes no están
+comprobadas.
+
+### Comprobación con lo que pasa
+
+Cada día, tras la verificación de las 16:00, `aprenentatge.py` apunta en
+`moto.csv`, de cada hora pasada de 6 a 22 h con lluvia medida, qué nivel daba
+la regla nueva y cuál la de antes, con dos antelaciones: al salir (la
+previsión más reciente de 1 a 3 horas antes) y la vuelta decidida por la
+mañana (de 6 a 10 horas antes). A los 28 días manda a Juanjo, una vez, las
+horas secas con «no» y con «compte» y las de lluvia con «bé» de las dos
+reglas. `python3 aprenentatge.py moto` lo dice en cualquier momento.
 
 ## Dónde está cada cosa
 
 | Archivo | Qué hace |
 |---|---|
-| `aprenentatge.py` | Rasgos, regresiones, validación y decisión diaria |
+| `aprenentatge.py` | Rasgos, regresiones, validación y decisión diaria; veredicto de la moto y lo que pasó |
+| `calibracio/regla_moto.py` | Compara con el archivo las reglas de lluvia de la moto |
 | `calibracio/pluja_casa.py` | Ajusta y comprueba el modelo de lluvia del archivo |
 | `calibracio/pluja_casa.json` | Sus pesos y la comprobación |
 | `calibracio/estacio_casa.py` | Ajusta la corrección de temperatura con el año de casa y comprueba las señales de casa para la lluvia |

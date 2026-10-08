@@ -26,7 +26,9 @@ aprendizaje automático también para casa.
   Sant Cugat como verdad. Con 30 horas de lluvia propias, un modelo con
   Montflorit y casa (cuando marca lluvia) como verdad y tres señales más: la
   fracción del ensemble, la lluvia medida al prever y la sequedad del aire en
-  casa al prever (ADR 0017).
+  casa al prever (ADR 0017). Dos variantes más se ajustan aparte y solo ganan
+  si aciertan más: con la lluvia de Sant Cugat (ADR 0042) y con el aviso de
+  AEMET y el INUNCAT de cada hora, registrados desde el 08-10-2026 (ADR 0047).
 - **Temperatura: regresión lineal ridge** del error del modelo en la estación
   de casa. Desde el 06-10-2026, el primer modelo se ajusta con un año de esa
   estación (`calibracio/estacio_casa.py`, ADR 0017); con 14 días registrados,
