@@ -6,6 +6,7 @@ import os
 import sys
 import tempfile
 import unittest
+import unittest.mock
 
 ARREL = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ARREL)
@@ -351,6 +352,62 @@ class Repartiment(unittest.TestCase):
     def test_el_menu_explica_el_canal(self):
         for idioma in ("ca", "es"):
             self.assertIn("@TempsMontflorit)", B.T[idioma]["menu"])
+
+
+class Consultes(unittest.TestCase):
+    """/dema, /radar, /trens i /avisos_actius (Juanjo, 08-10-2026): només llegeixen,
+    i la llista de subscriptors queda igual."""
+
+    def setUp(self):
+        self.dir = tempfile.TemporaryDirectory()
+        B.DADES = self.dir.name
+        d = dades()
+        d["radar"] = {"hora": ARA.isoformat(timespec="minutes"), "imatge": "rainviewer", "cap_a": "a l'est",
+                      "velocitat_kmh": 37, "arriba": None, "possible": None}
+        d["plans"] = [{"pla": "INUNCAT", "nom": "d'inundacions", "fase": "emergència", "comunicat": None}]
+        d["trens"] = {"linies": [{"linia": "R4", "estacio": "Cerdanyola del Vallès", "estat": "incidencies",
+                                  "avisos": [{"ca": "Obres <a Montcada>.", "es": "Obras en Montcada."}]},
+                                 {"linia": "S2", "estacio": "Bellaterra", "estat": "circula", "avisos": []}]}
+        with open(os.path.join(self.dir.name, "montflorit.json"), "w") as f:
+            json.dump(d, f)
+
+    def tearDown(self):
+        self.dir.cleanup()
+
+    def ordre(self, text, subs, chat=7, idioma="ca"):
+        api = Api()
+        missatge = {"message": {"chat": {"id": chat, "type": "private"}, "from": {"language_code": idioma}, "text": text}}
+        with unittest.mock.patch.object(B, "ara", return_value=ARA):
+            B.atén(api, subs, missatge)
+        return api.enviats[-1][1]["text"]
+
+    def test_les_consultes_no_toquen_ningu(self):
+        subs = {"1": {"idioma": "ca", "avisos": ["riera"], "resum": "7", "alta": "x"},
+                "7": {"idioma": "es", "avisos": ["perill", "pluja"], "resum": "20", "alta": "y"}}
+        abans = json.dumps(subs, sort_keys=True)
+        for o in ("/dema", "/radar", "/trens", "/avisos_actius", "/ara", "/resum", "/ajuda", "/xyz"):
+            self.ordre(o, subs, chat=7, idioma="es")
+        self.assertEqual(json.dumps(subs, sort_keys=True), abans)
+
+    def test_respostes(self):
+        subs = {"7": {"idioma": "ca", "avisos": [], "resum": None}}
+        self.assertIn("No s'acosta pluja en 2 hores.", self.ordre("/radar", subs))
+        self.assertIn("https://www.rainviewer.com/map.html", self.ordre("/radar", subs))
+        trens = self.ordre("/trens", subs)
+        self.assertIn("<b>R4</b> (Cerdanyola del Vallès): amb incidències", trens)
+        self.assertIn("R4: Obres &lt;a Montcada&gt;.", trens)          # el text de l'operador, escapat
+        self.assertIn("pla d'inundacions (INUNCAT) en fase d'emergència", self.ordre("/avisos_actius", subs))
+        self.assertTrue(self.ordre("/dema", subs).startswith("<b>Previsió per a demà"))
+        subs["7"]["idioma"] = "es"
+        self.assertIn("en fase de emergencia", self.ordre("/avisos_actius", subs))
+        self.assertIn("va hacia el este", self.ordre("/radar", subs))
+
+    def test_dades_velles(self):
+        subs = {"7": {"idioma": "ca", "avisos": [], "resum": None}}
+        with unittest.mock.patch.object(B, "ara", return_value=ARA + dt.timedelta(hours=3)):
+            api = Api()
+            B.atén(api, subs, {"message": {"chat": {"id": 7, "type": "private"}, "from": {}, "text": "/trens"}})
+        self.assertIn("no s'actualitzen", api.enviats[-1][1]["text"])
 
 
 class AvisosPublics(unittest.TestCase):

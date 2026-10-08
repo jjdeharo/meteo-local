@@ -23,6 +23,7 @@ Uso: bot.py           una vuelta (lo que hace el cron, cada minuto)
 """
 import datetime as dt
 import fcntl
+import html
 import json
 import math
 import os
@@ -71,7 +72,8 @@ T = {
         "pluja": "Pluja a punt de començar (15 min abans)", "trens": "Trens de Cerdanyola (si no circulen)",
         "resum": "Previsió, un cop al dia, a les:", "no": "No vull rebre la previsió", "h": "{} h", "dema": "{} h (per a demà)",
         "baixa": "Fet: s'han esborrat les teves dades i ja no rebràs res. Amb /start pots tornar-hi.",
-        "ajuda": ("/avisos tria què reps · /resum la previsió · /ara el temps ara · "
+        "ajuda": ("/avisos tria què reps · /resum la previsió · /dema la de demà · /ara el temps ara · "
+                  "/radar el radar ara · /trens els trens · /avisos_actius els avisos oficials · "
                   "/baixa deixa de rebre'n i esborra les teves dades"),
         "velles": "Les dades de Temps a Montflorit no s'actualitzen des de les {}: ara no puc donar la previsió.",
         "velles_ara": "Les dades de Temps a Montflorit no s'actualitzen des de les {}: ara no puc dir el temps que fa.",
@@ -93,7 +95,8 @@ T = {
         "pluja": "Lluvia a punto de empezar (15 min antes)", "trens": "Trenes de Cerdanyola (si no circulan)",
         "resum": "Previsión, una vez al día, a las:", "no": "No quiero recibir la previsión", "h": "{} h", "dema": "{} h (para mañana)",
         "baixa": "Hecho: se han borrado tus datos y ya no recibirás nada. Con /start puedes volver.",
-        "ajuda": ("/avisos elige qué recibes · /resum la previsión · /ara el tiempo ahora · "
+        "ajuda": ("/avisos elige qué recibes · /resum la previsión · /dema la de mañana · /ara el tiempo ahora · "
+                  "/radar el radar ahora · /trens los trenes · /avisos_actius los avisos oficiales · "
                   "/baixa deja de recibir y borra tus datos"),
         "velles": "Los datos de Temps a Montflorit no se actualizan desde las {}: ahora no puedo dar la previsión.",
         "velles_ara": "Los datos de Temps a Montflorit no se actualizan desde las {}: ahora no puedo decir el tiempo que hace.",
@@ -368,7 +371,7 @@ def text_avisos_aemet(dades, idioma, dia, moment):
     return res
 
 
-def resum(dades, idioma, moment):
+def resum(dades, idioma, moment, dema=False):
     """La previsión en pocas líneas, con los datos públicos: hasta las 18 h,
     el tiempo ahora y el resto del día; desde las 18 h, la de mañana. Con la
     ropa para ir a pie (text_roba)."""
@@ -381,9 +384,11 @@ def resum(dades, idioma, moment):
     ara_n = moment.replace(tzinfo=None)
     hores = [f for f in dades.get("hores") or [] if dt.datetime.fromisoformat(f["fins"]) > ara_n]
     hora = lambda f: dt.datetime.fromisoformat(f["hora"])
-    if moment.hour >= HORA_DEMA:
+    if dema or moment.hour >= HORA_DEMA:
         dema = (moment + dt.timedelta(days=1)).date()
-        nit = [f for f in hores if hora(f) < dt.datetime.combine(dema, dt.time(6))]
+        # La nit comença a les HORA_DEMA d'avui, també si es demana /dema al matí.
+        vespre = dt.datetime.combine(moment.date(), dt.time(HORA_DEMA))
+        nit = [f for f in hores if vespre <= hora(f) < dt.datetime.combine(dema, dt.time(6))]
         dia = [f for f in hores if hora(f).date() == dema and hora(f).hour >= 6]
         nom_dia = DIES[idioma][dema.weekday()]
         if not dia:     # sense hores de demà, no hi ha previsió, i es diu (auditoria del 08-10-2026)
@@ -437,6 +442,100 @@ def text_trens_resum(dades, idioma):
         return None if all(l["estat"] == "fora_horari" for l in linies) else \
             ("Trenes de Cerdanyola sin incidencias." if idioma == "es" else "Trens de Cerdanyola sense incidències.")
     return ("Trenes de Cerdanyola: " if idioma == "es" else "Trens de Cerdanyola: ") + ", ".join(mal) + "."
+
+
+# --- Órdenes de consulta (Juanjo, 08-10-2026) ---------------------------------------
+# /trens, /radar y /avisos_actius: lo mismo que la web, con el mismo límite de
+# edad de los datos que /ara.
+
+def dades_velles(dades, idioma, moment):
+    generat = dades.get("generat") and dt.datetime.fromisoformat(dades["generat"])
+    if not generat or moment - generat > dt.timedelta(hours=DADES_VELLES_H):
+        return T[idioma]["velles_ara"].format(generat.strftime("%H:%M") if generat else "?")
+    return None
+
+
+ESTAT_TREN = {"ca": {"circula": "sense incidències", "incidencies": "amb incidències", "bus": "servei per carretera",
+                     "sense_trens": "sense trens", "fora_horari": "fora d'horari", "sense_dades": "sense dades"},
+              "es": {"circula": "sin incidencias", "incidencies": "con incidencias", "bus": "servicio por carretera",
+                     "sense_trens": "sin trenes", "fora_horari": "fuera de horario", "sense_dades": "sin datos"}}
+
+
+def text_trens_bot(dades, idioma, moment):
+    vell = dades_velles(dades, idioma, moment)
+    if vell:
+        return vell
+    linies = ((dades.get("trens") or {}).get("linies")) or []
+    if not linies:
+        return "Ahora no hay datos de los trenes." if idioma == "es" else "Ara no hi ha dades dels trens."
+    files = [f"<b>{html.escape(l['linia'])}</b> ({html.escape(l.get('estacio', ''))}): {ESTAT_TREN[idioma].get(l['estat'], l['estat'])}"
+             for l in linies]
+    # El aviso más nuevo de cada línea, en su idioma original (Juanjo, 07-10-2026).
+    for l in linies:
+        if l.get("avisos"):
+            a = l["avisos"][0]
+            files.append(f"{l['linia']}: {html.escape(a.get(idioma) or a.get('ca') or a.get('es') or '')}")
+    cap = "Trenes de Cerdanyola" if idioma == "es" else "Trens de Cerdanyola"
+    return f"<b>{cap}</b>\n" + "\n".join(files)
+
+
+DIRECCIO_ES = {"al nord": "el norte", "al nord-est": "el nordeste", "a l'est": "el este", "al sud-est": "el sudeste",
+               "al sud": "el sur", "al sud-oest": "el sudoeste", "a l'oest": "el oeste", "al nord-oest": "el noroeste"}
+RADAR_EN_DIRECTE = {"rainviewer": "https://www.rainviewer.com/map.html?loc=41.482,2.135,9&layer=radar",
+                    "meteocat": "https://www.meteo.cat/observacions/radar"}
+
+
+def text_radar_bot(dades, idioma, moment):
+    vell = dades_velles(dades, idioma, moment)
+    if vell:
+        return vell
+    r = dades.get("radar")
+    if not r:
+        return "Ahora no hay datos del radar." if idioma == "es" else "Ara no hi ha dades del radar."
+    h = lambda t: dt.datetime.fromisoformat(t).strftime("%H:%M")
+    if r.get("arriba"):
+        que = (f"Llegaría lluvia hacia las {h(r['arriba'])}." if idioma == "es" else f"Arribaria pluja cap a les {h(r['arriba'])}.")
+    elif r.get("possible"):
+        que = (f"Puede llegar lluvia hacia las {h(r['possible'])}." if idioma == "es" else f"Pot arribar pluja cap a les {h(r['possible'])}.")
+    else:
+        que = "No se acerca lluvia en 2 horas." if idioma == "es" else "No s'acosta pluja en 2 hores."
+    font = "RainViewer" if r.get("imatge") == "rainviewer" else "Meteocat"
+    mov = ""
+    if r.get("cap_a"):
+        mov = (f" · va hacia {DIRECCIO_ES.get(r['cap_a'], r['cap_a'])} a {r['velocitat_kmh']}\u00a0km/h" if idioma == "es"
+               else f" · va cap {r['cap_a']} a {r['velocitat_kmh']}\u00a0km/h")
+    detall = (f"Radar de {font} de las {h(r['hora'])}{mov}." if idioma == "es" else f"Radar de {font} de les {h(r['hora'])}{mov}.")
+    enllac = RADAR_EN_DIRECTE["rainviewer" if font == "RainViewer" else "meteocat"]
+    vist = "En directo" if idioma == "es" else "En directe"
+    return f"{que}\n{detall}\n{vist}: {enllac}"
+
+
+FASE_ES = {"prealerta": "prealerta", "alerta": "alerta", "emergència": "emergencia"}
+PLA_ES = {"d'inundacions": "de inundaciones", "de vent": "de viento", "de neu": "de nieve"}
+
+
+def text_avisos_actius(dades, idioma, moment):
+    vell = dades_velles(dades, idioma, moment)
+    if vell:
+        return vell
+    linies = []
+    for p in dades.get("plans") or []:
+        if idioma == "es":
+            linies.append(f"Protección Civil: plan {PLA_ES.get(p['nom'], p['nom'])} ({p['pla']}) en fase de "
+                          f"{FASE_ES.get(p['fase'], p['fase'])}." + (f" {p['comunicat']}" if p.get("comunicat") else ""))
+        else:
+            # «d'alerta», «d'emergència», però «de prealerta», com a la web.
+            de = "d'" if p["fase"][:1] in "aeiouàèéíòóú" else "de "
+            linies.append(f"Protecció Civil: pla {p['nom']} ({p['pla']}) en fase {de}{p['fase']}."
+                          + (f" {p['comunicat']}" if p.get("comunicat") else ""))
+    avui, dema = moment.date(), (moment + dt.timedelta(days=1)).date()
+    linies += text_avisos_aemet(dades, idioma, avui, moment)
+    linies += [x for x in text_avisos_aemet(dades, idioma, dema, moment) if x not in linies]
+    if not linies:
+        return ("No hay avisos de la AEMET ni planes de Protección Civil activos." if idioma == "es"
+                else "No hi ha avisos de l'AEMET ni plans de Protecció Civil activats.")
+    cap = "Avisos activos" if idioma == "es" else "Avisos actius"
+    return f"<b>{cap}</b>\n" + "\n".join(html.escape(x, quote=False) for x in linies)
 
 
 # --- Mensajes recibidos -------------------------------------------------------------
@@ -503,6 +602,9 @@ def canvi_canal(api, cm):
     avisa_juanjo(f"Temps a Montflorit: {que}, {nom}.{total}")
 
 
+CONSULTES = ("/dema", "/trens", "/radar", "/avisos_actius")
+
+
 def atén(api, subs, update, estat=None):
     if "chat_member" in update:
         canvi_canal(api, update["chat_member"])
@@ -527,7 +629,7 @@ def atén(api, subs, update, estat=None):
         envia(api, chat, T[idioma]["baixa"])
         return
     nou = chat not in subs
-    if nou and ordre not in ("/start", "/avisos", "/menu", "/resum", "/ara"):
+    if nou and ordre not in ("/start", "/avisos", "/menu", "/resum", "/ara") + CONSULTES:
         # Quien escribe cualquier cosa sin haber empezado solo recibe la ayuda.
         envia(api, chat, T[nou_subscriptor(m.get("from", {}))["idioma"]]["ajuda"])
         return
@@ -544,6 +646,12 @@ def atén(api, subs, update, estat=None):
     elif ordre == "/ara":
         dades = llegeix(os.path.join(DADES, "montflorit.json"), {})
         envia(api, chat, text_ara_bot(dades, sub["idioma"], ara()) + "\n" + WEB)
+    elif ordre == "/dema":
+        envia(api, chat, resum(llegeix(os.path.join(DADES, "montflorit.json"), {}), sub["idioma"], ara(), dema=True), html=True)
+    elif ordre in CONSULTES:
+        dades = llegeix(os.path.join(DADES, "montflorit.json"), {})
+        funcio = {"/trens": text_trens_bot, "/radar": text_radar_bot, "/avisos_actius": text_avisos_actius}[ordre]
+        envia(api, chat, funcio(dades, sub["idioma"], ara()) + "\n" + WEB, html=True)
     else:
         envia(api, chat, t["ajuda"])
 

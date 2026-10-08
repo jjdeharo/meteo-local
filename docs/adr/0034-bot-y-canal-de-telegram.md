@@ -58,7 +58,12 @@ internet en casa, que suele llegar con las tormentas.
   noche solo si se espera lluvia, temperaturas, lluvia y avisos de AEMET de
   mañana; sin trenes), o «No vull rebre la previsió» (el menú lo explica), y el
   idioma (catalán o castellano, al principio el de su Telegram). Órdenes:
-  /avisos, /resum, /ara y /baixa, que borra sus datos. Solo se guardan su
+  /avisos, /resum, /ara y /baixa, que borra sus datos; desde el 08-10-2026,
+  también /dema (la previsión de mañana a cualquier hora), /radar (lo que ve
+  el radar y el enlace en directo), /trens (cada línea y su último aviso) y
+  /avisos_actius (AEMET y Protección Civil), que solo leen los datos públicos
+  y no tocan la lista de suscriptores. Cada descripción del menú cabe en una
+  línea, para que Telegram lo muestre entero. Solo se guardan su
   identificador de Telegram y lo que elige; si bloquea el bot, se le da de
   baja. Solo en chats privados.
 - **Canal**: los avisos de riera y peligro, y el resumen del día a las 7,
