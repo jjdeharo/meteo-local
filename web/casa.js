@@ -208,7 +208,7 @@ function blocAra(ara, casa, radarDades, vent, hores) {
 }
 
 // La pluja del radar portada endavant (ADR 0019): quan arribaria a casa i,
-// si ja hi és, quan pararia, «en proves» mentre es comprova (ADR 0049): el
+// si ja hi és, quan pararia, «en entrenament» mentre aprèn (ADR 0049): el
 // tercer valor diu si cal la marca.
 function textRadar(r, plou) {
   if (!r) return null;
@@ -245,8 +245,8 @@ function blocRadar(r, plou) {
   const cos = element('div');
   const p = element('p', 'radar-text', text);
   if (proves) {
-    const marca = element('span', 'en-proves', T(' (en proves)'));
-    marca.title = T('Hora estimada amb el radar. Encara s’està comprovant amb la pluja real i s’ajusta sola: pot fallar.');
+    const marca = element('span', 'en-proves', T(' (en entrenament)'));
+    marca.title = T('Hora estimada amb el radar. Encara s’està entrenant amb la pluja real: pot fallar.');
     p.append(marca);
   }
   cos.append(p);

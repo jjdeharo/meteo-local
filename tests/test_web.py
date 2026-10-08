@@ -327,8 +327,8 @@ class Web(unittest.TestCase):
         self.assertEqual(nou("2026-10-09T10:00:00+02:00", pagina="/es/avisos.html"), [])
         self.assertEqual(nou("2026-10-16T00:00:00+02:00"), [])
 
-    def test_final_de_la_pluja_en_proves(self):
-        # «Pluja a sobre» amb l'hora en què pararia, marcat «en proves» (ADR 0049).
+    def test_final_de_la_pluja_en_entrenament(self):
+        # «Pluja a sobre» amb l'hora en què pararia, marcat «en entrenament» (ADR 0049).
         r = {"arriba": "2026-10-08T19:00", "fi": "2026-10-08T20:10:00+02:00"}
         ara = "2026-10-08T19:02:00+02:00"
         self.assertEqual(self.avalua(ara, f"textRadar({json.dumps(r)}, true)"),

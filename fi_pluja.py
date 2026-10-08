@@ -6,7 +6,7 @@ El radar llevado hacia delante (nowcast.py) da, cada 5 minutos y hasta 2
 horas, la probabilidad de lluvia en casa. El final previsto es el primer
 momento, desde la pasada, en que baja de un umbral durante unos minutos
 seguidos (al principio, del 20 % durante 15 minutos); si no lo hace en el
-horizonte, «no s'acaba en 2 hores». La página lo enseña «en proves».
+horizonte, «no s'acaba en 2 hores». La página lo enseña «en entrenament».
 
 Aprende sola: cada día prueba las VARIANTS con lo registrado y, si una se
 equivoca al menos un 5 % menos que la que se usa (con MIN_EPISODIS_CANVI
@@ -182,7 +182,7 @@ def text(r):
             f"Quan donava una hora de final ({r['amb_final']} vegades): {r['encerts']} a {ENCERT_MIN} minuts o menys, "
             f"{r['massa_aviat']} massa aviat i {r['massa_tard']} massa tard; error mitjà de {r['error_mitja']} minuts. "
             f"Quan deia que no s'acabava en 2 hores ({r['sense_final']}), ho encertava {r['sense_final_be']}. "
-            "Es mostra a la pàgina «en proves»: digues a Claude si cal treure-ho o si ja no cal dir-ho (ADR 0049).")
+            "Es mostra a la pàgina «en entrenament»: digues a Claude si cal treure-ho o si ja no cal dir-ho (ADR 0049).")
 
 
 def verifica(avisa=True):

@@ -425,7 +425,7 @@ def recoger(anterior=None):
             salida["radar"][clau] = t and t.isoformat(timespec="minutes")
         # Cómo sería al llegar, para el aviso de antes de llover (ADR 0022).
         salida["radar"]["arriba_mm_h"] = N.intensitat_arribada(nc, "casa")
-        # A qué hora pararía, «en proves» en la página (fi_pluja.py, ADR 0049).
+        # A qué hora pararía, «en entrenament» en la página (fi_pluja.py, ADR 0049).
         try:
             salida["radar"].update(FP.fi_radar(nc, P.AHORA, salida["radar"]["arriba"]) or {})
         except Exception as ex:
