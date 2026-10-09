@@ -60,5 +60,6 @@
 | [0056](0056-pagina-com-funciona-y-metodologia-completa.md) | Página «Com funciona» y metodología completa | aceptado |
 | [0057](0057-correcciones-de-la-auditoria-del-9-de-octubre.md) | Correcciones de la auditoría del 9 de octubre de 2026 | aceptado |
 | [0058](0058-retirada-de-la-estacion-de-montflorit-de-meteocerdanyola-com.md) | Retirada de la estación de Montflorit de meteocerdanyola.com | aceptado |
+| [0059](0059-estacion-de-casa-en-weather-underground.md) | La estación de casa en Weather Underground, para leer las de los vecinos | aceptado |
 
 Plantilla: [0000-plantilla.md](0000-plantilla.md). Para crear uno: `nuevo-adr "Título"`.

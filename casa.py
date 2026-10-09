@@ -40,6 +40,7 @@ import riera as RI
 import riscos as RS
 import transit as TT
 import trens as TR
+import wunderground as WU
 
 HORAS = 24
 # La tabla llega como mínimo a 24 horas y hasta las 21 h de mañana, para que
@@ -392,6 +393,13 @@ def recoger(anterior=None):
     except Exception as ex:
         salida["errors"].append(f"estació de casa: {ex}")
     salida["ara_casa"] = casa and {k: v for k, v in casa.items() if k != "files"}
+    # La estación de casa, a Weather Underground (ADR 0059). Si falla, no es
+    # cosa de la página: solo se apunta.
+    if casa and WU.disponible():
+        try:
+            WU.puja(casa, P.AHORA)
+        except Exception as ex:
+            print("No he podido subir la estación a Weather Underground:", ex, file=sys.stderr)
     # El viento de ahora, de la estación de Meteocat más cercana (ADR 0037).
     try:
         salida["vent"] = P.vent_meteocat(C.VENT_ESTACIO)

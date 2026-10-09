@@ -79,6 +79,8 @@ prueba diaria avisa si deja de funcionar.
 Al subir cambios a `main`, una acción de GitHub pasa las pruebas, y el NAS, que
 mira cada minuto si hay código nuevo, publica. Solo publica el NAS.
 
+En cada pasada, la estación particular se sube también a la red de
+estaciones personales de Weather Underground (`wunderground.py`, ADR 0059).
 A las 16:00 el NAS rellena las horas que falten de la estación particular y la
 previsión aprende de sus aciertos (`aprenentatge.py`). En `main` no hay commits
 automáticos.

@@ -49,6 +49,7 @@ nuevo y se autorizan así:
 | `.ssh/id_ionos` | Subir `montflorit.json` y `avisos.json` a IONOS | `~/.ssh/authorized_keys` de IONOS, con `command="sh .meteo-reserva/bin/rep-dades",restrict` (ADR 0038) |
 | `.config/meteo-local/ionos.env` | `IONOS=` usuario y servidor SSH del hosting | Panel de IONOS |
 | `.config/meteo-local/ecowitt.env` | `ECOWITT_APPLICATION_KEY`, `ECOWITT_API_KEY`, `ECOWITT_MAC` | ecowitt.net > usuario > API Keys (ADR 0017) |
+| `.config/meteo-local/wunderground.env` | `WU_STATION_ID`, `WU_STATION_KEY`: la estación de casa en Weather Underground (ADR 0059) | wunderground.com > Member Settings > Devices |
 | `.config/meteo-local/claude.env` | `CLAUDE_CODE_OAUTH_TOKEN`, solo para el vigía del NAS | `claude setup-token` |
 | `.local/bin/avisar-juanjo` y `.config/avisar-juanjo/config.json` | Los avisos a Juanjo por Telegram (`usuario`, `token`, `chat_id`) | El script está en el equipo de Juanjo; el token, en @BotFather |
 

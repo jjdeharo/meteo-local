@@ -111,6 +111,7 @@ def ara():
             "rosada": _valor(d, "outdoor", "dew_point"),
             "pressio": pressio_mar(_valor(d, "pressure", "absolute"), temperatura),
             "solar": _valor(d, "solar_and_uvi", "solar"),
+            "uv": _valor(d, "solar_and_uvi", "uvi"),
             "intensitat": _valor(d, "rainfall", "rain_rate"),
             "pluja_1h": _valor(d, "rainfall", "1_hour"),
             "pluja_avui": _valor(d, "rainfall", "daily")}
