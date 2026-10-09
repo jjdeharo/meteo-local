@@ -540,6 +540,107 @@ function posaVersio(versio) {
     || 'https://github.com/meteo-montflorit/meteo-local/releases/tag/v' + versio;
 }
 
+// --- Trens i trànsit (ADR 0029 i 0052): les fitxes que fan servir «Si surts» i
+// «Consultes» (ADR 0054). ---
+
+const TEXT_ESTAT = {
+  circula: 'Sense incidències', incidencies: 'Amb incidències', bus: 'Servei per carretera',
+  sense_trens: 'Sense trens', fora_horari: 'Fora d’horari', sense_dades: 'Sense dades',
+};
+// On publica cada operador l'estat del servei: Rodalies, a la portada; FGC
+// remet a la seva compte d'X; dels busos, la mobilitat de l'AMB.
+const ESTAT_OPERADOR = {
+  rodalies: { text: () => 'Rodalies', href: () => `https://rodalies.gencat.cat/${IDIOMA.codi === 'es' ? 'es' : 'ca'}/inici/` },
+  fgc: { text: () => 'FGC', href: () => 'https://x.com/fgc' },
+  amb: { text: () => T('Busos de l’AMB'), href: () => `https://www.amb.cat/${IDIOMA.codi === 'es' ? 'es/' : ''}web/mobilitat` },
+};
+const COLOR_ESTAT = {
+  circula: 'be', incidencies: 'compte', bus: 'compte', sense_trens: 'no', fora_horari: 'neutre', sense_dades: 'neutre',
+};
+
+// Trànsit (config.TRANSIT_NIVELL_SORTIDA): des d'aquest nivell (3, retencions;
+// 4, congestió; 5, calçada tallada), si surts ara, el cotxe i la moto passen a
+// «compte». La circulació intensa (2) només es llista (ADR 0052).
+const NIVELL_TRANSIT = 3;
+
+function enllacExtern(text, href) {
+  const a = element('a', null, text);
+  a.href = href;
+  a.target = '_blank';
+  a.rel = 'noopener';
+  return a;
+}
+
+// L'estat de cada línia de tren, per al plec del transport públic.
+function blocTrens(trens) {
+  const llista = element('ul', 'llista-trens');
+  for (const l of trens.linies) {
+    const li = element('li', 'tren ' + COLOR_ESTAT[l.estat]);
+    const cap = element('p', 'tren-cap');
+    cap.append(element('span', 'tren-linia', l.linia), ' ', element('span', 'tren-estacio', TD(l.estacio)),
+      ' ', element('span', 'tren-estat', TD(TEXT_ESTAT[l.estat])));
+    li.append(cap);
+    // Els avisos, tal com els publica l'operador: no es tradueixen.
+    const textos = (l.avisos || []).map((a) => (IDIOMA.codi === 'es' ? a.es : a.ca) || a.ca || a.es);
+    if (textos.length) {
+      const plecAvisos = element('details', 'tren-avisos');
+      plecAvisos.append(element('summary', null, l.operador === 'fgc' ? T('Avís d’FGC') : T('Avís de Rodalies')));
+      for (const t of textos) plecAvisos.append(element('p', null, t));
+      li.append(plecAvisos);
+    }
+    llista.append(li);
+  }
+  // On publiquen els operadors l'estat del servei.
+  const estat = element('p', 'nota');
+  estat.append(T('Estat del servei: '));
+  Object.values(ESTAT_OPERADOR).forEach((e, n) => estat.append(...(n ? [' · '] : []), enllacExtern(e.text(), e.href())));
+  return [llista, estat, element('p', 'nota',
+    T`Dades de Renfe i d’FGC de les ${horaCurta(trens.hora)}, consultades automàticament: l’autor no es fa responsable de la seva exactitud.`)];
+}
+
+// Les incidències de trànsit de prop (ADR 0052), tal com les publica el Servei
+// Català de Trànsit, en català: no es tradueixen. Es veuen si es mira el cotxe
+// o la moto.
+const COLOR_TRANSIT = (nivell) => (nivell >= 5 ? 'no' : nivell >= NIVELL_TRANSIT ? 'compte' : 'neutre');
+const ESTAT_TRANSIT = () => `https://transit.gencat.cat/${IDIOMA.codi === 'es' ? 'es' : 'ca'}/informacio-viaria/estat-transit/`;
+
+// Sense hora per incidència: la del fitxer és la de l'última actualització, no
+// la de l'inici, i semblava que no estigués al dia. El que surt és el que el
+// Servei Català de Trànsit dona com a vigent a l'hora de la consulta, que es
+// diu a sota (Juanjo, 09-10-2026; ADR 0052).
+// La distància en línia recta fins al punt que dona la font per al tram: en
+// metres (de 50 en 50) per sota d'1 km; si no, en km amb un decimal.
+function distancia(km) {
+  if (km == null) return null;
+  if (km < 1) return `${Math.max(50, Math.round(km * 20) * 50)}\u00a0m`;
+  const x = Math.round(km * 10) / 10;
+  return `${Number.isInteger(x) ? x : coma(x)}\u00a0km`;
+}
+
+function filaTransit(i) {
+  const li = element('li', 'tren ' + COLOR_TRANSIT(i.nivell));
+  const cap = element('p', 'tren-cap');
+  cap.append(element('span', 'tren-linia', i.carretera));
+  const lloc = [i.municipi, i.km != null && T`a ${distancia(i.km)}`].filter(Boolean).join(', ');
+  if (lloc) cap.append(' ', element('span', 'tren-estacio', lloc));
+  cap.append(' ', element('span', 'tren-estat', i.descripcio || ''));
+  // «Circulació» com a causa no diu res que no digui ja l'estat.
+  const causa = i.tipus === 'obres' ? T`Obres: ${i.causa}` : i.causa !== 'Circulació' && i.causa;
+  const detall = [causa, i.sentit, i.pk && T`km ${i.pk}`].filter(Boolean);
+  li.append(cap, element('p', 'transit-detall', detall.join(' · ')));
+  return li;
+}
+
+// Les incidències de trànsit de prop, per al plec del cotxe i de la moto.
+function blocTransit(transit) {
+  const llista = element('ul', 'llista-trens');
+  for (const i of transit.incidencies) llista.append(filaTransit(i));
+  const estat = element('p', 'nota');
+  estat.append(T('Estat del trànsit: '), enllacExtern('Servei Català de Trànsit', ESTAT_TRANSIT()));
+  return [llista, estat, element('p', 'nota',
+    T`Dades del Servei Català de Trànsit de les ${horaCurta(transit.hora)}, consultades automàticament: l’autor no es fa responsable de la seva exactitud.`)];
+}
+
 // Tema: segueix el del dispositiu mentre no se'n triï un altre; si es tria
 // el mateix que el del dispositiu, es torna a seguir-lo (com a Sirena).
 const sistemaFosc = matchMedia('(prefers-color-scheme: dark)');

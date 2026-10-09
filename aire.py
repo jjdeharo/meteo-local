@@ -36,8 +36,8 @@ def categoria(index):
 
 
 def llegeix(d, ara):
-    """De la respuesta de Open-Meteo, lo de ahora y el peor momento de lo que
-    queda de hoy."""
+    """De la respuesta de Open-Meteo, lo de ahora (con el índice de cada
+    contaminante), cada hora de lo que queda de hoy y el peor momento."""
     cur = d["current"]
     per = {c: cur.get(f"european_aqi_{c}") for c in CONTAMINANTS}
     per = {c: v for c, v in per.items() if v is not None}
@@ -47,6 +47,7 @@ def llegeix(d, ara):
     index = cur.get("european_aqi")
     return {"hora": cur["time"], "index": index, "categoria": categoria(index),
             "contaminant": max(per, key=per.get) if per else None,
+            "contaminants": per, "hores": hores,
             "pitjor": pitjor and {**pitjor, "categoria": categoria(pitjor["index"])}}
 
 

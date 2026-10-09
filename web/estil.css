@@ -479,6 +479,63 @@ h1 { margin: 0; font-size: 1.6rem; line-height: 1.2; }
   background: var(--superficie); line-height: 1.5; overflow-wrap: anywhere; }
 .consulta p { margin: 0; }
 .consulta p + p { margin-top: .7rem; }
+/* El pol·len: una barra de 4 trams del color del nivell, com l'escala del PIA
+   (verd baix, groc mig, taronja alt, vermell màxim; els colors dels avisos). */
+.pollen-grup { margin: .9rem 0 .3rem; font-size: .8rem; text-transform: uppercase; letter-spacing: .05em; color: var(--suau); }
+.pollen { margin: 0; padding: 0; list-style: none; display: grid; gap: .3rem; }
+.pollen-fila { display: grid; grid-template-columns: minmax(7rem, 1fr) auto 3.6rem 1rem; align-items: center; gap: .6rem; }
+.pollen-barra { display: inline-grid; grid-template-columns: repeat(4, 1.6rem); gap: 3px; }
+.pollen-barra span { height: .7rem; border-radius: 2px; background: var(--vora); }
+.nivell-1 .pollen-barra .ple { background: var(--verd); }
+.nivell-2 .pollen-barra .ple { background: #eab308; }
+.nivell-3 .pollen-barra .ple { background: #fb923c; }
+.nivell-4 .pollen-barra .ple { background: #ef4444; }
+.pollen-nivell { font-size: .9rem; color: var(--suau); }
+.pollen-tendencia { font-weight: 700; text-align: center; }
+.pollen-nuls { margin-top: .4rem !important; font-size: .9rem; color: var(--suau); }
+.consulta .pollen ~ .nota:last-child { margin-top: .9rem; }
+/* L'aire: l'escala europea amb els colors oficials de l'Agència Europea de
+   Medi Ambient, on és ara, cada contaminant i cada hora del dia. */
+.aire-bona { --c: #50f0e6; } .aire-raonablement_bona { --c: #50ccaa; } .aire-regular { --c: #f0e641; }
+.aire-desfavorable { --c: #ff5050; } .aire-molt_desfavorable { --c: #960032; } .aire-extremadament_desfavorable { --c: #7d2181; }
+.aire-ara { margin-top: .5rem !important; display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
+.aire-xip { padding: .15rem .6rem; border-radius: 999px; background: var(--c); color: #111; font-weight: 600; }
+.aire-molt_desfavorable.aire-xip, .aire-extremadament_desfavorable.aire-xip { color: #fff; }
+.aire-escala { position: relative; display: grid; grid-template-columns: repeat(5, 1fr) .9fr; gap: 2px; margin: .7rem 0 .2rem; }
+.aire-escala > span:not(.aire-marca) { height: .6rem; background: var(--c); }
+.aire-escala > span:first-child { border-radius: 3px 0 0 3px; }
+.aire-escala > span:nth-child(6) { border-radius: 0 3px 3px 0; }
+.aire-marca { position: absolute; top: -.35rem; width: .2rem; height: 1.3rem; margin-left: -.1rem; background: var(--text); border-radius: 2px; }
+.aire-fila { display: grid; grid-template-columns: minmax(0, 1fr) 4.5rem 9.6rem; align-items: center; gap: .6rem; }
+.aire-barra { height: .7rem; border-radius: 3px; background: var(--vora); overflow: hidden; }
+.aire-barra span { display: block; height: 100%; background: var(--c); }
+.aire-hores { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(1.2rem, 1fr); gap: 2px; }
+.aire-hora { display: grid; gap: .15rem; text-align: center; font-size: .75rem; color: var(--suau); }
+.aire-hora > span:first-child { height: 1.2rem; background: var(--c); border-radius: 2px; }
+/* El sol: el dia de 0 a 24 h, la llum entre la sortida i la posta, i ara. */
+.sol-dia { position: relative; height: .9rem; margin: .7rem 0 .2rem; border-radius: 999px; background: #1e293b; overflow: hidden; }
+.sol-llum { position: absolute; top: 0; bottom: 0; background: linear-gradient(90deg, #fb923c, #fde047 20%, #fde047 80%, #fb923c); }
+.sol-ara { position: absolute; top: 0; bottom: 0; width: .2rem; margin-left: -.1rem; background: var(--text); }
+:root[data-theme="dark"] .sol-ara { background: #fff; }
+.sol-hores, .sol-sobre { position: relative; height: 1.3rem; font-size: .9rem; color: var(--suau); }
+.sol-sobre { margin-top: .6rem; height: 1.2rem; }
+.sol-sobre + .sol-dia { margin-top: .15rem; }
+.sol-hores span, .sol-sobre span { position: absolute; top: 0; white-space: nowrap; }
+.sol-punt { transform: translateX(-50%); }
+.sol-extrem { left: 0; }
+.sol-extrem.sol-fi { left: auto; right: 0; }
+.sol-hores + p { margin-top: .5rem !important; }
+.sol-uv { line-height: 1.9; }
+.uv-xip { display: inline-block; padding: 0 .6rem; border-radius: 999px; font-weight: 700; color: #111; line-height: 1.6; }
+.uv-baix { background: #3ea72d; color: #fff; } .uv-moderat { background: #fff300; } .uv-alt { background: #f18b00; }
+.uv-molt-alt { background: #e53210; color: #fff; } .uv-extrem { background: #b567a4; color: #fff; }
+/* Avui i demà: una icona per línia. */
+.resum-linia { display: grid; grid-template-columns: 1.3rem 1fr; gap: .5rem; align-items: start; }
+.resum-linia:first-child { display: block; }
+.resum-linia svg, .resum-buit { width: 1.15rem; height: 1.15rem; margin-top: .15rem; fill: none; stroke: var(--suau);
+  stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.consulta .resum-linia + .resum-linia { margin-top: .45rem; }
+.consulta .llista-trens { margin-top: .6rem; }
 .xip:has(input:focus-visible) { outline: 2px solid var(--enllac); outline-offset: 2px; }
 .xip svg, .mitja-nom svg {
   width: 1.15rem;

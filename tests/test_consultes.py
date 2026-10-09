@@ -54,7 +54,8 @@ class Pollen(unittest.TestCase):
     def test_text_del_bot(self):
         t = B.text_pollen_bot({"pollen": pollen()}, "ca", ARA)
         self.assertIn("<b>Pol·len a Bellaterra</b> (setmana del 5/10 al 11/10, a 3,1 km)", t)
-        self.assertIn("Mig: Artemísia, Compostes.\nBaix: Parietària, Gramínies, Blets, Pi (en descens).", t)
+        self.assertIn("Mig: Artemísia, Compostes.\nBaix: Parietària, Gramínies, Blets, Pi (en descens).\n"
+                      "Nul: Olivera, Casuarina, Palmeres, Plantatge, Plàtan.", t)
         self.assertIn("Comencen a pujar: Xiprers.", t)
         self.assertIn("<b>Espores de fongs</b>\nMàxim: Alternària, Cladosporium.", t)
         self.assertIn("CC BY-NC-SA 4.0", t)
@@ -73,6 +74,9 @@ class Aire(unittest.TestCase):
         a = AI.llegeix(AIRE, ARA)
         self.assertEqual((a["index"], a["categoria"], a["contaminant"]), (38, "raonablement_bona", "nitrogen_dioxide"))
         self.assertEqual(a["pitjor"], {"hora": "2026-10-09T21:00", "index": 72, "categoria": "desfavorable"})
+        self.assertEqual(a["contaminants"]["ozone"], 17)
+        self.assertEqual([h["hora"][11:13] for h in a["hores"]][:2], ["11", "12"])
+        self.assertEqual(len(a["hores"]), 13)
         t = B.text_aire_bot({"generat": ARA.isoformat(), "aire": a}, "ca", ARA)
         self.assertIn("Ara: raonablement bona (índex europeu 38). El que més pesa és el diòxid de nitrogen (NO₂).", t)
         self.assertIn("El pitjor d'avui: desfavorable cap a les 21:00.", t)

@@ -48,6 +48,32 @@ añadir el polen, la calidad del aire y el sol, también en el bot.
 - En el bot siguen `/ara`, `/radar` y `/avisos_actius`: en un chat no hay otra
   página donde verlos.
 
+## Cambio del 09-10-2026 (3.35.0): fichas más visuales
+
+Juanjo, ante el polen en texto: «podríamos poner los niveles de forma algo más
+visual?… es una sección un poco aburrida»; después pidió lo mismo para el aire y
+el resto de fichas. En la web, ya no todas son el texto del bot:
+
+- **Polen**: una fila por tipo con una barra de 4 tramos del color de su nivel
+  (verde bajo, amarillo medio, naranja alto, rojo máximo, los de los avisos) y
+  la tendencia (↑ ↓); los que están a cero y estables, en una línea. El bot
+  añade también esa línea («Nul: Olivera, …»): a la persona alérgica le sirve
+  saber que su polen no está.
+- **Aire**: la escala europea con los colores oficiales de la Agencia Europea
+  de Medio Ambiente y una marca donde está ahora, una barra por contaminante y
+  la evolución hora a hora del resto del día (`aire.py` guarda ahora el índice
+  de cada contaminante y de cada hora).
+- **Sol**: una barra del día de 0 a 24 h con la luz entre la salida y la puesta
+  y una marca en «ara»; debajo, «0 h», la salida y la puesta justo donde empieza
+  y acaba la luz, y «24 h» (con las horas en los extremos «no se entiende»).
+  El índice UV, en una pastilla con los colores de la OMS.
+- **Avui y Demà**: el texto del bot con un icono por línea (temperatura,
+  lluvia, avisos, trenes, ropa).
+- **Trens y Trànsit**: las mismas fichas de color que «Si surts»; esas piezas
+  pasan a `comu.js`, que comparten las dos páginas.
+
+El bot sigue en texto: Telegram no admite colores ni barras.
+
 ## Alternativas descartadas
 
 - **Un botón en la cabecera** que desplegara las consultas, y **una página con

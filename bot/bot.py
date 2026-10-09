@@ -666,11 +666,15 @@ def text_pollen_bot(dades, idioma, moment):
                     for t in tipus if t["nivell"] == n]
             if noms:
                 files.append(f"{nivell[n].capitalize()}: {', '.join(noms)}.")
+        # Els que són a zero, també: a qui hi és al·lèrgic també li serveix
+        # (Juanjo, 09-10-2026). Si van en augment, a part.
         pugen = [t["nom"][idioma] for t in tipus if t["nivell"] == 0 and t.get("tendencia") in ("A", "!")]
+        nuls = [t["nom"][idioma] for t in tipus if t["nivell"] == 0 and t["nom"][idioma] not in pugen]
+        if nuls:
+            files.append(f"{nivell[0].capitalize()}: {', '.join(nuls)}." if files or pugen
+                         else ("Nulo en todos." if es else "Nul en tots."))
         if pugen:
             files.append((f"Empiezan a subir: {', '.join(pugen)}." if es else f"Comencen a pujar: {', '.join(pugen)}."))
-        if not files:
-            files.append("Nulo en todos." if es else "Nul en tots.")
         return [f"<b>{titol}</b>"] + [html.escape(f, quote=False) for f in files]
 
     linies += grup(p.get("pollens") or [], "Polen" if es else "Pol·len")

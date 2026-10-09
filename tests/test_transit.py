@@ -94,7 +94,7 @@ class Transit(unittest.TestCase):
                          ["150-149,5", "7,2", "4", None])
 
     def test_mateix_nivell_que_la_pagina(self):
-        web = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "web", "sortir.js")
+        web = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "web", "comu.js")
         with open(web, encoding="utf-8") as f:
             self.assertIn(f"const NIVELL_TRANSIT = {C.TRANSIT_NIVELL_SORTIDA};", f.read())
 
