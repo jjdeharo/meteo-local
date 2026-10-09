@@ -61,6 +61,16 @@ para mañana»).
 - **Abiertos de entrada**: el primer tramo y cualquiera con aviso de AEMET
   o con un fenómeno de los de abajo, para que lo peligroso no quede
   plegado. Al imprimir se abren todos y después vuelven como estaban.
+- **«Desplega-ho tot» / «Plega-ho tot»**, junto al título, se recuerda en el
+  dispositivo (`localStorage`, `meteo.previsio-tot-obert`): quien quiere ver
+  siempre el día entero lo pulsa una vez (Juanjo, 09-10-2026: «no debería
+  ser persistente? si no cada vez que alguien abre la aplicación y quiere
+  ver el día entero tiene que hacer lo mismo»). No se recuerda cada tramo,
+  porque cambian de nombre a lo largo del día («Demà matí» pasa a ser
+  «Matí»). Lo que se abre o cierra a mano no se guarda, pero se mantiene
+  mientras la página está abierta, aunque se repinte con datos nuevos (antes
+  de la 3.41.0, cada actualización lo volvía a plegar). El botón dice lo que
+  hará: «Desplega-ho tot» si queda algún tramo plegado.
 - **Las columnas miden lo mismo en todos los tramos** (`table-layout:
   fixed` y un `<colgroup>`), para que las cifras queden alineadas al abrir
   varios. Desde 640 px de ancho, los anchos van en proporción (hora y
@@ -160,3 +170,7 @@ para mañana»).
   abiertos, que ninguna celda se desborda ni el cielo se monta sobre la
   columna de al lado (antes de la corrección pasaba de 320 a 412 px);
   `probar-web` y axe-core sin incidencias.
+- «Desplega-ho tot», 09-10-2026: `test_trams_oberts_de_sortida` (de serie,
+  con la preferencia guardada y con lo abierto a mano) y, en Firefox y
+  Chromium a 360 px, pulsar, recargar (todo abierto), plegar y recargar
+  (solo el primero).

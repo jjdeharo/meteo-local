@@ -399,8 +399,10 @@ def motivos_modo_aviso(avisos_, planes, obs, radar_):
 def horario(trams, cada_min, motivos_aviso):
     """El horario que muestra la página y que sigue el reloj del NAS."""
     if motivos_aviso:
+        # Lo normal y la distancia del radar, para que la web explique el modo aviso.
         return {"trams": trams, "cada_min": C.MODO_AVISO_INTERVALO_MIN,
-                "desfase_min": C.MODO_AVISO_DESFASE_MIN, "mode_avis": motivos_aviso}
+                "desfase_min": C.MODO_AVISO_DESFASE_MIN, "mode_avis": motivos_aviso,
+                "normal_min": cada_min, "radar_km": C.RADAR_AVISO_KM}
     return {"trams": trams, "cada_min": cada_min, "desfase_min": 0, "mode_avis": []}
 
 

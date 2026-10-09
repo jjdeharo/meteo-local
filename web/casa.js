@@ -165,6 +165,7 @@ function resumTrams(hores, ara) {
     const actual = new Date(g.files[0].hora) <= ara;
     const fi = new Date(g.files[g.files.length - 1].fins).getHours();
     return {
+      clau: g.clau,
       nom: (esDema ? NOM_TRAM_DEMA : NOM_TRAM)[g.nom](),
       hores: actual ? T`fins a les ${fi} h` : `${g.ini}–${fi} h`,
       cel: celTram(g.files, g.nom === 'Nit'),
@@ -228,7 +229,6 @@ function blocAra(ara, casa, radarDades, vent) {
   sec.append(llista);
   const radar = blocRadar(radarDades, plou);
   if (radar) sec.append(radar);
-  sec.append(elementHorari());    // «Actualitzat a les…», al peu de la targeta
   return sec;
 }
 
@@ -373,11 +373,28 @@ function ajustaFranges() {
 }
 addEventListener('resize', ajustaFranges);
 
-// Una taula per tram, amb les mateixes columnes: el primer tram, obert, i
-// també els que tenen un avís o un fenomen, perquè el perill no quedi plegat.
+// Quins trams surten oberts (Juanjo, 09-10-2026: «no debería ser
+// persistente?»). Els trams canvien de nom al llarg del dia, així que no es
+// recorda cadascun sinó com ho vol veure cadascú: amb «Desplega-ho tot», tots
+// oberts, desat en aquest dispositiu; si no, el primer i els que tenen un avís
+// o un fenomen, perquè el perill no quedi plegat. El que s'obre o es tanca a
+// mà es manté mentre la pàgina és oberta, encara que es torni a pintar amb
+// dades noves, però no es desa.
+const CLAU_TOT_OBERT = 'meteo.previsio-tot-obert';
+function totObert() {
+  try { return localStorage.getItem(CLAU_TOT_OBERT) === '1'; } catch (_) { return false; }
+}
+const obertsAMa = new Map();
+function obertDeSortida(t, i) {
+  if (obertsAMa.has(t.clau)) return obertsAMa.get(t.clau);
+  return totObert() || i === 0 || t.avis || t.fenomens.length > 0;
+}
+
+// Una taula per tram, amb les mateixes columnes.
 function taulaTram(t, obert) {
   const det = element('details', 'tram-hores');
   det.open = obert;
+  det.dataset.clau = t.clau;
   det.append(resumTram(t));
   const contenidor = element('div', 'taula-contenidor');
   // Al mòbil la taula es desplaça de costat: s'hi ha de poder arribar amb el teclat (axe-core).
@@ -436,7 +453,11 @@ function taulaTram(t, obert) {
   contenidor.append(taula);
   det.append(contenidor);
   // Plegada, la barra de l'avís no té alçada: s'ajusta en obrir-la.
-  det.addEventListener('toggle', ajustaFranges);
+  det.addEventListener('toggle', () => {
+    obertsAMa.set(t.clau, det.open);
+    ajustaFranges();
+    posaBotoTot();
+  });
   return det;
 }
 
@@ -444,8 +465,22 @@ function taula(hores, aprenentatge) {
   const trams = resumTrams(hores, new Date());
   if (!trams.length) return null;
   const sec = element('section', 'previsio');
-  sec.append(element('h2', 'perque', T('Previsió')));
-  trams.forEach((t, i) => sec.append(taulaTram(t, i === 0 || t.avis || t.fenomens.length > 0)));
+  const cap = element('div', 'cap-previsio');
+  const boto = element('button', 'boto-tot');
+  boto.type = 'button';
+  boto.id = 'boto-tot';
+  boto.addEventListener('click', () => {
+    const obrir = boto.dataset.accio === 'obre';
+    try { localStorage.setItem(CLAU_TOT_OBERT, obrir ? '1' : '0'); } catch (_) {}
+    for (const d of document.querySelectorAll('.tram-hores')) {
+      d.open = obrir;
+      obertsAMa.set(d.dataset.clau, obrir);
+    }
+    posaBotoTot();
+  });
+  cap.append(element('h2', 'perque', T('Previsió')), boto);
+  sec.append(cap);
+  trams.forEach((t, i) => sec.append(taulaTram(t, obertDeSortida(t, i))));
   // Les notes, plegades: només les que diuen alguna cosa de les hores d'ara.
   const visibles = trams.flatMap((t) => t.files);
   const notes = element('details', 'com notes-taula');
@@ -468,6 +503,15 @@ function taula(hores, aprenentatge) {
   if (apres) notes.append(element('p', 'nota', apres));
   sec.append(notes);
   return sec;
+}
+
+// El botó diu el que farà: desplegar-ho tot si en queda algun de plegat.
+function posaBotoTot() {
+  const boto = $('boto-tot');
+  if (!boto) return;
+  const obre = [...document.querySelectorAll('.tram-hores')].some((d) => !d.open);
+  boto.dataset.accio = obre ? 'obre' : 'plega';
+  boto.replaceChildren(icona(obre ? 'i-chevrons-up-down' : 'i-chevrons-down-up'), obre ? T('Desplega-ho tot') : T('Plega-ho tot'));
 }
 
 // En imprimir, tots els trams oberts; després, com estaven.
@@ -508,7 +552,7 @@ function pinta(dades) {
   // Dades de fa massa: només l'avís i on mirar (ADR 0031).
   if (dadesVelles(dades)) {
     $('avisos').replaceChildren();
-    cont.append(blocDadesVelles(dades), elementHorari());
+    cont.append(blocDadesVelles(dades));
     pintaHorari(dades);
     posaVersio(dades.versio);
     return;
@@ -524,11 +568,11 @@ function pinta(dades) {
     avisos.append(element('p', 'avis', T`Avui els models no veuen aquesta pluja: en les darreres ${m.hores} hores han caigut ${coma(m.mesurada_mm)}\u00a0mm a Montflorit i en preveien ${coma(m.prevista_mm)}. Les primeres hores de la taula parteixen del que mesura l\u2019estació; per a la resta, fes més cas dels avisos.`));
   }
   if (dades.ara || dades.ara_casa) cont.append(blocAra(dades.ara, dades.ara_casa, dades.radar, dades.vent));
-  else cont.append(elementHorari());
   const previsio = dades.hores && taula(dades.hores, dades.aprenentatge);
   if (previsio) {
     cont.append(previsio);
     ajustaFranges();
+    posaBotoTot();
   }
   pintaHorari(dades);
   posaVersio(dades.versio);

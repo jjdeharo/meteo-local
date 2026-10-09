@@ -66,3 +66,18 @@ desactivan.
 Pruebas automáticas del horario normal, del modo aviso con desfase, del paso
 por las 23:50 y de las razones que activan el modo aviso
 (`tests/test_horario.py`).
+
+## Cambio del 09-10-2026: cómo se dice en la página
+
+Desde la 3.41.0, la línea de actualización (arriba en las tres páginas, ADR
+0040) dice solo «Mode avís» con un «?» al lado, el mismo de los planes de
+Protección Civil (`botoAjuda` en `web/comu.js`). Al pulsarlo, debajo: «Quan
+hi ha un avís de l'AEMET, un pla de Protecció Civil en alerta o emergència,
+pluja a Montflorit o pluja al radar a menys de 15 km, la pàgina s'actualitza
+més sovint: cada 6 minuts en lloc de cada 15, al ritme de les imatges del
+radar.» Los 15 km y los 15 minutos van en los datos (`radar_km` y
+`normal_min` del horario, `prevision.horario`), para que el texto siga a
+`config.py`. Juanjo, 09-10-2026: «como la gente no sabe qué es modo aviso,
+un ? que al pulsarlo salga la descripción». Antes decía «Mode avís: dades
+cada 6 min.», y fuera del modo aviso, «Dades en directe cada 15 min.», que
+se quita porque la próxima hora ya lo dice.

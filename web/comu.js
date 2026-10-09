@@ -127,32 +127,44 @@ function horesActualitzacio(horari) {
   return hores;
 }
 
+// El que s'afegeix a «Actualitzat a les… · propera…»: res si és el ritme
+// normal de tot el dia, perquè la propera hora ja diu cada quan (Juanjo,
+// 09-10-2026); «Mode avís» si està actiu, amb un «?» que explica què és.
 function textHorari(horari) {
   const [[inici]] = horari.trams;
-  // Les raons del mode avís ja es veuen a la pàgina (avisos, pluja): aquí no
-  // es repeteixen.
-  if (horari.mode_avis && horari.mode_avis.length) {
-    const trams = horari.trams.length === 1 && inici === '00:00' ? ''
-      : ` (${horari.trams.map(([a, b]) => `${a}\u2013${b}`).join(T(' i '))})`;
-    return T`Mode avís: dades cada ${horari.cada_min} min${trams}.`;
-  }
-  // Tot el dia: no cal dir de quina hora a quina.
-  if (horari.trams.length === 1 && inici === '00:00') {
-    return T`Dades en directe cada ${horari.cada_min} min.`;
-  }
-  const trams = horari.trams.map(([a, b]) => `${a}–${b}`).join(T(' i '));
-  return T`Dades en directe cada ${horari.cada_min} min (${trams}).`;
+  const totElDia = horari.trams.length === 1 && inici === '00:00';
+  const trams = horari.trams.map(([a, b]) => `${a}\u2013${b}`).join(T(' i '));
+  if (horari.mode_avis && horari.mode_avis.length) return totElDia ? T('Mode avís') : T`Mode avís (${trams})`;
+  return totElDia ? '' : T`Dades en directe cada ${horari.cada_min} min (${trams}).`;
 }
 
-// «Dades en directe… Darrera: 07:07 · propera: 07:30.» i, si cal, l'avís de
-// retard quan una actualització prevista no ha arribat.
-// L'element de l'hora d'actualització, per posar-lo on toqui (a casa, al peu
-// de la targeta d'ara).
-function elementHorari() {
-  const p = element('p', 'horari');
-  p.id = 'horari';
-  return p;
+function textModeAvis(horari) {
+  return T`Quan hi ha un avís de l’AEMET, un pla de Protecció Civil en alerta o emergència, pluja a Montflorit o pluja al radar a menys de ${horari.radar_km || 15} km, la pàgina s’actualitza més sovint: cada ${horari.cada_min} minuts en lloc de cada ${horari.normal_min || 15}, al ritme de les imatges del radar.`;
 }
+
+// Un «?» que mostra o amaga una explicació al costat (els plans de Protecció
+// Civil i el mode avís). Torna [botó, explicació].
+function botoAjuda(text, etiqueta, obert = false, enCanviar = () => {}) {
+  const id = `ajuda-${++numAjuda}`;
+  const boto = element('button', 'ajuda-fase', '?');
+  boto.type = 'button';
+  boto.setAttribute('aria-expanded', String(obert));
+  boto.setAttribute('aria-controls', id);
+  boto.setAttribute('aria-label', etiqueta);
+  boto.title = etiqueta;
+  const sentit = element('span', 'sentit-fase', text);
+  sentit.id = id;
+  sentit.hidden = !obert;
+  boto.addEventListener('click', () => {
+    sentit.hidden = !sentit.hidden;
+    boto.setAttribute('aria-expanded', String(!sentit.hidden));
+    enCanviar(!sentit.hidden);
+  });
+  return [boto, sentit];
+}
+let numAjuda = 0;
+// L'explicació del mode avís segueix oberta quan la línia es torna a pintar.
+let ajudaModeOberta = false;
 
 // Les fonts de «El temps»: la previsió, el que es mesura i els avisos. Cada
 // pàgina avisa només de les fonts que fa servir (Juanjo, 09-10-2026: «cada
@@ -174,11 +186,24 @@ function pintaHorari(dades, fonts = FONTS_TEMPS) {
   const hores = horesActualitzacio(dades.horari);
   const propera = hores.find((t) => t > ara);
   const darreraPrevista = hores.filter((t) => t <= ara).pop();
-  // L'hora d'actualització, destacada, just després dels avisos.
+  // L'hora d'actualització, destacada, al capdamunt de la pàgina (Juanjo, 09-10-2026:
+  // «visible nada más abrir»).
   const dia = generat.toDateString() === ara.toDateString() ? '' : T` del ${generat.toLocaleDateString(IDIOMA.codi)}`;
   $('horari').replaceChildren(T('Actualitzat a les '), element('strong', null, horaCurta(generat) + dia),
     T(' · propera: '), element('strong', null, propera ? horaCurta(propera) : T`demà a les ${dades.horari.trams[0][0]}`),
-    '. ', element('span', 'mode', textHorari(dades.horari)));
+    '.');
+  const mode = textHorari(dades.horari);
+  if (mode) {
+    // «Mode avís» i el seu «?», sempre junts a la mateixa línia; l'explicació, a sota.
+    const span = element('span', 'mode', mode);
+    $('horari').append(' ', span);
+    if (dades.horari.mode_avis && dades.horari.mode_avis.length) {
+      const [boto, sentit] = botoAjuda(textModeAvis(dades.horari), T('Què és el mode avís?'), ajudaModeOberta,
+        (obert) => { ajudaModeOberta = obert; });
+      span.append(boto);
+      $('horari').append(sentit);
+    }
+  }
   // Calculades fora de casa perquè el servidor habitual no publica (ADR 0032).
   if (dades.reserva) $('horari').append(' ', element('span', 'mode', T('Dades del servidor de reserva.')));
   const avisos = [];
@@ -443,26 +468,11 @@ const SENTIT_FASE = {
   alerta: () => T('El pla està activat: es preveu un risc important a curt termini, o hi ha afectacions que no són greus.'),
   'emergència': () => T('El pla està activat per un risc greu per a la població: segueix les indicacions de Protecció Civil.'),
 };
-let numAjudaFase = 0;
 
 // El «?» de la fase: obre i tanca, a sota, una línia amb què vol dir.
 function ajudaFase(fase) {
   if (!SENTIT_FASE[fase]) return [];
-  const id = `sentit-fase-${++numAjudaFase}`;
-  const boto = element('button', 'ajuda-fase', '?');
-  boto.type = 'button';
-  boto.setAttribute('aria-expanded', 'false');
-  boto.setAttribute('aria-controls', id);
-  boto.setAttribute('aria-label', T`Què vol dir ${TD(NOM_FASE[fase])}?`);
-  boto.title = T`Què vol dir ${TD(NOM_FASE[fase])}?`;
-  const sentit = element('span', 'sentit-fase', SENTIT_FASE[fase]());
-  sentit.id = id;
-  sentit.hidden = true;
-  boto.addEventListener('click', () => {
-    sentit.hidden = !sentit.hidden;
-    boto.setAttribute('aria-expanded', String(!sentit.hidden));
-  });
-  return [boto, sentit];
+  return botoAjuda(SENTIT_FASE[fase](), T`Què vol dir ${TD(NOM_FASE[fase])}?`);
 }
 
 // «de prealerta», però «d’alerta» i «d’emergència»; en castellà, sempre «de».

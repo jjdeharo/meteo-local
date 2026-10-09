@@ -30,10 +30,16 @@ aplicarla «sin pérdida de datos».
   traducir (ADR 0033); se quita el «L'AEMET hi afegeix — avui:» y el día solo
   se dice si hay avisos de más de un día. El bloque no existe si no hay nada
   vigente. El risc calculado (`blocRiscos`) entra en el mismo bloque.
-- **«Actualitzat a les… · propera…»** al pie de la tarjeta de ahora, en
-  pequeño y con el «Mode avís» (la página tiene que decir cuándo se actualiza
-  de verdad: Juanjo, 05-10-2026). En «Si surts», que no tiene esa tarjeta,
-  sigue sobre los selectores, también en pequeño.
+- **«Actualitzat a les… · propera…»**, en pequeño (la página tiene que
+  decir cuándo se actualiza de verdad: Juanjo, 05-10-2026). Desde la 3.41.0
+  va **la primera, justo debajo de la cabecera, en las tres páginas**,
+  delante de los avisos (Juanjo, 09-10-2026: «yo creo que debería estar en
+  uno de los primeros lugares, visible nada más abrir»); hasta entonces iba
+  al pie de la tarjeta de ahora, que en el móvil quedaba por debajo del
+  radar, y en «Si surts» y «Consultes», encima de los selectores. Con el
+  ritmo normal no dice nada más, porque la próxima hora ya dice cada cuánto
+  se actualiza; con el modo aviso, «Mode avís» y un «?» que lo explica (ADR
+  0010).
 - **La tarjeta de ahora pierde la franja azul** y conserva todos los datos:
   lluvia de hoy, humedad, presión, viento con estación y hora, radar con
   fuente y hora.

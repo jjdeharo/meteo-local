@@ -208,6 +208,17 @@ class Web(unittest.TestCase):
         self.assertEqual([f[0] for f in r[1]["fenomens"]], ["calor"])
         self.assertEqual(self.avalua("2026-10-08T22:30:00+02:00", f"resumTrams({json.dumps(hores)}, new Date())", "casa.js", ARNES)[0]["hores"], "fins a les 7 h")
 
+    def test_trams_oberts_de_sortida(self):
+        # Juanjo, 09-10-2026: «no debería ser persistente?»: el primer tram i els de perill; amb «Desplega-ho tot» desat, tots.
+        trams = [{"clau": "a", "avis": False, "fenomens": []}, {"clau": "b", "avis": True, "fenomens": []},
+                 {"clau": "c", "avis": False, "fenomens": [["calor", "i"]]}, {"clau": "d", "avis": False, "fenomens": []}]
+        expr = f"{json.dumps(trams)}.map((t, i) => obertDeSortida(t, i))"
+        self.assertEqual(self.avalua("2026-10-09T18:00:00+02:00", expr), [True, True, True, False])
+        self.assertEqual(self.avalua("2026-10-09T18:00:00+02:00", "localStorage.getItem = () => '1'; " + expr), [True] * 4)
+        # El que s'ha obert o tancat a mà mana mentre la pàgina és oberta.
+        self.assertEqual(self.avalua("2026-10-09T18:00:00+02:00", "obertsAMa.set('a', false); obertsAMa.set('d', true); " + expr),
+                         [False, True, True, True])
+
     def test_cel_de_cada_tram(self):
         # El cel del tram, amb el seu nom i la seva icona: la mitjana dels núvols, i de nit, la lluna.
         def fila(h, nuvols, codi=0, mm=0):

@@ -228,8 +228,13 @@ class Castella(unittest.TestCase):
         self.assertEqual(js("textRadar({arriba: null, possible: null}, false)[1]"), "No se acerca lluvia en 2 horas")
         self.assertEqual(js("textRadar({arriba: '2026-10-06T11:15:00+02:00'}, false)[1]"), "Llegaría lluvia hacia las\u00a011:15")
         self.assertEqual(js("TD('al nord-est')"), "el nordeste")
-        self.assertEqual(js("textHorari({trams: [['00:00', '23:54']], cada_min: 6, mode_avis: ['pluja al radar']})"),
-                         "Modo aviso: datos cada 6 min.")
+        self.assertEqual(js("textHorari({trams: [['00:00', '23:54']], cada_min: 6, mode_avis: ['pluja al radar']})"), "Modo aviso")
+        # Juanjo, 09-10-2026: el ritmo normal no se dice (la próxima hora ya lo dice) y el modo aviso se explica con un «?».
+        self.assertEqual(js("textHorari({trams: [['00:00', '23:45']], cada_min: 15, mode_avis: []})"), "")
+        self.assertEqual(js("textModeAvis({cada_min: 6, normal_min: 15, radar_km: 15})"),
+                         "Cuando hay un aviso de la AEMET, un plan de Protección Civil en alerta o emergencia, lluvia en "
+                         "Montflorit o lluvia en el radar a menos de 15 km, la página se actualiza más a menudo: cada 6 "
+                         "minutos en lugar de cada 15, al ritmo de las imágenes del radar.")
         self.assertEqual(js("textAprenentatge({pluja: {origen: 'arxiu', des_de: '2024-01-01'}, temperatura: {origen: 'arxiu', des_de: '2025-10-08'}})"),
                          "Probabilidad de lluvia aprendida de lo que llovió de verdad en Sabadell y Sant Cugat desde 2024, "
                          "cuando los modelos decían lo mismo. Temperatura corregida con lo que ha medido la estación particular desde el 8/10/2025.")
