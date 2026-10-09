@@ -58,6 +58,58 @@ para mañana»).
   surts» rotulan con el día de la semana lo que cae pasado mañana
   («dissabte 06:00») en lugar de llamarlo «demà».
 
+- **Abiertos de entrada**: el primer tramo y cualquiera con aviso de AEMET
+  o con un fenómeno de los de abajo, para que lo peligroso no quede
+  plegado. Al imprimir se abren todos y después vuelven como estaban.
+- **Las columnas miden lo mismo en todos los tramos** (`table-layout:
+  fixed` y un `<colgroup>`), para que las cifras queden alineadas al abrir
+  varios. Desde 640 px de ancho, los anchos van en proporción (hora y
+  cuatro columnas de cifras al 13 %, el cielo con el resto), el reparto de
+  la tabla anterior, y la cabecera, más baja, en una línea: con anchos fijos
+  pensados para el móvil el cielo se quedaba casi todo el ancho del
+  ordenador y las cifras se amontonaban a la derecha (Juanjo, 09-10-2026:
+  «es muy distinto al actual, lo ves bien?»). Por debajo de 640 px, cada
+  columna de cifras mide lo que ocupa de verdad (medido a 360 px) y el
+  cielo se queda el resto; desde 400 px hacia abajo, el texto del cielo que
+  no cabe al lado de su icono pasa debajo («Poc ennuvolat»), y el que cabe
+  se queda al lado («Serè»). En la 3.40.0, en el móvil de Juanjo, «Cobert»
+  se montaba sobre la temperatura («en movil se mezcla la prevision con la
+  temperatura»): medido de 320 a 412 px, pasaba en todas las anchuras y en
+  los dos idiomas, y las pruebas solo se habían mirado a 393 y 412 px. A
+  320 px la tabla se desplaza un poco de lado, como antes.
+  La barra de color de un aviso se corta en el límite de cada tramo y
+  vuelve a empezar en el siguiente.
+- **Las notas de la tabla** (asterisco, cruz, barra de aviso, viento, de
+  dónde se aprende la probabilidad y, si pasa de 24 horas, que más allá es
+  menos precisa) van plegadas en «Com es llegeix la taula», con el aspecto
+  de «D'on surt».
+- **La tarjeta de ahora ya no lleva el resumen**: desde la 3.40.0 está en
+  las cabeceras de los desplegables, justo debajo. Entre el 08-10-2026 y la
+  3.39.0 eran tres fichas al final de la tarjeta, después del radar.
+- **Siempre**, en este orden: el cielo del tramo con su icono y su nombre
+  (la media de las nubes de sus horas, con los nombres de Meteocat del
+  ADR 0043; «Boira» si hay niebla en la mayoría de las horas; de noche, la
+  luna) y la temperatura mínima–máxima con el termómetro («9 °C» si son
+  iguales). El cielo no dice la lluvia: la dice el paraguas.
+- **El paraguas, solo si va a llover** (Juanjo, 09-10-2026: «símbolo de
+  lluvia solo si va a llover»): si alguna hora del tramo llega a «possible»
+  (20 % o más, el mismo criterio que el cielo de la tabla), con la
+  probabilidad máxima de sus horas y los milímetros sumados si llegan a 1
+  («uns 5 mm»). Hasta la 3.28.0 salía siempre, también con un 0 %.
+- **Solo cuando se dan**, en ámbar y con su icono: tempesta (código de
+  tormenta de Open-Meteo, 95 o más, o aviso de AEMET por tormentas en la
+  hora), pluja forta (40 mm en una hora) o torrencial (80), ratxes de vent
+  (70 km/h), calor (36 °C), gel (0 °C o menos) y neu (0,1 cm o más en el
+  tramo). La lluvia va con las palabras del manual de estilo de Meteocat
+  (`INTENSITAT_PLUJA` en `web/casa.js`, ADR 0043; hasta entonces, 20 mm, el
+  amarillo de AEMET); el viento y el calor, con los amarillos del Plan
+  Meteoalerta que ya usa `config.RISC_LLINDARS` (ADR 0018). El
+  hielo va a 0 °C, no al −4 del aviso amarillo de frío, porque lo que
+  importa a quien sale es si puede helar.
+- **El botón de la página pública se llama «El temps» / «El tiempo»**
+  (`PAGINES_PUBLIQUES` en `montflorit.py`); la privada sigue siendo «Temps a
+  casa».
+
 ## Alternativas descartadas
 
 - **Una línea de texto en vez de fichas**: con los fenómenos se hacía larga
@@ -103,3 +155,8 @@ para mañana»).
   con los modelos de las 17 h, 38 filas sin ninguna temperatura ni
   probabilidad vacía, con 7 horas sin AROME HD; `probar-web` de las dos
   páginas y axe-core sin incidencias.
+- Móvil, 09-10-2026: medido en Chromium y Firefox a 320, 340, 360, 375,
+  393, 412 y 430 px, en catalán y castellano, con todos los tramos
+  abiertos, que ninguna celda se desborda ni el cielo se monta sobre la
+  columna de al lado (antes de la corrección pasaba de 320 a 412 px);
+  `probar-web` y axe-core sin incidencias.

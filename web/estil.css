@@ -307,6 +307,20 @@ h1 { margin: 0; font-size: 1.6rem; line-height: 1.2; }
 .taula-hores .c-mm { width: 3.6em; }
 .taula-hores .c-prob { width: 3.6em; }
 .taula-hores .c-vent { width: 4.4em; }
+/* Al mòbil, cada columna de xifres amb el que ocupa de veritat (mesurat a
+   360 px) i el cel amb la resta; el text que no hi cap al costat de la icona
+   passa a sota (Juanjo, 09-10-2026: «en movil se mezcla la prevision con la
+   temperatura»). */
+@media (max-width: 639px) {
+  .taula-hores .c-hora { width: 3.3em; }
+  .taula-hores .c-temp { width: 1.9em; }
+  .taula-hores .c-mm { width: 3.5em; }
+  .taula-hores .c-prob { width: 3.4em; }
+  .taula-hores .c-vent { width: 4.1em; }
+}
+@media (max-width: 400px) {
+  .tram-hores .cel-text { flex-wrap: wrap; row-gap: .1rem; }
+}
 /* Cabecera repetida a cada tram: baixa i discreta. */
 .tram-hores .taula-hores thead th { padding-top: .25rem; padding-bottom: .25rem; }
 /* En pantalla ampla, el repartiment de la taula d'abans: l'hora, el cel amb
