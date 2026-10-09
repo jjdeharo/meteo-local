@@ -56,7 +56,8 @@ class Transit(unittest.TestCase):
     def test_filtra_per_distancia_i_tipus(self):
         r = T.filtra(T.llegeix_gml(GML), T.llegeix_rss(RSS))
         # Primer les retencions, de la més greu a la més lleu; després les obres.
-        self.assertEqual([i["carretera"] for i in r], ["C-58", "AP-7", "BV-1414"])
+        # La BV-1414 (obres del km 4 al 0) no diu on és el tall: no surt.
+        self.assertEqual([i["carretera"] for i in r], ["C-58", "AP-7"])
         self.assertTrue(all(i["km"] <= C.TRANSIT_RADI_KM for i in r))
 
     def test_text_tal_com_el_publica_el_sct(self):
@@ -74,14 +75,18 @@ class Transit(unittest.TestCase):
         self.assertEqual(c58["pk"], "0-1,5")
 
     def test_obres(self):
-        obres = lambda nivell, desc, cap_a=None: T.es_mostra({"tipus": 3, "nivell": nivell, "descripcio": desc,
-                                                               "cap_a": cap_a})
+        obres = lambda nivell, desc, cap_a=None, pk=("1.00", "1.50"): T.es_mostra(
+            {"tipus": 3, "nivell": nivell, "descripcio": desc, "cap_a": cap_a, "pk": pk})
         self.assertFalse(obres(2, "Calçada restringida"))
         self.assertFalse(obres(2, "Calçada restringida", "HORARI: 7 a 15h"))
         self.assertTrue(obres(2, "Calçada restringida", "C-58-INCORPORACIÓ A C-58 TALLADA"))
         self.assertTrue(obres(3, "Calçada restringida. Desviaments"))
         self.assertTrue(obres(5, "Calçada tallada"))
         self.assertTrue(obres(2, "Calçada restringida", "TALL TOTAL EN HORARI NOCTURN"))
+        # Sense ubicació precisa, no: tram de més de 2 km o sense punt quilomètric.
+        self.assertFalse(obres(5, "Calçada tallada", pk=("4.00", "0.00")))
+        self.assertFalse(obres(5, "Calçada tallada", pk=(None, None)))
+        self.assertTrue(obres(5, "Calçada tallada", pk=("7.20", "7.20")))
 
     def test_noms_de_municipi(self):
         self.assertEqual([T.nom_municipi(x) for x in ("CERDANYOLA DEL VALLÈS", "MONTCADA I REIXAC",

@@ -498,6 +498,10 @@ def text_trens_bot(dades, idioma, moment):
     files = []
     for l in linies:
         fila = f"<b>{html.escape(l['linia'])}</b> ({html.escape(l.get('estacio', ''))}): {ESTAT_TREN[idioma].get(l['estat'], l['estat'])}"
+        if l.get("no_vist"):
+            fila += (" (dice que circula, pero en la última hora no se ha visto ningún tren cerca de la estación)"
+                     if idioma == "es" else
+                     " (diu que circula, però a l'última hora no s'ha vist cap tren a prop de l'estació)")
         if l.get("avisos"):
             a = l["avisos"][0]
             fila += f". «{html.escape(a.get(idioma) or a.get('ca') or a.get('es') or '')}»"

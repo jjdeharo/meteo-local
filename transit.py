@@ -113,9 +113,23 @@ def tallada(i):
     return "TALLADA" in text or "TALL TOTAL" in text
 
 
+def tram_km(i):
+    """Llargada del tram afectat, dels punts quilomètrics; None sense."""
+    try:
+        return abs(float(i["pk"][0]) - float(i["pk"][1]))
+    except (TypeError, ValueError, IndexError):
+        return None
+
+
 def es_mostra(i):
-    """Retencions, sempre; obres, només si desvien o tallen la via."""
-    return i["tipus"] == 2 or (i["tipus"] == 3 and (i["nivell"] >= C.TRANSIT_NIVELL_OBRES or tallada(i)))
+    """Retencions, sempre; obres, només si desvien o tallen la via i diuen on:
+    amb punt quilomètric i en un tram curt."""
+    if i["tipus"] == 2:
+        return True
+    if i["tipus"] != 3 or not (i["nivell"] >= C.TRANSIT_NIVELL_OBRES or tallada(i)):
+        return False
+    tram = tram_km(i)
+    return tram is not None and tram <= C.TRANSIT_OBRES_TRAM_MAX_KM
 
 
 def filtra(gml, rss=None, casa=C.CASA):

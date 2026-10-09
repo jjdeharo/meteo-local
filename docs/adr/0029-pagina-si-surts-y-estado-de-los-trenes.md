@@ -108,6 +108,18 @@ y otros transportes.
   Las incidencias de tráfico, que también estaban aquí, se añadieron el
   09-10-2026 (ADR 0052).
 
+## Cambio del 09-10-2026 (3.36.0): manda el aviso oficial
+
+La R8 salía «Sense trens» con el aviso de Rodalies «Circulació ferroviària a
+tot el recorregut» (el más nuevo) y otro más viejo de servicio por carretera:
+Juanjo, «es confuso». Ahora, si el aviso de servicio más reciente (con fecha)
+dice que hay circulación ferroviaria y en la última hora no se ha visto ningún
+tren, la línea sale «Amb incidències» y se dice la contradicción («Rodalies
+diu que hi ha circulació ferroviària, però a l'última hora no s'ha vist cap
+tren a prop de l'estació»), como con los avisos del tiempo: lo oficial manda y
+la contradicción se dice. Y de los avisos de servicio vigentes solo se muestra
+el más nuevo: los anteriores ya no valen.
+
 ## Consecuencias
 
 - Los datos públicos llevan `trens` y, en cada hora, `uv`.

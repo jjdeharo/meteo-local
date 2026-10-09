@@ -580,6 +580,12 @@ function blocTrens(trens) {
     cap.append(element('span', 'tren-linia', l.linia), ' ', element('span', 'tren-estacio', TD(l.estacio)),
       ' ', element('span', 'tren-estat', TD(TEXT_ESTAT[l.estat])));
     li.append(cap);
+    // L'avís oficial diu que hi ha trens, però no se n'ha vist cap (trens.py).
+    if (l.no_vist) {
+      li.append(element('p', 'tren-nota', l.operador === 'fgc'
+        ? T('FGC diu que hi ha circulació, però a l’última hora no s’ha vist cap tren a prop de l’estació.')
+        : T('Rodalies diu que hi ha circulació ferroviària, però a l’última hora no s’ha vist cap tren a prop de l’estació.')));
+    }
     // Els avisos, tal com els publica l'operador: no es tradueixen.
     const textos = (l.avisos || []).map((a) => (IDIOMA.codi === 'es' ? a.es : a.ca) || a.ca || a.es);
     if (textos.length) {

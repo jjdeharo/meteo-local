@@ -506,7 +506,14 @@ h1 { margin: 0; font-size: 1.6rem; line-height: 1.2; }
 .aire-escala > span:first-child { border-radius: 3px 0 0 3px; }
 .aire-escala > span:nth-child(6) { border-radius: 0 3px 3px 0; }
 .aire-marca { position: absolute; top: -.35rem; width: .2rem; height: 1.3rem; margin-left: -.1rem; background: var(--text); border-radius: 2px; }
-.aire-fila { display: grid; grid-template-columns: minmax(0, 1fr) 4.5rem 9.6rem; align-items: center; gap: .6rem; }
+/* Nom i nivell a dalt i la barra a sota, a tota l'amplada: al mòbil, en una
+   sola fila el nom quedava en una columna de dues lletres (Juanjo, 09-10-2026). */
+.aire-fila { display: grid; grid-template-columns: 1fr auto; grid-template-areas: "nom nivell" "barra barra";
+  align-items: baseline; column-gap: .6rem; row-gap: .2rem; }
+.aire-fila .pollen-nom { grid-area: nom; }
+.aire-fila .pollen-nivell { grid-area: nivell; text-align: right; }
+.aire-fila .aire-barra { grid-area: barra; }
+.aire-fila + .aire-fila { margin-top: .3rem; }
 .aire-barra { height: .7rem; border-radius: 3px; background: var(--vora); overflow: hidden; }
 .aire-barra span { display: block; height: 100%; background: var(--c); }
 .aire-hores { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(1.2rem, 1fr); gap: 2px; }
@@ -570,6 +577,7 @@ h1 { margin: 0; font-size: 1.6rem; line-height: 1.2; }
 .consells li { margin: .2rem 0; }
 .seccio { font-size: .8rem; text-transform: uppercase; letter-spacing: .05em; color: var(--suau); margin: 0; }
 .tren-avisos { margin-top: .3rem; font-size: .9rem; }
+.tren .tren-nota { margin-top: .3rem; font-size: .9rem; color: var(--suau); }
 .tren-avisos summary { cursor: pointer; color: var(--suau); }
 .tren-avisos p { margin: .3rem 0 0; }
 /* Trens i trànsit dins de la fitxa del mitjà, plegats (ADR 0029 i 0052). Obert,

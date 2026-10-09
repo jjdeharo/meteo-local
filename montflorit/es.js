@@ -227,6 +227,8 @@ var IDIOMA = {
     "Ara no hi ha previsió hora a hora.": "Ahora no hay previsión hora a hora.",
     "Avís d\u2019FGC": "Aviso de FGC",
     "Avís de Rodalies": "Aviso de Rodalies",
+    "Rodalies diu que hi ha circulació ferroviària, però a l\u2019última hora no s\u2019ha vist cap tren a prop de l\u2019estació.": "Rodalies dice que hay circulación ferroviaria, pero en la última hora no se ha visto ningún tren cerca de la estación.",
+    "FGC diu que hi ha circulació, però a l\u2019última hora no s\u2019ha vist cap tren a prop de l\u2019estació.": "FGC dice que hay circulación, pero en la última hora no se ha visto ningún tren cerca de la estación.",
     "Estat del servei: ": "Estado del servicio: ",
     "Busos de l\u2019AMB": "Autobuses de la AMB",
     "Estat de cada línia": "Estado de cada línea",

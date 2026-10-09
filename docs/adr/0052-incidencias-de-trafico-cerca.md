@@ -30,6 +30,12 @@ moto solo tenían en cuenta el tiempo.
   carril restringido (nivel 2) no: el 09-10-2026 eran 162 de 184 en toda
   Cataluña, duran semanas y taparían lo que importa; el enlace al Servei
   Català de Trànsit las tiene todas.
+- **Obras sin ubicación precisa, fuera** (3.36.0): sin punto kilométrico o
+  en un tramo de más de `TRANSIT_OBRES_TRAM_MAX_KM` (2 km) no dicen dónde está
+  el corte. Juanjo, ante la BV-1414 del km 4 al 0 («incorporació a C-58
+  tallada»): «no se sabe dónde está esa calzada cortada, si no hay ubicación
+  precisa se elimina». Las retenciones siguen saliendo aunque sean largas: su
+  tramo es la propia cola.
 - **Dónde**: dentro de las fichas del coche y de la moto, plegado al final
   («Trànsit ara: N incidències»), con la carretera, el municipio, el estado con
   el color de su nivel (gris, 2; ámbar, 3 y 4; rojo, 5), la causa, el sentido,

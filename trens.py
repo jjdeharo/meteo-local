@@ -296,19 +296,35 @@ def estat_linia(linia, mouen, vist, avisos, ara):
     carretera = lambda a: bool(re.search(r"carretera", a["text"]["ca"] + a["text"]["es"], re.I))
     servei = [a for a in nomes if SERVEI.search(a["text"]["ca"] + a["text"]["es"]) and vigent(a, ara)]
     bus = (carretera(servei[0]) if servei[0].get("inici") else any(carretera(a) for a in servei)) if servei else False
+    # Si l'avís de servei més nou diu que hi ha circulació ferroviària, mana
+    # ell encara que no s'hagi vist cap tren: no es diu «sense trens», sinó
+    # que hi ha incidències, i es diu la contradicció (Juanjo, 09-10-2026: la
+    # R8 sortia «Sense trens» amb l'avís «Circulació ferroviària a tot el
+    # recorregut»).
+    ferroviari = bool(servei) and servei[0].get("inici") and not carretera(servei[0])
+    no_vist = False
     if bus:
         estat = "bus"
     elif circula:
         estat = "incidencies" if propis or generals else "circula"
+    elif de_dia and ferroviari:
+        estat, no_vist = "incidencies", True
     else:
         estat = "sense_trens" if de_dia else "fora_horari"
+    # Dels avisos de servei vigents, només el més nou: els anteriors ja no
+    # valen i, mostrats, es contradeien amb ell (Juanjo, 09-10-2026).
+    antics = {id(a) for a in servei[1:]} if servei and servei[0].get("inici") else set()
+    propis = [a["text"] for a in nomes if id(a) not in antics]
     # Primer el que és només d'aquesta línia; sense repetir textos.
     textos = []
     for t in propis + generals:
         if t not in textos:
             textos.append(t)
-    return {"estat": estat, "trens": n, "vist": vist if not n else ara.isoformat(timespec="minutes"),
-            "avisos": textos[:2]}
+    res = {"estat": estat, "trens": n, "vist": vist if not n else ara.isoformat(timespec="minutes"),
+           "avisos": textos[:2]}
+    if no_vist:
+        res["no_vist"] = True
+    return res
 
 
 def calcula(ara=None):

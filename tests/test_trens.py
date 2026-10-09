@@ -179,9 +179,11 @@ class Estat(unittest.TestCase):
         tren = self.avis(["R8"], "Circulació ferroviària a tot el recorregut.", inici="2026-10-07T09:49+02:00")
         general = self.avis(["R4", "R7", "R8"], "No es pot garantir la prestació del servei.", inici="2026-10-07T09:02+02:00")
         r = T.estat_linia("R8", [], None, [bus, general, tren], vespre)
-        self.assertEqual(r["estat"], "sense_trens")
-        # Del més nou al més vell: primer el propi nou, després el propi vell, i el general.
-        self.assertEqual([a["ca"][:12] for a in r["avisos"]], ["Circulació f", "Servei alter"])
+        # Sense trens vistos, però l'avís oficial més nou diu que hi ha
+        # circulació: mana ell, i es diu que no se n'ha vist cap (09-10-2026).
+        self.assertEqual((r["estat"], r.get("no_vist")), ("incidencies", True))
+        # De servei, només el més nou: el de carretera ja no val. Després, el general.
+        self.assertEqual([a["ca"][:12] for a in r["avisos"]], ["Circulació f", "No es pot ga"])
         # Al revés (el de carretera és el nou), bus.
         bus["inici"], tren["inici"] = tren["inici"], bus["inici"]
         self.assertEqual(T.estat_linia("R8", [], None, [tren, general, bus], vespre)["estat"], "bus")

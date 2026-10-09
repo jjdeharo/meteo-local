@@ -2,7 +2,7 @@
 """Datos fijos de «Temps a Montflorit»: lugares, horario, fuentes y umbrales.
 Se cambian aquí, no en los programas."""
 
-VERSION = "3.35.1"
+VERSION = "3.36.0"
 
 # Coordenadas con tres decimales (unos 100 m), no las exactas: para el tiempo
 # da igual una calle u otra, y el repositorio es público.
@@ -211,6 +211,11 @@ ALFA_NIVELL_MOSTRAR = 3
 # congestión; 5, calzada cortada); la «circulació intensa» (2) solo se lista.
 TRANSIT_RADI_KM = 5
 TRANSIT_NIVELL_OBRES = 3
+# Obras sin ubicación precisa: sin punto kilométrico o en un tramo de más de
+# TRANSIT_OBRES_TRAM_MAX_KM no dicen dónde está el corte, y no salen (Juanjo,
+# 09-10-2026, ante la BV-1414 del km 4 al 0: «si no hay ubicación precisa se
+# elimina»).
+TRANSIT_OBRES_TRAM_MAX_KM = 2
 TRANSIT_NIVELL_SORTIDA = 3
 
 TRENS_ESTACIONS = {"R4": (41.493, 2.148), "R7": (41.497, 2.115), "R8": (41.497, 2.115),
