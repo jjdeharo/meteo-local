@@ -90,6 +90,18 @@ sirve para «¿llueve ahora?» ni para aprender por horas.
   d'Informació, en Vallvidrera): publica solo las condiciones actuales en
   una página sin hora de actualización ni historial, y está más lejos que
   Sant Cugat.
+- **La misma estación por Meteoclimatic** («Cerdanyola - Montflorit»,
+  ESCAT0800000008290D, del mismo observador): son los mismos datos por otra
+  puerta, y el `robots.txt` de Meteoclimatic cierra sus canales a los
+  programas (ya en el ADR 0004).
+- **Las estaciones particulares de Weathercloud** (el 09-10-2026 había seis
+  a menos de 1 km, además de la de Juanjo y la de meteocerdanyola.com, con
+  datos cada pocos minutos): sus condiciones de servicio (13-09-2021)
+  prohíben el scraping, los robots, «accessing Weathercloud's API with an
+  unauthorized client» y las aplicaciones de terceros sin consentimiento
+  escrito; no hay API pública de lectura. Solo valdría que el dueño de una
+  estación cediera el acceso directo a sus datos (por ejemplo, las claves de
+  la API de su fabricante), y eso lo decide Juanjo.
 - **Dejar el aprendizaje en pausa** (lo que había empezado a hacer otro
   agente): Juanjo pidió el 05-10-2026 que el programa aprenda de sus
   aciertos y fallos («es imperativo»).
