@@ -19,6 +19,8 @@ Uso:
 import datetime as dt
 import os
 import sys
+import time
+import urllib.error
 import urllib.parse
 import urllib.request
 
@@ -26,6 +28,12 @@ import ecowitt as E
 
 URL = "https://weatherstation.wunderground.com/weatherstation/updateweatherstation.php"
 PROGRAMA = "meteo-local"
+# Con una estación recién dada de alta, Weather Underground contesta
+# «unauthorized» a ratos, hasta que las credenciales llegan a todos sus
+# servidores (09-10-2026: la misma petición, aceptada y rechazada en
+# minutos): se vuelve a probar un par de veces antes de darlo por fallido.
+INTENTS = 3
+PAUSA_S = 3
 
 
 def claves():
@@ -80,8 +88,15 @@ def puja(casa, ahora=None, lector=None):
     if lector:
         return lector(f"{URL}?{q}")
     req = urllib.request.Request(f"{URL}?{q}", headers={"User-Agent": PROGRAMA})
-    with urllib.request.urlopen(req, timeout=20) as r:
-        resposta = r.read().decode("utf-8", "replace").strip()
+    for intent in range(INTENTS):
+        try:
+            with urllib.request.urlopen(req, timeout=20) as r:
+                resposta = r.read().decode("utf-8", "replace").strip()
+            break
+        except urllib.error.HTTPError as ex:
+            if ex.code != 401 or intent == INTENTS - 1:
+                raise
+            time.sleep(PAUSA_S)
     if resposta != "success":
         raise RuntimeError(f"Weather Underground: {resposta[:80]}")
     return resposta

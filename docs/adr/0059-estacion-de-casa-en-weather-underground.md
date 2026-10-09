@@ -68,6 +68,12 @@ con la ubicación que él eligió en el mapa.
 
 ## Riesgos y limitaciones
 
+- Con la estación recién dada de alta, el 09-10-2026 la misma petición se
+  aceptó y se rechazó («unauthorized») a ratos durante la primera hora:
+  las credenciales tardan en llegar a todos los servidores de la red. Desde
+  la 3.45.1 cada subida se intenta hasta tres veces; además la pasada
+  siguiente vuelve a probar.
+
 - Las condiciones de la clave de lectura (uso personal, no comercial) se
   revisarán al generarla; la web es pública pero no comercial.
 - Si cambia el protocolo de subida o la red cierra las claves gratuitas, se
