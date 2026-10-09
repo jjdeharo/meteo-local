@@ -62,9 +62,10 @@ sirve para «¿llueve ahora?» ni para aprender por horas.
   petición de Juanjo («borra los datos guardados de montflorit del nas»):
   `montflorit.csv` y `montflorit-5min.csv`; el campo `ara` de cada línea de
   `casa-2026-10.jsonl` (a `null`); las lecturas de la estación dentro del
-  registro de la página del trayecto retirada (`2026-10.jsonl` y
-  `dades.json`: observaciones, estaciones y las frases que citaban su
-  medida); la columna `montflorit_3h_max` de `riera.csv`; y `moto.csv`, cuya
+  registro de la página del trayecto retirada (`2026-10.jsonl`,
+  `dades.json` y `resultats.csv`: observaciones, estaciones y las frases que
+  citaban su medida; la lluvia de ida y vuelta de `resultats.csv` se recalculó
+  con las estaciones que quedan); la columna `montflorit_3h_max` de `riera.csv`; y `moto.csv`, cuya
   lluvia observada salía de esa estación (se regenera solo con la verdad
   nueva). Lo mismo en la copia de trabajo del repositorio privado
   `meteo-local-registre` que hay en el NAS, que la copia diaria sube. En el
