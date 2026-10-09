@@ -164,6 +164,10 @@ internet en casa, que suele llegar con las tormentas.
   guardada y restaurada después.
 - Los avisos personales de Juanjo siguen como estaban.
 
+Desde el 09-10-2026 (ADR 0055), el canal recibe también los avisos oficiales
+nuevos de AEMET y de Protección Civil y la previsión de mañana a las 21 h, y en
+el bot la hora de la mañana y la de la noche se eligen por separado.
+
 ## Alternativas descartadas
 
 - **Bot en el NAS**: se para con un corte de luz en casa.

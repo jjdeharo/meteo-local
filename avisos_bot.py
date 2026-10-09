@@ -18,6 +18,10 @@ Tipos:
   dejar de constar (entorn.py, ADR 0046).
 - riera: riesgo de desbordamiento de la riera de Sant Cugat (la de riera.py,
   ADR 0027), atención y peligro, siempre con el aviso de que es orientativo.
+- perill, también, desde el 09-10-2026: los avisos oficiales nuevos (ADR 0055).
+  Un aviso de AEMET para el Prelitoral de Barcelona al aparecer o subir de
+  nivel, y un plan de Protección Civil al pasar a alerta o a emergencia y
+  cuando sale de ellas. La prealerta no avisa (ADR 0051).
 
 Los trenes y el tráfico no avisan desde el 09-10-2026: se consultan en «Si
 surts» y con /trens y /transit del bot (ADR 0053).
@@ -216,6 +220,91 @@ def text_incendi(i, acabat=False):
                   f"desde las {hhmm(i.get('inici'))}. Sigue las indicaciones de Bombers y de Protección Civil."}
 
 
+# --- Avisos oficiales nuevos (ADR 0055) -------------------------------------------
+# Van con los de peligro: llegan al canal y a quien tiene «Situacions de perill».
+
+FASES_PLA = ("prealerta", "alerta", "emergència")
+DIES = {"ca": ("dilluns", "dimarts", "dimecres", "dijous", "divendres", "dissabte", "diumenge"),
+        "es": ("lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo")}
+TIPUS_AEMET = {"ca": {"pluja": "pluja", "tempestes": "tempestes"}, "es": {"pluja": "lluvia", "tempestes": "tormentas"}}
+NOM_PLA_ES = {"d'inundacions": "de inundaciones", "de vent": "de viento", "de neu": "de nieve",
+              "per onada de calor": "por ola de calor", "per onada de fred": "por ola de frío",
+              "per contaminació": "por contaminación", "per vent": "por viento"}
+SENTIT_FASE = {
+    "ca": {"alerta": "El pla està activat: es preveu un risc important a curt termini, o hi ha afectacions que no són greus.",
+           "emergència": "El pla està activat per un risc greu per a la població: segueix les indicacions de Protecció Civil."},
+    "es": {"alerta": "El plan está activado: se prevé un riesgo importante a corto plazo, o hay afectaciones que no son graves.",
+           "emergència": "El plan está activado por un riesgo grave para la población: sigue las indicaciones de Protección Civil."}}
+
+
+def moment(iso, ahora):
+    """(dia, hora) d'un instant; les 23:59:59 compten com la mitjanit següent."""
+    t = dt.datetime.fromisoformat(iso).astimezone(ahora.tzinfo)
+    if t.second == 59:
+        t += dt.timedelta(seconds=1)
+    return t, (t.date() - ahora.date()).days
+
+
+def nom_dia(t, dies, idioma):
+    es = idioma == "es"
+    return (("hoy" if es else "avui") if dies == 0 else ("mañana" if es else "demà") if dies == 1
+            else DIES[idioma][t.weekday()])
+
+
+def franja(inici, fi, ahora, idioma):
+    """«Des d'avui a les 15 h fins a mitjanit.», «Desde mañana a las 6 h hasta el
+    sábado a las 3 h.»"""
+    es = idioma == "es"
+    t0, d0 = moment(inici, ahora)
+    t1, d1 = moment(fi, ahora)
+    dia0 = nom_dia(t0, d0, idioma)
+    if d1 == d0:                                     # el mateix dia
+        return (f"{dia0.capitalize()}, de las {t0.hour} h a las {t1.hour} h." if es
+                else f"{dia0.capitalize()}, de les {t0.hour} h a les {t1.hour} h.")
+    if t1.hour == 0 and t1.minute == 0 and d1 == d0 + 1:
+        fins = "hasta medianoche" if es else "fins a mitjanit"
+    else:
+        dia1 = nom_dia(t1, d1, idioma)
+        fins = (f"hasta {'el ' if d1 > 1 else ''}{dia1} a las {t1.hour} h" if es
+                else f"fins {dia1} a les {t1.hour} h")
+    if es:
+        return f"Desde {'el ' if d0 > 1 else ''}{dia0} a las {t0.hour} h {fins}."
+    de = "d'" if dia0[:1] in "aeiouàèéíòóú" else "de "
+    return f"Des {de}{dia0} a les {t0.hour} h {fins}."
+
+
+def text_aemet(a, ahora):
+    """Un aviso de AEMET: nivel, de qué, de cuándo a cuándo y su texto (en
+    castellano, como lo publica AEMET: ADR 0033)."""
+    nivell = a["nivel"]
+    desc = f"\n«{html.escape(a['descripcio'], quote=False)}»" if a.get("descripcio") else ""
+    ca = (negreta(f"Avís {nivell} de l'AEMET per {TIPUS_AEMET['ca'].get(a['tipo'], a['tipo'])} al Vallès")
+          + "\n" + franja(a["inicio"], a["fin"], ahora, "ca") + desc
+          + "\nÉs un avís oficial: segueix les indicacions de Protecció Civil.")
+    es = (negreta(f"Aviso {NIVELLS_ES.get(nivell, nivell)} de la AEMET por {TIPUS_AEMET['es'].get(a['tipo'], a['tipo'])} "
+                  f"en el Vallès")
+          + "\n" + franja(a["inicio"], a["fin"], ahora, "es") + desc
+          + "\nEs un aviso oficial: sigue las indicaciones de Protección Civil.")
+    return {"ca": ca, "es": es}
+
+
+def text_pla(p, acabat=False):
+    nom_ca, nom_es = p["nom"], NOM_PLA_ES.get(p["nom"], p["nom"])
+    if acabat:
+        return {"ca": negreta(f"Protecció Civil: el pla {nom_ca} ({p['pla']}) ja no està en alerta")
+                      + "\nJa no consta en alerta ni en emergència.",
+                "es": negreta(f"Protección Civil: el plan {nom_es} ({p['pla']}) ya no está en alerta")
+                      + "\nYa no consta en alerta ni en emergencia."}
+    de = "d'" if p["fase"][:1] in "aeiouàèéíòóú" else "de "
+    fase_es = {"emergència": "emergencia"}.get(p["fase"], p["fase"])
+    enllac_ca = f"\n<a href=\"{html.escape(p['comunicat'])}\">Comunicat (PDF)</a>" if p.get("comunicat") else ""
+    enllac_es = enllac_ca.replace("Comunicat (PDF)", "Comunicado (PDF)")
+    return {"ca": negreta(f"Protecció Civil: pla {nom_ca} ({p['pla']}) en fase {de}{p['fase']}")
+                  + "\n" + SENTIT_FASE["ca"][p["fase"]] + enllac_ca,
+            "es": negreta(f"Protección Civil: plan {nom_es} ({p['pla']}) en fase de {fase_es}")
+                  + "\n" + SENTIT_FASE["es"][p["fase"]] + enllac_es}
+
+
 # --- Decidir -----------------------------------------------------------------
 
 def decideix(estat, salida, ahora):
@@ -271,6 +360,31 @@ def decideix(estat, salida, ahora):
                 if iid not in ara_ids:
                     afegeix("perill", f"incendi:{iid}:fi", text_incendi(i, acabat=True), "fi")
         estat.setdefault("entorn", {"incendis": {}})["incendis"] = ara_ids
+    # Avisos oficiales nuevos (ADR 0055). La primera vez solo se apunta lo que
+    # hay; si una fuente ha fallado (None), no se toca: no es que se acabe.
+    of = estat.get("oficials")
+    nou_of = {"aemet": dict((of or {}).get("aemet") or {}), "plans": dict((of or {}).get("plans") or {})}
+    if salida.get("avisos") is not None:
+        aemet = {f"{a['tipo']}:{a['inicio']}": a for a in salida["avisos"]
+                 if a.get("zona", C.ZONA_AVISOS) == C.ZONA_AVISOS and a["nivel"] in RS.NIVELLS}
+        if of is not None:
+            for k, a in aemet.items():
+                abans = of["aemet"].get(k)
+                if abans is None or RS.NIVELLS.index(a["nivel"]) > RS.NIVELLS.index(abans):
+                    afegeix("perill", f"aemet:{k}:{a['nivel']}", text_aemet(a, ahora), a["nivel"])
+        nou_of["aemet"] = {k: a["nivel"] for k, a in aemet.items()}
+    if salida.get("plans") is not None:
+        plans = {p["pla"]: p for p in salida["plans"] if p.get("fase") in ("alerta", "emergència")}
+        if of is not None:
+            for k, p in plans.items():
+                abans = (of["plans"].get(k) or {}).get("fase")
+                if abans is None or FASES_PLA.index(p["fase"]) > FASES_PLA.index(abans):
+                    afegeix("perill", f"pla:{k}:{p['fase']}:{hora}", text_pla(p), "pc")
+            for k, p in of["plans"].items():
+                if k not in plans:
+                    afegeix("perill", f"pla:{k}:fi:{hora}", text_pla({**p, "pla": k}, acabat=True), "fi")
+        nou_of["plans"] = {k: {"fase": p["fase"], "nom": p["nom"]} for k, p in plans.items()}
+    estat["oficials"] = nou_of
     # Riera: atención y peligro, una vez cada nivel por episodio.
     riera = salida.get("riera")
     if riera:

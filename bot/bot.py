@@ -52,10 +52,14 @@ DURADA_S = 50
 TIPUS = ("riera", "perill", "pluja")
 PER_DEFECTE = ["riera", "perill"]
 CANAL_TIPUS = ("riera", "perill")
-# La de la nit, a les 21 h i no a les 20 h: a les 21 ja hi ha entrat sempre la
+# Al matí se'n tria una hora; la de la nit, la de demà, es pot afegir a part
+# (Juanjo, 09-10-2026: «elegir 1h por la mañana y la de la noche si se
+# quiere»). A les 21 h i no a les 20 h: a les 21 ja hi ha entrat sempre la
 # passada de les 17 h d'AROME i ICON-EU, que arriba cap a les 19:45 (ADR 0053).
-HORES_RESUM = ("6", "7", "8", "21")
-CANAL_RESUM = "7"
+HORES_RESUM = ("6", "7", "8")
+HORA_NIT = "21"
+# El canal, la del matí a les 7 i la de demà a les 21 (ADR 0055).
+CANAL_RESUMS = ("7", "21")
 # Un aviso que llega tarde ya no sirve: lluvia en 15 minutos, como mucho 20.
 VIGENCIA_MIN = {"pluja": 20, "perill": 180, "riera": 180}
 DADES_VELLES_H = 2
@@ -68,13 +72,14 @@ T = {
                        "l'Ajuntament.\n" + WEB),
         "inici": "Per començar, t'he activat els avisos de la riera i de perill.",
         "menu": ("Toca el que vulguis rebre. ✓ vol dir que sí; si el tornes a tocar, es treu.\n"
-                 "La previsió arriba un cop al dia, a l'hora que triïs.\n\n"
+                 "La previsió del dia arriba al matí, a l'hora que triïs, i, si vols, la de demà a les 21 h.\n\n"
                  "Si també ets al canal (@TempsMontflorit), no et repetiré el que ja t'arriba per allà: els avisos "
-                 "de la riera i de perill i la previsió de les 7 h.\n\n"
+                 "de la riera i de perill i la previsió de les 7 h i de les 21 h.\n\n"
                  "Només es desa el teu identificador de Telegram i el que triïs aquí. Amb /baixa s'esborra tot."),
         "riera": "Desbordament de la riera de Sant Cugat (en proves)", "perill": "Situacions de perill",
         "pluja": "Pluja a punt de començar (15 min abans)",
-        "resum": "Previsió, un cop al dia, a les:", "no": "No vull rebre la previsió", "h": "{} h", "dema": "{} h (per a demà)",
+        "resum": "Previsió del dia, al matí, a les:", "no": "Cap", "h": "{} h",
+        "nit": "A les 21 h, la previsió de demà",
         "baixa": "Fet: s'han esborrat les teves dades i ja no rebràs res. Amb /start pots tornar-hi.",
         "ajuda": ("/avisos tria què reps · /resum la previsió d'avui · /dema la de demà · /ara el temps ara · "
                   "/radar el radar ara · /sol el sol · /aire la qualitat de l'aire · /pollen el pol·len · /trens els trens · "
@@ -93,13 +98,14 @@ T = {
                        "Ayuntamiento.\n" + WEB),
         "inici": "Para empezar, te he activado los avisos de la riera y de peligro.",
         "menu": ("Toca lo que quieras recibir. ✓ quiere decir que sí; si lo vuelves a tocar, se quita.\n"
-                 "La previsión llega una vez al día, a la hora que elijas.\n\n"
+                 "La previsión del día llega por la mañana, a la hora que elijas, y, si quieres, la de mañana a las 21 h.\n\n"
                  "Si también estás en el canal (@TempsMontflorit), no te repetiré lo que ya te llega por allí, en "
-                 "catalán: los avisos de la riera y de peligro y la previsión de las 7 h.\n\n"
+                 "catalán: los avisos de la riera y de peligro y la previsión de las 7 h y de las 21 h.\n\n"
                  "Solo se guarda tu identificador de Telegram y lo que elijas aquí. Con /baixa se borra todo."),
         "riera": "Desbordamiento de la riera de Sant Cugat (en pruebas)", "perill": "Situaciones de peligro",
         "pluja": "Lluvia a punto de empezar (15 min antes)",
-        "resum": "Previsión, una vez al día, a las:", "no": "No quiero recibir la previsión", "h": "{} h", "dema": "{} h (para mañana)",
+        "resum": "Previsión del día, por la mañana, a las:", "no": "Ninguna", "h": "{} h",
+        "nit": "A las 21 h, la previsión de mañana",
         "baixa": "Hecho: se han borrado tus datos y ya no recibirás nada. Con /start puedes volver.",
         "ajuda": ("/avisos elige qué recibes · /resum la previsión de hoy · /dema la de mañana · /ara el tiempo ahora · "
                   "/radar el radar ahora · /sol el sol · /aire la calidad del aire · /pollen el polen · /trens los trenes · "
@@ -192,9 +198,9 @@ def teclat(sub):
     marca = lambda si: "✓ " if si else ""
     files = [[{"text": marca(x in sub["avisos"]) + t[x], "callback_data": f"t:{x}"}] for x in TIPUS]
     files.append([{"text": t["resum"], "callback_data": "-"}])
-    files.append([{"text": marca(sub.get("resum") == h) + t["dema" if int(h) >= HORA_DEMA else "h"].format(h),
-                   "callback_data": f"r:{h}"} for h in HORES_RESUM])
-    files.append([{"text": marca(not sub.get("resum")) + t["no"], "callback_data": "r:no"}])
+    files.append([{"text": marca(sub.get("resum") == h) + t["h"].format(h), "callback_data": f"r:{h}"}
+                  for h in HORES_RESUM] + [{"text": marca(not sub.get("resum")) + t["no"], "callback_data": "r:no"}])
+    files.append([{"text": marca(sub.get("nit")) + t["nit"], "callback_data": "n:"}])
     files.append([{"text": marca(sub["idioma"] == i) + n, "callback_data": f"i:{i}"}
                   for i, n in (("ca", "Català"), ("es", "Castellano"))])
     return files
@@ -213,6 +219,8 @@ def canvia(sub, dada):
         sub["avisos"] = [x for x in TIPUS if (x in sub["avisos"]) != (x == valor)]
     elif tipus == "r" and (valor in HORES_RESUM or valor == "no"):
         sub["resum"] = None if valor == "no" else valor
+    elif tipus == "n":
+        sub["nit"] = not sub.get("nit")
     elif tipus == "i" and valor in T:
         sub["idioma"] = valor
     else:
@@ -954,8 +962,9 @@ def migra(api, subs, estat):
     se li diu una sola vegada que ja no arriben i que hi ha /trens. Si el
     missatge no entra, es torna a provar a la volta següent."""
     for chat, sub in list(subs.items()):
-        if sub.get("resum") == "20":
-            sub["resum"] = "21"
+        # La del vespre ja no és una hora de la llista: va a part (ADR 0055).
+        if sub.get("resum") in ("20", "21"):
+            sub["resum"], sub["nit"] = None, True
         if "trens" in sub.get("avisos", []):
             try:
                 envia(api, chat, T[sub["idioma"]]["sense_trens"])
@@ -1147,31 +1156,36 @@ def reparteix(api, subs, estat, moment):
     limit = moment - dt.timedelta(days=3)
     for k in [k for k, v in enviats.items() if dt.datetime.fromisoformat(v) < limit]:
         del enviats[k]
-    # El resumen diario: primero el del canal, a las 7; luego el de cada uno, a su hora
-    # (una vez al día), salvo a quien ya le ha llegado por el canal. Se apunta
-    # como hecho solo cuando Telegram lo acepta: si falla, se reintenta al
-    # minuto siguiente mientras dure esa hora.
+    # El resumen diario: primero el del canal, a las 7 y a las 21 (la de mañana);
+    # luego el de cada uno, a su hora, salvo a quien ya le ha llegado por el
+    # canal. Se apunta como hecho solo cuando Telegram lo acepta: si falla, se
+    # reintenta al minuto siguiente mientras dure esa hora.
     hora, avui = str(moment.hour), moment.date().isoformat()
     dades = None
-    if hora == CANAL_RESUM and estat.get("canal_resum") != avui:
+    canal = estat.setdefault("canal_resums", {})
+    if "canal_resum" in estat:                       # estat d'abans del 09-10-2026
+        canal.setdefault("7", estat.pop("canal_resum"))
+    if hora in CANAL_RESUMS and canal.get(hora) != avui:
         dades = llegeix(os.path.join(DADES, "montflorit.json"), {})
         try:
             # El canal, solo en catalán (Juanjo, 08-10-2026).
             envia(api, CANAL, resum(dades, "ca", moment), html=True)
-            estat["canal_resum"] = avui
+            canal[hora] = avui
         except Exception as ex:
-            registra(f"el resumen del canal no ha entrado: {ex}")
-    canal_resum_ok = hora == CANAL_RESUM and estat.get("canal_resum") == avui
+            registra(f"el resumen del canal de las {hora} h no ha entrado: {ex}")
+    canal_resum_ok = hora in CANAL_RESUMS and canal.get(hora) == avui
     resums = estat.setdefault("resums", {})
     for chat, sub in list(subs.items()):
-        if sub.get("resum") == hora and resums.get(chat) != avui:
+        fets = resums.get(chat) if isinstance(resums.get(chat), dict) else {}
+        toca = sub.get("resum") == hora or (hora == HORA_NIT and sub.get("nit"))
+        if toca and fets.get(hora) != avui:
             if canal_resum_ok and al_canal(api, chat, memoria):
-                resums[chat] = avui
+                resums[chat] = {**fets, hora: avui}
                 continue
             dades = dades or llegeix(os.path.join(DADES, "montflorit.json"), {})
             try:
                 envia(api, chat, resum(dades, sub["idioma"], moment), html=True)
-                resums[chat] = avui
+                resums[chat] = {**fets, hora: avui}
             except Bloquejat:
                 subs.pop(chat, None)
                 esborra(estat, chat)

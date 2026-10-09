@@ -73,7 +73,8 @@ class Menu(unittest.TestCase):
         self.assertIn("✓ Lluvia a punto de empezar (15 min antes)", textos)
         self.assertIn("Desbordamiento de la riera de Sant Cugat (en pruebas)", textos)
         self.assertIn("✓ 7 h", textos)
-        self.assertIn("21 h (para mañana)", textos)
+        self.assertIn("A las 21 h, la previsión de mañana", textos)
+        self.assertNotIn("21 h", [x.replace("✓ ", "") for x in textos])
         # Els trens ja no són un avís: es consulten amb /trens (ADR 0053).
         self.assertFalse(any("Tren" in t for t in textos))
         self.assertFalse(B.canvia(sub, "t:trens"))
@@ -507,13 +508,57 @@ class Consultes(unittest.TestCase):
         self.assertEqual([B.distancia(x) for x in (0.01, 0.73, 0.98, 1.0, 4.04, 4.35, 4.96)],
                          ["50\u00a0m", "750\u00a0m", "1000\u00a0m", "1\u00a0km", "4\u00a0km", "4,4\u00a0km", "5\u00a0km"])
 
+    def test_el_canal_a_les_7_i_a_les_21(self):
+        api, estat = Api(), {"canal_resum": "2026-10-01"}          # estat d'abans
+        B.reparteix(api, {}, estat, ARA.replace(hour=21, minute=0))
+        self.assertEqual(estat["canal_resums"], {"7": "2026-10-01", "21": ARA.date().isoformat()})
+        self.assertEqual([p["chat_id"] for m, p in api.enviats if m == "sendMessage"], [B.CANAL])
+
+    def test_avisos_oficials_nous(self):
+        # ADR 0055: AEMET en aparèixer o pujar de nivell; Protecció Civil en
+        # passar a alerta o emergència i en sortir-ne. La primera vegada, només s'apunta.
+        aemet = {"zona": "Prelitoral de Barcelona", "tipo": "pluja", "nivel": "groc",
+                 "inicio": "2026-10-07T15:00:00+02:00", "fin": "2026-10-07T23:59:59+02:00"}
+        pla = {"pla": "INUNCAT", "nom": "d'inundacions", "fase": "prealerta"}
+        estat = {}
+        perill = lambda sal, m: [a for a in AB.decideix(estat, sal, ARA + dt.timedelta(minutes=m)) if a["tipus"] == "perill"]
+        self.assertEqual(perill({"avisos": [], "plans": [pla]}, 0), [])
+        nous = perill({"avisos": [aemet], "plans": [pla]}, 6)
+        self.assertEqual(nous[0]["ca"].splitlines()[0], "<b>Avís groc de l'AEMET per pluja al Vallès</b>")
+        self.assertEqual(perill({"avisos": [aemet], "plans": [pla]}, 12), [])          # una sola vegada
+        nous = perill({"avisos": [dict(aemet, nivel="taronja")], "plans": [dict(pla, fase="alerta")]}, 18)
+        self.assertEqual([a["nivell"] for a in nous], ["taronja", "pc"])
+        self.assertIn("en fase d'alerta", nous[1]["ca"])
+        self.assertEqual(perill({"avisos": None, "plans": None}, 24), [])              # font caiguda: res
+        fi = perill({"avisos": [], "plans": [dict(pla, fase="prealerta")]}, 30)
+        self.assertEqual(fi[0]["ca"].splitlines()[0], "<b>Protecció Civil: el pla d'inundacions (INUNCAT) ja no està en alerta</b>")
+
+    def test_mati_i_nit(self):
+        # Una hora al matí i, a part, la de demà a les 21 h (Juanjo, 09-10-2026).
+        sub = B.nou_subscriptor({})
+        self.assertTrue(B.canvia(sub, "r:8"))
+        self.assertTrue(B.canvia(sub, "n:"))
+        self.assertEqual((sub["resum"], sub["nit"]), ("8", True))
+        self.assertTrue(B.canvia(sub, "n:"))
+        self.assertFalse(sub["nit"])
+        self.assertFalse(B.canvia(sub, "r:21"))         # el 21 ja no és una hora del matí
+        api = Api()
+        subs = {"1": {"idioma": "ca", "avisos": [], "resum": "8", "nit": True}}
+        estat = {"canal_resums": {"7": ARA.date().isoformat(), "21": ARA.date().isoformat()}}
+        for h in (8, 21):
+            B.reparteix(api, subs, estat, ARA.replace(hour=h, minute=1))
+        enviats = [p["chat_id"] for m, p in api.enviats if m == "sendMessage"]
+        self.assertEqual(enviats.count("1"), 2)                 # matí i nit, el mateix dia
+        self.assertEqual(set(estat["resums"]["1"]), {"8", "21"})
+
     def test_migracio_del_9_d_octubre(self):
         # ADR 0053: les 20 h passen a les 21 h, i a qui tenia els trens se li diu una sola vegada.
         api = Api()
         subs = {"1": {"idioma": "ca", "avisos": ["perill", "trens"], "resum": "20"},
                 "2": {"idioma": "es", "avisos": ["riera"], "resum": "7"}}
         B.migra(api, subs, {})
-        self.assertEqual(subs["1"], {"idioma": "ca", "avisos": ["perill"], "resum": "21"})
+        # La de la nit va a part: qui la tenia, la conserva (ADR 0055).
+        self.assertEqual(subs["1"], {"idioma": "ca", "avisos": ["perill"], "resum": None, "nit": True})
         self.assertEqual(subs["2"]["resum"], "7")
         self.assertEqual([(m, p["chat_id"]) for m, p in api.enviats], [("sendMessage", "1")])
         self.assertIn("amb /trens", api.enviats[0][1]["text"])
@@ -783,10 +828,10 @@ class RepartimentAmbReintents(unittest.TestCase):
         subs = {}
         api, estat = Api(canal_falla=True), {}
         B.reparteix(api, subs, estat, ARA)
-        self.assertNotIn("canal_resum", estat)
+        self.assertNotIn("7", estat["canal_resums"])
         api.canal_falla = False
         B.reparteix(api, subs, estat, ARA + dt.timedelta(minutes=1))
-        self.assertEqual(estat["canal_resum"], ARA.date().isoformat())
+        self.assertEqual(estat["canal_resums"]["7"], ARA.date().isoformat())
         api.enviats.clear()
         B.reparteix(api, subs, estat, ARA + dt.timedelta(minutes=2))
         self.assertEqual(api.enviats, [])
