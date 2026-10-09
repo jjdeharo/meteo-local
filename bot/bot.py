@@ -546,7 +546,9 @@ def text_radar_bot(dades, idioma, moment):
 
 
 FASE_ES = {"prealerta": "prealerta", "alerta": "alerta", "emergència": "emergencia"}
-PLA_ES = {"d'inundacions": "de inundaciones", "de vent": "de viento", "de neu": "de nieve"}
+PLA_ES = {"d'inundacions": "de inundaciones", "de vent": "de viento", "de neu": "de nieve",
+          "per onada de calor": "por ola de calor", "per onada de fred": "por ola de frío",
+          "per contaminació": "por contaminación", "per vent": "por viento"}
 
 
 def enllac(url, text):

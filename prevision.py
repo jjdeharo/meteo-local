@@ -334,22 +334,41 @@ def afecta_la_zona(descripcion):
     return not any(z in d for z in C.ZONAS_AJENAS_PC)
 
 
+ORDRE_FASES = {"prealerta": 0, "alerta": 1, "emergència": 2}
+
+
+def nom_pla(p):
+    """El nombre que ve el lector de un plan que interesa, o None. Del PROCICAT
+    solo interesan algunos riesgos, y el de cada registro lo dice su icono."""
+    acronimo = p.get("plaacronim", "")
+    if acronimo in C.PLANES_PC:
+        return C.PLANES_PC[acronimo]
+    if acronimo == "PROCICAT":
+        icona = urllib.parse.unquote((p.get("plaicona") or {}).get("url") or "")
+        m = re.search(r"ico_PROCICAT_([^/]+)\.png$", icona, re.I)
+        return C.PROCICAT_PC.get(m.group(1).upper()) if m else None
+    return None
+
+
 def planes_proteccion_civil():
-    """Planes meteorológicos de Protección Civil activados (datos abiertos de
-    la Generalitat, actualizados en tiempo real), uno por plan."""
+    """Planes de Protección Civil que dependen del tiempo, activados o en
+    prealerta (datos abiertos de la Generalitat, actualizados en tiempo real),
+    uno por plan y riesgo, con la fase más alta. La prealerta no activa el plan
+    pero se muestra (ADR 0051)."""
     res = {}
     for p in json.loads(get(PLANES_PC_URL)):
-        acronimo = p.get("plaacronim", "")
-        if (p.get("plaactivat") != "SI" or acronimo not in C.PLANES_PC
+        nom = nom_pla(p)
+        fase = (p.get("plafase") or "").lower()
+        if (nom is None or fase not in ORDRE_FASES or (p.get("plaactivat") != "SI" and fase != "prealerta")
                 or not afecta_la_zona(p.get("descripcio"))):
             continue
-        if acronimo in res:
+        clau = (p["plaacronim"], nom)
+        if clau in res and ORDRE_FASES[res[clau]["fase"]] >= ORDRE_FASES[fase]:
             continue
-        res[acronimo] = {"pla": acronimo, "nom": C.PLANES_PC[acronimo],
-                         "fase": (p.get("plafase") or "").lower(),
-                         "des_de": p.get("fasedatahora"),
-                         "descripcio": (p.get("descripcio") or "").strip(" -"),
-                         "comunicat": (p.get("comunicatpdf") or {}).get("url")}
+        res[clau] = {"pla": p["plaacronim"], "nom": nom, "fase": fase,
+                     "des_de": p.get("fasedatahora"),
+                     "descripcio": (p.get("descripcio") or "").strip(" -"),
+                     "comunicat": (p.get("comunicatpdf") or {}).get("url")}
     return list(res.values())
 
 

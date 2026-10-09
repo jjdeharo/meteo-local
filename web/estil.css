@@ -13,6 +13,7 @@
   --compte-fons: #fdf3e1;
   --vermell: #b91c1c;       /* el que no */
   --vermell-fons: #fdeceb;
+  --taronja-text: #c2410c;  /* el títol d'un avís taronja */
   --bot: #15803d;          /* el verd de la icona del bot de Telegram */
   color-scheme: light;
 }
@@ -30,6 +31,7 @@
   --compte-fons: #2e2412;
   --vermell: #f87171;
   --vermell-fons: #331a1a;
+  --taronja-text: #fdba74;
   --bot: #4ade80;
   color-scheme: dark;
 }
@@ -351,8 +353,18 @@ h1 { margin: 0; font-size: 1.6rem; line-height: 1.2; }
 .avis-item + .avis-item, .avis-item + .risc-previst, .risc-previst + .avis-item { margin-top: .5rem; }
 .avis-item strong { color: var(--nivell-text, inherit); }
 .avis-item.groc { --nivell: #eab308; }
-.avis-item.taronja { --nivell: #fb923c; --nivell-text: #c2410c; }
+.avis-item.taronja { --nivell: #fb923c; --nivell-text: var(--taronja-text); }
 .avis-item.vermell { --nivell: var(--vermell); --nivell-text: var(--vermell); }
+/* Prealerta de Protecció Civil: el pla no està activat, sense alarma (ADR 0051). */
+.avis-item.prealerta { --nivell: var(--suau); }
+/* El «?» de la fase i el que vol dir, a sota (ADR 0051). */
+.ajuda-fase {
+  margin-left: .3rem; width: 1.4rem; height: 1.4rem; padding: 0; border: 1px solid var(--vora);
+  border-radius: 50%; background: var(--superficie); color: var(--text); font: inherit; font-size: .8rem;
+  font-weight: 700; line-height: 1; cursor: pointer; vertical-align: .1em;
+}
+.sentit-fase { display: block; margin-top: .2rem; color: var(--suau); font-size: .9rem; }
+.sentit-fase[hidden] { display: none; }
 .avisos-actius .risc-previst { margin-top: .5rem; }
 .avis-item.compte { --nivell: var(--compte); }
 /* Nota de Protecció Civil sobre els veredictes de «Si surts». */

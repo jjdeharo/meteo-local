@@ -52,5 +52,6 @@
 | [0048](0048-avisos-en-el-navegador-sin-telegram.md) | Avisos en el navegador, sin Telegram | aceptado |
 | [0049](0049-final-de-la-lluvia-segun-el-radar.md) | Final de la lluvia según el radar, en pruebas y aprendiendo | aceptado |
 | [0050](0050-botonera-de-la-cabecera-y-frase-bajo-el-titulo.md) | Botonera de la cabecera y frase bajo el título | aceptado |
+| [0051](0051-prealerta-y-mas-planes-de-proteccion-civil-con-su-fase-explicada.md) | Prealerta y más planes de Protección Civil, con su fase explicada | aceptado |
 
 Plantilla: [0000-plantilla.md](0000-plantilla.md). Para crear uno: `nuevo-adr "Título"`.

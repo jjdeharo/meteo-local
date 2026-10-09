@@ -13,6 +13,10 @@ function ambArticle(dia) {
 var IDIOMA = {
   codi: 'es',
   textos: {
+    'Es preveu un risc a mitjà termini. El pla no està activat: només cal estar-ne pendent.': 'Se prevé un riesgo a medio plazo. El plan no está activado: solo hay que estar pendiente.',
+    'El pla està activat: es preveu un risc important a curt termini, o hi ha afectacions que no són greus.': 'El plan está activado: se prevé un riesgo importante a corto plazo, o hay afectaciones que no son graves.',
+    'El pla està activat per un risc greu per a la població: segueix les indicacions de Protecció Civil.': 'El plan está activado por un riesgo grave para la población: sigue las indicaciones de Protección Civil.',
+    'Què vol dir {0}?': '¿Qué quiere decir {0}?',
     'Tanca': 'Cerrar',
     "Nou!": "¡Nuevo!",
     "Situacions de perill": "Situaciones de peligro",
@@ -238,6 +242,8 @@ var IDIOMA = {
     groc: 'amarillo', taronja: 'naranja', vermell: 'rojo',
     pluja: 'lluvia', tempestes: 'tormentas',
     "d'inundacions": 'de inundaciones', 'de vent': 'de viento', 'de neu': 'de nieve',
+    'per onada de calor': 'por ola de calor', 'per onada de fred': 'por ola de frío',
+    'per contaminació': 'por contaminación', 'per vent': 'por viento',
     prealerta: 'prealerta', alerta: 'alerta', 'emergència': 'emergencia',
     'al nord': 'el norte', 'al nord-est': 'el nordeste', "a l'est": 'el este', 'al sud-est': 'el sudeste',
     'al sud': 'el sur', 'al sud-oest': 'el sudoeste', "a l'oest": 'el oeste', 'al nord-oest': 'el noroeste',

@@ -2,7 +2,7 @@
 """Datos fijos de «Temps a Montflorit»: lugares, horario, fuentes y umbrales.
 Se cambian aquí, no en los programas."""
 
-VERSION = "3.29.0"
+VERSION = "3.30.0"
 
 # Coordenadas con tres decimales (unos 100 m), no las exactas: para el tiempo
 # da igual una calle u otra, y el repositorio es público.
@@ -71,8 +71,13 @@ ZONA_CERCANA = "Litoral de Barcelona"
 
 # Planes de Protección Civil de la Generalitat que dependen del tiempo, con el
 # nombre que ve el lector. Un plan en alerta o emergencia cuenta como riesgo
-# alto; en prealerta solo se avisa.
+# alto; en prealerta solo se muestra en la web (ADR 0051).
 PLANES_PC = {"INUNCAT": "d'inundacions", "VENTCAT": "de vent", "NEUCAT": "de neu"}
+# El PROCICAT agrupa riesgos distintos: el de cada registro lo dice su icono
+# (ico_PROCICAT_<RIESGO>.png). Solo los que afectan a toda una zona; ni la
+# pandemia ni el ferrocarril (los trenes ya están en «Si surts»).
+PROCICAT_PC = {"ONADA_CALOR": "per onada de calor", "ONADA_FRED": "per onada de fred",
+               "CONTAMINACIÓ": "per contaminació", "VENT": "per vent"}
 # Si la descripción del plan nombra solo otras zonas, no afecta al barrio.
 ZONAS_PROPIAS_PC = ["Vallès", "Barcelona", "Catalunya"]
 ZONAS_AJENAS_PC = ["Ebre", "Pirineu", "Aran", "Lleida", "Girona", "Tarragona", "Empordà"]

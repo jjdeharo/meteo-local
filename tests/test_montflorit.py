@@ -195,7 +195,7 @@ class Castella(unittest.TestCase):
 
     def test_paraules_de_les_dades(self):
         dades = js("IDIOMA.dades")
-        paraules = list(R.NIVELLS) + list(C.PLANES_PC.values()) + list(N.RUMBS) + ["pluja", "tempestes",
+        paraules = list(R.NIVELLS) + list(C.PLANES_PC.values()) + list(C.PROCICAT_PC.values()) + list(N.RUMBS) + ["pluja", "tempestes",
                                                                                  "prealerta", "alerta", "emergència"]
         self.assertEqual([p for p in paraules if p not in dades], [])
         self.assertEqual(set(js("Object.keys(IDIOMA.riscos)")), set(R.TEXTOS))

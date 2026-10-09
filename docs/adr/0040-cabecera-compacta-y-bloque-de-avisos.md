@@ -23,7 +23,8 @@ aplicarla «sin pérdida de datos».
   campana de la botonera de la cabecera y la fila solo lleva el menú.
 - **Un solo bloque «Avisos actius»** (`blocAvisos`, en `web/comu.js`) con
   borde fino y sin fondo de color, y dentro cada aviso con la franja lateral
-  de su nivel: roja para Protecció Civil, naranja o amarilla para la AEMET
+  de su nivel: roja para Protecció Civil (desde la 3.30.0, del color de la
+  fase: ADR 0051), naranja o amarilla para la AEMET
   según el nivel. El título de cada aviso va en negrita (en color, el rojo y
   el naranja). El texto oficial de la AEMET sigue citado, en castellano y sin
   traducir (ADR 0033); se quita el «L'AEMET hi afegeix — avui:» y el día solo

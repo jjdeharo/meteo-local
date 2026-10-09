@@ -32,3 +32,47 @@ class Descripcio(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+def registre(acronim, fase, activat="SI", icona=None, descripcio="Episodi", comunicat=None):
+    return {"plaacronim": acronim, "planom": acronim, "plafase": fase, "plaactivat": activat,
+            "plaicona": {"url": icona or f"https://documents.dadesobertes.gencat.cat/cecat/docs/ico_{acronim}.png"},
+            "fasedatahora": "09/10/2026 08:00", "descripcio": descripcio,
+            "comunicatpdf": {"url": comunicat} if comunicat else None}
+
+
+class PlansProteccioCivil(unittest.TestCase):
+    """Prealerta i plans del PROCICAT (ADR 0051), sense xarxa."""
+    def setUp(self):
+        self.original = P.get
+
+    def tearDown(self):
+        P.get = self.original
+
+    def plans(self, registres):
+        P.get = lambda url, *a, **k: __import__("json").dumps(registres)
+        return {(p["pla"], p["nom"]): p["fase"] for p in P.planes_proteccion_civil()}
+
+    def test_la_prealerta_surt_encara_que_el_pla_no_estigui_activat(self):
+        self.assertEqual(self.plans([registre("VENTCAT", "PREALERTA", "NO")]), {("VENTCAT", "de vent"): "prealerta"})
+        # Un pla no activat que no és en prealerta, no.
+        self.assertEqual(self.plans([registre("VENTCAT", "ALERTA", "NO")]), {})
+
+    def test_procicat_nomes_els_riscos_del_temps_i_de_l_aire(self):
+        base = "https://documents.dadesobertes.gencat.cat/cecat/docs/"
+        r = self.plans([registre("PROCICAT", "ALERTA", icona=base + "ico_PROCICAT_ONADA_CALOR.png"),
+                        registre("PROCICAT", "PREALERTA", "NO", icona=base + "ico_PROCICAT_CONTAMINACI%C3%93.png"),
+                        registre("PROCICAT", "ALERTA", icona=base + "ico_PROCICAT_PANDEMIA.png"),
+                        registre("PROCICAT", "ALERTA", icona=base + "ico_PROCICAT_FERROCARRIL.png"),
+                        registre("PROCICAT", "ALERTA"),
+                        registre("INFOCAT", "ALERTA"), registre("TRANSCAT", "EMERGÈNCIA")])
+        self.assertEqual(r, {("PROCICAT", "per onada de calor"): "alerta",
+                             ("PROCICAT", "per contaminació"): "prealerta"})
+
+    def test_un_pla_repetit_es_queda_amb_la_fase_mes_alta(self):
+        r = self.plans([registre("INUNCAT", "PREALERTA", "NO"), registre("INUNCAT", "EMERGÈNCIA"),
+                        registre("INUNCAT", "ALERTA")])
+        self.assertEqual(r, {("INUNCAT", "d'inundacions"): "emergència"})
+
+    def test_fora_de_zona_no(self):
+        self.assertEqual(self.plans([registre("NEUCAT", "PREALERTA", "NO", descripcio="Neu al Pirineu")]), {})

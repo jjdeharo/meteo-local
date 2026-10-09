@@ -219,6 +219,17 @@ class Web(unittest.TestCase):
                         f"resumTrams({json.dumps([fila(10, 10, mm=0.5)])}, new Date())[0].cel")
         self.assertEqual(r, ["Mig ennuvolat", "i-cloud"])
 
+    def test_plans_del_color_de_la_fase_i_amb_el_que_vol_dir(self):
+        # ADR 0051: la prealerta no espanta; el «?» desplega què vol dir cada fase.
+        plans = [{"pla": "VENTCAT", "nom": "de vent", "fase": f} for f in ("prealerta", "alerta", "emergència")]
+        r = self.avalua("2026-10-09T10:00:00+02:00", f"blocPlans({json.dumps(plans)}).map((p) => p.className)")
+        self.assertEqual(r, ["avis-item prealerta", "avis-item taronja", "avis-item vermell"])
+        r = self.avalua("2026-10-09T10:00:00+02:00",
+                        "ajudaFase('prealerta').map((e) => [e.className, e.textContent, e.hidden === true])")
+        self.assertEqual(r[0][:2], ["ajuda-fase", "?"])
+        self.assertEqual(r[1], ["sentit-fase", "Es preveu un risc a mitjà termini. El pla no està activat: "
+                                "només cal estar-ne pendent.", True])
+
     def test_les_franges_acabades_no_compten(self):
         hores = [{"hora": "2026-10-08T06:00", "fins": "2026-10-08T07:00"}, {"hora": "2026-10-08T07:00", "fins": "2026-10-08T08:00"},
                  {"hora": "2026-10-08T08:00", "fins": "2026-10-08T09:00"}]

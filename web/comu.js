@@ -417,9 +417,40 @@ function textPrevisioAnterior(dades) {
   return T`Open-Meteo, d\u2019on surten els models, ara no respon: la previsió és la de les ${horaCurta(de)}${dia}.`;
 }
 
-// Plans de Protecció Civil activats (inundacions, vent, neu): avís destacat
-// a dalt de la pàgina, amb l'enllaç al comunicat.
+// Plans de Protecció Civil que depenen del temps (inundacions, vent, neu,
+// onades de calor i de fred, contaminació), en prealerta, alerta o emergència:
+// avís destacat a dalt de la pàgina, amb l'enllaç al comunicat (ADR 0051).
 const NOM_FASE = { prealerta: 'prealerta', alerta: 'alerta', 'emergència': 'emergència' };
+// La franja, del color de la fase: la prealerta no ha d'espantar.
+const COLOR_FASE = { prealerta: 'prealerta', alerta: 'taronja', 'emergència': 'vermell' };
+// Què vol dir cada fase, resumit de la definició oficial del conjunt de dades
+// de Protecció Civil; es desplega amb el «?» (Juanjo, 09-10-2026).
+const SENTIT_FASE = {
+  prealerta: () => T('Es preveu un risc a mitjà termini. El pla no està activat: només cal estar-ne pendent.'),
+  alerta: () => T('El pla està activat: es preveu un risc important a curt termini, o hi ha afectacions que no són greus.'),
+  'emergència': () => T('El pla està activat per un risc greu per a la població: segueix les indicacions de Protecció Civil.'),
+};
+let numAjudaFase = 0;
+
+// El «?» de la fase: obre i tanca, a sota, una línia amb què vol dir.
+function ajudaFase(fase) {
+  if (!SENTIT_FASE[fase]) return [];
+  const id = `sentit-fase-${++numAjudaFase}`;
+  const boto = element('button', 'ajuda-fase', '?');
+  boto.type = 'button';
+  boto.setAttribute('aria-expanded', 'false');
+  boto.setAttribute('aria-controls', id);
+  boto.setAttribute('aria-label', T`Què vol dir ${TD(NOM_FASE[fase])}?`);
+  boto.title = T`Què vol dir ${TD(NOM_FASE[fase])}?`;
+  const sentit = element('span', 'sentit-fase', SENTIT_FASE[fase]());
+  sentit.id = id;
+  sentit.hidden = true;
+  boto.addEventListener('click', () => {
+    sentit.hidden = !sentit.hidden;
+    boto.setAttribute('aria-expanded', String(!sentit.hidden));
+  });
+  return [boto, sentit];
+}
 
 // «de prealerta», però «d’alerta» i «d’emergència»; en castellà, sempre «de».
 function deFase(fase) {
@@ -427,13 +458,14 @@ function deFase(fase) {
   return /^[aeiouàèéíòóúh]/i.test(fase) ? `d’${fase}` : `de ${fase}`;
 }
 
-// Els plans de Protecció Civil, un element per pla (vermell).
+// Els plans de Protecció Civil, un element per pla, del color de la fase.
 function blocPlans(plans) {
   return (plans || []).map((p) => {
-    const item = element('p', 'avis-item vermell');
+    const item = element('p', `avis-item ${COLOR_FASE[p.fase] || 'vermell'}`);
     item.setAttribute('aria-label', T('Avís de Protecció Civil'));
     item.append(element('strong', null,
-      T`Protecció Civil: pla ${TD(p.nom)} (${p.pla}) en fase ${deFase(TD(NOM_FASE[p.fase] || p.fase))}.`));
+      T`Protecció Civil: pla ${TD(p.nom)} (${p.pla}) en fase ${deFase(TD(NOM_FASE[p.fase] || p.fase))}.`),
+    ...ajudaFase(p.fase));
     if (p.fase === 'emergència') {
       item.append(T(' Evita els desplaçaments que no siguin necessaris.'));
     }
