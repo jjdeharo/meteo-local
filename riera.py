@@ -51,7 +51,7 @@ DIR = os.environ.get("REGISTRE_DIR", "/estat/registre")
 ESTADO = os.path.join(os.path.dirname(DIR), "riera.json")
 REGISTRO = os.path.join(DIR, "riera.csv")
 CAMPOS = ["inici", "fi", "hora_max", "index_max", "mm_3h_max", "mm_6h_max", "capcalera_3h_max",
-          "montflorit_3h_max", "avis_atencio", "avis_perill", "desbordament"]
+          "avis_atencio", "avis_perill", "desbordament"]
 MITJA_HORA = dt.timedelta(minutes=30)
 # Con la estación más atrasada que esto, lo medido ya no sirve para avisar.
 RETARD_MAX = dt.timedelta(hours=2)
@@ -158,11 +158,9 @@ def nivell_amb_radar(filas, fins, nc, ahora):
     return millor[1:]
 
 
-def calcula(ahora, nc, lector=None, montflorit_3h=None):
+def calcula(ahora, nc, lector=None):
     """Estado de la riera ahora, para casa.json. None si Sant Cugat no da
-    datos recientes. La lluvia de 3 horas de Montflorit (minuto a minuto, en
-    la parte baja de la cuenca) se guarda y se dice, pero no decide: aún no
-    hay historial para saber qué umbral le corresponde."""
+    datos recientes."""
     filas = files(C.RIERA_ESTACIO, ahora, 6, lector)
     if not filas:
         return None
@@ -176,7 +174,7 @@ def calcula(ahora, nc, lector=None, montflorit_3h=None):
            "mm_1h": acumulat(filas, fins, 1),     # per al registre de l'aprenentatge (ADR 0042)
            "incomplet": incomplet(filas, fins),
            "radar_1h": previst(nc, fins, (ahora - fins).total_seconds() / 60 + 60) if nc else None,
-           "capcalera": None, "montflorit_3h": montflorit_3h}
+           "capcalera": None}
     res["nivell"], res["index"], res["index_6h"], res["index_d_aqui_a_min"] = nivell_amb_radar(filas, fins, nc, ahora)
     try:
         codi, nom = C.RIERA_CAPCALERA
@@ -209,8 +207,6 @@ def missatge(riera, nom):
     altres = []
     if riera.get("capcalera"):
         altres.append(f"al Fabra (Collserola), {coma(riera['capcalera']['mm_3h'])} mm")
-    if riera.get("montflorit_3h") is not None:
-        altres.append(f"a Montflorit, {coma(riera['montflorit_3h'])} mm")
     if altres:
         cap += " En 3 hores, " + " i ".join(altres) + "."
     if nom == "perill":
@@ -236,7 +232,7 @@ def missatge_fi(riera, ep):
 def fila_registro(ep):
     fila = dict.fromkeys(CAMPOS, "")
     fila.update({k: ep.get(k, "") for k in ("inici", "hora_max", "index_max", "mm_3h_max",
-                                             "mm_6h_max", "capcalera_3h_max", "montflorit_3h_max")})
+                                             "mm_6h_max", "capcalera_3h_max")})
     fila["fi"] = ep["vist"]
     fila["avis_atencio"] = ep["avisos"].get("atencio") or ""
     fila["avis_perill"] = ep["avisos"].get("perill") or ""
@@ -265,7 +261,7 @@ def compara(estat, riera, ahora):
     if senyal:
         if not ep:
             ep = {"inici": ara, "avisos": {}, "index_max": 0, "mm_3h_max": 0, "mm_6h_max": 0,
-                  "capcalera_3h_max": 0, "montflorit_3h_max": 0, "hora_max": ara}
+                  "capcalera_3h_max": 0, "hora_max": ara}
         ep["vist"] = ara
         if riera["index"] > ep["index_max"]:
             ep["index_max"], ep["hora_max"] = riera["index"], ara
@@ -273,8 +269,6 @@ def compara(estat, riera, ahora):
         ep["mm_6h_max"] = max(ep["mm_6h_max"], riera["mm_6h"])
         if riera.get("capcalera"):
             ep["capcalera_3h_max"] = max(ep["capcalera_3h_max"], riera["capcalera"]["mm_3h"])
-        if riera.get("montflorit_3h") is not None:
-            ep["montflorit_3h_max"] = max(ep.get("montflorit_3h_max", 0), riera["montflorit_3h"])
         nom = nivell(riera["index"], riera.get("index_6h", riera["mm_6h"]))
         if nom in ("perill", "atencio") and not ep["avisos"].get(nom):
             text = missatge(riera, nom)
@@ -333,7 +327,7 @@ def resum():
     with open(REGISTRO, encoding="utf-8") as f:
         files_ = list(csv.DictReader(f))
     return "\n".join(f"{f['inici']} · índex {f['index_max']} mm · 3 h {f['mm_3h_max']} · 6 h {f['mm_6h_max']}"
-                     f" · Fabra {f['capcalera_3h_max']} · Montflorit {f.get('montflorit_3h_max', '')} · atenció {f['avis_atencio'] or '-'}"
+                     f" · Fabra {f['capcalera_3h_max']} · atenció {f['avis_atencio'] or '-'}"
                      f" · perill {f['avis_perill'] or '-'} · desbordament {f['desbordament'] or '?'}"
                      for f in files_)
 

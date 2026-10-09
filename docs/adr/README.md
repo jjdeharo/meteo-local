@@ -5,7 +5,7 @@
 | [0001](0001-fuentes-de-datos-y-metodo-para-decidir-moto-o-coche.md) | Fuentes de datos y método para decidir moto o coche | aceptado |
 | [0002](0002-publicacion-en-github-pages-con-una-accion-programada.md) | Publicación en GitHub Pages con una acción programada | sustituido en parte por el 0005 |
 | [0003](0003-calibracion-con-datos-reales-se-mantiene-la-regla.md) | Calibración con datos reales: se mantiene la regla | aceptado |
-| [0004](0004-estacion-de-montflorit-de-meteocerdanyola-com.md) | Estación de Montflorit de meteocerdanyola.com | aceptado |
+| [0004](0004-estacion-de-montflorit-de-meteocerdanyola-com.md) | Estación de Montflorit de meteocerdanyola.com | sustituido por el 0058 |
 | [0005](0005-actualizacion-desde-el-nas-y-publicacion-en-la-rama-gh-pages.md) | Actualización desde el NAS y publicación en la rama gh-pages | aceptado |
 | [0006](0006-registro-de-aciertos-y-de-todas-las-senales.md) | Registro de aciertos y de todas las señales | aceptado |
 | [0007](0007-pagina-del-tiempo-en-casa.md) | Página del tiempo en casa | aceptado |
@@ -59,5 +59,6 @@
 | [0055](0055-avisos-oficiales-al-canal-y-prevision-de-la-noche.md) | Avisos oficiales nuevos al canal, y la previsión de la noche aparte | aceptado |
 | [0056](0056-pagina-com-funciona-y-metodologia-completa.md) | Página «Com funciona» y metodología completa | aceptado |
 | [0057](0057-correcciones-de-la-auditoria-del-9-de-octubre.md) | Correcciones de la auditoría del 9 de octubre de 2026 | aceptado |
+| [0058](0058-retirada-de-la-estacion-de-montflorit-de-meteocerdanyola-com.md) | Retirada de la estación de Montflorit de meteocerdanyola.com | aceptado |
 
 Plantilla: [0000-plantilla.md](0000-plantilla.md). Para crear uno: `nuevo-adr "Título"`.

@@ -7,6 +7,9 @@ al ver que le llegaba repetido): lo reciben todos por las notificaciones, el
 bot y el canal (`avisos_bot.py`, ADR 0034 y 0048), con la misma detección.
 Este programa sigue llevando el estado y el registro.
 
+
+**09-10-2026 (ADR 0058).** La lluvia de Montflorit deja de guardarse y de decirse en el aviso (`montflorit_3h` y `montflorit_3h_max` desaparecen). El Fabra sigue igual.
+
 ## Contexto
 
 La riera de Sant Cugat nace en Collserola, en la zona de Les Planes, cruza

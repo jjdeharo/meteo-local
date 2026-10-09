@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 """Pruebas de la comprobación del final de la lluvia (fi_pluja.py, ADR 0049)
-y de la lluvia de Montflorit cada 5 minutos (registre.py)."""
+con la lluvia de casa cada 5 minutos (registre.py)."""
 import datetime as dt
 import json
 import os
@@ -22,12 +22,12 @@ def t(hhmm, dia=6):
 
 class CincMinuts(unittest.TestCase):
     def test_trams_complets(self):
-        fila = lambda hhmm, prec: {"dt_local": f"2026-10-06T{hhmm}:00", "PREC": prec}
+        fila = lambda hhmm, prec: {"t": t(hhmm), "pluja_avui": prec}
         filas = [fila("20:03", 1.0), fila("20:05", 1.2), fila("20:07", 1.6), fila("20:10", 2.0), fila("20:12", 2.2)]
-        cincs = R.cincs_montflorit(filas)
+        cincs = R.cincs_casa(filas)
         # El de 20:00 a 20:05 comença a les 20:03: no és complet; el de 20:10 a 20:15 tampoc.
-        self.assertEqual(list(cincs), [dt.datetime(2026, 10, 6, 20, 10)])
-        self.assertAlmostEqual(cincs[dt.datetime(2026, 10, 6, 20, 10)], 0.8)
+        self.assertEqual(list(cincs), [t("20:10")])
+        self.assertAlmostEqual(cincs[t("20:10")], 0.8)
 
 
 class Final(unittest.TestCase):
@@ -48,7 +48,7 @@ class Final(unittest.TestCase):
     def test_resultat_i_avis_una_vegada(self):
         with tempfile.TemporaryDirectory() as d:
             F.DIR, F.APRENENTATGE, F.AVIS = d, d, os.path.join(d, "avis-fi-pluja")
-            with open(os.path.join(d, "montflorit-5min.csv"), "w") as f:
+            with open(os.path.join(d, "estacio-casa-5min.csv"), "w") as f:
                 f.write("fins,pluja_mm\n" + "".join(f"2026-10-06T{h},{mm}\n" for h, mm in
                         (("20:05", 0.4), ("20:10", 1.0), ("20:15", 0.6), ("20:20", 0.0), ("21:00", 0.0))))
             linia = lambda hora, prob: json.dumps({"t": f"2026-10-06T{hora}+02:00", "triada": "meteocat",

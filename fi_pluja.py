@@ -19,9 +19,11 @@ Juanjo y se aplica al día siguiente, como el aprendizaje de la lluvia
 (aprenentatge.py); el archivo «atura» lo para. Se guarda en
 aprenentatge/fi-pluja.json; la propuesta, en fi-pluja-proposat.json.
 
-Aquí se compara con la lluvia de Montflorit cada 5 minutos
-(montflorit-5min.csv, registre.py): episodios con lluvia separados por
-menos de BUIT_MIN minutos; su final, el último tramo con lluvia. Se juzgan
+Aquí se compara con la lluvia de la estación de casa cada 5 minutos
+(estacio-casa-5min.csv, registre.py): episodios con lluvia separados por
+menos de BUIT_MIN minutos; su final, el último tramo con lluvia. El
+pluviómetro a veces no marca la lluvia débil (ADR 0017): un final que vea
+antes de tiempo cuenta como error de la regla, no se corrige. Se juzgan
 las pasadas registradas mientras llovía (radar-fonts-*.jsonl, con el radar
 que usaba la página). El día en que hay MIN_EPISODIS episodios, el NAS manda
 el resultado a Juanjo una vez, para decidir si se muestra.
@@ -54,8 +56,8 @@ ENCERT_MIN = 15         # acierto: a 15 minutos o menos del final real
 
 
 def pluja_5min():
-    """{fin del tramo: mm} de Montflorit."""
-    ruta = os.path.join(DIR, "montflorit-5min.csv")
+    """{fin del tramo: mm} de la estación de casa."""
+    ruta = os.path.join(DIR, "estacio-casa-5min.csv")
     if not os.path.exists(ruta):
         return {}
     with open(ruta, encoding="utf-8") as f:

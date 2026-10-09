@@ -59,24 +59,22 @@ class Ecowitt(unittest.TestCase):
 
 
 class Casa(unittest.TestCase):
-    def test_llueve_ahora_en_cualquiera_de_las_dos(self):
-        self.assertFalse(casa.llueve_ahora_en({"intensitat": 0, "pluja_30min": 0}, {"plou": False}))
-        self.assertTrue(casa.llueve_ahora_en({"intensitat": 0, "pluja_30min": 0}, {"plou": True}))
-        self.assertTrue(casa.llueve_ahora_en(None, {"plou": True}))
-        self.assertTrue(casa.llueve_ahora_en({"intensitat": 2.0}, None))
-        # Amb el valor nou, només la pluja dels últims 15 minuts (08-10-2026).
-        self.assertFalse(casa.llueve_ahora_en({"pluja_15min": 0, "intensitat": 0.8, "pluja_30min": 0.6}, None))
-        self.assertTrue(casa.llueve_ahora_en({"pluja_15min": 0.2, "intensitat": 0}, None))
+    def test_llueve_ahora_solo_si_casa_marca(self):
+        # Només el pluviòmetre de casa, i només el sí (ADR 0017 i 0058).
+        self.assertFalse(casa.llueve_ahora_en({"plou": False, "intensitat": 0.8}))
+        self.assertTrue(casa.llueve_ahora_en({"plou": True}))
+        self.assertFalse(casa.llueve_ahora_en(None))
 
     def test_error_del_modelo_al_prever(self):
         h = {"time": ["2026-10-05T10:00", "2026-10-05T11:00"],
              "temperature_2m_meteofrance_seamless": [18.0, 20.0]}
         est = {"hora": "2026-10-05T10:30+02:00", "temperatura": 17.0, "rosada": 15.5, "pluja_1h": 0.4}
-        d = casa.al_prever(None, h, {"pluja_1h": 1.0}, est)
+        d = casa.al_prever(None, h, est)
         self.assertEqual(d["error_temp_ara"], 2.0)      # 19,0 del modelo a las 10:30 - 17,0
         self.assertEqual(d["deficit_rosada_ara"], 1.5)
-        self.assertEqual(d["pluja_1h_emes"], 1.0)       # la mayor de las dos estaciones
-        self.assertIsNone(casa.al_prever(None, h, None, None)["error_temp_ara"])
+        self.assertEqual(d["pluja_1h_emes"], 0.4)       # la lluvia de la última hora en casa
+        self.assertIsNone(casa.al_prever(None, h, None)["error_temp_ara"])
+        self.assertIsNone(casa.al_prever(None, h, None)["pluja_1h_emes"])
 
 
 class Registre(unittest.TestCase):

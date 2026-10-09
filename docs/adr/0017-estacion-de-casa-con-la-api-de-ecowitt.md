@@ -21,6 +21,9 @@ datos no lo muestran. La regla de no fiarse de sus ceros
 (`PLUVIOMETRE_CASA_FIABLE_FINS`) se mantiene mientras la vigilancia, ya con
 datos buenos, no dé su resultado.
 
+
+**09-10-2026 (ADR 0058).** Montflorit se retiró: casa es la única estación del barrio. «Plou ara» lo dice solo su pluviómetro; su cero se muestra como «no plou» con la advertencia de la llovizna. La vigilancia del pluviómetro compara con la menor de las lluvias de Sabadell y Sant Cugat en cada hora.
+
 ## Contexto
 
 Juanjo tiene una estación Ecowitt en casa, a unos 300-400 m de la de

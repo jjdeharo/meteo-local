@@ -51,14 +51,17 @@ Operations at Mesoscale*) es el de Météo-France, a 1,5 km en su versión HD y
 a 2,5 km en la normal, e ICON-EU (*ICOsahedral Nonhydrostatic*) es el del
 servicio meteorológico alemán, a 7 km. En cada pasada, el servidor guarda:
 
-- **Lo que midió la estación de Montflorit**, hora a hora: la lluvia de la
-  hora y la temperatura y la humedad en la hora en punto. La estación solo
-  ofrece las últimas 24 horas, así que lo que no se guarda se pierde.
 - **Lo que midió una estación particular del barrio** («la estación de
   casa»), hora a hora: la lluvia de la hora y la temperatura, la humedad, el
-  punto de rocío, la presión y la radiación en la hora en punto. Ecowitt, el
-  fabricante, guarda su historial, y cada día se rellenan las horas que
-  falten. Su pluviómetro solo cuenta cuando marca lluvia (ADR 0017).
+  punto de rocío, la presión y la radiación en la hora en punto, y la lluvia
+  cada 5 minutos. Ecowitt, el fabricante, guarda su historial, y cada día se
+  rellenan las horas que falten. Su pluviómetro solo cuenta cuando marca
+  lluvia (ADR 0017). Hasta el 09-10-2026 se guardaba también lo que medía la
+  estación de Montflorit de meteocerdanyola.com, retirada desde entonces
+  (ADR 0058).
+- **La lluvia por horas de las estaciones de Meteocat** de Sabadell y Sant
+  Cugat (a 2,5 y 4,6 km): cuando el pluviómetro de casa marca cero, la hora
+  solo cuenta como seca si ellas tampoco recogieron nada (ADR 0058).
 - **Lo que daban los modelos**, una vez por hora y para las 24 horas
   siguientes: la lluvia de los tres modelos finos (AROME HD, AROME e ICON-EU),
   la fracción de las 40 simulaciones del conjunto ICON-EU-EPS con lluvia, la
@@ -114,7 +117,7 @@ moja en moto (`UMBRAL_MM` de `config.py`).
 | Hora del día | $\sin(2\pi h / 24)$ y $\cos(2\pi h / 24)$, con $h$ la hora en que acaba el tramo | Las tormentas de tarde no se reparten igual que la lluvia de frente |
 | Día del año | $\sin(2\pi d / 365{,}25)$ y $\cos(2\pi d / 365{,}25)$ | La lluvia de otoño no es la de verano |
 | Fracción del conjunto* | de 0 a 1 | Cuántas de las 40 simulaciones de ICON-EU-EPS ven lluvia |
-| Lluvia medida al prever* | $\ln(1 + \text{mm de la última hora})$ si $t \le 4$; si no, 0. La mayor de Montflorit y casa | Si ya llueve, es probable que siga |
+| Lluvia medida al prever* | $\ln(1 + \text{mm de la última hora})$ en casa si $t \le 4$; si no, 0 | Si ya llueve, es probable que siga |
 | Sequedad del aire al prever* | $\min(\max(T - T_d, 0), 15) / 10$ en casa si $t \le 4$; si no, 0 | Con el aire seco, la lluvia cercana es menos probable |
 | Lluvia en Sant Cugat al prever*† | $\ln(1 + \text{mm de la última hora})$ en la estación de Meteocat de Sant Cugat (4,6 km al oeste, en la cuenca de la riera) si $t \le 4$; si no, 0 | Lo que llueve cerca puede llegar o anticipar. Es una hipótesis: se ajusta en una variante aparte y solo se adopta si acierta más (ADR 0042) |
 
@@ -124,8 +127,9 @@ Meteorològic de Catalunya.
 
 ### 2.1 Primer modelo: el archivo de 2024-2026
 
-Montflorit no tiene historial, así que el primer modelo se ajusta con lo que
-sí lo tiene (`calibracio/pluja_casa.py`):
+La estación de casa no tiene historial de lluvia en el que fiarse (ADR
+0017), así que el primer modelo se ajusta con lo que sí lo tiene
+(`calibracio/pluja_casa.py`):
 
 - previsiones archivadas de Open-Meteo para el barrio, del 01-01-2024 al
   04-10-2026, a corto plazo y hechas un día antes;
@@ -200,12 +204,13 @@ o más.
 Después de comprobarlo, el modelo se ajusta con todos los datos. Sus pesos y
 las dos tablas están en `calibracio/pluja_casa.json`.
 
-### 2.2 Segundo modelo: los datos de Montflorit y de casa
+### 2.2 Segundo modelo: los datos de casa
 
-Una hora cuenta como lluviosa si Montflorit recoge 0,2 mm o más o si los
-recoge casa: el pluviómetro de casa a veces no marca la lluvia débil, pero lo
-que marca es lluvia (ADR 0017). Sin dato de Montflorit, una hora seca en casa
-no se usa.
+Una hora cuenta como lluviosa si casa recoge 0,2 mm o más: el pluviómetro a
+veces no marca la lluvia débil, pero lo que marca es lluvia (ADR 0017). Una
+hora con cero en casa cuenta como seca solo si las estaciones de Meteocat de
+Sabadell y Sant Cugat tampoco recogieron nada en ella; si alguna recogió
+lluvia, no se sabe qué pasó en casa y la hora no se usa (ADR 0058).
 
 Cuando el registro reúna **30 horas con lluvia** (horas observadas distintas:
 cada hora se prevé muchas veces, con distintas antelaciones, y no cuenta más
@@ -455,9 +460,8 @@ y la lluvia esperada es la mediana de $\text{mm}(h+k)$ en esas horas:
 | 1 mm o más | 78 % (1,1 mm) | 56 % (0,3 mm) | 44 % (0,1 mm) | 38 % (0 mm) | 859 |
 | 4 mm o más | 86 % (2,0 mm) | 57 % (0,4 mm) | 43 % (0 mm) | 38 % (0 mm) | 245 |
 
-Se aplica con la lluvia de la última hora, la mayor de Montflorit y casa, a
-las cuatro primeras filas de la tabla: la primera, la hora en curso, usa
-$k = 1$.
+Se aplica con la lluvia de la última hora en casa a las cuatro primeras
+filas de la tabla: la primera, la hora en curso, usa $k = 1$.
 
 ## 6. Cómo se calcula cada hora de la tabla
 
@@ -482,9 +486,8 @@ Para cada hora, en este orden (`casa.py`, `previsio`):
    $p_{\text{radar}}$ si es mayor y llega al 20 %; los milímetros suben a
    $\text{mm}_{\text{radar}}$ si es mayor, llega a 0,2 mm y el radar cubre al
    menos 30 minutos de la hora. Nunca baja nada. Estas cifras llevan «†».
-6. **Lo medido manda**: si ahora llueve en Montflorit (ha recogido lluvia en
-   los últimos 15 minutos) o casa marca lluvia, la primera hora es «Plou ara»
-   con el 100 %.
+6. **Lo medido manda**: si casa ha recogido lluvia en los últimos 15
+   minutos, la primera hora es «Plou ara» con el 100 %.
 
 **Cuántas horas.** Desde la versión 3.40.0 (ADR 0041), la tabla llega a 24
 horas como mínimo y hasta las 21 h de mañana. Acaba siempre al final de un
@@ -557,8 +560,8 @@ estación de casa y ejecuta `aprenentatge.py diari`:
 El mismo día se comparan también los dos radares (`radar_fonts.py`, ADR
 0026). En cada pasada se apunta la probabilidad que daba cada uno para casa,
 $p_M$ (Meteocat) y $p_R$ (RainViewer), con su última imagen y el mismo
-movimiento, y si llovía en ese momento en Montflorit o en casa ($o = 1$ u
-$o = 0$). Para cada hora prevista entre 10 y 60 minutos después de la
+movimiento, y si llovía en ese momento en casa ($o = 1$ u $o = 0$; sin la
+estación, la pasada no cuenta). Para cada hora prevista entre 10 y 60 minutos después de la
 pasada, con una observación a menos de 4 minutos, se calcula la puntuación de
 Brier de los últimos 30 días:
 
@@ -589,9 +592,11 @@ Si no pasa en las dos horas del radar, «no s'acaba en 2 hores». La regla de
 partida es $u = 0{,}2$ y $s = 3$, es decir, menos del 20 % durante 15
 minutos.
 
-**Qué es la verdad.** La lluvia de Montflorit cada 5 minutos: un episodio son
-los tramos con lluvia separados por menos de 30 minutos secos, y su final, el
-último tramo con lluvia. Se juzgan las pasadas registradas mientras llovía,
+**Qué es la verdad.** La lluvia de casa cada 5 minutos: un episodio son los
+tramos con lluvia separados por menos de 30 minutos secos, y su final, el
+último tramo con lluvia. Como el pluviómetro a veces no marca la lluvia
+débil, un final real puede quedar antes de tiempo; se acepta como ruido de
+la medida (ADR 0058). Se juzgan las pasadas registradas mientras llovía,
 con el radar que usaba la página. El error de una pasada es
 $\lvert t_{\text{fi}} - t_{\text{real}} \rvert$ en minutos. Si la regla no da
 final, el error es cero cuando el final real cae más allá del horizonte del
@@ -631,7 +636,7 @@ y la propuesta espera un día.
 Tras cada pasada se mira cuántos minutos faltan para la llegada que da el
 radar, el primer paso con $p(t) \ge 0{,}5$ (`pluja_arriba.py`, ADR 0022). Si
 faltan 21 o menos (15 minutos más el intervalo de 6 del modo aviso) y aún no
-llueve en Montflorit ni en casa, se avisa a los suscriptores (ADR 0048). La
+llueve en casa, se avisa a los suscriptores (ADR 0048). La
 intensidad que se anuncia es el máximo de $\hat R$ en los 30 minutos
 siguientes a la llegada: feble por debajo de 1 mm/h, moderada desde 1 y forta
 desde 4.
@@ -681,10 +686,9 @@ cercano está en el Ripoll, en Montcada, aguas abajo. Solo queda la lluvia.
 Decide la de la estación de Meteocat de Sant Cugat (CAR, código XV), en
 medio de la cuenca, por medias horas y unos 30 minutos por detrás, leída en
 la web de meteo.cat o, si falla, en el portal de datos abiertos de la
-Generalitat. Se guardan y se dicen en el aviso, pero no deciden, la del
+Generalitat. Se guarda y se dice en el aviso, pero no decide, la del
 Observatori Fabra (D5), en la cresta de Collserola junto a donde nace la
-riera, y la de Montflorit, en la parte baja: aún no hay historial para saber
-qué umbral les corresponde. A lo medido se suma lo que el radar lleva hacia
+riera: aún no hay historial para saber qué umbral le corresponde. A lo medido se suma lo que el radar lleva hacia
 delante sobre el centro de la cuenca (apartado 4), que cubre también la
 media hora que la estación va por detrás.
 
@@ -762,8 +766,8 @@ cuando acierta, la atención habría llegado a las 18:30, a las 10:30 y a las
 
 El aviso de atención y el de peligro van a todo el mundo igual: al canal de
 Telegram, a cada persona que lo ha elegido en el bot y a las notificaciones
-del navegador (ADR 0034 y 0048), con la lluvia de Sant Cugat, del Fabra y
-de Montflorit y lo que el radar prevé para la hora siguiente. Al cerrarse el
+del navegador (ADR 0034 y 0048), con la lluvia de Sant Cugat y del Fabra y
+lo que el radar prevé para la hora siguiente. Al cerrarse el
 episodio llega un solo mensaje de final (ADR 0027). La web pública no
 muestra el índice: solo los avisos. Los textos dicen que el aviso está en
 pruebas y no es oficial, y que mandan siempre las indicaciones de Protección
@@ -776,8 +780,8 @@ ningún aviso real.
 
 ## 13. Cuando los modelos no ven la lluvia
 
-En cada pasada se suman la lluvia medida en Montflorit en las tres últimas
-horas completas, $M$, y la que daban los modelos en esas horas, $P$ (el
+En cada pasada se suman la lluvia medida en casa en las tres últimas horas
+completas, $M$, y la que daban los modelos en esas horas, $P$ (el
 máximo de los tres, hora a hora). Si
 
 ```math
@@ -972,9 +976,10 @@ página.
 Detalles internos para la persona que mantiene el código.
 
 **Dónde se guarda.** En el servidor doméstico (un NAS, *Network Attached
-Storage*), en `/estat/registre/`: `montflorit.csv` y `estacio-casa.csv` (lo
-medido hora a hora), `montflorit-5min.csv` (la lluvia de Montflorit cada 5
-minutos), `casa-AAAA-MM.jsonl` (lo previsto), `radar-fonts-*.jsonl` (lo que
+Storage*), en `/estat/registre/`: `estacio-casa.csv` (lo medido hora a
+hora), `estacio-casa-5min.csv` (la lluvia de casa cada 5 minutos),
+`meteocat-XF.csv` y `meteocat-XV.csv` (la lluvia por horas de Sabadell y
+Sant Cugat), `casa-AAAA-MM.jsonl` (lo previsto), `radar-fonts-*.jsonl` (lo que
 daba cada radar), `moto.csv` (la regla de la moto), `avisos-pluja.csv`
 (episodios del aviso de lluvia) y `riera.csv` (episodios de la riera). Los
 modelos aprendidos, en `/estat/aprenentatge/`: `model.json`, `proposat.json`,
@@ -1003,7 +1008,8 @@ cifras), `python3 aprenentatge.py moto`, `python3 fi_pluja.py resum`,
 
 **El pluviómetro de casa** (`pluviometre.py`, ADR 0017). Su cero no es
 fiable: solo cuenta cuando marca lluvia. Tras limpiarlo, una vigilancia de una
-sola vez compara cada episodio débil de Montflorit (de 0,6 a 4 mm, con dos
+sola vez compara cada episodio débil de la referencia (lo que recogieron a
+la vez Sabadell y Sant Cugat, la menor de las dos; de 0,6 a 4 mm, con dos
 horas secas como mucho entre medias) con casa: cuenta como detectado si casa
 marca algo en él o en la hora de antes o de después. Con tres episodios
 débiles, o a los 45 días, se comunica el resultado para decidir si la página
@@ -1028,5 +1034,5 @@ vuelve a fiarse de su cero.
 | `calibracio/analitza.py`, `calibracio/calibracio.json` | La persistencia de la lluvia |
 | `calibracio/regla_moto.py` | Compara con el archivo las reglas de lluvia de la moto |
 | `calibracio/moviment_radar.py` | Comprueba de dónde medir el movimiento del radar |
-| `ecowitt.py`, `registre.py`, `pluviometre.py` | Leen y guardan lo que miden Montflorit y casa; vigilan el pluviómetro |
+| `ecowitt.py`, `registre.py`, `pluviometre.py` | Leen y guardan lo que miden casa y las estaciones de Meteocat; vigilan el pluviómetro |
 | `tests/test_aprenentatge.py`, `tests/test_estacio_casa.py` | Pruebas, con un registro inventado |

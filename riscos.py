@@ -144,21 +144,21 @@ def de_la_previsio(hores, ahora):
     return res
 
 
-def de_les_estacions(ara, casa):
-    """Lo que miden ahora: la lluvia de Montflorit y, si marca, la de casa; la
-    temperatura de casa (o la de Montflorit). El viento de las estaciones no
-    sirve aquí: Montflorit da la media y el anemómetro de casa no va bien."""
+def de_l_estacio(casa):
+    """Lo que mide ahora la estación de casa: la lluvia de la última hora,
+    solo si marca (su cero no es fiable, ADR 0017), y la temperatura. Ni el
+    viento (el anemómetro no va bien) ni la lluvia de 12 horas, que la
+    estación no da en cada pasada: ese riesgo sale solo de la previsión."""
     res = []
-    plujas = [x.get("pluja_1h") for x in (ara, casa if casa and casa.get("plou") else None)
-              if x and x.get("pluja_1h") is not None]
-    for r in (risc("pluja_1h", "ara", max(plujas)) if plujas else None,
-              risc("pluja_12h", "ara", ara.get("pluja_12h")) if ara else None):
+    if not casa:
+        return res
+    if casa.get("plou") and casa.get("pluja_1h") is not None:
+        r = risc("pluja_1h", "ara", casa["pluja_1h"])
         if r:
             res.append(r)
-    base = casa if casa and casa.get("temperatura") is not None else ara
-    if base and base.get("temperatura") is not None:
+    if casa.get("temperatura") is not None:
         for tipus in ("calor", "fred"):
-            r = risc(tipus, "ara", base["temperatura"])
+            r = risc(tipus, "ara", casa["temperatura"])
             if r:
                 res.append(r)
     return res
@@ -170,7 +170,7 @@ HORES_RISC = 24     # la tabla puede llegar a 38 para dar mañana entero (ADR 00
 def detecta(salida, ahora):
     """Riesgos de ahora y de las próximas 24 horas, el peor nivel primero."""
     hores = (salida.get("hores") or [])[:HORES_RISC]
-    res = de_les_estacions(salida.get("ara"), salida.get("ara_casa")) + de_la_previsio(hores, ahora)
+    res = de_l_estacio(salida.get("ara_casa")) + de_la_previsio(hores, ahora)
     return sorted(res, key=lambda r: -NIVELLS.index(r["nivell"]))
 
 

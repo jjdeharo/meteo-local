@@ -2,23 +2,17 @@
 """Datos fijos de «Temps a Montflorit»: lugares, horario, fuentes y umbrales.
 Se cambian aquí, no en los programas."""
 
-VERSION = "3.43.0"
+VERSION = "3.44.0"
 
 # Coordenadas con tres decimales (unos 100 m), no las exactas: para el tiempo
 # da igual una calle u otra, y el repositorio es público.
 CASA = (41.482, 2.135)      # Cerdanyola del Vallès (Montflorit)
 
-# Estaciones de meteocerdanyola.com (nombre en su web: nombre), minuto a
-# minuto. Montflorit es la del barrio.
-ESTACIONES_LOCALES = {
-    "cerdanyola_montflorit": "Cerdanyola (Montflorit)",
-}
-
-# La estación de casa (Ecowitt, API oficial; ADR 0017), a unos 300-400 m de
-# Montflorit. Temperatura, humedad, punto de rocío, presión y radiación son
-# fiables; el viento no se usa. El pluviómetro registró toda la lluvia hasta
-# PLUVIOMETRE_CASA_FIABLE_FINS; desde entonces a veces no marca la lluvia
-# débil, así que solo cuenta cuando marca lluvia.
+# La estación de casa (Ecowitt, API oficial; ADR 0017), en Montflorit: la
+# única del barrio desde la 3.44.0 (ADR 0058). Temperatura, humedad, punto de
+# rocío, presión y radiación son fiables; el viento no se usa. El pluviómetro
+# registró toda la lluvia hasta PLUVIOMETRE_CASA_FIABLE_FINS; desde entonces
+# a veces no marca la lluvia débil, así que solo cuenta cuando marca lluvia.
 ESTACIO_CASA = "Casa"
 PLUVIOMETRE_CASA_FIABLE_FINS = "2026-08-31"
 # La estación da la presión medida a su altura (la «relativa» de Ecowitt no
@@ -28,13 +22,14 @@ PLUVIOMETRE_CASA_FIABLE_FINS = "2026-08-31"
 # demás estaciones y los mapas (ADR 0037).
 ALTITUD_CASA_M = 70
 
-# El viento de ahora: el anemómetro de Montflorit marca casi siempre 0 (el
-# 07-10-2026, 0 en 1.072 de 1.094 minutos con 13 km/h en Open-Meteo), así que
-# se muestra el de la estación de Meteocat más cercana, por medias horas
-# (ADR 0037).
+# El viento de ahora: el anemómetro de la estación de casa no funciona bien,
+# así que se muestra el de la estación de Meteocat más cercana, por medias
+# horas (ADR 0037).
 VENT_ESTACIO = "XV"
 
-# Estaciones automáticas de Meteocat más próximas (código: nombre).
+# Estaciones automáticas de Meteocat más próximas (código: nombre). Su lluvia
+# por horas se registra: cuando el pluviómetro de casa marca cero, la hora
+# solo cuenta como seca si ellas tampoco recogieron nada (ADR 0058).
 ESTACIONES = {
     "XF": "Sabadell (Parc Agrari)",
     "XV": "Sant Cugat (CAR)",
@@ -49,7 +44,7 @@ HORARIO_CASA_AVISO = ("00:00", "23:54")
 INTERVALO_CASA_MIN = 15
 
 # Modo aviso: con aviso de AEMET vigente, plan de Protección Civil en alerta o
-# emergencia, lluvia en Montflorit o lluvia en el radar a menos de
+# emergencia, lluvia en casa o lluvia en el radar a menos de
 # RADAR_AVISO_KM de casa (o que llegará a casa en la próxima hora), la página
 # se actualiza cada 6 minutos: el ritmo del radar de Meteocat, que saca una
 # imagen a :00, :06, :12… y la publica unos 13-14 minutos después. Con el

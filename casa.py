@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: AGPL-3.0-or-later
-"""El tiempo en casa (Montflorit): lo que miden ahora la estación de casa y
-la de Montflorit y la previsión hora a hora para las próximas 24 horas.
+"""El tiempo en casa (Montflorit): lo que mide ahora la estación de casa y
+la previsión hora a hora para las próximas 24 horas.
 
 Los modelos pueden no ver un episodio (el 05-10-2026 daban 0,3 mm por hora
 mientras caían más de 20 mm/h y había alerta de Protección Civil). Por eso:
@@ -33,7 +33,6 @@ import entorn as EN
 import fi_pluja as FP
 import nowcast as N
 import pollen as PO
-import pluja_arriba as PA
 import prevision as P
 import radar_fonts as RF
 import registre as R
@@ -58,40 +57,6 @@ HORAS_PERSISTENCIA = 4      # las que tiene la tabla de calibracio.json
 # no puede decir que llueve (o que no) durante horas.
 ARA_MAX_MIN = 30
 HORAS_COMPROBACION = 3      # últimas horas en que se comparan modelos y estación
-
-
-def lluvia_entre(filas, ini, fin):
-    """mm medidos entre ini y fin con el acumulado diario minuto a minuto."""
-    mm = 0.0
-    for antes, despues in zip(filas, filas[1:]):
-        t = dt.datetime.fromisoformat(despues["dt_local"]).astimezone()
-        if ini < t <= fin:
-            salto = despues["PREC"] - antes["PREC"]
-            mm += despues["PREC"] if salto < 0 else salto
-    return round(mm, 1)
-
-
-def montflorit():
-    """Filas minuto a minuto de la estación y el resumen de ahora."""
-    slug = next(iter(C.ESTACIONES_LOCALES))
-    filas = json.loads(P.get_recent(P.METEOCERDANYOLA.format(slug))).get("rows", [])
-    filas = [f for f in filas if f.get("PREC") is not None]
-    if not filas:
-        return [], None
-    u = filas[-1]
-    hora = dt.datetime.fromisoformat(u["dt_local"]).astimezone()
-    if P.AHORA - hora > dt.timedelta(minutes=ARA_MAX_MIN):
-        raise RuntimeError(f"l'última lectura és de les {hora:%H:%M}")
-    # El viento de Montflorit no se publica: su anemómetro marca casi siempre
-    # 0 (config.VENT_ESTACIO, ADR 0037).
-    ara = {"hora": hora.isoformat(), "temperatura": u.get("TEMP"), "humitat": u.get("HUM"),
-           "vent": None, "pluja_avui": u.get("PREC"),
-           "pluja_15min": lluvia_entre(filas, hora - dt.timedelta(minutes=C.PLOU_ARA_MIN), hora),
-           "pluja_30min": lluvia_entre(filas, hora - dt.timedelta(minutes=30), hora),
-           "pluja_1h": lluvia_entre(filas, hora - dt.timedelta(hours=1), hora),
-           "pluja_12h": lluvia_entre(filas, hora - dt.timedelta(hours=12), hora),
-           "intensitat": u.get("PINT")}
-    return filas, ara
 
 
 def modelos(desde, errors=None):
@@ -152,9 +117,10 @@ def estacio_casa():
     return casa
 
 
-def llueve_ahora_en(ara, casa):
-    """Llueve ahora en Montflorit o en casa (en casa, solo cuenta el sí)."""
-    return PA.plou_estacio(ara) or bool(casa and casa.get("plou"))
+def llueve_ahora_en(casa):
+    """Llueve ahora en casa: el pluviómetro ha recogido lluvia en los últimos
+    PLOU_ARA_MIN minutos (config.py). Solo cuenta el sí (ADR 0017)."""
+    return bool(casa and casa.get("plou"))
 
 
 def temperatura_model_ara(h, ahora):
@@ -171,9 +137,9 @@ def temperatura_model_ara(h, ahora):
     return a + (b - a) * (ahora - ini).total_seconds() / 3600
 
 
-def al_prever(desde, h, ara, casa, riera=None):
+def al_prever(desde, h, casa, riera=None):
     """Lo que medían las estaciones al prever y usa el aprendizaje: la lluvia
-    de la última hora (la mayor de las dos), lo que se equivocaba el modelo
+    de la última hora en casa, lo que se equivocaba el modelo
     de temperatura en casa, lo seco que estaba el aire y la lluvia de la
     última hora en Sant Cugat (la misma que guarda el registro, ADR 0042;
     hasta la auditoría del 09-10-2026 la variante se entrenaba con ella pero
@@ -181,8 +147,7 @@ def al_prever(desde, h, ara, casa, riera=None):
     Sin dato reciente de Sant Cugat (riera None: más de 2 horas), None, y
     esa variante usa el archivo en las primeras horas; el error «riera: …»
     de la pasada lo deja apuntado."""
-    plujas = [x.get("pluja_1h") for x in (ara, casa) if x and x.get("pluja_1h") is not None]
-    d = {"pluja_1h_emes": max(plujas) if plujas else None,
+    d = {"pluja_1h_emes": casa.get("pluja_1h") if casa else None,
          "error_temp_ara": None, "deficit_rosada_ara": None,
          "pluja_1h_xv": (riera or {}).get("mm_1h")}
     if casa and casa.get("temperatura") is not None:
@@ -258,14 +223,14 @@ def variables_hora(desde, h, prob, i, prever):
     return d
 
 
-def previsio(desde, h, e, ara, avisos, model=None, casa=None, nc=None, planes=None, riera=None):
+def previsio(desde, h, e, avisos, model=None, casa=None, nc=None, planes=None, riera=None):
     """Una fila por tramo de una hora («de 10 a 11»), de la hora actual a 24
     horas después como mínimo, hasta las 21 h de mañana y acabando un tramo
     del día (FI_TRAMS). Open-Meteo da la lluvia acumulada en la hora anterior: el
     tramo de 10 a 11 se lee en la hora 11:00, y los demás valores también."""
     prob = prob_ensemble(e)
-    llueve_ahora = llueve_ahora_en(ara, casa)
-    prever = al_prever(desde, h, ara, casa, riera)
+    llueve_ahora = llueve_ahora_en(casa)
+    prever = al_prever(desde, h, casa, riera)
     ultima_hora = prever["pluja_1h_emes"] or 0.0
 
     def valor(campo, i):
@@ -339,16 +304,16 @@ def previsio(desde, h, e, ara, avisos, model=None, casa=None, nc=None, planes=No
     return filas
 
 
-def filas_registro(desde, h, e, ara, mostradas, casa=None, avisos=None, planes=None, riera=None):
+def filas_registro(desde, h, e, mostradas, casa=None, avisos=None, planes=None, riera=None):
     """Todo lo que los modelos daban para cada hora de la tabla, junto a lo que
     mostró la página: lo que hace falta para aprender de los fallos (ADR 0012)."""
     prob = prob_ensemble(e)
     indice = {t: i for i, t in enumerate(h["time"])}
-    prever = al_prever(desde, h, ara, casa, riera)
+    prever = al_prever(desde, h, casa, riera)
     filas = []
     for f in mostradas:
         d = variables_hora(desde, h, prob, indice[f["fins"]], prever)
-        d.pop("pluja_1h_emes")      # ya va en «ara» y «ara_casa», una vez por línea
+        d.pop("pluja_1h_emes")      # ya va en «ara_casa», una vez por línea
         d.pop("pluja_1h_xv", None)  # ya va en «sant_cugat», una vez por línea
         fin = dt.datetime.fromisoformat(f["fins"]).astimezone()
         d.update(senyals_avis(fin - dt.timedelta(hours=1), fin, avisos, planes))
@@ -363,7 +328,7 @@ def filas_registro(desde, h, e, ara, mostradas, casa=None, avisos=None, planes=N
     return filas
 
 
-def previsio_anterior(origen, ara, avisos, casa=None):
+def previsio_anterior(origen, avisos, casa=None):
     """Las horas que aún no han pasado de la última previsión buena, con los
     avisos y la lluvia de ahora. None si no la hay o tiene más de
     CASA_PREVISION_ANTERIOR_MAX_H horas."""
@@ -386,7 +351,7 @@ def previsio_anterior(origen, ara, avisos, casa=None):
     hores = [dict(f) for f in antes["hores"] if f["fins"] > ara_hora]
     if not hores:
         return None
-    llueve_ahora = llueve_ahora_en(ara, casa)
+    llueve_ahora = llueve_ahora_en(casa)
     for n, f in enumerate(hores):
         fin = dt.datetime.fromisoformat(f["fins"]).astimezone()
         f["avisos"] = avisos_del_tramo(fin - dt.timedelta(hours=1), fin, avisos)
@@ -397,13 +362,16 @@ def previsio_anterior(origen, ara, avisos, casa=None):
 
 
 def comprobacion_modelos(desde, h, filas_estacion):
-    """Lluvia medida y prevista en las últimas horas completas. Si los modelos
-    se han quedado muy cortos, la página lo dice."""
+    """Lluvia medida en casa y prevista en las últimas horas completas. Si
+    los modelos se han quedado muy cortos, la página lo dice. Solo si las
+    lecturas de la estación (ecowitt.resum_ara) cubren esas horas."""
     if not filas_estacion:
         return None
     fin = desde.replace(minute=0, second=0, microsecond=0)
     ini = fin - dt.timedelta(hours=HORAS_COMPROBACION)
-    medida = lluvia_entre(filas_estacion, ini, fin)
+    if filas_estacion[0]["t"] > ini or filas_estacion[-1]["t"] < fin:
+        return None
+    medida = E.pluja_entre(filas_estacion, ini, fin)
     prevista = 0.0
     for i, t in enumerate(h["time"]):
         tt = dt.datetime.fromisoformat(t).astimezone()
@@ -417,12 +385,7 @@ def comprobacion_modelos(desde, h, filas_estacion):
 def recoger(anterior=None):
     salida = {"versio": C.VERSION, "generat": P.AHORA.isoformat(timespec="minutes"),
               "errors": []}
-    filas_estacion, ara = [], None
-    try:
-        filas_estacion, ara = montflorit()
-    except Exception as ex:
-        salida["errors"].append(f"estació: {ex}")
-    salida["ara"] = ara
+    # La estación del barrio es la de casa, en «ara_casa» (ADR 0017 y 0058).
     casa = None
     try:
         casa = estacio_casa()
@@ -451,8 +414,7 @@ def recoger(anterior=None):
         radar = P.radar()
     except Exception as ex:
         salida["errors"].append(f"radar: {ex}")
-    obs = [{"intensitat": ara.get("intensitat"), "mm_ultima_media_hora": ara.get("pluja_30min")}] if ara else []
-    obs += [o for o in [E.observacio(casa, C.ESTACIO_CASA)] if o]
+    obs = [o for o in [E.observacio(casa, C.ESTACIO_CASA)] if o]
     motivos = P.motivos_modo_aviso(avisos, planes, obs, radar)
     # En modo aviso, todo el día: hasta las 23:50, no solo hasta las 23:00.
     nc = (radar or {}).get("nowcast")
@@ -472,11 +434,7 @@ def recoger(anterior=None):
     # La riera de Sant Cugat: lo que ha llovido en la cuenca y lo que trae el
     # radar, para el aviso por Telegram (ADR 0027).
     try:
-        m3 = None
-        if ara:
-            hora = dt.datetime.fromisoformat(ara["hora"])
-            m3 = lluvia_entre(filas_estacion, hora - dt.timedelta(hours=C.RIERA_HORES), hora)
-        salida["riera"] = RI.calcula(P.AHORA, nc, montflorit_3h=m3)
+        salida["riera"] = RI.calcula(P.AHORA, nc)
         if salida["riera"] is None:
             salida["errors"].append("riera: Sant Cugat (Meteocat) sense dades recents")
         elif salida["riera"].get("incomplet"):
@@ -490,13 +448,13 @@ def recoger(anterior=None):
         h, e = modelos(P.AHORA, salida["errors"])
         model = A.carrega()
         salida["aprenentatge"] = A.resum_pagina(model)
-        salida["hores"] = previsio(P.AHORA, h, e, ara, avisos, model, casa, nc, planes, salida.get("riera"))
-        salida["models"] = comprobacion_modelos(P.AHORA, h, filas_estacion)
+        salida["hores"] = previsio(P.AHORA, h, e, avisos, model, casa, nc, planes, salida.get("riera"))
+        salida["models"] = comprobacion_modelos(P.AHORA, h, (casa or {}).get("files", []))
     except Exception as ex:
         salida["hores"] = salida["models"] = None
         salida["errors"].append(f"previsió: {ex}")
         # Sin modelos: la última previsión buena, si es reciente, avisando.
-        antes = previsio_anterior(anterior, ara, avisos, casa)
+        antes = previsio_anterior(anterior, avisos, casa)
         if antes:
             salida.update(antes)
     # Para «Si surts» (ADR 0029): el índice UV de cada hora y si circulan los
@@ -537,25 +495,29 @@ def recoger(anterior=None):
     salida["errors"] += [f"entorn: {e}" for e in salida["entorn"].pop("errors")]
     # Situaciones de peligro según lo medido y lo previsto (ADR 0018).
     salida["riscos"] = RS.detecta(salida, P.AHORA)
-    # Registro para aprender (solo en el NAS, que tiene /estat): lo que medían
-    # Montflorit y la estación de casa y, una vez por hora, lo que daban los
-    # modelos.
+    # Registro para aprender (solo en el NAS, que tiene /estat): lo que medía
+    # la estación de casa, por horas y cada 5 minutos, la lluvia por horas de
+    # las estaciones de Meteocat y, una vez por hora, lo que daban los modelos.
     if R.hay_registro():
         try:
-            R.apunta_montflorit(filas_estacion)
-            R.apunta_montflorit_5min(filas_estacion)
             if casa:
                 R.apunta_estacio_casa(E.hores(casa["files"]))
+                R.apunta_casa_5min(R.cincs_casa(casa["files"]))
             if salida["hores"] and not salida.get("previsio_de"):
                 r = salida.get("riera")
-                R.apunta_casa(P.AHORA, ara, filas_registro(P.AHORA, h, e, ara, salida["hores"][:HORAS], casa,
-                                                           avisos, planes, salida.get("riera")),
+                R.apunta_casa(P.AHORA, filas_registro(P.AHORA, h, e, salida["hores"][:HORAS], casa,
+                                                      avisos, planes, salida.get("riera")),
                               salida["ara_casa"], {"pluja_1h": r["mm_1h"], "fins": r["fins"]} if r else None)
         except Exception as ex:
             print("No he podido apuntar en el registro:", ex, file=sys.stderr)
+        for codi in C.ESTACIONES:
+            try:
+                R.apunta_meteocat(codi, R.hores_meteocat(RI.files(codi, P.AHORA, 6, None)))
+            except Exception as ex:
+                print(f"No he podido apuntar la estación {codi} de Meteocat:", ex, file=sys.stderr)
         # Lo que daba cada radar, para saber cuál acierta más (ADR 0026).
         try:
-            RF.apunta(P.AHORA, nc, ara, salida["ara_casa"])
+            RF.apunta(P.AHORA, nc, salida["ara_casa"])
         except Exception as ex:
             print("No he podido apuntar los radares:", ex, file=sys.stderr)
     return salida
@@ -567,7 +529,6 @@ if __name__ == "__main__":
         with open(sys.argv[sys.argv.index("--json") + 1], "w", encoding="utf-8") as f:
             json.dump(datos, f, ensure_ascii=False, indent=1)
     print(f"Generado {datos['generat']}", datos["errors"] or "")
-    print("Ahora:", datos["ara"])
     print("Casa:", datos["ara_casa"])
     print("Modelos:", datos["models"])
     print("Planes:", datos["plans"])

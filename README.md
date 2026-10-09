@@ -85,11 +85,13 @@ automáticos.
 
 Fuentes de la previsión:
 
-1. **Estaciones**: Montflorit (meteocerdanyola.com), minuto a minuto; la
-   particular (Ecowitt), cuya lluvia solo cuenta cuando marca (ADR 0017) y cuya
-   presión se reduce al nivel del mar (ADR 0037), y las de Meteocat en Sabadell
-   y Sant Cugat. El viento de ahora es el de Sant Cugat, por medias horas: el
-   anemómetro de Montflorit marca casi siempre 0 (ADR 0037).
+1. **Estaciones**: la particular del barrio (Ecowitt), al minuto, cuya lluvia
+   solo cuenta cuando marca (ADR 0017) y cuya presión se reduce al nivel del
+   mar (ADR 0037), y las de Meteocat en Sabadell y Sant Cugat, que además
+   confirman las horas secas para aprender (ADR 0058). El viento de ahora es
+   el de Sant Cugat, por medias horas: el anemómetro de la particular no
+   funciona bien (ADR 0037). La estación de Montflorit de meteocerdanyola.com
+   se usó del 05-10-2026 al 09-10-2026 (ADR 0004 y 0058).
 2. **Radar** de Meteocat o, si su imagen va 10 minutos por detrás, de
    RainViewer; una comparación diaria decide cuál acierta más (ADR 0026).
 3. **Modelos** de Open-Meteo (AROME HD, AROME e ICON-EU, y el ensemble
@@ -192,8 +194,6 @@ leer los datos de IONOS y usa la copia de su carpeta).
 Previsión de [Open-Meteo](https://open-meteo.com/) (CC BY 4.0), observaciones
 de [Meteocat](https://www.meteo.cat/observacions/xema) y del
 [portal de datos abiertos de la Generalitat](https://analisi.transparenciacatalunya.cat/d/nzvn-apee),
-estación de Montflorit de
-[meteocerdanyola.com](https://meteocerdanyola.com/2026/sites/cerdanyola_montflorit/index.html),
 estación particular con la [API de Ecowitt](https://doc.ecowitt.net/web/#/apiv3en?page_id=1),
 radar y advección de [Meteocat](https://www.meteo.cat/observacions/radar) y,
 de reserva, de [RainViewer](https://www.rainviewer.com/), avisos de AEMET a

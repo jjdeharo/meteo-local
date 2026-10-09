@@ -48,7 +48,7 @@ def dades(generat=ARA):
         h = (generat + dt.timedelta(hours=i)).replace(minute=0, tzinfo=None)
         hores.append({"hora": h.isoformat(timespec="minutes"), "fins": (h + dt.timedelta(hours=1)).isoformat(timespec="minutes"),
                       "temperatura": 15 + i % 10, "probabilitat": 0.4 if 12 <= h.hour < 15 else 0.0, "pluja_mm": 0})
-    return {"generat": generat.isoformat(timespec="minutes"), "ara": {"temperatura": 16.2, "intensitat": 0},
+    return {"generat": generat.isoformat(timespec="minutes"), "ara_casa": {"temperatura": 16.2, "intensitat": 0, "plou": False},
             "hores": hores, "trens": {"linies": [{"linia": "R4", "estat": "sense_trens"}, {"linia": "S2", "estat": "circula"}]},
             "avisos": [{"inicio": "2026-10-07T12:00:00+02:00", "fin": "2026-10-07T19:59:59+02:00", "nivel": "groc",
                         "tipo": "tempestes", "zona": "Prelitoral de Barcelona"}]}
@@ -172,13 +172,15 @@ class Resum(unittest.TestCase):
         d["hores"] = [f for f in d["hores"] if f["hora"][:10] == vespre.date().isoformat()]
         self.assertIn("no en porten", B.resum(d, "ca", vespre))
 
-    def test_sense_montflorit_el_zero_de_casa_no_diu_que_no_plou(self):
-        self.assertEqual(B.text_ara({"ara": None, "ara_casa": {"temperatura": 20, "plou": False}}, "es"),
-                         "Ahora mismo: 20 °C.")
-        self.assertEqual(B.text_ara({"ara": None, "ara_casa": {"temperatura": 20, "plou": True}}, "ca"),
+    def test_ara_nomes_amb_l_estacio_del_barri(self):
+        # Des de la 3.44.0 l'única estació és la particular (ADR 0058): el que marca mana.
+        self.assertEqual(B.text_ara({"ara_casa": {"temperatura": 20, "plou": False}}, "es"),
+                         "Ahora mismo: 20 °C, no llueve.")
+        self.assertEqual(B.text_ara({"ara_casa": {"temperatura": 20, "plou": True}}, "ca"),
                          "Ara mateix: 20 °C, plou.")
-        self.assertEqual(B.text_ara({"ara": {"intensitat": 0}, "ara_casa": {"temperatura": 20, "plou": False}}, "ca"),
-                         "Ara mateix: 20 °C, no plou.")
+        self.assertIsNone(B.text_ara({"ara_casa": None}, "ca"))
+        # Dades d'abans de la 3.44.0, amb «ara» de l'estació retirada: no es fan servir.
+        self.assertIsNone(B.text_ara({"ara": {"temperatura": 20, "intensitat": 0}, "ara_casa": None}, "ca"))
 
     def test_avis_aemet_que_ve_d_ahir(self):
         # Auditoria del 08-10-2026: un avís començat ahir i vigent avui no sortia.
@@ -225,14 +227,14 @@ class Resum(unittest.TestCase):
         d["radar"] = {"hora": ARA.isoformat(timespec="minutes"), "imatge": "rainviewer", "arriba": None,
                       "possible": ARA.isoformat(timespec="minutes"), "fi": (ARA + dt.timedelta(minutes=10)).isoformat(),
                       "sense_fi": False}
-        d["ara"]["intensitat"] = 0.8
+        d["ara_casa"].update(intensitat=0.8, plou=True)
         self.assertTrue(B.text_radar_bot(d, "ca", ARA).startswith(
             "Pluja a sobre. Pararia cap a les 07:10 (en entrenament: pot fallar)."))
         self.assertTrue(B.text_radar_bot(d, "es", ARA).startswith(
             "Lluvia encima. Pararía hacia las 07:10 (en entrenamiento: puede fallar)."))
         d["radar"].update(possible=None, fi=None)
         self.assertTrue(B.text_radar_bot(d, "ca", ARA).startswith("Pluja a sobre.\n"))
-        d["ara"]["intensitat"] = 0
+        d["ara_casa"].update(intensitat=0, plou=False)
         self.assertTrue(B.text_radar_bot(d, "ca", ARA).startswith("No s'acosta pluja en 2 hores."))
 
     def test_pluja_aquesta_nit(self):
@@ -283,14 +285,14 @@ class Resum(unittest.TestCase):
     def test_ara_amb_el_mateix_limit_i_l_hora_de_la_mesura(self):
         # Auditoría del 07-10-2026: /ara contestaba con medidas de hace horas.
         d = dades()
-        d["ara"]["hora"] = (ARA - dt.timedelta(minutes=9)).isoformat(timespec="minutes")
+        d["ara_casa"]["hora"] = (ARA - dt.timedelta(minutes=9)).isoformat(timespec="minutes")
         self.assertEqual(B.text_ara_bot(d, "ca", ARA), "Ara mateix a Montflorit: 16 °C, no plou. (mesura de les 06:51)")
         self.assertEqual(B.text_ara_bot(d, "es", ARA), "Ahora mismo en Montflorit: 16 °C, no llueve. (medida de las 06:51)")
         vell = dades(ARA - dt.timedelta(hours=3))
         self.assertIn("ara no puc dir el temps que fa", B.text_ara_bot(vell, "ca", ARA))
         self.assertIn("ahora no puedo decir el tiempo que hace", B.text_ara_bot(vell, "es", ARA))
         # Medida congelada con un generat reciente: tampoco.
-        d["ara"]["hora"] = (ARA - dt.timedelta(hours=5)).isoformat(timespec="minutes")
+        d["ara_casa"]["hora"] = (ARA - dt.timedelta(hours=5)).isoformat(timespec="minutes")
         self.assertIn("des de les 02:00", B.text_ara_bot(d, "ca", ARA))
         self.assertEqual(B.text_ara_bot({}, "ca", ARA), B.T["ca"]["velles_ara"].format("?"))
 
@@ -652,7 +654,7 @@ class AvisosPublics(unittest.TestCase):
     def test_riera_amb_avis_orientatiu(self):
         estat = {}
         riera = {"fins": ARA.isoformat(), "mm_3h": 52, "mm_6h": 70, "radar_1h": 3.0, "index": 55, "index_6h": 75,
-                 "capcalera": None, "montflorit_3h": None}
+                 "capcalera": None}
         nous = AB.decideix(estat, {"riera": riera}, ARA)
         self.assertEqual(nous[0]["nivell"], "perill")
         self.assertTrue(nous[0]["ca"].startswith("<b>Perill de desbordament de la riera de Sant Cugat a Montflorit</b>"))

@@ -2,6 +2,9 @@
 
 Fecha: 2026-10-05 · Estado: aceptado
 
+
+**09-10-2026 (ADR 0058).** Montflorit ya no se registra ni es verdad de nada. La verdad de la lluvia es la estación de casa; su cero solo cuenta como hora seca si Sabadell y Sant Cugat (Meteocat, `meteocat-XF.csv` y `meteocat-XV.csv`) tampoco recogieron nada.
+
 ## Contexto
 
 La página de casa daba como probabilidad de lluvia la fracción de las 40

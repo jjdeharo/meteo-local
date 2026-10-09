@@ -2,6 +2,9 @@
 
 Fecha: 2026-10-08 · Estado: aceptado
 
+
+**09-10-2026 (ADR 0058).** La verdad pasa a ser la lluvia de casa cada 5 minutos (`estacio-casa-5min.csv`), no la de Montflorit; un final visto antes de tiempo por no marcar la llovizna cuenta como error de la regla.
+
 ## Contexto
 
 Cuando llueve, la tarjeta «Ara» dice «Pluja a sobre». Juanjo preguntó si

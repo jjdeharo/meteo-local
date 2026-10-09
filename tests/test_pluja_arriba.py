@@ -20,13 +20,13 @@ def a(minuts):
 
 def salida(ahora, arriba=None, plou=False, mm_h=0.6):
     """Datos de casa en una pasada: la llegada que da el radar (minutos desde
-    T0) y si llueve en Montflorit."""
+    T0) y si llueve en casa."""
     radar = {"hora": (ahora - dt.timedelta(minutes=15)).isoformat(timespec="minutes"),
              "imatge": "meteocat", "arriba": None, "arriba_mm_h": None}
     if arriba is not None:
         radar.update(arriba=a(arriba).isoformat(timespec="minutes"), arriba_mm_h=mm_h)
     return {"generat": ahora.isoformat(timespec="minutes"), "radar": radar,
-            "ara": {"intensitat": 1.2 if plou else 0, "pluja_30min": 0.4 if plou else 0}, "ara_casa": None}
+            "ara_casa": {"intensitat": 1.2 if plou else 0, "plou": plou}}
 
 
 class Avis(unittest.TestCase):

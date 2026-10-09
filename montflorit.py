@@ -42,7 +42,7 @@ DADES = "montflorit.json"
 # riera, que solo sirve para el aviso por Telegram (ADR 0027).
 PRIVADES = ("sortides", "sortida_per_defecte_h", "riera")
 # Con False, la página pide a los buscadores que no la indexen. Desde el
-# 06-10-2026, con el permiso de meteocerdanyola.com, sí (ADR 0024).
+# 06-10-2026, sí (ADR 0024).
 INDEXABLE = True
 # Palabras que no pueden quedar en lo que se lee de la web pública. El nombre
 # del repositorio del código ya no está prohibido: los créditos lo enlazan
@@ -100,17 +100,17 @@ CANVIS_INDEX = [
     # Sota el títol, què hi ha a la web (Juanjo, 09-10-2026).
     ('<h1>Temps a casa</h1>\n      <p class="ruta">Montflorit, Cerdanyola del Vallès</p>',
      f'<h1>Temps a Montflorit</h1>\n      <p class="ruta">{DESCRIPCIO}</p>'),
-    ("de l'estació de casa; la pluja, de l'estació de Montflorit de meteocerdanyola.com, a uns 300-400 m, minut a minut",
-     "d'una estació particular del barri; la pluja, de l'estació de Montflorit de meteocerdanyola.com, minut a minut"),
+    ("i la pluja, de l'estació de casa, que marca la pluja al minut", "i la pluja, d'una estació particular del barri, que marca la pluja al minut"),
     ("amb el que ha mesurat l'estació de casa des de", "amb el que ha mesurat l'estació particular des de"),
-    ("a Montflorit i a casa. Comprovada", "a Montflorit. Comprovada"),
+    ("quan hi hagi prou dades, a casa. Comprovada", "quan hi hagi prou dades, a Montflorit. Comprovada"),
+    ("la pluja real de l'estació de casa.", "la pluja real de l'estació particular."),
 ]
 
 CANVIS_FONTS = [
     ('<html lang="ca" data-theme="light">',
      f'<html lang="ca" data-theme="light" data-dades="{DADES}" data-notes="{NOTES}">'),
     ("<title>Fonts i crèdits · Temps a casa</title>", "<title>Fonts i crèdits · Temps a Montflorit</title>"),
-    ("<strong>Estació de casa:</strong> una estació pròpia a uns 300-400 m de la de Montflorit, llegida",
+    ("<strong>Estació de casa:</strong> una estació pròpia del barri, llegida",
      "<strong>Estació particular:</strong> una estació pròpia del mateix barri, llegida"),
     ("<li>Icones del cotxe i del ciclomotor de <a href=\"https://tabler.io/icons\" target=\"_blank\" rel=\"noopener\">"
      "Tabler Icons</a>, llicència MIT; la icona de l'aplicació els combina amb el núvol de Lucide.</li>",

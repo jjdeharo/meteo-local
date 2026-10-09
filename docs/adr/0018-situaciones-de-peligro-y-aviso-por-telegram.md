@@ -8,6 +8,9 @@ bot y el canal (`avisos_bot.py`, ADR 0034 y 0048), con la misma detección.
 Este programa sigue llevando el estado y el registro. Desde entonces el aviso
 público dice también cuándo ya no queda ningún peligro, como hacía el privado.
 
+
+**09-10-2026 (ADR 0058).** Sin Montflorit, lo medido de ahora es solo casa: la lluvia de la última hora cuando marca y la temperatura. La lluvia de 12 horas medida ya no se evalúa; queda la prevista.
+
 ## Contexto
 
 Juanjo pidió que la página de casa indique las situaciones de riesgo («viento

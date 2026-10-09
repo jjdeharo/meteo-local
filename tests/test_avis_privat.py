@@ -83,7 +83,7 @@ class Cua(unittest.TestCase):
         RI.ESTADO = os.path.join(self.dir.name, "riera.json")
         casa = os.path.join(self.dir.name, "casa.json")
         riera = {"fins": ARA.isoformat(timespec="minutes"), "mm_3h": 40, "mm_6h": 55, "radar_1h": 0,
-                 "index": 40, "index_6h": 55, "capcalera": None, "montflorit_3h": None}
+                 "index": 40, "index_6h": 55, "capcalera": None}
         with open(casa, "w") as f:
             f.write('{"generat": "%s", "riera": %s}' % (ARA.isoformat(timespec="minutes"),
                                                         __import__("json").dumps(riera)))

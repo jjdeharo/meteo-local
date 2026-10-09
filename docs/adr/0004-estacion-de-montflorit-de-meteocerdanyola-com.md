@@ -1,6 +1,8 @@
 # 4. Estación de Montflorit de meteocerdanyola.com
 
-Fecha: 2026-10-05 · Estado: aceptado
+Fecha: 2026-10-05 · Estado: sustituido por el ADR 0058
+
+**09-10-2026 (ADR 0058).** La estación se retiró de todo el programa a petición de Juanjo. Lo que sigue describe cómo se usó del 05-10-2026 al 09-10-2026.
 
 ## Contexto
 

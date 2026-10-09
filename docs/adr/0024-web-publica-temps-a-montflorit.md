@@ -2,6 +2,9 @@
 
 Fecha: 2026-10-06 · Estado: aceptado
 
+
+**09-10-2026 (ADR 0058).** La estación de meteocerdanyola.com se retiró de la web pública y de todo el programa. La pública sigue indexable; lo escrito abajo sobre su permiso es historia.
+
 ## Contexto
 
 Juanjo quiere dar a conocer la página «Temps a casa» como web del tiempo del

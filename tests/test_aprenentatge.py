@@ -122,11 +122,17 @@ class Rasgos(unittest.TestCase):
         self.assertAlmostEqual(sin, A.prob_pluja({"pluja": A.modelo_arxiu()}, d))
 
     def test_lluvia_observada(self):
-        # Montflorit manda; casa solo suma cuando marca lluvia.
-        self.assertEqual(A.pluja_observada({"pluja_mm": "0.0"}, {"pluja_mm": "0.0"}), 0.0)
-        self.assertEqual(A.pluja_observada({"pluja_mm": "0.0"}, {"pluja_mm": "1.2"}), 1.2)
-        self.assertEqual(A.pluja_observada(None, {"pluja_mm": "1.2"}), 1.2)
-        self.assertIsNone(A.pluja_observada(None, {"pluja_mm": "0.0"}))
+        # Lo que marca casa es lluvia; su cero solo vale si Meteocat tampoco recogió nada (ADR 0058).
+        sec, moll = {"pluja_mm": "0.0"}, {"pluja_mm": "0.6"}
+        self.assertEqual(A.pluja_observada({"pluja_mm": "1.2"}, [sec, sec]), 1.2)
+        self.assertEqual(A.pluja_observada({"pluja_mm": "1.2"}), 1.2)
+        self.assertEqual(A.pluja_observada({"pluja_mm": "0.0"}, [sec, sec]), 0.0)
+        self.assertEqual(A.pluja_observada({"pluja_mm": "0.0"}, [sec, None]), 0.0)   # con una basta
+        self.assertIsNone(A.pluja_observada({"pluja_mm": "0.0"}, [sec, moll]))     # llovía cerca: no se sabe
+        self.assertIsNone(A.pluja_observada({"pluja_mm": "0.0"}, [None, None]))   # sin Meteocat, no se sabe
+        self.assertIsNone(A.pluja_observada({"pluja_mm": "0.0"}))
+        self.assertIsNone(A.pluja_observada(None, [sec, sec]))
+        self.assertIsNone(A.pluja_observada({"pluja_mm": ""}, [sec, sec]))
 
 
 class Moto(unittest.TestCase):
@@ -168,7 +174,7 @@ class Diari(unittest.TestCase):
         """com_arxiu: la estación mide justo lo que da la corrección del
         archivo, que entonces no se puede mejorar."""
         rnd = random.Random(1)
-        mont = ["fins,pluja_mm,temperatura,humitat,lectures"]
+        mont = ["fins,pluja_mm"]
         casa = ["fins,pluja_mm,temperatura,humitat,rosada,pressio,solar"]
         arxiu_t = {"temperatura": A.modelo_arxiu_temperatura()}
         inici = dt.datetime(2026, 9, 1)
@@ -180,12 +186,12 @@ class Diari(unittest.TestCase):
                 h = hora(fins, temp=round(real + error, 1), antelacio=1, error_ara=error)
                 if com_arxiu:
                     real = A.temperatura(arxiu_t, h)
-                mont.append(f"{fins},0.0,,80,45")
+                mont.append(f"{fins},0.0")
                 casa.append(f"{fins},0.0,{real:.3f},80,15,1013,0")
-                linea = {"emes": t.strftime("%Y-%m-%dT%H:%M") + "+02:00", "ara": {"pluja_1h": 0},
+                linea = {"emes": t.strftime("%Y-%m-%dT%H:%M") + "+02:00",
                          "ara_casa": {"pluja_1h": 0}, "hores": [h], "sant_cugat": {"pluja_1h": 0.0} if k % 2 else None}
                 f.write(json.dumps(linea) + "\n")
-        for nom, filas in (("montflorit.csv", mont), ("estacio-casa.csv", casa)):
+        for nom, filas in (("meteocat-XV.csv", mont), ("estacio-casa.csv", casa)):
             with open(os.path.join(A.REGISTRE, nom), "w") as f:
                 f.write("\n".join(filas) + "\n")
 
@@ -261,7 +267,7 @@ class Diari(unittest.TestCase):
 
     def test_verifica_la_moto_una_vez_por_hora(self):
         # Cada hora, previsiones de 1 a 9 horas antes; llueve de 12 a 13 h.
-        mont = ["fins,pluja_mm,temperatura,humitat,lectures"]
+        mont = ["fins,pluja_mm,temperatura,humitat,rosada,pressio,solar"]
         with open(os.path.join(A.REGISTRE, "casa-2026-10.jsonl"), "w") as f:
             for k in range(30):
                 emes = dt.datetime(2026, 10, 8, 0) + dt.timedelta(hours=k)
@@ -272,9 +278,12 @@ class Diari(unittest.TestCase):
                                   "mostrat": {"probabilitat": 0.15, "pluja_mm": 0.0}})
                 f.write(json.dumps({"emes": emes.strftime("%Y-%m-%dT%H:%M") + "+02:00", "hores": hores}) + "\n")
                 fins = (emes + dt.timedelta(hours=1)).strftime("%Y-%m-%dT%H:%M")
-                mont.append(f"{fins},{1.5 if fins.endswith('13:00') else 0.0},18,80,45")
-        with open(os.path.join(A.REGISTRE, "montflorit.csv"), "w") as f:
+                mont.append(f"{fins},{1.5 if fins.endswith('13:00') else 0.0},18,80,15,1013,0")
+        with open(os.path.join(A.REGISTRE, "estacio-casa.csv"), "w") as f:
             f.write("\n".join(mont) + "\n")
+        # Les hores seques només compten si Meteocat tampoc no va recollir res (ADR 0058).
+        with open(os.path.join(A.REGISTRE, "meteocat-XF.csv"), "w") as f:
+            f.write("fins,pluja_mm\n" + "".join(f"{l.split(',')[0]},0.0\n" for l in mont[1:]))
         ara = dt.datetime(2026, 10, 9, 0).astimezone()
         n = A.verifica_moto(ara)
         self.assertEqual(n, 16 + 16)               # de 7 a 22 h, al sortir i la tornada

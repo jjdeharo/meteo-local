@@ -2,6 +2,9 @@
 
 Fecha: 2026-10-07 · Estado: aceptado
 
+
+**09-10-2026 (ADR 0058).** Montflorit se retiró; el viento de ahora sigue siendo el de Sant Cugat, ahora porque el anemómetro de la estación de casa no funciona bien (ADR 0017).
+
 ## Contexto
 
 La revisión del 07-10-2026 de la web y de los datos publicados encontró dos

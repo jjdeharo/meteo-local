@@ -11,7 +11,7 @@ Sale del radar llevado hacia delante (nowcast.py, ADR 0019), que la página de
 casa ya calcula en cada pasada: cuándo llegaría a casa la lluvia que hay
 ahora. Tras publicar la página, el NAS mira cuánto falta. Si faltan
 AVIS_PLUJA_MIN minutos más una pasada o menos (config.py) y aún no llueve en
-las estaciones, avisa.
+casa, avisa.
 
 Para no repetir, los avisos van por episodios: uno empieza cuando el radar
 anuncia la lluvia o cuando empieza a llover, y acaba tras AVIS_PLUJA_REPOS_MIN
@@ -41,21 +41,11 @@ CAMPOS = ["inici", "avisat", "arribada_prevista", "minuts_previstos", "imatge", 
 FONTS = {"meteocat": "Meteocat", "rainviewer": "RainViewer"}
 
 
-def plou_estacio(ara):
-    """Llueve en Montflorit: ha recogido lluvia en los últimos PLOU_ARA_MIN
-    minutos (config.py). Con datos de antes de la 3.27.4, sin ese dato, como
-    entonces: la intensidad o la última media hora."""
-    if not ara:
-        return False
-    if "pluja_15min" in ara:
-        return (ara["pluja_15min"] or 0) > 0
-    return (ara.get("intensitat") or 0) > 0 or (ara.get("pluja_30min") or 0) > 0
-
-
 def plou(salida):
-    """Llueve ahora en Montflorit o en casa (en casa, solo cuenta el sí)."""
+    """Llueve ahora en casa: el pluviómetro ha recogido lluvia en los últimos
+    PLOU_ARA_MIN minutos (config.py). Solo cuenta el sí (ADR 0017)."""
     casa = salida.get("ara_casa")
-    return plou_estacio(salida.get("ara")) or bool(casa and casa.get("plou"))
+    return bool(casa and casa.get("plou"))
 
 
 def falta_min(salida, ahora):

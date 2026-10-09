@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// Llegeix casa.json (el genera casa.py) i pinta el temps a casa: el que mesuren
-// ara l'estació de casa i la de Montflorit i la previsió hora a hora, 24 hores com a
-// mínim i fins a les 21 h de demà (ADR 0041).
+// Llegeix casa.json (el genera casa.py) i pinta el temps a casa: el que mesura
+// ara l'estació de casa i la previsió hora a hora, 24 hores com a mínim i
+// fins a les 21 h de demà (ADR 0041).
 
 // La pàgina pública («Temps a Montflorit», ADR 0024) és aquesta mateixa amb
 // tres coses canviades a l'etiqueta <html>: el nom del lloc, com s'anomena
@@ -88,10 +88,9 @@ function textPressio(casa) {
   return T`${p}, ${sentit}${rapid} (${signe}${coma(Math.abs(d))} en 3 h)`;
 }
 
-// Temperatura, humitat i pressió, de l'estació de casa; pluja i vent, de
-// Montflorit. Plou si qualsevol de les dues en marca (la de casa, només quan
-// en marca: el seu zero no és fiable). Si en falla una, l'altra. Cada dada,
-// amb la seva icona, perquè es llegeixi d'una ullada.
+// Temperatura, humitat, pressió i pluja, de l'estació de casa (plou només
+// quan en marca: el seu zero no és fiable, ADR 0017); el vent, de Meteocat.
+// Cada dada, amb la seva icona, perquè es llegeixi d'una ullada.
 function dada(id, text) {
   const li = element('li');
   li.append(icona(id), document.createTextNode(text));
@@ -199,28 +198,24 @@ function resumTram(t) {
   return sum;
 }
 
-function blocAra(ara, casa, radarDades, vent) {
-  const base = casa || ara;
+function blocAra(casa, radarDades, vent) {
   const sec = element('section', 'decisio targeta ara');
-  const lloc = casa ? LLOC : 'Montflorit';
-  sec.setAttribute('aria-label', T`El temps ara a ${lloc}`);
-  sec.append(element('h2', 'data', T`Ara a ${lloc} (${horaCurta(base.hora)})`));
+  sec.setAttribute('aria-label', T`El temps ara a ${LLOC}`);
+  sec.append(element('h2', 'data', T`Ara a ${LLOC} (${horaCurta(casa.hora)})`));
   const temp = element('p', 'veredicte');
   const termometre = icona('i-thermometer');
   termometre.classList.add('vehicle');
-  temp.append(termometre, `${coma(base.temperatura)} °C`);
+  temp.append(termometre, `${coma(casa.temperatura)} °C`);
   sec.append(temp);
-  // Plou si ha caigut res en els últims 15 minuts (config.PLOU_ARA_MIN); amb
-  // dades d'abans, sense aquest valor, com llavors.
-  const plouMont = !!ara && ('pluja_15min' in ara ? (ara.pluja_15min || 0) > 0
-    : (ara.intensitat || 0) > 0 || (ara.pluja_30min || 0) > 0);
-  const plou = plouMont || !!(casa && casa.plou);
-  const intensitat = Math.max((ara && ara.intensitat) || 0, (casa && casa.plou && casa.intensitat) || 0);
+  // Plou si el pluviòmetre ha recollit res en els últims 15 minuts
+  // (config.PLOU_ARA_MIN, ecowitt.resum_ara).
+  const plou = !!casa.plou;
+  const intensitat = (plou && casa.intensitat) || 0;
   const llista = element('ul', 'dades-ara');
   llista.append(plou ? dada('i-umbrella', T`Plou: ${coma(intensitat)} mm/h`) : dada('i-umbrella-off', T('No plou')));
-  if (ara) llista.append(dada('i-cloud-rain', T`${coma(ara.pluja_avui || 0)} mm avui`));
-  llista.append(dada('i-droplets', T`Humitat ${coma(base.humitat, 0)} %`));
-  if (casa && casa.pressio != null) llista.append(dada('i-gauge', textPressio(casa)));
+  llista.append(dada('i-cloud-rain', T`${coma(casa.pluja_avui || 0)} mm avui`));
+  llista.append(dada('i-droplets', T`Humitat ${coma(casa.humitat, 0)} %`));
+  if (casa.pressio != null) llista.append(dada('i-gauge', textPressio(casa)));
   // El vent, de l'estació de Meteocat més propera, per mitges hores (ADR 0037).
   if (vent && vent.mitja != null) {
     const ratxa = vent.ratxa != null ? T` (ratxes de ${coma(vent.ratxa, 0)})` : '';
@@ -533,7 +528,7 @@ addEventListener('afterprint', () => {
 function textAprenentatge(a) {
   if (!a || !a.pluja) return '';
   const data = (iso) => new Date(iso + 'T12:00:00').toLocaleDateString(IDIOMA.codi);
-  const on = LLOC === 'casa' ? 'Montflorit i a casa' : LLOC;
+  const on = LLOC;
   const any = new Date(a.pluja.des_de).getFullYear();
   let t = a.pluja.origen !== 'arxiu'
     ? T`Probabilitat de pluja apresa del que ha plogut de veritat a ${on} des del ${data(a.pluja.des_de)}, quan els models deien el mateix.`
@@ -567,7 +562,7 @@ function pinta(dades) {
     const m = dades.models;
     avisos.append(element('p', 'avis', T`Avui els models no veuen aquesta pluja: en les darreres ${m.hores} hores han caigut ${coma(m.mesurada_mm)}\u00a0mm a Montflorit i en preveien ${coma(m.prevista_mm)}. Les primeres hores de la taula parteixen del que mesura l\u2019estació; per a la resta, fes més cas dels avisos.`));
   }
-  if (dades.ara || dades.ara_casa) cont.append(blocAra(dades.ara, dades.ara_casa, dades.radar, dades.vent));
+  if (dades.ara_casa) cont.append(blocAra(dades.ara_casa, dades.radar, dades.vent));
   const previsio = dades.hores && taula(dades.hores, dades.aprenentatge);
   if (previsio) {
     cont.append(previsio);

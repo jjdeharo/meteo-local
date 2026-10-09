@@ -2,12 +2,14 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 """¿Marca bien el pluviómetro de casa? Vigilancia de una sola vez (ADR 0017).
 
-Tras limpiar el pluviómetro, compara su lluvia con la de Montflorit, a unos
-300-400 m, en cada episodio de lluvia (horas seguidas con lluvia en
-Montflorit, con dos horas secas como mucho entre medias). Lo que importa es la
-lluvia débil, la que no marcaba: un episodio débil (de EPISODIO_DEBIL_MM en
-Montflorit) cuenta como detectado si casa marca algo en él o en la hora de
-antes o de después.
+Tras limpiar el pluviómetro, compara su lluvia con la de referencia: lo que
+recogieron a la vez las estaciones de Meteocat de Sabadell y Sant Cugat (a
+2,5 y 4,6 km; la menor de las dos en cada hora, para contar solo la lluvia
+que cae en toda la zona; ADR 0058), en cada episodio de lluvia (horas
+seguidas con lluvia, con dos horas secas como mucho entre medias). Lo que
+importa es la lluvia débil, la que no marcaba: un episodio débil (de
+EPISODIO_DEBIL_MM en la referencia) cuenta como detectado si casa marca algo
+en él o en la hora de antes o de después.
 
 Cuando hay bastantes episodios débiles, avisa a Juanjo por Telegram con el
 resultado y borra su archivo: no vuelve a avisar. Si en DIAS_MAX no ha llovido
@@ -33,7 +35,7 @@ def local(t=None):
 
 DIR = os.environ.get("REGISTRE_DIR", "/estat/registre")
 ESTADO = os.path.join(os.path.dirname(DIR), "vigila-pluviometre.json")
-MONTFLORIT = os.path.join(DIR, "montflorit.csv")
+REFERENCIA = [os.path.join(DIR, f"meteocat-{codi}.csv") for codi in ("XF", "XV")]
 CASA = os.path.join(DIR, "estacio-casa.csv")
 
 UMBRAL_MM = 0.2                 # una hora con lluvia
@@ -57,8 +59,18 @@ def lee(ruta):
         return res
 
 
+def referencia():
+    """{hora: mm} con la menor lluvia de las estaciones de referencia, en las
+    horas que tienen todas."""
+    series = [lee(r) for r in REFERENCIA]
+    if not series:
+        return {}
+    comunes = set.intersection(*(set(s) for s in series))
+    return {t: min(s[t] for s in series) for t in comunes}
+
+
 def episodios(mont, desde, hasta):
-    """Episodios de Montflorit entre desde y hasta: listas de horas (fin)."""
+    """Episodios de la referencia entre desde y hasta: listas de horas (fin)."""
     horas = sorted(t for t, mm in mont.items() if desde < t <= hasta and mm >= UMBRAL_MM)
     res = []
     for t in horas:
@@ -70,7 +82,7 @@ def episodios(mont, desde, hasta):
 
 
 def movimiento(mont, casa, desde):
-    """Primera hora en que casa marca lluvia sin que llueva en Montflorit
+    """Primera hora en que casa marca lluvia sin que llueva en la referencia
     (ni la hora antes ni la de después): mover el cubo al limpiar."""
     for t in sorted(casa):
         if t <= desde or casa[t] < UMBRAL_MM:
@@ -92,7 +104,7 @@ def evalua(mont, casa, desde, ahora):
         m = round(sum(mont[t] for t in ep), 1)
         c = round(sum(casa.get(t, 0.0) for t in horas), 1)
         fila = {"inici": (ep[0] - dt.timedelta(hours=1)).isoformat(timespec="minutes"),
-                "fi": ep[-1].isoformat(timespec="minutes"), "montflorit_mm": m, "casa_mm": c}
+                "fi": ep[-1].isoformat(timespec="minutes"), "referencia_mm": m, "casa_mm": c}
         (debiles if EPISODIO_DEBIL_MM[0] <= m < EPISODIO_DEBIL_MM[1] else otros).append(fila)
     detectados = sum(e["casa_mm"] >= UMBRAL_MM for e in debiles)
     return {"des_de": inicio.isoformat(timespec="minutes"),
@@ -134,12 +146,12 @@ def mensaje(r, v):
         lineas.append(f"Cuento desde la limpieza, que se nota el {hm(r['neteja'])}.")
     if r["debils"]:
         lineas.append(f"Lluvias débiles: marcó {r['detectats']} de {len(r['debils'])}.")
-        lineas += [f"- {hm(e['inici'])}: Montflorit {coma(e['montflorit_mm'])} mm, casa {coma(e['casa_mm'])} mm"
+        lineas += [f"- {hm(e['inici'])}: Meteocat {coma(e['referencia_mm'])} mm, casa {coma(e['casa_mm'])} mm"
                    for e in r["debils"]]
     if r["altres"]:
-        m = sum(e["montflorit_mm"] for e in r["altres"])
+        m = sum(e["referencia_mm"] for e in r["altres"])
         c = sum(e["casa_mm"] for e in r["altres"])
-        lineas.append(f"Lluvias más fuertes: Montflorit {coma(m)} mm, casa {coma(c)} mm.")
+        lineas.append(f"Lluvias más fuertes: Meteocat {coma(m)} mm, casa {coma(c)} mm.")
     if v == "funciona":
         lineas.append("Si quieres que la web vuelva a fiarse también de su cero, díselo a Claude.")
     elif v in ("falla", "dudoso"):
@@ -154,7 +166,7 @@ def vigila(ahora=None, avisa=True):
         estado = json.load(f)
     ahora = ahora or local()
     desde = local(dt.datetime.fromisoformat(estado["des_de"]))
-    r = evalua(lee(MONTFLORIT), lee(CASA), desde, ahora)
+    r = evalua(referencia(), lee(CASA), desde, ahora)
     v = veredicto(r, ahora - desde > dt.timedelta(days=DIAS_MAX))
     if not v:
         return None
@@ -181,7 +193,7 @@ def estat():
         return
     with open(ESTADO, encoding="utf-8") as f:
         desde = local(dt.datetime.fromisoformat(json.load(f)["des_de"]))
-    print(json.dumps(evalua(lee(MONTFLORIT), lee(CASA), desde, local()),
+    print(json.dumps(evalua(referencia(), lee(CASA), desde, local()),
                      ensure_ascii=False, indent=1))
 
 

@@ -10,11 +10,15 @@ import registre as R  # noqa: E402
 import casa  # noqa: E402
 
 
-def fila(hhmm, prec, temp=20.0, dia="2026-10-05"):
-    return {"dt_local": f"{dia} {hhmm}:00", "PREC": prec, "TEMP": temp, "HUM": 90}
+TZ = dt.timezone(dt.timedelta(hours=2))
 
 
-class HorasMontflorit(unittest.TestCase):
+def lectura(hhmm, pluja, dia=5):
+    h, m = map(int, hhmm.split(":"))
+    return {"t": dt.datetime(2026, 10, dia, h, m, tzinfo=TZ), "pluja_avui": pluja}
+
+
+class Registre(unittest.TestCase):
     def test_rehaz_la_pluja_de_casa(self):
         # El 06-10-2026 la hora de 20 a 21 quedó con 1,3 mm en lugar de 3,5 (ADR 0017).
         import tempfile
@@ -56,24 +60,46 @@ class HorasMontflorit(unittest.TestCase):
         # Si no s'han pogut llegir, no se sap: res de zeros.
         self.assertEqual(senyals(11, None, None), {"avis_pluja": None, "pla_inuncat": None})
 
-    def test_lluvia_y_temperatura_por_hora(self):
-        filas = [fila("06:58", 1.0), fila("07:00", 1.2, 17.0), fila("07:30", 3.0),
-                 fila("07:57", 4.0, 18.0), fila("08:10", 4.5)]
-        h = R.horas_montflorit(filas)
-        # La hora de 6 a 7 está cortada (empieza a las 6:58): no cuenta.
-        self.assertEqual(list(h), [dt.datetime(2026, 10, 5, 8, 0)])
-        self.assertAlmostEqual(h[dt.datetime(2026, 10, 5, 8, 0)]["pluja_mm"], 2.8)
-        # Sin lectura a las 8:00 en punto, la de las 7:57.
-        self.assertEqual(h[dt.datetime(2026, 10, 5, 8, 0)]["temperatura"], 18.0)
+    def test_cinc_minuts_de_casa(self):
+        # Trams complets de 5 minuts; el que passa per mitjanit, amb l'acumulat que torna a zero.
+        filas = [lectura("23:50", 5.0, dia=4), lectura("23:55", 5.4, dia=4), lectura("00:00", 5.6),
+                 lectura("00:05", 0.2), lectura("00:10", 0.2), lectura("00:12", 0.4)]
+        cincs = R.cincs_casa(filas)
+        self.assertEqual(sorted(cincs), [lectura("23:55", 0, dia=4)["t"], lectura("00:00", 0)["t"],
+                                         lectura("00:05", 0)["t"], lectura("00:10", 0)["t"]])
+        self.assertAlmostEqual(cincs[lectura("00:00", 0)["t"]], 0.2)
+        self.assertAlmostEqual(cincs[lectura("00:05", 0)["t"]], 0.2)   # 5,6 → 0,2: nou dia
+        self.assertAlmostEqual(cincs[lectura("00:10", 0)["t"]], 0.0)
+        # El de 00:10 a 00:15 no és complet (l'última lectura és de les 00:12).
+        self.assertNotIn(lectura("00:15", 0)["t"], cincs)
+        self.assertEqual(R.cincs_casa([]), {})
 
-    def test_paso_por_medianoche(self):
-        # El acumulado del día vuelve a cero a medianoche.
-        filas = [fila("22:59", 5.0, dia="2026-10-04"), fila("23:30", 5.4, dia="2026-10-04"),
-                 fila("00:00", 5.6, dia="2026-10-05"), fila("00:20", 0.2, dia="2026-10-05"),
-                 fila("01:00", 0.3, dia="2026-10-05")]
-        h = R.horas_montflorit(filas)
-        self.assertAlmostEqual(h[dt.datetime(2026, 10, 5, 0, 0)]["pluja_mm"], 0.6)
-        self.assertAlmostEqual(h[dt.datetime(2026, 10, 5, 1, 0)]["pluja_mm"], 0.3)
+    def test_hores_de_meteocat(self):
+        # Mitges hores en UTC (prevision.taula_meteocat): només les hores amb les dues.
+        utc = lambda h, m: dt.datetime(2026, 10, 5, h, m, tzinfo=dt.timezone.utc)
+        h = R.hores_meteocat([(utc(5, 30), 0.3), (utc(6, 0), 0.4), (utc(6, 30), 0.0), (utc(7, 0), 1.0)])
+        # 6:00 i 6:30 UTC són l'hora de 8 a 9 local; la de 7 a 8 i la de 9 a 10 estan a mitges.
+        self.assertEqual(list(h), [dt.datetime(2026, 10, 5, 9, 0, tzinfo=TZ)])
+        self.assertAlmostEqual(h[dt.datetime(2026, 10, 5, 9, 0, tzinfo=TZ)], 0.4)
+        self.assertEqual(R.hores_meteocat([]), {})
+
+    def test_apunta_meteocat_i_cinc_minuts(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as d:
+            vell = R.DIR, R.ESTACIO_CASA_5MIN
+            R.DIR, R.ESTACIO_CASA_5MIN = d, os.path.join(d, "estacio-casa-5min.csv")
+            try:
+                R.apunta_meteocat("XV", {dt.datetime(2026, 10, 5, 9, 0, tzinfo=TZ): 0.4})
+                R.apunta_meteocat("XV", {dt.datetime(2026, 10, 5, 10, 0, tzinfo=TZ): 1.2,
+                                         dt.datetime(2026, 10, 5, 9, 0, tzinfo=TZ): 0.5})
+                with open(os.path.join(d, "meteocat-XV.csv")) as f:
+                    self.assertEqual(f.read().splitlines(),
+                                     ["fins,pluja_mm", "2026-10-05T09:00,0.5", "2026-10-05T10:00,1.2"])
+                R.apunta_casa_5min({lectura("00:05", 0)["t"]: 0.24})
+                with open(R.ESTACIO_CASA_5MIN) as f:
+                    self.assertEqual(f.read().splitlines(), ["fins,pluja_mm", "2026-10-05T00:05,0.2"])
+            finally:
+                R.DIR, R.ESTACIO_CASA_5MIN = vell
 
 
 if __name__ == "__main__":

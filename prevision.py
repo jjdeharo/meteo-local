@@ -173,9 +173,6 @@ def observaciones_portal(codi, nom):
             "hasta": (ultima + dt.timedelta(minutes=30)).astimezone().isoformat()}
 
 
-METEOCERDANYOLA = "https://meteocerdanyola.com/2026/api/graphs-series.php?slug={}"
-
-
 def resumen_minutal(filas, nom, font):
     """Lluvia de la última media hora a partir de filas minuto a minuto con el
     acumulado del día (PREC, se pone a cero a medianoche) y la intensidad
@@ -197,27 +194,11 @@ def resumen_minutal(filas, nom, font):
             "hasta": ultima.isoformat()}
 
 
-def observaciones_meteocerdanyola(slug, nom):
-    """Estaciones de meteocerdanyola.com, minuto a minuto. Se lee la API de
-    sus gráficas una vez por actualización (unos 380 KB, últimas 24 h): la
-    carpeta /2026/data/ está cerrada a programas en su robots.txt, la API no.
-    Juanjo decidió usarla (05-10-2026); ver el ADR 0004."""
-    datos = json.loads(get_recent(METEOCERDANYOLA.format(slug)))
-    return resumen_minutal(datos.get("rows", []), nom, "meteocerdanyola.com")
-
-
 def observaciones():
-    """Primero la estación de Montflorit (minuto a minuto) y la de casa si
-    marca lluvia; después las de Meteocat: su web, que va más al día, o si falla el portal de la
-    Generalitat."""
+    """La estación de casa, si marca lluvia (su cero no es fiable, ADR 0017),
+    y después las de Meteocat: su web, que va más al día, o si falla el
+    portal de la Generalitat."""
     res = []
-    for slug, nom in C.ESTACIONES_LOCALES.items():
-        try:
-            dato = observaciones_meteocerdanyola(slug, nom)
-        except Exception:
-            dato = None
-        if dato:
-            res.append(dato)
     # La estación de casa, solo si marca lluvia: su cero no es fiable (ADR 0017).
     try:
         dato = ecowitt.observacio(ecowitt.resum_ara(), C.ESTACIO_CASA) if ecowitt.disponible() else None

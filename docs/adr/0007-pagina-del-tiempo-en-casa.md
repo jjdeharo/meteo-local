@@ -12,7 +12,8 @@ todo la previsión hora a hora para las 24 horas siguientes.
 - `web/casa.html`, en catalán como el resto del sitio, enlazada con la del
   trayecto por una navegación común en el mismo sitio de las dos páginas. El
   código común de las dos (tema, horario, versión) pasa a `web/comu.js`.
-- **Ara a Montflorit:** la estación de meteocerdanyola.com (ADR 0004).
+- **Ara a Montflorit:** la estación de meteocerdanyola.com (ADR 0004); desde el
+  09-10-2026, solo la estación de casa (ADR 0017 y 0058).
 - **Avisos de AEMET** del Prelitoral de Barcelona aún vigentes.
 - **Tabla de 24 tramos de una hora** («10–11»), calculada por `casa.py`
   (desde el 09-10-2026, hasta las 21 h de mañana como mínimo, ADR 0041):

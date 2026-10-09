@@ -21,12 +21,13 @@ class Vigilancia(unittest.TestCase):
     def setUp(self):
         d = tempfile.mkdtemp()
         V.DIR = os.path.join(d, "registre")
-        V.ESTADO, V.MONTFLORIT, V.CASA = (os.path.join(d, "vigila.json"), os.path.join(V.DIR, "m.csv"),
-                                          os.path.join(V.DIR, "c.csv"))
+        V.ESTADO, V.CASA = os.path.join(d, "vigila.json"), os.path.join(V.DIR, "c.csv")
+        # Dues estacions de referència: compta la menor de les dues en cada hora.
+        V.REFERENCIA = [os.path.join(V.DIR, "xf.csv"), os.path.join(V.DIR, "xv.csv")]
         os.makedirs(V.DIR)
 
     def escribe(self, mont, casa, horas=200):
-        for ruta, datos in ((V.MONTFLORIT, mont), (V.CASA, casa)):
+        for ruta, datos in ((V.REFERENCIA[0], mont), (V.REFERENCIA[1], mont), (V.CASA, casa)):
             with open(ruta, "w") as f:
                 f.write("fins,pluja_mm\n")
                 for n in range(horas):
@@ -61,10 +62,18 @@ class Vigilancia(unittest.TestCase):
         mont = {1: 1.0, 20: 1.0, 40: 1.0, 60: 1.0}
         casa = {3: 0.3, 20: 0.8, 40: 1.0, 60: 0.8}
         self.escribe(mont, casa)
-        r = V.evalua(V.lee(V.MONTFLORIT), V.lee(V.CASA), T0, h(150))
+        r = V.evalua(V.referencia(), V.lee(V.CASA), T0, h(150))
         self.assertEqual(r["neteja"], h(3).isoformat(timespec="minutes"))
         self.assertEqual((len(r["debils"]), r["detectats"]), (3, 3))
         self.assertIn("limpieza", V.mensaje(r, "funciona"))
+
+    def test_la_referencia_es_la_menor_de_les_dues(self):
+        # Pluja només a Sabadell: no és de tota la zona i no compta com a episodi.
+        self.escribe({10: 1.0}, {}, horas=30)
+        with open(V.REFERENCIA[1], "w") as f:
+            f.write("fins,pluja_mm\n" + "".join(f"{h(n).strftime('%Y-%m-%dT%H:%M')},0.0\n" for n in range(30)))
+        self.assertEqual(V.referencia()[h(10)], 0.0)
+        self.assertEqual(V.evalua(V.referencia(), V.lee(V.CASA), T0, h(29))["debils"], [])
 
     def test_sin_lluvia_en_el_plazo(self):
         self.escribe({}, {}, horas=10)

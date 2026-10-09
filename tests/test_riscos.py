@@ -25,9 +25,9 @@ def hores(cambios=None, n=24):
     return res
 
 
-def salida(h=None, ara=None, casa=None):
-    d = {"hores": h if h is not None else hores(), "ara": ara or {"pluja_1h": 0, "pluja_12h": 0, "temperatura": 18},
-         "ara_casa": casa}
+def salida(h=None, casa=None):
+    d = {"hores": h if h is not None else hores(),
+         "ara_casa": casa or {"pluja_1h": 0, "plou": False, "temperatura": 18}}
     d["riscos"] = RS.detecta(d, AHORA)
     return d
 
@@ -50,14 +50,14 @@ class Deteccio(unittest.TestCase):
         self.assertIn("avui de 22 a 10 h", r[0]["text"])
 
     def test_mesura_ara_i_previsio_son_claus_diferents(self):
-        r = salida(hores({0: {"pluja_mm": 25}}), ara={"pluja_1h": 42, "pluja_12h": 50, "temperatura": 15})["riscos"]
+        r = salida(hores({0: {"pluja_mm": 25}}), casa={"pluja_1h": 42, "plou": True, "temperatura": 15})["riscos"]
         self.assertEqual({x["clau"]: x["nivell"] for x in r}, {"ara:pluja_1h": "taronja", "previsio:pluja_1h": "groc"})
         self.assertEqual(r[0]["nivell"], "taronja")   # el pitjor primer
 
     def test_pluja_de_casa_nomes_si_en_marca(self):
-        ara = {"pluja_1h": 0, "temperatura": 15}
-        self.assertEqual(salida(ara=ara, casa={"pluja_1h": 30, "plou": False, "temperatura": 15})["riscos"], [])
-        self.assertEqual(len(salida(ara=ara, casa={"pluja_1h": 30, "plou": True, "temperatura": 15})["riscos"]), 1)
+        self.assertEqual(salida(casa={"pluja_1h": 30, "plou": False, "temperatura": 15})["riscos"], [])
+        self.assertEqual(len(salida(casa={"pluja_1h": 30, "plou": True, "temperatura": 15})["riscos"]), 1)
+        self.assertEqual(salida(casa=None)["riscos"], [])     # sense estació, només la previsió
 
     def test_fred_i_neu(self):
         h = hores({i: {"temperatura": -5, "neu": 0.5} for i in range(14, 20)})

@@ -34,8 +34,8 @@ antelación». Lo que importa es el margen, no el minuto.
   que siga llegando con margen si la lluvia se adelanta. Si
   el radar ya la ve encima y las estaciones aún no marcan, el aviso dice que
   puede empezar en cualquier momento.
-- **Si ya llueve, no se avisa**: llueve cuando Montflorit o la estación de
-  casa lo marcan.
+- **Si ya llueve, no se avisa**: llueve cuando la estación de casa lo marca
+  (hasta el 09-10-2026, también Montflorit; ADR 0058).
 - **Un aviso por episodio**: un episodio empieza cuando el radar anuncia la
   lluvia o cuando empieza a llover, y acaba tras `AVIS_PLUJA_REPOS_MIN` (60)
   minutos sin lluvia medida ni anunciada. Los chubascos seguidos no repiten

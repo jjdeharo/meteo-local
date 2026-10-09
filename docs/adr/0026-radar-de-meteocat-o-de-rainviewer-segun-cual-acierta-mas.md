@@ -2,6 +2,9 @@
 
 Fecha: 2026-10-06 · Estado: aceptado
 
+
+**09-10-2026 (ADR 0058).** La observación es solo si llueve en casa; sin estación en la pasada, no se apunta observación y la pasada no entra en la comparación.
+
 ## Contexto
 
 Juanjo vio en la página de casa, a las 19:39, la imagen del radar de Meteocat

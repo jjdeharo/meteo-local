@@ -13,13 +13,6 @@ import prevision as P  # noqa: E402
 AHORA = dt.datetime(2026, 10, 7, 18, 30).astimezone()
 
 
-def files(fins):
-    res = []
-    for i in range(60):
-        t = fins - dt.timedelta(minutes=59 - i)
-        res.append({"dt_local": t.strftime("%Y-%m-%d %H:%M:%S"), "TEMP": 20.0, "HUM": 70, "VEL": 0, "PREC": 0.0, "PINT": 0})
-    return res
-
 
 class Fonts(unittest.TestCase):
     def setUp(self):
@@ -28,15 +21,6 @@ class Fonts(unittest.TestCase):
 
     def tearDown(self):
         P.AHORA, P.get_recent, P.get = self.ahora, self.get_recent, self.get
-
-    def test_montflorit_congelada_no_val(self):
-        P.get_recent = lambda url, segons=120: json.dumps({"rows": files(AHORA - dt.timedelta(minutes=45))})
-        with self.assertRaises(RuntimeError):
-            casa.montflorit()
-        P.get_recent = lambda url, segons=120: json.dumps({"rows": files(AHORA - dt.timedelta(minutes=5))})
-        _, ara = casa.montflorit()
-        self.assertEqual(ara["temperatura"], 20.0)
-        self.assertIsNone(ara["vent"])     # el vent de Montflorit no es publica (ADR 0037)
 
     def test_sense_ensemble_la_previsio_segueix(self):
         def get(url):

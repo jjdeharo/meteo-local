@@ -2,6 +2,9 @@
 
 Fecha: 2026-10-08 · Estado: aceptado
 
+
+**09-10-2026 (ADR 0058).** Las estaciones del barrio son ahora solo la de casa. La lluvia por horas de Sant Cugat y Sabadell se registra además para confirmar las horas secas del aprendizaje.
+
 ## Contexto
 
 Juanjo preguntó si la estación del aeropuerto de Sabadell (AEMET, a 5 km al

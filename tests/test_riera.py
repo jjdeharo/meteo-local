@@ -173,8 +173,7 @@ class Avisos(unittest.TestCase):
     def riera(self, index, index_6h=None):
         index_6h = index + 20 if index_6h is None else index_6h
         return {"fins": self.T0.isoformat(timespec="minutes"), "mm_3h": index, "mm_6h": index_6h,
-                "radar_1h": 4.0, "index": index, "index_6h": index_6h, "capcalera": {"mm_3h": 30.0},
-                "montflorit_3h": 41.0}
+                "radar_1h": 4.0, "index": index, "index_6h": index_6h, "capcalera": {"mm_3h": 30.0}}
 
     def passades(self, indexs, cada=30, index_6h=None):
         estat, textos, files = {"episodi": None}, [], []
@@ -191,7 +190,7 @@ class Avisos(unittest.TestCase):
         self.assertEqual([bool(t) for t in textos], [False, False, True, False, True, False, False, False])
         self.assertIn("atenció", textos[2])
         self.assertIn("perill de desbordament", textos[4])
-        self.assertIn("al Fabra (Collserola), 30 mm i a Montflorit, 41 mm", textos[2])
+        self.assertIn("En 3 hores, al Fabra (Collserola), 30 mm.", textos[2])
         self.assertIn("el radar en preveu uns 4,0 més", textos[2])
 
     def test_xafec_sobre_sol_sec_nomes_atencio(self):
@@ -221,7 +220,6 @@ class Avisos(unittest.TestCase):
         self.assertEqual(len(files), 1)
         f = files[0]
         self.assertEqual(f["index_max"], 38)
-        self.assertEqual(f["montflorit_3h_max"], 41.0)
         self.assertTrue(f["avis_atencio"])
         self.assertEqual(f["avis_perill"], "")
         self.assertEqual(f["desbordament"], "")

@@ -8,7 +8,7 @@ Dos regresiones, sin IA, ajustadas con numpy:
   más en una hora a partir de la lluvia de los tres modelos finos (cuánta, si
   cada uno da alguna y cuántos coinciden), la antelación, la hora y el día
   del año (ADR 0021) y, con datos propios, la fracción del ensemble y la
-  lluvia que medía Montflorit al hacer la previsión.
+  lluvia que medía la estación de casa al hacer la previsión.
 - Temperatura: regresión lineal (ridge) del error del modelo en la estación
   de casa según la propia temperatura, las nubes, la humedad, la radiación,
   la hora, el día del año, la antelación y el error que tenía el modelo al
@@ -53,7 +53,7 @@ HISTORIAL = os.path.join(DIR, "historial.csv")
 
 # Cuándo hay bastantes datos propios y cuánto tiene que mejorar un método
 # para sustituir al que se usa (en semanas que no ha visto).
-MIN_HORES_PLUJA = 30        # horas con lluvia en Montflorit
+MIN_HORES_PLUJA = 30        # horas con lluvia medida en casa
 MIN_DIES_TEMPERATURA = 14
 MILLORA_MINIMA = 0.05       # 5 % menos de error
 SETMANES_VALIDACIO = 4      # grupos de semanas para la validación cruzada
@@ -256,28 +256,40 @@ def _num(x):
         return None
 
 
-def pluja_observada(mont, casa):
-    """mm de la hora: Montflorit y, si marca lluvia, la estación de casa (su
-    cero no es fiable). Sin Montflorit y sin lluvia en casa, no se sabe."""
-    m, c = _num((mont or {}).get("pluja_mm")), _num((casa or {}).get("pluja_mm"))
-    if m is None:
-        return c if c is not None and c >= C.UMBRAL_MM else None
-    return max(m, c or 0)
+def pluja_observada(casa, meteocat=()):
+    """mm de la hora según la estación de casa. Lo que marca es lluvia; su
+    cero solo vale como hora seca si las estaciones de Meteocat de alrededor
+    (meteocat: lo que midió cada una, si lo hay) tampoco recogieron nada: el
+    pluviómetro a veces no marca la lluvia débil (ADR 0017 y 0058). Sin casa,
+    o con casa a cero y lluvia cerca, no se sabe."""
+    c = _num((casa or {}).get("pluja_mm"))
+    if c is None:
+        return None
+    if c >= C.UMBRAL_MM:
+        return c
+    prop = [_num((m or {}).get("pluja_mm")) for m in meteocat]
+    prop = [x for x in prop if x is not None]
+    return 0.0 if prop and all(x < C.UMBRAL_MM for x in prop) else None
+
+
+def _meteocat():
+    """Lo medido por horas en cada estación de Meteocat del registro."""
+    return [_llegeix(f"meteocat-{codi}.csv") for codi in C.ESTACIONES]
 
 
 def mostres():
     """Una muestra por hora prevista y pasada de cada previsión registrada, con
-    lo que pasó: la lluvia de Montflorit y de casa y la temperatura de casa
-    (ADR 0017)."""
-    mont, casa = _llegeix("montflorit.csv"), _llegeix("estacio-casa.csv")
+    lo que pasó: la lluvia y la temperatura de casa (ADR 0017), con las
+    estaciones de Meteocat para confirmar las horas secas (ADR 0058)."""
+    casa, meteocat = _llegeix("estacio-casa.csv"), _meteocat()
     res = []
     for arxiu in sorted(glob.glob(os.path.join(REGISTRE, "casa-*.jsonl"))):
         with open(arxiu, encoding="utf-8") as f:
             for linea in map(json.loads, f):
-                ara, ara_casa = linea.get("ara") or {}, linea.get("ara_casa") or {}
-                plujas = [x for x in (ara.get("pluja_1h"), ara_casa.get("pluja_1h")) if x is not None]
+                ara_casa = linea.get("ara_casa") or {}
+                plujas = [x for x in (ara_casa.get("pluja_1h"),) if x is not None]
                 for h in linea["hores"]:
-                    obs_pluja = pluja_observada(mont.get(h["fins"]), casa.get(h["fins"]))
+                    obs_pluja = pluja_observada(casa.get(h["fins"]), [m.get(h["fins"]) for m in meteocat])
                     obs_temp = _num((casa.get(h["fins"]) or {}).get("temperatura"))
                     if obs_pluja is None and obs_temp is None:
                         continue
@@ -416,7 +428,7 @@ def explica(abans, nou, vp, vt):
             p = nou["pluja"]
             amb_xv = (" i la pluja de Sant Cugat" if "sant_cugat" in p["rasgos"]
                       else " i els avisos oficials" if "avis_aemet" in p["rasgos"] else "")
-            linies.append(f"Pluja: passa a aprendre de Montflorit i de l'estació de casa{amb_xv} "
+            linies.append(f"Pluja: passa a aprendre de l'estació de casa{amb_xv} "
                           f"({p['mostres']} mostres). "
                           f"Error {p['error']:.4f} en setmanes no vistes, abans {p['error_abans']:.4f}."
                           + (f" Sense aquest rasgo, a les mateixes hores: {p['error_base']:.4f}."
@@ -593,14 +605,14 @@ def verifica_moto(ahora=None):
     if os.path.exists(MOTO):
         with open(MOTO, encoding="utf-8") as f:
             fetes = {(r["fins"], r["termini"]) for r in csv.DictReader(f)}
-    mont, casa = _llegeix("montflorit.csv"), _llegeix("estacio-casa.csv")
+    casa, meteocat = _llegeix("estacio-casa.csv"), _meteocat()
     millor = {}
     for arxiu in sorted(glob.glob(os.path.join(REGISTRE, "casa-*.jsonl"))):
         with open(arxiu, encoding="utf-8") as f:
             for linea in map(json.loads, f):
                 for h in linea["hores"]:
                     # Sin el aviso registrado (antes del 08-10-2026) no se sabe qué dijo.
-                    if h.get("avis_pluja") is None or int(h["fins"][11:13]) not in HORES_MOTO:
+                    if not h.get("mostrat") or h.get("avis_pluja") is None or int(h["fins"][11:13]) not in HORES_MOTO:
                         continue
                     for termini, (a, b) in TERMINIS_MOTO.items():
                         clau = (h["fins"], termini)
@@ -611,7 +623,7 @@ def verifica_moto(ahora=None):
     for (fins, termini), (emes, h) in sorted(millor.items()):
         if (fins, termini) in fetes or dt.datetime.fromisoformat(fins).astimezone() > ahora:
             continue
-        obs = pluja_observada(mont.get(fins), casa.get(fins))
+        obs = pluja_observada(casa.get(fins), [m.get(fins) for m in meteocat])
         if obs is None:
             continue
         m, avis = h["mostrat"], bool(h["avis_pluja"])

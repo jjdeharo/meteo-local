@@ -11,10 +11,8 @@ patinet, moto, cotxe i transport públic), quina roba cal, consells i si
 circulen els trens que paren a Cerdanyola, amb les dades en temps real de
 Renfe i d'FGC.
 
-- **Ara:** temperatura, humitat i pressió d'una estació particular del barri;
-  pluja de l'estació de Montflorit de
-  [meteocerdanyola.com](https://meteocerdanyola.com/2026/sites/cerdanyola_montflorit/index.html);
-  vent de l'estació de Meteocat de Sant Cugat.
+- **Ara:** temperatura, humitat, pressió i pluja d'una estació particular del
+  barri; vent de l'estació de Meteocat de Sant Cugat.
 - **Previsió:** models de Météo-France i del servei meteorològic alemany, a
   través d'[Open-Meteo](https://open-meteo.com/), amb la temperatura i la
   probabilitat de pluja corregides amb el que ha passat de veritat.
