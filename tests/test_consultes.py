@@ -85,19 +85,8 @@ class Aire(unittest.TestCase):
         f = AI.factors(model, mesures)
         self.assertEqual(f, {"nitrogen_dioxide": {"factor": 0.5, "hores": 96}})
 
-    def test_ultimes_mesures(self):
-        files = [{"nom_estacio": "Sant Cugat del Vallès", "contaminant": "NO2", "data": "2026-10-09T00:00:00.000",
-                  "h01": "11", "h04": "7"},
-                 {"nom_estacio": "Sant Cugat del Vallès", "contaminant": "O3", "data": "2026-10-09T00:00:00.000",
-                  "h04": "32"}]
-        m = AI.ultimes(AI.per_hora(files))
-        self.assertEqual(m, [{"estacio": "Sant Cugat del Vallès", "km": 3.9, "hora": "2026-10-09T04:00",
-                              "valors": {"nitrogen_dioxide": 7.0, "ozone": 32.0}, "index": 14}])
-
     def test_ara_i_el_pitjor_d_avui_corregits(self):
-        corr = {"factors": {"nitrogen_dioxide": {"factor": 0.5, "hores": 700}},
-                "mesures": [{"estacio": "Sant Cugat del Vallès", "km": 3.9, "hora": "2026-10-09T04:00",
-                             "valors": {"nitrogen_dioxide": 7.0, "ozone": 32.0}, "index": 14}]}
+        corr = {"factors": {"nitrogen_dioxide": {"factor": 0.5, "hores": 700}}}
         a = AI.llegeix(AIRE, ARA, corr)
         # 11:40: el NO₂ de 20 passa a 10 (índex 20); l'ozó, sense corregir, 50 µg/m³ (índex 17).
         self.assertEqual((a["hora"], a["index"], a["contaminant"], a["corregit"]),
@@ -109,7 +98,7 @@ class Aire(unittest.TestCase):
         self.assertIn("Ara: bona (índex europeu 20).", t)
         self.assertIn("El pitjor d'avui: regular cap a les 21:00.", t)
         self.assertIn("no mesurada a Montflorit; NO₂, corregits amb les mesures", t)
-        self.assertIn("Sant Cugat del Vallès (3,9 km), a les 4 h: NO₂ 7, ozó 32 µg/m³ (bona).", t)
+        self.assertNotIn("Sant Cugat", t)                    # les mesures no es mostren
 
 
 class Sol(unittest.TestCase):

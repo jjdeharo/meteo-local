@@ -20,9 +20,8 @@ Por eso:
   factor y el índice se recalcula con la tabla del índice europeo (EAQI) de
   Open-Meteo: para cada contaminante, interpolado dentro de su tramo, y el
   total, el del peor. Sin bastantes horas (`AIRE_HORES_MIN`), no se corrige.
-- **Se da la última medida de cada estación**, con su hora: la red publica sus
-  datos abiertos con unas 7 u 8 horas de retraso, así que no sirven para decir
-  cómo está el aire ahora, pero sí para ver si la estimación exagera.
+- Las medidas no se publican: la red publica sus datos abiertos con unas 7 u
+  8 horas de retraso, y para los vecinos eran ruido (Juanjo, 09-10-2026).
 
 Categorías (de 0-20 a más de 100), con los nombres del índice español, que
 sigue al europeo: bona, raonablement bona, regular, desfavorable, molt
@@ -146,23 +145,8 @@ def factors(model_hores, mesures):
     return res
 
 
-def ultimes(mesures):
-    """La última medida de cada estación: la hora más reciente con algún valor
-    y los valores de esa hora."""
-    res = []
-    for nom, lloc in ESTACIONS.items():
-        hores = sorted({t for (e, c, t) in mesures if e == nom})
-        if not hores:
-            continue
-        t = hores[-1]
-        valors = {c: v for (e, c, tt), v in mesures.items() if e == nom and tt == t}
-        res.append({"estacio": nom, "km": round(km(C.CASA, lloc), 1), "hora": t, "valors": valors,
-                    "index": max(index_de(c, v) for c, v in valors.items())})
-    return sorted(res, key=lambda e: e["km"])
-
-
 def correccio(ara):
-    """Los factores y las últimas medidas, guardados un día en el NAS."""
+    """Los factores de corrección, guardados un día en el NAS."""
     try:
         with open(CACHE, encoding="utf-8") as f:
             desat = json.load(f)
@@ -175,7 +159,7 @@ def correccio(ara):
     mesures = per_hora(mesures_xvpca(desde))
     passat = model(ara, DIES_CORRECCIO)["hourly"]
     res = {"dia": ara.date().isoformat(), "hora": ara.isoformat(timespec="minutes"),
-           "factors": factors(passat, mesures), "mesures": ultimes(mesures)}
+           "factors": factors(passat, mesures)}
     if os.path.isdir(os.path.dirname(CACHE)):
         with open(CACHE + ".tmp", "w", encoding="utf-8") as f:
             json.dump(res, f, ensure_ascii=False)
@@ -204,8 +188,7 @@ def llegeix(d, ara, corr=None):
             "contaminant": max(ara_["per"], key=ara_["per"].get), "contaminants": ara_["per"],
             "hores": [{"hora": x["hora"], "index": x["index"]} for x in hores],
             "pitjor": {"hora": pitjor["hora"], "index": pitjor["index"], "categoria": categoria(pitjor["index"])},
-            "corregit": bool(fs), "factors": (corr or {}).get("factors") or {},
-            "mesures": (corr or {}).get("mesures") or []}
+            "corregit": bool(fs), "factors": (corr or {}).get("factors") or {}}
 
 
 def calcula(ara=None):

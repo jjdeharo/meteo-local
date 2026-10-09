@@ -87,7 +87,8 @@ Juanjo pidió las tres cosas propuestas, sin quitar las barras de colores:
   d'uns 10 km al voltant de Bellaterra, no mesurada a Montflorit», y qué se ha
   corregido.
 - **Las últimas medidas de Barberà, Sant Cugat y Montcada**, con su hora y su
-  categoría (llegan con 7 u 8 horas de retraso).
+  categoría (llegan con 7 u 8 horas de retraso). Quitadas en la 3.37.1: «para
+  los vecinos es ruido». Se siguen usando, por dentro, para la corrección.
 - **El modelo, corregido con lo medido** (`aire.py`): una vez al día, para cada
   contaminante, el cociente entre la suma de lo medido (media de las
   estaciones) y la del modelo en las horas del último mes que tienen las dos

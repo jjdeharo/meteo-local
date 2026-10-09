@@ -613,8 +613,9 @@ MAPA_AIRE = "https://mediambient.gencat.cat/{}/05_ambits_dactuacio/atmosfera/qua
 
 def text_aire_bot(dades, idioma, moment):
     """L'índex europeu de qualitat de l'aire del model CAMS, corregit amb les
-    estacions (aire.py): ara, el pitjor moment del que queda d'avui, que és una
-    estimació d'una zona i les últimes mesures de les estacions."""
+    estacions (aire.py): ara, el pitjor moment del que queda d'avui i que és una
+    estimació d'una zona. Les mesures de les estacions no es mostren: per als
+    veïns són soroll (Juanjo, 09-10-2026)."""
     vell = dades_velles(dades, idioma, moment)
     if vell:
         return vell
@@ -635,12 +636,6 @@ def text_aire_bot(dades, idioma, moment):
         linies.append(f"Lo peor de hoy: {n[p['categoria']]} hacia las {hm(p['hora'])}." if es
                       else f"El pitjor d'avui: {n[p['categoria']]} cap a les {hm(p['hora'])}.")
     linies.append("<i>" + html.escape(nota_aire(a, idioma), quote=False) + "</i>")
-    # Les últimes mesures de les estacions, amb la seva hora: arriben amb
-    # hores de retard, però són mesures (aire.py).
-    if a.get("mesures"):
-        linies.append("<b>" + ("Últimas medidas" if es else "Últimes mesures") + "</b>")
-        for m in a["mesures"]:
-            linies.append(html.escape(text_mesura(m, idioma, moment), quote=False))
     linies.append(enllac(MAPA_AIRE.format("es" if es else "ca"),
                          "Medidas de las estaciones (Generalitat)" if es else "Mesures de les estacions (Generalitat)"))
     return "\n".join(linies)
@@ -649,12 +644,6 @@ def text_aire_bot(dades, idioma, moment):
 CURT_AIRE = {"ca": {"nitrogen_dioxide": "NO₂", "ozone": "ozó", "pm10": "PM10", "pm2_5": "PM2,5", "sulphur_dioxide": "SO₂"},
              "es": {"nitrogen_dioxide": "NO₂", "ozone": "ozono", "pm10": "PM10", "pm2_5": "PM2,5", "sulphur_dioxide": "SO₂"}}
 ORDRE_AIRE = ("nitrogen_dioxide", "ozone", "pm10", "pm2_5", "sulphur_dioxide")
-
-
-def categoria_aire(index):
-    """Com aire.categoria (el bot no carrega aire.py)."""
-    cats = ("bona", "raonablement_bona", "regular", "desfavorable", "molt_desfavorable", "extremadament_desfavorable")
-    return cats[sum(index > l for l in (20, 40, 60, 80, 100))]
 
 
 def nota_aire(a, idioma):
@@ -673,19 +662,6 @@ def nota_aire(a, idioma):
     else:
         nota += "."
     return nota
-
-
-def text_mesura(m, idioma, moment):
-    """«Sant Cugat del Vallès (4 km), a les 4 h: NO₂ 7, ozó 32 µg/m³ (bona).»"""
-    es = idioma == "es"
-    t = dt.datetime.fromisoformat(m["hora"])
-    quan = (f"a las {t.hour} h" if es else f"a les {t.hour} h") if t.date() == moment.date() else \
-        (f"ayer a las {t.hour} h" if es else f"ahir a les {t.hour} h") \
-        if t.date() == (moment - dt.timedelta(days=1)).date() else f"{t.day}/{t.month} {t.hour} h"
-    valors = ", ".join(f"{CURT_AIRE[idioma][c]} {m['valors'][c]:g}" for c in ORDRE_AIRE if c in m["valors"])
-    distancia_ = str(m["km"]).replace(".", ",").replace(",0", "")
-    return (f"{m['estacio']} ({distancia_} km), {quan}: {valors} µg/m³ "
-            f"({AIRE_NOMS[idioma][categoria_aire(m['index'])]}).")
 
 
 NIVELL_POLLEN = {"ca": ("nul", "baix", "mig", "alt", "màxim"), "es": ("nulo", "bajo", "medio", "alto", "máximo")}

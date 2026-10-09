@@ -514,8 +514,6 @@ h1 { margin: 0; font-size: 1.6rem; line-height: 1.2; }
 .aire-fila .pollen-nivell { grid-area: nivell; text-align: right; }
 .aire-fila .aire-barra { grid-area: barra; }
 .aire-fila + .aire-fila { margin-top: .3rem; }
-.aire-mesures { margin: 0; padding: 0; list-style: none; display: grid; gap: .45rem; font-size: .95rem; }
-.aire-xip-petit { padding: 0 .5rem; font-size: .85rem; }
 .aire-barra { height: .7rem; border-radius: 3px; background: var(--vora); overflow: hidden; }
 .aire-barra span { display: block; height: 100%; background: var(--c); }
 .aire-hores { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(1.2rem, 1fr); gap: 2px; }
