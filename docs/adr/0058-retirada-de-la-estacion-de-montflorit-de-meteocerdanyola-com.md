@@ -58,11 +58,19 @@ sirve para «¿llueve ahora?» ni para aprender por horas.
   lluvia que cae en toda la zona; el mecanismo no cambia.
 - **«Los modelos no ven esta lluvia»**: se compara con las tres últimas
   horas de casa, solo si las lecturas de la pasada las cubren.
-- **Los datos ya guardados** (`montflorit.csv`, `montflorit-5min.csv`, el
-  campo `ara` de `casa-*.jsonl` y la columna `montflorit_3h_max` de
-  `riera.csv`) no los lee ya ningún programa. Borrarlos del NAS y de la copia
-  privada es decisión de Juanjo; el modelo aprendido con ellos se sustituye
-  solo en el siguiente ajuste diario, que ya usa la verdad nueva.
+- **Los datos ya guardados se borraron del NAS** el mismo 09-10-2026, a
+  petición de Juanjo («borra los datos guardados de montflorit del nas»):
+  `montflorit.csv` y `montflorit-5min.csv`; el campo `ara` de cada línea de
+  `casa-2026-10.jsonl` (a `null`); las lecturas de la estación dentro del
+  registro de la página del trayecto retirada (`2026-10.jsonl` y
+  `dades.json`: observaciones, estaciones y las frases que citaban su
+  medida); la columna `montflorit_3h_max` de `riera.csv`; y `moto.csv`, cuya
+  lluvia observada salía de esa estación (se regenera solo con la verdad
+  nueva). Lo mismo en la copia de trabajo del repositorio privado
+  `meteo-local-registre` que hay en el NAS, que la copia diaria sube. En el
+  historial de ese repositorio privado quedan las versiones anteriores; no
+  se ha reescrito. Ningún modelo aprendido salía de esos datos: el
+  aprendizaje seguía con el archivo.
 
 ## Alternativas descartadas
 
