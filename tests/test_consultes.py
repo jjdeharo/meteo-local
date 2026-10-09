@@ -83,7 +83,8 @@ class Aire(unittest.TestCase):
             mesures[("Barberà del Vallès", "nitrogen_dioxide", t)] = 12.0
             mesures[("Montcada i Reixac", "pm10", t)] = 25.0        # una sola estació: no es corregeix
         f = AI.factors(model, mesures)
-        self.assertEqual(f, {"nitrogen_dioxide": {"factor": 0.5, "hores": 96}})
+        # Des del 09-10-2026, amb l'error en dies no usats (corregit i sense corregir).
+        self.assertEqual(f, {"nitrogen_dioxide": {"factor": 0.5, "hores": 96, "error": 0.0, "error_sense": 10.0}})
 
     def test_ara_i_el_pitjor_d_avui_corregits(self):
         corr = {"factors": {"nitrogen_dioxide": {"factor": 0.5, "hores": 700}}}

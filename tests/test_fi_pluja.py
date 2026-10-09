@@ -93,13 +93,47 @@ class Final(unittest.TestCase):
                     regs.append({"t": t(f"20:{m:02d}", dia).isoformat(), "triada": "meteocat",
                                  "fonts": {"meteocat": {"hora": t("20:00", dia).isoformat(),
                                                         "prob": [1, 1, 1, 1, 0.25, 0.25, 0.25, 0.25, 0.25]}}})
-            text = F.aprèn(pluja, regs, avisa=False)
+            F.PROPOSAT = os.path.join(d, "fi-pluja-proposat.json")
+            text = F.aprèn(pluja, regs, avisa=False, avui="2026-10-09")
             self.assertIn("menys del 30 %", text)
+            self.assertIn("episodis no usats per triar-la", text)
+            # Auditoria del 09-10-2026: es proposa i s'aplica l'endemà, no el mateix dia.
+            self.assertEqual(F.regla()["llindar"], 0.2)
+            self.assertIsNone(F.aprèn(pluja, regs, avisa=False, avui="2026-10-09"))    # ja proposada: no es repeteix
+            self.assertIsNone(F.aplica_proposta("2026-10-09"))                          # avui encara no
+            self.assertIn("aplicada", F.aplica_proposta("2026-10-10"))
             self.assertEqual(F.regla()["llindar"], 0.3)
+            self.assertFalse(os.path.exists(F.PROPOSAT))
             self.assertIsNone(F.aprèn(pluja, regs, avisa=False))       # ja és la millor
             open(F.ATURA, "w").close()
             os.remove(F.REGLA)
             self.assertIsNone(F.aprèn(pluja, regs, avisa=False))       # aturat
+
+    def test_l_error_validat_deixa_fora_cada_episodi(self):
+        # Auditoria del 09-10-2026: la variant es triava i es mesurava amb els
+        # mateixos episodis. Dos episodis en què guanya el 30 % i un en què el
+        # 30 % s'equivoca molt: en triar amb els altres, aquell surt a l'error.
+        pluja, regs = {}, []
+        for dia, baixa in ((6, 0.25), (7, 0.25), (8, 0.25)):
+            for m in (5, 10, 15, 20):
+                pluja[t(f"20:{m:02d}", dia)] = 0.4
+            pluja[t("21:00", dia)] = 0.0
+            prob = [1, 1, 1, 1, baixa, baixa, baixa, baixa, baixa]
+            if dia == 8:        # el radar s'equivoca: baixa del 30 % quan encara plou 15 minuts
+                prob = [1, baixa, baixa, baixa, baixa, baixa, baixa, baixa, baixa]
+            regs.append({"t": t("20:00", dia).isoformat(), "triada": "meteocat",
+                         "fonts": {"meteocat": {"hora": t("20:00", dia).isoformat(), "prob": prob}}})
+        millor = min(F.VARIANTS, key=lambda v: F.error(F.compara(pluja, regs, v)[0]))
+        self.assertEqual(millor["llindar"], 0.3)
+        # Amb tots: error 5 (0, 0 i 15 minuts). Deixant cada episodi fora, el
+        # mateix: en triar amb els altres dos també surt el 30 %, i el tercer costa 15.
+        self.assertAlmostEqual(F.error(F.compara(pluja, regs, millor)[0]), 5.0)
+        self.assertAlmostEqual(F.error_validat(pluja, regs), 5.0)
+        # Un sol episodi en què guanya una altra regla no val: en triar sense
+        # ell surt el 30 %, i l'error validat és el del 30 % en aquell episodi.
+        pluja2 = {k: v for k, v in pluja.items() if k.day != 8}
+        regs2 = [r for r in regs if "-08T" not in r["t"]]
+        self.assertAlmostEqual(F.error_validat(pluja2, regs2), 0.0)
 
 
 

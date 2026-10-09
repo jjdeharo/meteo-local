@@ -54,8 +54,8 @@ estaba completa (09-10-2026).
 
 ## Consecuencias
 
-- Dos limitaciones de método que encontró la auditoría quedan escritas en
-  la metodología, sin cambiar el código: la regla del final de la lluvia se
+- Dos limitaciones de método que encontró la auditoría quedaron escritas en
+  la metodología; se corrigieron en la 3.43.0 (ADR 0049 y 0054): la regla del final de la lluvia se
   elige y se mide con los mismos episodios y se cambia el mismo día, y la
   corrección del aire no se ha comprobado fuera de los datos con que se
   calcula.

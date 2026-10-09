@@ -16,7 +16,12 @@ Por eso:
   `tasf-thgu`) de Barberà, Sant Cugat y Montcada, y para cada contaminante se
   calcula cuánto se desvía el modelo: el cociente entre la suma de lo medido y
   la de lo previsto. Solo si lo miden al menos dos estaciones
-  (`AIRE_ESTACIONS_MIN`): hoy, el NO₂ y el ozono. Las concentraciones del modelo se multiplican por ese
+  (`AIRE_ESTACIONS_MIN`): hoy, el NO₂ y el ozono. Y solo si acierta más:
+  para cada día, el factor calculado con los demás días se aplica a ese y se
+  mide el error contra lo medido; si el error corregido no baja al menos un
+  5 % (`AIRE_MILLORA`) respecto al del modelo sin corregir, el factor se
+  descarta (auditoría del 09-10-2026: antes se aplicaba sin comprobarlo).
+  Las concentraciones del modelo se multiplican por ese
   factor y el índice se recalcula con la tabla del índice europeo (EAQI) de
   Open-Meteo: para cada contaminante, interpolado dentro de su tramo, y el
   total, el del peor. Sin bastantes horas (`AIRE_HORES_MIN`), no se corrige.
@@ -63,6 +68,7 @@ AIRE_HORES_MIN = 72          # horas emparejadas por contaminante para corregir
 # mide Montcada, junto a la cementera, y su factor (2,5 el 09-10-2026) diría
 # más de Montcada que de Montflorit.
 AIRE_ESTACIONS_MIN = 2
+AIRE_MILLORA = 0.95          # el error corregido, un 5 % menor como mínimo, en días no usados
 CACHE = os.path.join(os.environ.get("AIRE_DIR", "/estat"), "aire-correccio.json")
 UA = {"User-Agent": "Temps a Montflorit (https://meteo-montflorit.github.io/)"}
 
@@ -126,23 +132,53 @@ def per_hora(files):
     return res
 
 
-def factors(model_hores, mesures):
+def valida_factor(parelles):
+    """Error medio (µg/m³) del modelo corregido y sin corregir, en días que
+    no sirvieron para calcular el factor: para cada día, el factor sale de
+    los demás y se aplica a ese (validación dejando un día fuera)."""
+    per_dia = {}
+    for t, m, p in parelles:
+        per_dia.setdefault(t[:10], []).append((m, p))
+    tot_m, tot_p = sum(m for _, m, _ in parelles), sum(p for _, _, p in parelles)
+    corregit = cru = 0.0
+    n = 0
+    for dia, items in per_dia.items():
+        m_d, p_d = sum(m for m, _ in items), sum(p for _, p in items)
+        if tot_p - p_d <= 0:
+            continue
+        f = (tot_m - m_d) / (tot_p - p_d)
+        for m, p in items:
+            corregit += abs(f * p - m)
+            cru += abs(p - m)
+            n += 1
+    return (corregit / n, cru / n) if n else (None, None)
+
+
+def factors(model_hores, mesures, tot=False):
     """Para cada contaminante, la suma de lo medido (media de las estaciones
-    de cada hora) entre la del modelo, en las horas que tienen las dos cosas."""
-    res = {}
+    de cada hora) entre la del modelo, en las horas que tienen las dos cosas,
+    si al aplicarlo a días no usados para calcularlo el error baja al menos
+    AIRE_MILLORA. Con tot, también los descartados y por qué."""
+    res, descartats = {}, {}
     for c in CONTAMINANTS:
-        mesurat, previst, n = 0.0, 0.0, 0
+        parelles = []
         for t, m in zip(model_hores["time"], model_hores.get(c) or []):
             vals = [v for (e, cc, tt), v in mesures.items() if cc == c and tt == t]
             if m is None or not vals:
                 continue
-            mesurat += sum(vals) / len(vals)
-            previst += m
-            n += 1
+            parelles.append((t, sum(vals) / len(vals), m))
         estacions = {e for (e, cc, t) in mesures if cc == c}
-        if n >= AIRE_HORES_MIN and previst > 0 and len(estacions) >= AIRE_ESTACIONS_MIN:
-            res[c] = {"factor": round(mesurat / previst, 2), "hores": n}
-    return res
+        previst = sum(p for _, _, p in parelles)
+        if len(parelles) < AIRE_HORES_MIN or previst <= 0 or len(estacions) < AIRE_ESTACIONS_MIN:
+            continue
+        error, error_sense = valida_factor(parelles)
+        dades = {"factor": round(sum(m for _, m, _ in parelles) / previst, 2), "hores": len(parelles),
+                 "error": round(error, 1), "error_sense": round(error_sense, 1)}
+        if error is not None and error_sense and error < AIRE_MILLORA * error_sense:
+            res[c] = dades
+        else:
+            descartats[c] = dades
+    return (res, descartats) if tot else res
 
 
 def correccio(ara):
@@ -158,8 +194,9 @@ def correccio(ara):
     desde = (ara - dt.timedelta(days=DIES_CORRECCIO + 1)).date().isoformat()
     mesures = per_hora(mesures_xvpca(desde))
     passat = model(ara, DIES_CORRECCIO)["hourly"]
+    adoptats, descartats = factors(passat, mesures, tot=True)
     res = {"dia": ara.date().isoformat(), "hora": ara.isoformat(timespec="minutes"),
-           "factors": factors(passat, mesures)}
+           "factors": adoptats, "descartats": descartats}
     if os.path.isdir(os.path.dirname(CACHE)):
         with open(CACHE + ".tmp", "w", encoding="utf-8") as f:
             json.dump(res, f, ensure_ascii=False)

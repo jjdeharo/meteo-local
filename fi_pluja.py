@@ -8,10 +8,16 @@ momento, desde la pasada, en que baja de un umbral durante unos minutos
 seguidos (al principio, del 20 % durante 15 minutos); si no lo hace en el
 horizonte, «no s'acaba en 2 hores». La página lo enseña «en entrenament».
 
-Aprende sola: cada día prueba las VARIANTS con lo registrado y, si una se
-equivoca al menos un 5 % menos que la que se usa (con MIN_EPISODIS_CANVI
-episodios o más), pasa a usarla y lo dice a Juanjo. Se guarda en
-aprenentatge/fi-pluja.json; el archivo «atura» lo para.
+Aprende sola: cada día prueba las VARIANTS con lo registrado. Para no
+elegir y medir con los mismos episodios (con pocos y nueve combinaciones, la
+elegida podía ganar por azar; auditoría del 09-10-2026), el error que cuenta
+es el de «elegir la mejor»: para cada episodio, la variante que menos se
+equivoca en los demás, juzgada solo en ese (error_validat). Si ese error es
+al menos un 5 % menor que el de la regla en uso (con MIN_EPISODIS_CANVI
+episodios o más), se propone la mejor con todos los episodios, se dice a
+Juanjo y se aplica al día siguiente, como el aprendizaje de la lluvia
+(aprenentatge.py); el archivo «atura» lo para. Se guarda en
+aprenentatge/fi-pluja.json; la propuesta, en fi-pluja-proposat.json.
 
 Aquí se compara con la lluvia de Montflorit cada 5 minutos
 (montflorit-5min.csv, registre.py): episodios con lluvia separados por
@@ -35,6 +41,7 @@ DIR = os.environ.get("REGISTRE_DIR", "/estat/registre")
 APRENENTATGE = os.environ.get("APRENENTATGE_DIR", "/estat/aprenentatge")
 AVIS = os.path.join(APRENENTATGE, "avis-fi-pluja")
 REGLA = os.path.join(APRENENTATGE, "fi-pluja.json")
+PROPOSAT = os.path.join(APRENENTATGE, "fi-pluja-proposat.json")
 ATURA = os.path.join(APRENENTATGE, "atura")
 PER_DEFECTE = {"llindar": 0.2, "passos": 3}       # 20 %, 15 minutos
 VARIANTS = [{"llindar": l, "passos": p} for l in (0.1, 0.2, 0.3) for p in (2, 3, 4)]
@@ -140,37 +147,92 @@ def resultat(casos, n_episodis):
             "sense_final": len(sense), "sense_final_be": sum(c["real"] > c["horitzo"] for c in sense)}
 
 
+def errors_casos(casos):
+    """Error en minutos de cada caso: con hora de final, la distancia al final
+    real; sin ella, nada si de verdad acababa más allá del radar y, si no,
+    lo que faltaba hasta el horizonte."""
+    return [abs((c["previst"] - c["real"]).total_seconds()) / 60 if c["previst"]
+            else max(0.0, (c["horitzo"] - c["real"]).total_seconds() / 60) for c in casos]
+
+
 def error(casos):
-    """Error medio en minutos de una regla: con hora de final, la distancia al
-    final real; sin ella, nada si de verdad acababa más allá del radar y, si
-    no, lo que faltaba hasta el horizonte."""
-    if not casos:
+    """Error medio en minutos de una regla."""
+    return sum(errors_casos(casos)) / len(casos) if casos else None
+
+
+def error_validat(pluja, regs):
+    """El error honesto de «elegir la mejor variante»: para cada episodio, la
+    variante que menos se equivoca en los demás, juzgada solo en ese
+    (validación dejando un episodio fuera); la media de todos los casos.
+    Hasta la auditoría del 09-10-2026 la variante se elegía y se medía con
+    los mismos episodios."""
+    per_variant = [compara(pluja, regs, v)[0] for v in VARIANTS]
+    errors = []
+    for ep in episodis(pluja):
+        fora = [[c for c in casos if c["episodi"] != ep[0]] for casos in per_variant]
+        if not fora[0]:
+            continue
+        k = min(range(len(VARIANTS)), key=lambda k: error(fora[k]))
+        errors += errors_casos([c for c in per_variant[k] if c["episodi"] == ep[0]])
+    return sum(errors) / len(errors) if errors else None
+
+
+def llegeix_proposta():
+    try:
+        with open(PROPOSAT, encoding="utf-8") as f:
+            return json.load(f)
+    except (OSError, ValueError):
         return None
-    e = [abs((c["previst"] - c["real"]).total_seconds()) / 60 if c["previst"]
-         else max(0.0, (c["horitzo"] - c["real"]).total_seconds() / 60) for c in casos]
-    return sum(e) / len(e)
 
 
-def aprèn(pluja, regs, avisa=True):
-    """Prueba las variantes y, si una mejora bastante, pasa a usarla."""
+def aplica_proposta(avui=None):
+    """Una propuesta de un día anterior que nadie ha parado pasa a ser la
+    regla (como las del aprendizaje de la lluvia). Devuelve qué ha hecho."""
+    avui = avui or dt.date.today().isoformat()
+    p = llegeix_proposta()
+    if not p:
+        return None
+    if os.path.exists(ATURA):
+        os.remove(PROPOSAT)
+        return "Final de la pluja: proposta aturada, no s'aplica."
+    if p["dia"] >= avui:
+        return None
+    with open(REGLA + ".tmp", "w", encoding="utf-8") as f:
+        json.dump({"llindar": p["llindar"], "passos": p["passos"], "error_min": p["error_min"],
+                   "episodis": p["episodis"], "des_de": avui}, f)
+    os.replace(REGLA + ".tmp", REGLA)
+    os.remove(PROPOSAT)
+    return (f"Final de la pluja: aplicada la proposta d'ahir, menys del {round(p['llindar'] * 100)} % "
+            f"durant {p['passos'] * PAS_MIN} minuts.")
+
+
+def aprèn(pluja, regs, avisa=True, avui=None):
+    """Prueba las variantes y, si elegir la mejor se equivoca bastante menos
+    que la regla en uso en episodios que no han servido para elegirla, la
+    propone para el día siguiente."""
+    avui = avui or dt.date.today().isoformat()
     eps = episodis(pluja)
     if len(eps) < MIN_EPISODIS_CANVI or os.path.exists(ATURA):
         return None
     actual = regla()
     err_actual = error(compara(pluja, regs, actual)[0])
     millor = min(VARIANTS, key=lambda v: error(compara(pluja, regs, v)[0]) or 0)
-    err_millor = error(compara(pluja, regs, millor)[0])
-    if millor == actual or err_actual is None or err_millor >= MILLORA * err_actual:
+    err_validat = error_validat(pluja, regs)
+    if millor == actual or err_actual is None or err_validat is None or err_validat >= MILLORA * err_actual:
         return None
+    p = llegeix_proposta()
+    if p and (p["llindar"], p["passos"]) == (millor["llindar"], millor["passos"]):
+        return None            # ya propuesta: se aplicará mañana
     os.makedirs(APRENENTATGE, exist_ok=True)
-    with open(REGLA + ".tmp", "w", encoding="utf-8") as f:
-        json.dump({**millor, "error_min": round(err_millor, 1), "episodis": len(eps),
-                   "des_de": dt.date.today().isoformat()}, f)
-    os.replace(REGLA + ".tmp", REGLA)
-    t = (f"Temps a Montflorit, final de la pluja segons el radar: passa a donar-la per acabada amb menys del "
-         f"{round(millor['llindar'] * 100)} % durant {millor['passos'] * PAS_MIN} minuts (abans, "
-         f"{round(actual['llindar'] * 100)} % i {actual['passos'] * PAS_MIN}). Error mitjà amb {len(eps)} episodis: "
-         f"{err_millor:.0f} minuts, abans {err_actual:.0f}.")
+    with open(PROPOSAT + ".tmp", "w", encoding="utf-8") as f:
+        json.dump({**millor, "error_min": round(err_validat, 1), "error_abans": round(err_actual, 1),
+                   "episodis": len(eps), "dia": avui}, f)
+    os.replace(PROPOSAT + ".tmp", PROPOSAT)
+    t = (f"Temps a Montflorit, final de la pluja segons el radar: proposta de donar-la per acabada amb menys del "
+         f"{round(millor['llindar'] * 100)} % durant {millor['passos'] * PAS_MIN} minuts (ara, "
+         f"{round(actual['llindar'] * 100)} % i {actual['passos'] * PAS_MIN}). Error mitjà en episodis no usats per "
+         f"triar-la: {err_validat:.0f} minuts, amb la regla actual {err_actual:.0f} ({len(eps)} episodis). "
+         "S'aplicarà demà; per aturar-ho, demana-ho a Claude abans.")
     if avisa:
         subprocess.run(["avisar-juanjo", "--asunto", "meteo-local", t], check=False)
     return t
@@ -185,22 +247,22 @@ def text(r):
             "Es mostra a la pàgina «en entrenament»: digues a Claude si cal treure-ho o si ja no cal dir-ho (ADR 0049).")
 
 
-def verifica(avisa=True):
-    """Cada día (aprenentatge.py diari): aprende y, con MIN_EPISODIS
-    episodios, manda el resultado a Juanjo, una sola vez."""
+def verifica(avisa=True, avui=None):
+    """Cada día (aprenentatge.py diari): aplica la propuesta de ayer, propone
+    la de hoy si la hay y, con MIN_EPISODIS episodios, manda el resultado a
+    Juanjo, una sola vez. Devuelve lo que ha hecho, en texto."""
     pluja, regs = pluja_5min(), passades()
-    canvi = aprèn(pluja, regs, avisa)
-    if os.path.exists(AVIS):
-        return canvi
-    casos, n = compara(pluja, regs)
-    if n < MIN_EPISODIS:
-        return canvi
-    t = text(resultat(casos, n))
-    if avisa:
-        subprocess.run(["avisar-juanjo", "--asunto", "meteo-local", t], check=False)
-    os.makedirs(APRENENTATGE, exist_ok=True)
-    open(AVIS, "w").close()
-    return t
+    fets = [aplica_proposta(avui), aprèn(pluja, regs, avisa, avui)]
+    if not os.path.exists(AVIS):
+        casos, n = compara(pluja, regs)
+        if n >= MIN_EPISODIS:
+            t = text(resultat(casos, n))
+            if avisa:
+                subprocess.run(["avisar-juanjo", "--asunto", "meteo-local", t], check=False)
+            os.makedirs(APRENENTATGE, exist_ok=True)
+            open(AVIS, "w").close()
+            fets.append(t)
+    return "\n".join(f for f in fets if f) or None
 
 
 if __name__ == "__main__":

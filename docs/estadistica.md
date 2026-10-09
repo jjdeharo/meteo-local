@@ -600,18 +600,31 @@ radar y, si no, lo que faltaba hasta el horizonte. Un acierto es un error de
 
 **Cómo aprende.** Cada día se prueban las nueve combinaciones de
 $u \in \{0{,}1;\ 0{,}2;\ 0{,}3\}$ y $s \in \{2, 3, 4\}$ con todos los
-episodios registrados. Con tres episodios o más, si la mejor tiene un error
-medio al menos un 5 % menor que la que se usa, pasa a usarse. Con cinco
-episodios, el resultado se comunica una vez, para decidir si se sigue
-mostrando «en entrenament».
+episodios registrados. Como con pocos episodios y nueve combinaciones la
+mejor puede ganar por azar, el error que decide no es el de la mejor
+combinación en los episodios con que se eligió, sino el de *elegir la
+mejor*: para cada episodio $j$ se toma la combinación que menos se equivoca
+en los demás y se mide solo en $j$ (validación dejando un episodio fuera),
 
-**Limitaciones conocidas.** La regla se elige y se mide con los mismos
-episodios. Con pocos episodios y nueve combinaciones, la elegida puede ganar
-por azar, y su error es optimista. Además, a diferencia del aprendizaje de la
-lluvia y la temperatura (apartado 8), el cambio se aplica el mismo día, sin
-propuesta previa. Mientras haya pocos episodios, la cifra de error conviene
-leerla con esa reserva; una validación que deje fuera cada episodio al
-juzgarlo la haría comparable con el resto.
+```math
+E_{\text{val}} = \frac{1}{N} \sum_{j} \sum_{i \in j} \left| t_{\text{fi}}^{(u_j, s_j)}(i) - t_{\text{real}}(i) \right|,
+\qquad (u_j, s_j) = \arg\min_{(u, s)} E_{-j}(u, s),
+```
+
+donde $i$ recorre las pasadas del episodio $j$, $N$ es el total de pasadas y
+$E_{-j}$ es el error medio sin el episodio $j$. Con tres episodios o más, si
+$E_{\text{val}}$ es al menos un 5 % menor que el error de la regla en uso
+(que, al estar fija, se mide sin sesgo en todos los episodios), se propone
+la combinación mejor con todos los episodios, se comunica con las cifras y
+se aplica al día siguiente, salvo que se pare antes, como el aprendizaje de
+la lluvia y la temperatura (apartado 8). Hasta el 09-10-2026 la regla se
+elegía y se medía con los mismos episodios y el cambio se aplicaba el mismo
+día (ADR 0049). Con cinco episodios, el resultado se comunica una vez, para
+decidir si se sigue mostrando «en entrenament».
+
+**Limitación conocida.** Con pocos episodios, $E_{\text{val}}$ sigue
+siendo una cifra con mucha incertidumbre; por eso se exige el 5 % de mejora
+y la propuesta espera un día.
 
 ## 10. Aviso antes de llover
 
@@ -894,10 +907,27 @@ de calidad del aire (EAQI, *European Air Quality Index*) se recalcula
 interpolando dentro del tramo de cada contaminante, con la tabla que publica
 Open-Meteo; el total es el del peor contaminante.
 
-**Limitaciones conocidas.** Es un factor único para todas las horas del día, y
-no se ha comprobado, en días que no se usaron para calcularlo, que el índice
-corregido acierte más que el modelo sin corregir. Las medidas de la red se
-publican con 7 u 8 horas de retraso, por eso no se muestran en la página.
+**Solo si acierta más.** Antes de aplicar $f_c$ se comprueba en días que no
+sirvieron para calcularlo: para cada día $d$ de los 30, el factor se calcula
+con los demás días, $f_c^{(-d)}$, y se aplica a las horas de $d$. El error
+medio del modelo corregido y el del modelo sin corregir, en µg/m³, son
+
+```math
+E_{\text{corr}} = \frac{1}{N} \sum_{d} \sum_{t \in d} \left| f_c^{(-d)} \hat m_{c,t} - \bar m_{c,t} \right|,
+\qquad
+E_{\text{cru}} = \frac{1}{N} \sum_{t} \left| \hat m_{c,t} - \bar m_{c,t} \right|.
+```
+
+El factor se aplica solo si $E_{\text{corr}} < 0{,}95\, E_{\text{cru}}$;
+si no, ese contaminante se muestra tal como lo da el modelo, y la
+corrección descartada queda guardada con sus dos errores
+(`aire-correccio.json`). Hasta el 09-10-2026 el factor se aplicaba sin esta
+comprobación (ADR 0054).
+
+**Limitación conocida.** Es un factor único para todas las horas del día:
+no corrige un sesgo que cambie entre el día y la noche. Las medidas de la
+red se publican con 7 u 8 horas de retraso, por eso no se muestran en la
+página.
 
 ## 16. Límites
 
@@ -931,10 +961,11 @@ publican con 7 u 8 horas de retraso, por eso no se muestran en la página.
 - **El radar no ve la lluvia que nace** en las dos horas siguientes, y su
   círculo y su umbral del 50 % no se han ajustado con datos propios; el
   registro de avisos de lluvia (apartado 10) lo dirá.
-- **Limitaciones de método** ya descritas: el final de la lluvia se elige y
-  se mide con los mismos episodios (apartado 9), los umbrales de la riera
-  salen de cuatro casos (apartado 12) y la corrección del aire no se ha
-  comprobado fuera de los datos con que se calcula (apartado 15).
+- **Limitaciones de método** ya descritas: el error validado del final de
+  la lluvia tiene mucha incertidumbre mientras haya pocos episodios
+  (apartado 9), los umbrales de la riera salen de cuatro casos (apartado
+  12) y la corrección del aire es un factor único para todo el día
+  (apartado 15).
 
 ## 17. Operación
 

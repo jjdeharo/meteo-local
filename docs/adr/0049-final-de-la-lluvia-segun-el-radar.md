@@ -90,3 +90,15 @@ se puede saber si acierta.
 `tests/test_fi_pluja.py` (tramos de 5 minutos completos, episodios y pausas,
 final previsto, el de la página, la variante que se aprende, `atura`, cifras y
 aviso una sola vez) y `tests/test_web.py` (el texto «en entrenament»).
+
+## Cambio del 09-10-2026: validación dejando un episodio fuera y propuesta
+
+La regla se elegía y se medía con los mismos episodios, y el cambio se
+aplicaba el mismo día (limitación anotada en la auditoría del 09-10-2026,
+ADR 0057). Ahora `error_validat` mide el error de «elegir la mejor»: para
+cada episodio, la combinación que menos se equivoca en los demás, juzgada
+solo en ese; si ese error es al menos un 5 % menor que el de la regla en
+uso, `aprèn` escribe una propuesta (`fi-pluja-proposat.json`), avisa, y
+`aplica_proposta` la aplica al día siguiente si no existe «atura», como el
+aprendizaje de la lluvia (ADR 0012). `tests/test_fi_pluja.py`:
+`test_l_error_validat_deixa_fora_cada_episodi` y la prueba de la propuesta.

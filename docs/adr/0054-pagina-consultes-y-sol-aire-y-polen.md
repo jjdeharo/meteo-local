@@ -152,3 +152,14 @@ de la web son las del bot, lectura del HTML de Telegram sin `innerHTML` y orden
 de las opciones). `probar-web` de «Consultes» en Chromium y Firefox,
 escritorio, móvil y tableta, claro y oscuro, en las dos lenguas; axe-core sin
 fallos en «Consultes», «El temps» y «Fonts i crèdits».
+
+## Cambio del 09-10-2026: la corrección del aire, solo si acierta más
+
+El factor se aplicaba sin comprobar que mejorara el modelo (limitación
+anotada en la auditoría del 09-10-2026, ADR 0057). Ahora `valida_factor`
+calcula, para cada día de los 30, el factor con los demás días y lo aplica
+a ese; el factor se adopta solo si el error medio corregido es al menos un
+5 % menor que el del modelo sin corregir (`AIRE_MILLORA`). Los descartados
+quedan en `aire-correccio.json` con sus dos errores, y la página y el bot
+solo dicen «corregit» de los adoptados. `tests/test_aire.py` (nuevo): un
+sesgo constante se corrige; uno que cambia de signo entre días se descarta.
