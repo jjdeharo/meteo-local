@@ -128,7 +128,7 @@ def filtra(gml, rss=None, casa=C.CASA):
         res.append({"id": i["id"], "tipus": "retencio" if i["tipus"] == 2 else "obres", "nivell": i["nivell"],
                     "carretera": i["carretera"], "municipi": municipi,
                     "sentit": sentit or (i["cap_a"] and f"Cap a {i['cap_a']}"),
-                    "causa": i["causa"], "descripcio": i["descripcio"], "pk": pk(*i["pk"]), "km": round(dist, 1)})
+                    "causa": i["causa"], "descripcio": i["descripcio"], "pk": pk(*i["pk"]), "km": round(dist, 2)})
     # Primer les retencions, de la més greu a la més lleu; després les obres.
     return sorted(res, key=lambda i: (i["tipus"] != "retencio", -i["nivell"], i["km"]))
 

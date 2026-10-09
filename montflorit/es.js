@@ -241,6 +241,7 @@ var IDIOMA = {
     "Trànsit ara: cap incidència a prop.": "Tráfico ahora: ninguna incidencia cerca.",
     "Obres: {0}": "Obras: {0}",
     "km {0}": "km {0}",
+    "a {0}": "a {0}",
     "Dades del Servei Català de Trànsit de les {0}, consultades automàticament: l\u2019autor no es fa responsable de la seva exactitud.": "Datos del Servei Català de Trànsit de las {0}, consultados automáticamente: el autor no se hace responsable de su exactitud.",
     "Estat del trànsit: ": "Estado del tráfico: ",
   },

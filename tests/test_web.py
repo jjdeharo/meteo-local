@@ -294,6 +294,11 @@ class Web(unittest.TestCase):
         self.assertEqual(v("cotxe", False, transit[2:])["nivell"], "be")
         self.assertEqual(v("cotxe", False, None)["nivell"], "be")
 
+    def test_distancia_del_transit(self):
+        # Igual que el bot: en metres per sota d'1 km (Juanjo, 09-10-2026).
+        r = self.avalua("2026-10-09T09:30:00+02:00", "[0.01, 0.73, 1.0, 4.04, 4.35].map(distancia)", "sortir.js")
+        self.assertEqual(r, ["50\u00a0m", "750\u00a0m", "1\u00a0km", "4\u00a0km", "4,4\u00a0km"])
+
     def test_roba_bici(self):
         self.assertEqual(self.roba("bici", (9, 22, 0), (11, 22, 0)), "Màniga curta.")
         self.assertEqual(self.roba("bici", (9, 19, 0), (11, 19, 0), pluja=True),

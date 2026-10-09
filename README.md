@@ -94,7 +94,7 @@ Fuentes de la previsión:
 5. **Trenes**: avisos y posición en tiempo real de Renfe (R4, R7 y R8) y de FGC
    (S2), para «Si surts» (`trens.py`, ADR 0029), con el horario de cada línea
    en Cerdanyola sacado de sus GTFS (ADR 0038).
-6. **Tráfico**: las incidencias del Servei Català de Trànsit a 6 km o menos
+6. **Tráfico**: las incidencias del Servei Català de Trànsit a 5 km o menos
    (retenciones, accidentes, averías y obras que desvían o cortan la vía), de
    los datos abiertos de la Generalitat (`transit.py`, ADR 0052).
 

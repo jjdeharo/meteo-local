@@ -2,7 +2,7 @@
 """Datos fijos de «Temps a Montflorit»: lugares, horario, fuentes y umbrales.
 Se cambian aquí, no en los programas."""
 
-VERSION = "3.32.1"
+VERSION = "3.33.0"
 
 # Coordenadas con tres decimales (unos 100 m), no las exactas: para el tiempo
 # da igual una calle u otra, y el repositorio es público.
@@ -201,14 +201,15 @@ ALFA_ACTUAL_H = 36
 ALFA_NIVELL_MOSTRAR = 3
 
 # Tráfico de cerca (transit.py, ADR 0052): las incidencias del Servei Català de
-# Trànsit que empiezan a TRANSIT_RADI_KM o menos de casa (AP-7, B-30, C-58,
-# C-17, C-33, BV-1414, BV-1415, BV-1462 y las rondas por el norte). Las
+# Trànsit que empiezan a TRANSIT_RADI_KM o menos de casa, en línea recta (AP-7,
+# B-30, C-58, C-17, C-33, BV-1414 y BV-1415); desde la 3.33.0, 5 km y no 6
+# (Juanjo, 09-10-2026). Las
 # retenciones, accidentes y averías salen siempre; las obras, solo si desvían
 # o cortan la vía (nivel TRANSIT_NIVELL_OBRES o más, o «tallada» en el texto).
 # En «Si surts», si se sale ahora, el coche y la moto pasan a «compte» con una
 # incidencia de nivel TRANSIT_NIVELL_SORTIDA o más (3, retenciones; 4,
 # congestión; 5, calzada cortada); la «circulació intensa» (2) solo se lista.
-TRANSIT_RADI_KM = 6
+TRANSIT_RADI_KM = 5
 TRANSIT_NIVELL_OBRES = 3
 TRANSIT_NIVELL_SORTIDA = 3
 

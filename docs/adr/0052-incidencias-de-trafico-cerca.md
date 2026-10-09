@@ -19,9 +19,12 @@ moto solo tenían en cuenta el tiempo.
   `incidenciesRSS.xml` (municipio y sentido escritos), cruzados por el
   identificador (`transit.py`). Sin el RSS, las incidencias salen igual, sin
   municipio. Sin el GML, el bloque no sale y el error queda en `errors`.
-- **Qué se muestra**: las incidencias que empiezan a `TRANSIT_RADI_KM` (6 km)
-  o menos de Montflorit: AP-7, B-30, C-58, C-17, C-33, BV-1414, BV-1415,
-  BV-1462 y las rondas por el norte. Todas las retenciones (accidentes,
+- **Qué se muestra**: las incidencias que empiezan a `TRANSIT_RADI_KM` o menos
+  de Montflorit, en línea recta: AP-7, B-30, C-58, C-17, C-33, BV-1414 y
+  BV-1415. Eran 6 km; desde la 3.33.0, 5 (Juanjo, 09-10-2026: «como máximo
+  5km»), y cada incidencia dice a qué distancia está («Barcelona, a 4 km»):
+  en metros, de 50 en 50, por debajo de 1 km («si está a menos de 1km en
+  metros»), y si no, en km con un decimal; igual en la web y en `/transit`. Todas las retenciones (accidentes,
   averías, circulación) y, de las obras, solo las que desvían o cortan la vía
   (nivel 3 o más, o «tallada» o «tall total» en el texto). Las obras con un
   carril restringido (nivel 2) no: el 09-10-2026 eran 162 de 184 en toda
@@ -112,8 +115,11 @@ moto solo tenían en cuenta el tiempo.
 
 ## Riesgos y limitaciones
 
-- La distancia es la del punto de inicio del tramo, no la de todo el tramo:
-  una incidencia larga que empiece lejos y llegue cerca no sale.
+- La distancia es en línea recta hasta el punto que da la fuente para el
+  tramo, no la de todo el tramo ni por carretera: una incidencia larga que
+  empiece lejos y llegue cerca no sale, y la misma puede salir a distancias
+  algo distintas entre descargas (la BV-1414, a 3,1 y a 4,4 km el 09-10-2026),
+  porque el punto cambia de un extremo del tramo al otro.
 - Las obras pueden seguir «activas» en la fuente mucho después de acabar
   (hay alguna de abril); sin la fecha, no se nota. Se muestra lo que la fuente
   da por vigente, como su propia lista.

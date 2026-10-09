@@ -507,6 +507,15 @@ def text_trens_bot(dades, idioma, moment):
 TRANSIT = "https://transit.gencat.cat/{}/informacio-viaria/estat-transit/"
 
 
+def distancia(km):
+    """Com a la web: en metres (de 50 en 50) per sota d'1 km; si no, en km amb un decimal."""
+    # Arrodonit com Math.round de la web (la meitat, cap amunt), perquè surti igual.
+    if km < 1:
+        return f"{max(50, math.floor(km * 20 + 0.5) * 50)}\u00a0m"
+    x = math.floor(km * 10 + 0.5) / 10
+    return f"{x:g}".replace(".", ",") + "\u00a0km"
+
+
 def text_transit_bot(dades, idioma, moment):
     """Les incidències de trànsit a prop, com a la fitxa del cotxe de «Si surts»
     (ADR 0052 i 0053). Els textos del Servei Català de Trànsit, en català."""
@@ -520,7 +529,8 @@ def text_transit_bot(dades, idioma, moment):
     cap = "Tráfico cerca de Montflorit" if es else "Trànsit a prop de Montflorit"
     files = []
     for i in transit.get("incidencies") or []:
-        lloc = f" ({i['municipi']})" if i.get("municipi") else ""
+        lloc = ", ".join(x for x in (i.get("municipi"), i.get("km") is not None and f"a {distancia(i['km'])}") if x)
+        lloc = f" ({lloc})" if lloc else ""
         causa = i.get("causa") if i.get("causa") != "Circulació" else None
         if causa and i.get("tipus") == "obres":
             causa = ("Obras: " if es else "Obres: ") + causa
@@ -531,8 +541,8 @@ def text_transit_bot(dades, idioma, moment):
                      + html.escape(f"{i.get('descripcio') or ''}. {detall}." if detall else f"{i.get('descripcio') or ''}.",
                                    quote=False))
     if not files:
-        files = ["Ninguna incidencia en las carreteras cercanas (6 km)." if es
-                 else "Cap incidència a les carreteres de prop (6 km)."]
+        files = ["Ninguna incidencia en las carreteras cercanas (5 km)." if es
+                 else "Cap incidència a les carreteres de prop (5 km)."]
     h = dt.datetime.fromisoformat(transit["hora"]).strftime("%H:%M") if transit.get("hora") else "?"
     return (f"<b>{cap}</b>\n" + "\n".join(files) + "\n"
             + enllac(TRANSIT.format("es" if es else "ca"), f"Servei Català de Trànsit, {h}"))

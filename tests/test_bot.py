@@ -481,16 +481,16 @@ class Consultes(unittest.TestCase):
         d["transit"] = {"hora": ARA.isoformat(), "incidencies": [
             {"id": "t1", "tipus": "retencio", "nivell": 3, "carretera": "C-58", "municipi": "Barcelona",
              "sentit": "Sentit Sud cap a NUS TRINITAT", "causa": "Circulació", "descripcio": "Circulació amb retencions",
-             "pk": "0-1,5"},
+             "pk": "0-1,5", "km": 4.04},
             {"id": "t2", "tipus": "obres", "nivell": 2, "carretera": "BV-1414", "municipi": "Cerdanyola del Vallès",
              "sentit": "Sentit Sud cap a C-58", "causa": "Reasfaltat", "descripcio": "Calçada restringida",
-             "pk": "4-0"}]}
+             "pk": "4-0", "km": 0.73}]}
         json.dump(d, open(os.path.join(self.dir.name, "montflorit.json"), "w"))
         subs = {"7": {"idioma": "ca", "avisos": [], "resum": None}}
         r = self.ordre("/transit", subs)
-        self.assertIn("<b>Trànsit a prop de Montflorit</b>\n<b>C-58</b> (Barcelona): Circulació amb retencions. "
+        self.assertIn("<b>Trànsit a prop de Montflorit</b>\n<b>C-58</b> (Barcelona, a 4\u00a0km): Circulació amb retencions. "
                       "Sentit Sud cap a NUS TRINITAT, km 0-1,5.", r)
-        self.assertIn("<b>BV-1414</b> (Cerdanyola del Vallès): Calçada restringida. Obres: Reasfaltat, "
+        self.assertIn("<b>BV-1414</b> (Cerdanyola del Vallès, a 750\u00a0m): Calçada restringida. Obres: Reasfaltat, "
                       "Sentit Sud cap a C-58, km 4-0.", r)
         self.assertIn("Servei Català de Trànsit", r)
         subs["7"]["idioma"] = "es"
@@ -499,9 +499,13 @@ class Consultes(unittest.TestCase):
         self.assertIn("Obras: Reasfaltat", r)
         d["transit"]["incidencies"] = []
         json.dump(d, open(os.path.join(self.dir.name, "montflorit.json"), "w"))
-        self.assertIn("Ninguna incidencia en las carreteras cercanas (6 km).", self.ordre("/transit", subs))
+        self.assertIn("Ninguna incidencia en las carreteras cercanas (5 km).", self.ordre("/transit", subs))
         # Ja no surten a /avisos_actius: no són una situació de perill.
         self.assertNotIn("Carreter", self.ordre("/avisos_actius", subs))
+
+    def test_distancia(self):
+        self.assertEqual([B.distancia(x) for x in (0.01, 0.73, 0.98, 1.0, 4.04, 4.35, 4.96)],
+                         ["50\u00a0m", "750\u00a0m", "1000\u00a0m", "1\u00a0km", "4\u00a0km", "4,4\u00a0km", "5\u00a0km"])
 
     def test_migracio_del_9_d_octubre(self):
         # ADR 0053: les 20 h passen a les 21 h, i a qui tenia els trens se li diu una sola vegada.

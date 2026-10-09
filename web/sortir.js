@@ -527,11 +527,21 @@ const ESTAT_TRANSIT = () => `https://transit.gencat.cat/${IDIOMA.codi === 'es' ?
 // la de l'inici, i semblava que no estigués al dia. El que surt és el que el
 // Servei Català de Trànsit dona com a vigent a l'hora de la consulta, que es
 // diu a sota (Juanjo, 09-10-2026; ADR 0052).
+// La distància en línia recta fins al punt que dona la font per al tram: en
+// metres (de 50 en 50) per sota d'1 km; si no, en km amb un decimal.
+function distancia(km) {
+  if (km == null) return null;
+  if (km < 1) return `${Math.max(50, Math.round(km * 20) * 50)}\u00a0m`;
+  const x = Math.round(km * 10) / 10;
+  return `${Number.isInteger(x) ? x : coma(x)}\u00a0km`;
+}
+
 function filaTransit(i) {
   const li = element('li', 'tren ' + COLOR_TRANSIT(i.nivell));
   const cap = element('p', 'tren-cap');
   cap.append(element('span', 'tren-linia', i.carretera));
-  if (i.municipi) cap.append(' ', element('span', 'tren-estacio', i.municipi));
+  const lloc = [i.municipi, i.km != null && T`a ${distancia(i.km)}`].filter(Boolean).join(', ');
+  if (lloc) cap.append(' ', element('span', 'tren-estacio', lloc));
   cap.append(' ', element('span', 'tren-estat', i.descripcio || ''));
   // «Circulació» com a causa no diu res que no digui ja l'estat.
   const causa = i.tipus === 'obres' ? T`Obres: ${i.causa}` : i.causa !== 'Circulació' && i.causa;
