@@ -359,9 +359,18 @@ function titol(text) {
   return p;
 }
 
+// Només avisa de les fonts de la fitxa triada: «Avui» i «Demà» surten de la
+// previsió (i «Avui», també dels trens); les altres fitxes ja diuen soles
+// «Ara aquesta consulta no està disponible» si els falta la dada.
+function fontsConsulta() {
+  if (triada === 'avui') return [...FONTS_TEMPS, 'trens'];
+  return triada === 'dema' ? FONTS_TEMPS : [];
+}
+
 function pintaConsulta() {
   const caixa = $('consulta');
   if (!DADES) return;
+  if (!dadesVelles(DADES)) pintaHorari(DADES, fontsConsulta());
   let peces = null;
   if (triada === 'pollen' && DADES.pollen) peces = pintaPollen(DADES.pollen);
   else if (triada === 'aire' && DADES.aire && DADES.aire.index != null) peces = pintaAire(DADES.aire);
@@ -389,7 +398,7 @@ function pinta(dades) {
   $('opcions').hidden = velles;
   if (velles) $('consulta').replaceChildren(blocDadesVelles(dades));
   else pintaConsulta();
-  pintaHorari(dades);
+  pintaHorari(dades, fontsConsulta());
   posaVersio(dades.versio);
 }
 

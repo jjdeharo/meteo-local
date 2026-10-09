@@ -471,6 +471,9 @@ function plec(clau, titol, peces) {
 // Les franges que encara no han acabat: la primera és «Ara». Sense això, amb
 // dades endarrerides (menys de 2 hores) «Ara» podia ser una hora ja passada
 // (auditoria del 08-10-2026).
+// «Si surts» fa servir el temps i, a més, l'índex UV (la roba), els trens i el trànsit.
+const FONTS_SORTIR = [...FONTS_TEMPS, 'índex UV', 'trens', 'trànsit'];
+
 function horesVigents(hores, ara) {
   return (hores || []).filter((f) => new Date(f.fins) > ara);
 }
@@ -486,7 +489,7 @@ function pinta(dades) {
     if (explica) explica.hidden = true;
     $('avisos').replaceChildren();
     $('sortida').replaceChildren(blocDadesVelles(dades));
-    pintaHorari(dades);
+    pintaHorari(dades, FONTS_SORTIR);
     posaVersio(dades.versio);
     return;
   }
@@ -498,7 +501,7 @@ function pinta(dades) {
   if (dades.hores && dades.hores.length >= 2) pintaSelectors(dades.hores, new Date());
   pintaSortida();
   obreDelEnllac();
-  pintaHorari(dades);
+  pintaHorari(dades, FONTS_SORTIR);
   posaVersio(dades.versio);
 }
 

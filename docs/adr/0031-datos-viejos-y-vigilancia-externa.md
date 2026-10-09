@@ -56,3 +56,30 @@ a Juanjo: el latido de IONOS solo mira si el NAS responde.
 páginas, en catalán y castellano, con datos de hace 3 horas en Firefox y WebKit
 móvil; `latido.sh --probar` con un archivo de hace 2 horas (avisa) y con el
 real (no avisa), en IONOS, el 07-10-2026.
+
+## Cambio del 09-10-2026: el aviso de fuentes caídas, solo de las que usa cada página
+
+El aviso «No s'han pogut llegir totes les fonts: la informació és menys
+segura» salía en todas las páginas en cuanto fallaba cualquiera de las fuentes
+de `errors`. El 09-10-2026 salió en «El temps» por un 503 pasajero de
+Open-Meteo al pedir la salida y la puesta del sol, con la previsión completa.
+Juanjo: «esto solo afecta a la tarjeta del sol, no? no afecta a la previsión,
+por lo tanto no debe aparecer», y «cada pagina solo avisa de lo que usa».
+
+- **El temps** (`FONTS_TEMPS` en `web/comu.js`): previsión, ensemble,
+  estaciones (Montflorit, la de casa y el viento), radar y final de la
+  lluvia, avisos de AEMET, planes de Protección Civil, riera, incendios y
+  Pla Alfa (`entorn`).
+- **Si surts** (`FONTS_SORTIR` en `web/sortir.js`): lo mismo, más el índice
+  UV (la ropa), los trenes y el tráfico.
+- **Consultes** (`fontsConsulta` en `web/consultes.js`): según la ficha
+  elegida; «Avui», las de «El temps» y los trenes; «Demà», las de «El
+  temps»; las demás no avisan, porque si les falta el dato ya dicen «Ara
+  aquesta consulta no està disponible».
+
+Los nombres son los que pone `casa.py` delante de «:» en cada error; una
+fuente nueva hay que añadirla a la lista de la página que la usa.
+Validación: `test_cada_pagina_avisa_de_les_seves_fonts` y, en Firefox, las
+tres páginas con un error simulado del sol (ningún aviso), del radar (en
+todas menos en la ficha del sol) y de los trenes (en «Si surts» y en
+«Avui»).

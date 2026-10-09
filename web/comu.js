@@ -154,7 +154,21 @@ function elementHorari() {
   return p;
 }
 
-function pintaHorari(dades) {
+// Les fonts de «El temps»: la previsió, el que es mesura i els avisos. Cada
+// pàgina avisa només de les fonts que fa servir (Juanjo, 09-10-2026: «cada
+// pagina solo avisa de lo que usa»): un error del sol, per exemple, no fa
+// menys segura la previsió. Els noms són els que posa casa.py davant de «:».
+const FONTS_TEMPS = ['previsió', 'ensemble', 'estació', 'estació de casa', 'vent', 'radar',
+  'final de la pluja', 'avisos', 'plans', 'riera', 'entorn'];
+
+// Si ha fallat alguna de les fonts de la pàgina. La previsió que falla i
+// s'ha substituït per l'anterior ja té el seu avís.
+function fontsFallades(dades, fonts) {
+  return (dades.errors || []).some((e) => fonts.includes(e.split(':')[0])
+    && !(dades.previsio_de && e.startsWith('previsió')));
+}
+
+function pintaHorari(dades, fonts = FONTS_TEMPS) {
   const ara = new Date();
   const generat = new Date(dades.generat);
   const hores = horesActualitzacio(dades.horari);
@@ -172,8 +186,7 @@ function pintaHorari(dades) {
       && ara - darreraPrevista > MARGE_RETARD_MIN * 60000) {
     avisos.push(T`L’actualització de les ${horaCurta(darreraPrevista)} no s’ha fet: les dades són de les ${horaCurta(generat)}.`);
   }
-  // La previsió que falla i s'ha substituït per l'anterior ja té el seu avís.
-  if (dades.errors.some((e) => !(dades.previsio_de && e.startsWith('previsió')))) {
+  if (fontsFallades(dades, fonts)) {
     avisos.push(T('No s’han pogut llegir totes les fonts: la informació és menys segura.'));
   }
   $('avis-dades').textContent = avisos.join(' ');

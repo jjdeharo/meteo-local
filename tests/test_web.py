@@ -29,7 +29,8 @@ const ctx = vm.createContext({
   document: { querySelectorAll: () => [], getElementById: el, createElement: el, createElementNS: el, addEventListener() {},
     documentElement: { dataset: {} } },
   matchMedia: () => ({ matches: false, addEventListener() {} }), addEventListener() {}, AbortController,
-  localStorage: { getItem: () => null, setItem() {} }, navigator: {}, location: { pathname: '/' },
+  localStorage: { getItem: () => null, setItem() {} }, navigator: {}, location: { pathname: '/', hash: '' },
+  history: { replaceState() {} }, window: { addEventListener() {} },
   fetch: () => new Promise(() => {}), setTimeout: () => 0, clearTimeout() {},
 });
 for (const f of ['comu.js', pagina]) vm.runInContext(fs.readFileSync(`${web}/${f}`, 'utf8'), ctx);
@@ -238,6 +239,30 @@ class Web(unittest.TestCase):
         r = self.avalua("2026-10-08T07:44:00+02:00", f"horesVigents({json.dumps(hores)}, new Date()).map((f) => f.hora)", "sortir.js")
         self.assertEqual(r, ["2026-10-08T07:00", "2026-10-08T08:00"])
         self.assertEqual(self.avalua("2026-10-08T07:44:00+02:00", "horesVigents(null, new Date())", "sortir.js"), [])
+
+    def test_cada_pagina_avisa_de_les_seves_fonts(self):
+        # Juanjo, 09-10-2026: «cada pagina solo avisa de lo que usa»; un 503 del sol no fa menys segura la previsió.
+        def falla(errors, fonts, pagina="casa.js", previsio_de=None):
+            d = json.dumps({"errors": errors, "previsio_de": previsio_de})
+            return self.avalua("2026-10-09T18:05:00+02:00", f"fontsFallades({d}, {fonts})", pagina)
+        sol = ["sol: HTTP Error 503: Service Unavailable"]
+        self.assertFalse(falla(sol, "FONTS_TEMPS"))
+        self.assertFalse(falla(sol, "FONTS_SORTIR", "sortir.js"))
+        self.assertTrue(falla(["radar: timeout"], "FONTS_TEMPS"))
+        self.assertTrue(falla(["estació de casa: 500"], "FONTS_TEMPS"))
+        self.assertFalse(falla(["trens: 500"], "FONTS_TEMPS"))
+        self.assertTrue(falla(["trens: 500"], "FONTS_SORTIR", "sortir.js"))
+        self.assertTrue(falla(["índex UV: 500"], "FONTS_SORTIR", "sortir.js"))
+        # La previsió substituïda per l'anterior ja té el seu avís.
+        self.assertFalse(falla(["previsió: 503"], "FONTS_TEMPS", previsio_de="2026-10-09T17:00+02:00"))
+        # A «Consultes», segons la fitxa: el sol no avisa enlloc; els trens, només a «Avui».
+        def consulta(triada, errors):
+            return self.avalua("2026-10-09T18:05:00+02:00",
+                               f"triada = '{triada}'; fontsFallades({json.dumps({'errors': errors})}, fontsConsulta())",
+                               "consultes.js")
+        self.assertEqual([consulta(t, sol) for t in ("avui", "dema", "sol")], [False, False, False])
+        self.assertEqual([consulta(t, ["trens: 500"]) for t in ("avui", "dema", "trens")], [True, False, False])
+        self.assertEqual([consulta(t, ["radar: x"]) for t in ("avui", "dema", "aire")], [True, True, False])
 
     def test_hores_de_si_surts_amb_el_dia(self):
         # La previsió pot arribar a l'endemà de demà al matí (ADR 0041): no és «demà».
