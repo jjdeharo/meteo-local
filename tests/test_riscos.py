@@ -64,6 +64,10 @@ class Deteccio(unittest.TestCase):
         tipus = {x["tipus"]: x["nivell"] for x in salida(h)["riscos"]}
         self.assertEqual(tipus, {"fred": "groc", "neu_24h": "groc"})
 
+    def test_nomes_les_24_primeres_hores(self):
+        # La taula pot arribar a 38 hores per donar demà sencer (ADR 0041); el risc, no.
+        self.assertEqual(salida(hores({26: {"ratxa": 95}}, n=30))["riscos"], [])
+
     def test_sense_previsio(self):
         self.assertEqual(salida(h=[])["riscos"], [])
 

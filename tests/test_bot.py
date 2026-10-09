@@ -209,6 +209,16 @@ class Resum(unittest.TestCase):
         self.assertNotIn("Aquesta nit", r)
         self.assertTrue(B.resum(d, "es", vespre).startswith("<b>Previsión para mañana, jueves, en Montflorit</b> (hasta las 20 h)"))
 
+    def test_dema_sencer_sense_fins_a_les(self):
+        # Juanjo, 09-10-2026: les dades arriben a les 21 h de demà (ADR 0041); demà és sencer i no es diu «fins a les».
+        vespre = ARA.replace(hour=20)
+        d = dades(vespre)
+        h = dt.datetime.fromisoformat(d["hores"][-1]["fins"])
+        d["hores"].append({"hora": h.isoformat(timespec="minutes"), "fins": (h + dt.timedelta(hours=1)).isoformat(timespec="minutes"),
+                           "temperatura": 15, "probabilitat": 0.0, "pluja_mm": 0})
+        self.assertTrue(B.resum(d, "ca", vespre).startswith("<b>Previsió per a demà, dijous, a Montflorit</b>\n"))
+        self.assertTrue(B.resum(d, "es", vespre).startswith("<b>Previsión para mañana, jueves, en Montflorit</b>\n"))
+
     def test_radar_quan_ja_plou(self):
         # El que es mesura mana: si ja plou i el radar en veu una mica, «pluja a sobre» i quan pararia.
         d = dades()

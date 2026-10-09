@@ -192,10 +192,12 @@ class Web(unittest.TestCase):
                  + [fila(h, 0.05, 0, -1 if h == 23 else 5, 10, 0, 0.5 if h == 22 else 0) for h in range(21, 31)]
                  + [fila(31, 0.2, 0.5, 37)])
         r = self.avalua("2026-10-08T09:30:00+02:00", f"resumTrams({json.dumps(hores)}, new Date())")
-        self.assertEqual([(t["nom"], t["hores"]) for t in r], [("Matí", "fins a les 14 h"), ("Tarda", "14–21 h"), ("Nit", "21–7 h")])
+        # Juanjo, 09-10-2026: tots els trams de la previsió, cadascun desplegable; l'últim, fins on arriben les hores.
+        self.assertEqual([(t["nom"], t["hores"]) for t in r],
+                         [("Matí", "fins a les 14 h"), ("Tarda", "14–21 h"), ("Nit", "21–7 h"), ("Demà matí", "7–8 h")])
         self.assertEqual((r[0]["prob"], r[0]["tMin"], r[0]["tMax"], r[0]["fenomens"]), (0.1, 17, 21, []))
         # Juanjo, 09-10-2026: la pluja, només si va a ploure (alguna hora amb un 20 % o més).
-        self.assertEqual([t["plou"] for t in r], [False, True, False])
+        self.assertEqual([t["plou"] for t in r], [False, True, False, True])
         self.assertEqual([f[0] for f in r[1]["fenomens"]], ["tempesta", "pluja forta", "ratxes de 75\u00a0km/h"])
         self.assertEqual(r[1]["mm"], 57)
         self.assertEqual([f[0] for f in r[2]["fenomens"]], ["neu", "glaçada"])
@@ -236,6 +238,13 @@ class Web(unittest.TestCase):
         r = self.avalua("2026-10-08T07:44:00+02:00", f"horesVigents({json.dumps(hores)}, new Date()).map((f) => f.hora)", "sortir.js")
         self.assertEqual(r, ["2026-10-08T07:00", "2026-10-08T08:00"])
         self.assertEqual(self.avalua("2026-10-08T07:44:00+02:00", "horesVigents(null, new Date())", "sortir.js"), [])
+
+    def test_hores_de_si_surts_amb_el_dia(self):
+        # La previsió pot arribar a l'endemà de demà al matí (ADR 0041): no és «demà».
+        hores = ["2026-10-08T23:00", "2026-10-09T17:00", "2026-10-10T06:00"]
+        r = self.avalua("2026-10-08T22:10:00+02:00",
+                        f"{json.dumps(hores)}.map((h) => etiquetaHora({{hora: h}}, new Date()))", "sortir.js")
+        self.assertEqual(r, ["23:00", "demà 17:00", "dissabte 06:00"])
 
     def test_public_amb_linies_sense_dades(self):
         # Auditoria del 08-10-2026: amb Renfe caigut i la S2 circulant deia «cap incidència».

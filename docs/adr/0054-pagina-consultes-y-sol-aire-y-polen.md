@@ -118,8 +118,9 @@ el recuadro de «Avisos» salía oscuro y con poco contraste. Pasa a
   ligado al proyecto AtPollenFluo, PID2020-117873RB-I00, que dirige el
   CIEMAT): publicó lecturas del ciprés en `aerobiologia.cat/tr` desde marzo de
   2023, «en desarrollo», pero esa dirección redirige a la portada (ya en julio
-  de 2024) y el acceso está comentado en el código de la portada. Se les ha
-  preguntado si volverán a publicarlas.
+  de 2024) y el acceso está comentado en el código de la portada. Preguntado
+  el PIA, Jordina Belmonte respondió el 09-10-2026 que ya no tienen ese
+  captador y que por ahora no saben si podrán volver a publicarlas.
 
 ## Consecuencias
 

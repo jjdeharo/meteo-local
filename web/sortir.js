@@ -302,10 +302,14 @@ function consells(tram, ara) {
 
 // --- Selectors d'hora ------------------------------------------------------------
 
+// Les hores poden arribar a l'endemà de demà al matí (la previsió acaba el
+// tram de nit, ADR 0041): llavors, amb el dia de la setmana.
 function etiquetaHora(f, ara) {
   const d = new Date(f.hora);
   const text = horaCurta(d);
-  return d.toDateString() === ara.toDateString() ? text : T`demà ${text}`;
+  if (d.toDateString() === ara.toDateString()) return text;
+  const dia = nomDiaCurt(d, ara);
+  return dia === T('demà') ? T`demà ${text}` : `${dia} ${text}`;
 }
 
 function omple(select, opcions, triada) {

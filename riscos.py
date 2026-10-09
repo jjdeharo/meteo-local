@@ -164,9 +164,13 @@ def de_les_estacions(ara, casa):
     return res
 
 
+HORES_RISC = 24     # la tabla puede llegar a 38 para dar mañana entero (ADR 0041); el riesgo, no
+
+
 def detecta(salida, ahora):
     """Riesgos de ahora y de las próximas 24 horas, el peor nivel primero."""
-    res = de_les_estacions(salida.get("ara"), salida.get("ara_casa")) + de_la_previsio(salida.get("hores"), ahora)
+    hores = (salida.get("hores") or [])[:HORES_RISC]
+    res = de_les_estacions(salida.get("ara"), salida.get("ara_casa")) + de_la_previsio(hores, ahora)
     return sorted(res, key=lambda r: -NIVELLS.index(r["nivell"]))
 
 

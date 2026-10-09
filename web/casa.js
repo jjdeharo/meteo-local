@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Llegeix casa.json (el genera casa.py) i pinta el temps a casa: el que mesuren
-// ara l'estació de casa i la de Montflorit i la previsió hora a hora per a 24 hores.
+// ara l'estació de casa i la de Montflorit i la previsió hora a hora, 24 hores com a
+// mínim i fins a les 21 h de demà (ADR 0041).
 
 // La pàgina pública («Temps a Montflorit», ADR 0024) és aquesta mateixa amb
 // tres coses canviades a l'etiqueta <html>: el nom del lloc, com s'anomena
@@ -97,12 +98,14 @@ function dada(id, text) {
   return li;
 }
 
-// Resum del que ve per trams del dia (matí 7–14, tarda 14–21, nit 21–7), per
-// a la targeta d'ara (Juanjo, 08-10-2026): el cel i les temperatures sempre;
-// la pluja, només si alguna hora en té com a mínim de possible (Juanjo,
-// 09-10-2026: «símbolo de lluvia solo si va a llover»); els fenòmens, només
-// quan es donen, amb els llindars grocs del Pla Meteoalerta que ja usa
-// config.RISC_LLINDARS, més neu i gel.
+// Resum del que ve per trams del dia (matí 7–14, tarda 14–21, nit 21–7): el
+// cel i les temperatures sempre; la pluja, només si alguna hora en té com a
+// mínim de possible (Juanjo, 09-10-2026: «símbolo de lluvia solo si va a
+// llover»); els fenòmens, només quan es donen, amb els llindars grocs del Pla
+// Meteoalerta que ja usa config.RISC_LLINDARS, més neu i gel. Cada tram és un
+// desplegable de la taula, amb aquest resum a la capçalera (Juanjo,
+// 09-10-2026: «dividir la lista del tiempo en mañana, tarde, noche como
+// desplegables»).
 const TRAMS = [[7, 14, 'Matí'], [14, 21, 'Tarda'], [21, 7, 'Nit']];
 const FENOMENS = { pluja_forta: INTENSITAT_PLUJA[1], pluja_torrencial: INTENSITAT_PLUJA[2], ratxa: 70, calor: 36, glaçada: 0 };
 // Els noms, amb T() literal perquè les proves de traducció els trobin.
@@ -131,6 +134,10 @@ function celTram(files, nit) {
   return n.length ? celNuvols(n.reduce((a, b) => a + b, 0) / n.length, nit) : null;
 }
 
+// Tots els trams que toca la previsió, sense les hores ja passades. Les hores
+// diuen les que hi ha de veritat: el tram en curs, «fins a les…», i l'últim,
+// sencer (casa.py arriba fins a les 21 h de demà i acaba amb un tram), o fins
+// on arribin les dades si en falten.
 function resumTrams(hores, ara) {
   const grups = [];
   for (const f of hores || []) {
@@ -142,7 +149,7 @@ function resumTrams(hores, ara) {
   }
   const dema = new Date(ara);
   dema.setDate(dema.getDate() + 1);
-  return grups.slice(0, 3).map((g) => {
+  return grups.map((g) => {
     const temps = g.files.map((f) => f.temperatura).filter((t) => t != null);
     const fenomens = [];
     const tempesta = (f) => f.codi >= 95 || (f.avisos || []).some((a) => (a.tipus || []).includes('tempestes'));
@@ -156,46 +163,42 @@ function resumTrams(hores, ara) {
     if (temps.length && Math.min(...temps) <= FENOMENS.glaçada) fenomens.push([NOM_FENOMEN.glaçada(), 'i-thermometer-snowflake']);
     const esDema = g.dia.toDateString() === dema.toDateString();
     const actual = new Date(g.files[0].hora) <= ara;
+    const fi = new Date(g.files[g.files.length - 1].fins).getHours();
     return {
       nom: (esDema ? NOM_TRAM_DEMA : NOM_TRAM)[g.nom](),
-      hores: actual ? T`fins a les ${g.fi} h` : `${g.ini}–${g.fi} h`,
+      hores: actual ? T`fins a les ${fi} h` : `${g.ini}–${fi} h`,
       cel: celTram(g.files, g.nom === 'Nit'),
       plou: g.files.some((f) => plujaHora(f) !== null),
       prob: Math.max(...g.files.map((f) => f.probabilitat || 0)),
       mm: g.files.reduce((s, f) => s + (f.pluja_mm || 0), 0),
       tMin: temps.length ? Math.min(...temps) : null, tMax: temps.length ? Math.max(...temps) : null,
       fenomens,
+      avis: g.files.some((f) => (f.avisos || []).length),
+      files: g.files,
     };
   });
 }
 
-function blocTrams(hores, ara) {
-  const trams = resumTrams(hores, ara);
-  if (!trams.length) return null;
-  const cont = element('ul', 'trams-dia');
-  cont.setAttribute('aria-label', T('Pròxims trams del dia'));
-  for (const t of trams) {
-    const li = element('li', 'tram');
-    li.append(element('strong', null, t.nom), element('span', 'quan', ` (${t.hores})`));
-    const peca = (id, text, classe = 'dada') => {
-      const s = element('span', classe);
-      s.append(icona(id), text);
-      li.append(s);
-    };
-    if (t.cel) peca(t.cel[1], t.cel[0]);
-    if (t.tMin != null) {
-      const [min, max] = [Math.round(t.tMin), Math.round(t.tMax)];
-      peca('i-thermometer', min === max ? `${min} °C` : `${min}–${max} °C`);
-    }
-    if (t.plou) peca('i-umbrella', `${Math.round(t.prob * 100)} %` + (t.mm >= 1 ? T`, uns ${coma(t.mm, 0)} mm` : ''));
-    for (const [text, id] of t.fenomens) peca(id, text, 'dada fenomen');
-    cont.append(li);
+// La capçalera del desplegable: el nom del tram, les hores i el resum.
+function resumTram(t) {
+  const sum = element('summary');
+  sum.append(element('strong', null, t.nom), element('span', 'quan', ` (${t.hores})`));
+  const peca = (id, text, classe = 'dada') => {
+    const s = element('span', classe);
+    s.append(icona(id), text);
+    sum.append(s);
+  };
+  if (t.cel) peca(t.cel[1], t.cel[0]);
+  if (t.tMin != null) {
+    const [min, max] = [Math.round(t.tMin), Math.round(t.tMax)];
+    peca('i-thermometer', min === max ? `${min} °C` : `${min}–${max} °C`);
   }
-  return cont;
+  if (t.plou) peca('i-umbrella', `${Math.round(t.prob * 100)} %` + (t.mm >= 1 ? T`, uns ${coma(t.mm, 0)} mm` : ''));
+  for (const [text, id] of t.fenomens) peca(id, text, 'dada fenomen');
+  return sum;
 }
 
-
-function blocAra(ara, casa, radarDades, vent, hores) {
+function blocAra(ara, casa, radarDades, vent) {
   const base = casa || ara;
   const sec = element('section', 'decisio targeta ara');
   const lloc = casa ? LLOC : 'Montflorit';
@@ -225,8 +228,6 @@ function blocAra(ara, casa, radarDades, vent, hores) {
   sec.append(llista);
   const radar = blocRadar(radarDades, plou);
   if (radar) sec.append(radar);
-  const trams = blocTrams(hores, new Date());
-  if (trams) sec.append(trams);
   sec.append(elementHorari());    // «Actualitzat a les…», al peu de la targeta
   return sec;
 }
@@ -313,12 +314,8 @@ function blocRiscos(riscos) {
   return caixa;
 }
 
-function nomDia(iso) {
-  return new Date(iso).toLocaleDateString(IDIOMA.codi, { weekday: 'long', day: 'numeric', month: 'long' });
-}
-
-// Avisos de l'AEMET en trams d'hores seguides del mateix dia amb el mateix
-// avís: per a cada hora, el tram que hi comença ({nivell, tipus, hores}),
+// Avisos de l'AEMET en trams d'hores seguides del mateix tram del dia amb el
+// mateix avís: per a cada hora, el tram que hi comença ({nivell, tipus, hores}),
 // undefined si la cobreix un tram que ha començat abans, o null si no n'hi ha.
 const ORDRE_NIVELL = ['groc', 'taronja', 'vermell'];
 
@@ -333,18 +330,15 @@ function avisHora(f) {
 function tramsAvis(hores) {
   const res = [];
   let obert = null;
-  let dia = null;
   for (const f of hores) {
     const a = avisHora(f);
-    const d = new Date(f.hora).toDateString();
-    if (a && obert && obert.clau === a.clau && d === dia) {
+    if (a && obert && obert.clau === a.clau) {
       obert.hores += 1;
       res.push(undefined);
     } else {
       obert = a && { ...a, hores: 1 };
       res.push(obert);
     }
-    dia = d;
   }
   return res;
 }
@@ -379,15 +373,21 @@ function ajustaFranges() {
 }
 addEventListener('resize', ajustaFranges);
 
-function taula(hores, aprenentatge) {
-  const sec = element('section', 'previsio');
-  sec.append(element('h2', 'perque', T('Pròximes 24 hores')));
+// Una taula per tram, amb les mateixes columnes: el primer tram, obert, i
+// també els que tenen un avís o un fenomen, perquè el perill no quedi plegat.
+function taulaTram(t, obert) {
+  const det = element('details', 'tram-hores');
+  det.open = obert;
+  det.append(resumTram(t));
   const contenidor = element('div', 'taula-contenidor');
   // Al mòbil la taula es desplaça de costat: s'hi ha de poder arribar amb el teclat (axe-core).
   contenidor.tabIndex = 0;
   contenidor.setAttribute('role', 'region');
-  contenidor.setAttribute('aria-label', T('Pròximes 24 hores'));
-  const t = element('table', 'taula-hores');
+  contenidor.setAttribute('aria-label', `${t.nom} (${t.hores})`);
+  const taula = element('table', 'taula-hores');
+  const cols = element('colgroup');
+  for (const c of ['hora', 'col-avis', 'cel', 'temp', 'mm', 'prob', 'vent']) cols.append(element('col', `c-${c}`));
+  taula.append(cols);
   const cap = element('thead');
   const fila = element('tr');
   // Les unitats van a la capçalera perquè la taula càpiga al mòbil.
@@ -400,29 +400,18 @@ function taula(hores, aprenentatge) {
     fila.append(th);
   }
   cap.append(fila);
-  t.append(cap);
+  taula.append(cap);
   const cos = element('tbody');
-  const trams = tramsAvis(hores);
-  let diaAnterior = new Date().toDateString();
-  hores.forEach((f, i) => {
-    const inici = new Date(f.hora);
-    if (inici.toDateString() !== diaAnterior) {
-      diaAnterior = inici.toDateString();
-      const separador = element('tr', 'dia-nou');
-      const td = element('th', '', nomDia(f.hora));
-      td.colSpan = 7;
-      td.scope = 'rowgroup';
-      separador.append(td);
-      cos.append(separador);
-    }
+  const avisos = tramsAvis(t.files);
+  t.files.forEach((f, i) => {
     const tr = element('tr', { pluja: 'amb-pluja', possible: 'pluja-possible' }[plujaHora(f)] || '');
-    const h0 = inici.getHours();
+    const h0 = new Date(f.hora).getHours();
     const hora = element('th', 'hora', `${h0}–${(h0 + 1) % 24}`);
     hora.scope = 'row';
     tr.append(hora);
-    const tram = trams[i];
-    if (tram === null) tr.append(element('td', 'col-avis'));
-    else if (tram) tr.append(franjaAvis(tram));
+    const avis = avisos[i];
+    if (avis === null) tr.append(element('td', 'col-avis'));
+    else if (avis) tr.append(franjaAvis(avis));
     const [textCel, iconaCel] = f.plou_ara ? [T('Plou ara'), 'i-umbrella'] : cel(f);
     const celCel = element('td', 'cel');
     const linia = element('span', 'cel-text');
@@ -435,31 +424,65 @@ function taula(hores, aprenentatge) {
     const prob = element('td', 'num prob');
     if (f.probabilitat != null) {
       const pct = Math.round(f.probabilitat * 100);
-      prob.textContent = `${pct} %${f.segons_estacio ? '*' : f.segons_radar ? '\u2020' : ''}`;
+      prob.textContent = `${pct} %${f.segons_estacio ? '*' : f.segons_radar ? '\u2020' : ''}`;
       prob.style.setProperty('--prob', `${pct}%`);
     }
     tr.append(prob);
     tr.append(element('td', 'num', f.vent == null ? ''
-      : `${Math.round(f.vent)}${f.ratxa ? ` (${Math.round(f.ratxa)})` : ''}`));
+      : `${Math.round(f.vent)}${f.ratxa ? ` (${Math.round(f.ratxa)})` : ''}`));
     cos.append(tr);
   });
-  t.append(cos);
-  contenidor.append(t);
-  sec.append(contenidor);
-  if (hores.some((f) => f.segons_estacio)) {
-    sec.append(element('p', 'nota', T('* Segons la pluja que mesura ara l\u2019estació i el que va passar en casos semblants a Sabadell i Sant Cugat entre el 2024 i el 2026.')));
+  taula.append(cos);
+  contenidor.append(taula);
+  det.append(contenidor);
+  // Plegada, la barra de l'avís no té alçada: s'ajusta en obrir-la.
+  det.addEventListener('toggle', ajustaFranges);
+  return det;
+}
+
+function taula(hores, aprenentatge) {
+  const trams = resumTrams(hores, new Date());
+  if (!trams.length) return null;
+  const sec = element('section', 'previsio');
+  sec.append(element('h2', 'perque', T('Previsió')));
+  trams.forEach((t, i) => sec.append(taulaTram(t, i === 0 || t.avis || t.fenomens.length > 0)));
+  // Les notes, plegades: només les que diuen alguna cosa de les hores d'ara.
+  const visibles = trams.flatMap((t) => t.files);
+  const notes = element('details', 'com notes-taula');
+  notes.append(element('summary', null, T('Com es llegeix la taula')));
+  if (visibles.some((f) => f.segons_estacio)) {
+    notes.append(element('p', 'nota', T('* Segons la pluja que mesura ara l\u2019estació i el que va passar en casos semblants a Sabadell i Sant Cugat entre el 2024 i el 2026.')));
   }
-  if (hores.some((f) => f.segons_radar)) {
-    sec.append(element('p', 'nota', T('\u2020 Segons el radar: la pluja que hi ha ara, portada endavant a la velocitat i en la direcció que porta.')));
+  if (visibles.some((f) => f.segons_radar)) {
+    notes.append(element('p', 'nota', T('\u2020 Segons el radar: la pluja que hi ha ara, portada endavant a la velocitat i en la direcció que porta.')));
   }
-  if (trams.some((t) => t)) {
-    sec.append(element('p', 'nota', T('La barra de color al costat de l\u2019hora marca les hores amb avís de l\u2019AEMET, del color del nivell.')));
+  if (visibles.some((f) => (f.avisos || []).length)) {
+    notes.append(element('p', 'nota', T('La barra de color al costat de l\u2019hora marca les hores amb avís de l\u2019AEMET, del color del nivell.')));
   }
-  sec.append(element('p', 'nota', T('Vent en km/h: mitjana i, entre parèntesis, les ratxes.')));
+  notes.append(element('p', 'nota', T('Vent en km/h: mitjana i, entre parèntesis, les ratxes.')));
+  // La taula arriba fins a les 21 h de demà (ADR 0041): més enllà d'un dia, menys fina.
+  if (visibles.length && new Date(visibles[visibles.length - 1].fins) - new Date() > 24 * 3600e3) {
+    notes.append(element('p', 'nota', T('Més enllà de les 24 hores la previsió és menys precisa: alguns models no hi arriben i la probabilitat apresa és la d\u2019un dia abans.')));
+  }
   const apres = textAprenentatge(aprenentatge);
-  if (apres) sec.append(element('p', 'nota', apres));
+  if (apres) notes.append(element('p', 'nota', apres));
+  sec.append(notes);
   return sec;
 }
+
+// En imprimir, tots els trams oberts; després, com estaven.
+addEventListener('beforeprint', () => {
+  for (const d of document.querySelectorAll('.previsio details:not([open])')) {
+    d.dataset.plegat = '1';
+    d.open = true;
+  }
+});
+addEventListener('afterprint', () => {
+  for (const d of document.querySelectorAll('.previsio details[data-plegat]')) {
+    d.open = false;
+    delete d.dataset.plegat;
+  }
+});
 
 // Com s'ha après la probabilitat de pluja i, si cal, la correcció de la
 // temperatura (aprenentatge.py, ADR 0012).
@@ -500,10 +523,11 @@ function pinta(dades) {
     const m = dades.models;
     avisos.append(element('p', 'avis', T`Avui els models no veuen aquesta pluja: en les darreres ${m.hores} hores han caigut ${coma(m.mesurada_mm)}\u00a0mm a Montflorit i en preveien ${coma(m.prevista_mm)}. Les primeres hores de la taula parteixen del que mesura l\u2019estació; per a la resta, fes més cas dels avisos.`));
   }
-  if (dades.ara || dades.ara_casa) cont.append(blocAra(dades.ara, dades.ara_casa, dades.radar, dades.vent, dades.hores));
+  if (dades.ara || dades.ara_casa) cont.append(blocAra(dades.ara, dades.ara_casa, dades.radar, dades.vent));
   else cont.append(elementHorari());
-  if (dades.hores) {
-    cont.append(taula(dades.hores, dades.aprenentatge));
+  const previsio = dades.hores && taula(dades.hores, dades.aprenentatge);
+  if (previsio) {
+    cont.append(previsio);
     ajustaFranges();
   }
   pintaHorari(dades);

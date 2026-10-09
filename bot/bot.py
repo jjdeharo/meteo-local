@@ -419,9 +419,10 @@ def resum(dades, idioma, moment, dema=False, avui=False):
         nom_dia = DIES[idioma][dema.weekday()]
         if not dia:     # sense hores de demà, no hi ha previsió, i es diu (auditoria del 08-10-2026)
             return t["sense_previsio"].format(generat.strftime("%H:%M")) + "\n" + WEB
-        # Les dades arriben a 24 hores: de nit, demà només fins a la tarda, i es diu.
+        # Les dades arriben fins a les 21 h de demà (ADR 0041): demà, el matí i
+        # la tarda, és sencer. Si no hi arriben (dades d'abans), es diu fins on.
         fi = dt.datetime.fromisoformat(dia[-1]["fins"]).hour if dia else 0
-        fins = (f" (hasta las {fi} h)" if idioma == "es" else f" (fins a les {fi} h)") if 0 < fi < 24 else ""
+        fins = (f" (hasta las {fi} h)" if idioma == "es" else f" (fins a les {fi} h)") if 0 < fi < 21 else ""
         linies = [(f"<b>Previsión para mañana, {nom_dia}, en Montflorit</b>" if idioma == "es"
                    else f"<b>Previsió per a demà, {nom_dia}, a Montflorit</b>") + fins]
         if franges(nit):    # la noche, solo si se espera lluvia

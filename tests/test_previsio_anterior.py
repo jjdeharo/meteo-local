@@ -70,6 +70,29 @@ class TemperaturaDelTram(unittest.TestCase):
         self.assertEqual([(f["hora"][11:16], f["temperatura"]) for f in files[:2]],
                          [("18:00", 18.5), ("19:00", 19.5)])
 
+    def test_acaba_el_tram_del_dia(self):
+        # Juanjo, 09-10-2026: la previsió arriba a 24 hores com a mínim i fins
+        # a les 21 h de demà, i acaba sempre amb un tram (matí, tarda o nit).
+        import config as C
+        t0 = dt.datetime(2026, 10, 9, 0)
+        temps = [(t0 + dt.timedelta(hours=x)).strftime("%Y-%m-%dT%H:%M") for x in range(72)]
+        h = {"time": temps, "temperature_2m_meteofrance_seamless": [15.0] * 72}
+        for m in C.MODELOS_FINOS:
+            h[f"precipitation_{m}"] = [0.0] * 72
+        # La primera fila és l'hora en curs: a les 16.03, la de 16 a 17.
+        for minut, fi, n in ((dt.datetime(2026, 10, 9, 16, 3), "2026-10-10T21:00", 29),
+                             (dt.datetime(2026, 10, 9, 20, 3), "2026-10-10T21:00", 25),
+                             (dt.datetime(2026, 10, 9, 21, 3), "2026-10-10T21:00", 24),
+                             # La nit dura 10 hores: 9 hores més.
+                             (dt.datetime(2026, 10, 9, 22, 3), "2026-10-11T07:00", 33),
+                             # Al matí, demà sencer: fins a les 21 h, el màxim.
+                             (dt.datetime(2026, 10, 9, 7, 3), "2026-10-10T21:00", 38),
+                             (dt.datetime(2026, 10, 9, 11, 3), "2026-10-10T21:00", 34),
+                             # De matinada, la nit és d'ahir: «demà» és avui.
+                             (dt.datetime(2026, 10, 9, 0, 30), "2026-10-10T07:00", 31)):
+            files = casa.previsio(minut.astimezone(), h, {}, None, [])
+            self.assertEqual((files[-1]["fins"], len(files)), (fi, n))
+
 
 if __name__ == "__main__":
     unittest.main()

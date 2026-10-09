@@ -255,8 +255,6 @@ h1 { margin: 0; font-size: 1.6rem; line-height: 1.2; }
 .taula-hores thead th { font-size: .8rem; color: var(--suau); white-space: normal; vertical-align: bottom; }
 .taula-hores .num { text-align: right; font-variant-numeric: tabular-nums; }
 .taula-hores th.hora { font-weight: 600; }
-.taula-hores tr.dia-nou th { background: var(--fons); color: var(--suau); font-size: .85rem; text-transform: none; }
-.taula-hores tr.dia-nou th::first-letter { text-transform: uppercase; }
 .taula-hores tr.amb-pluja td.cel { color: var(--enllac); font-weight: 600; }
 .taula-hores tr.pluja-possible td.cel { color: var(--enllac); }
 /* La probabilitat porta una barra darrere del número; el número ja ho diu. */
@@ -289,17 +287,36 @@ h1 { margin: 0; font-size: 1.6rem; line-height: 1.2; }
 }
 .dades-ara svg { color: var(--enllac); }
 
-/* Trams del dia a la targeta d'ara: matí, tarda i nit, en fitxes. */
-.trams-dia { list-style: none; margin: .7rem 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: .4rem .6rem; }
-.tram {
-  display: flex; flex-wrap: wrap; align-items: center; gap: .2rem .6rem;
-  padding: .35rem .7rem; border: 1px solid var(--vora); border-radius: .5rem; font-size: .95rem;
+/* Previsió per trams del dia (matí, tarda i nit), cadascun plegable amb el
+   resum a la capçalera. Les columnes, amb la mateixa amplada a tots els trams. */
+.tram-hores { margin: .5rem 0 0; border: 1px solid var(--vora); border-radius: .6rem; background: var(--superficie); }
+.tram-hores > summary { cursor: pointer; padding: .5rem .7rem; font-size: .95rem; line-height: 1.6; }
+.tram-hores > summary > * { margin-right: .6rem; }
+.tram-hores[open] > summary { border-bottom: 1px solid var(--vora); }
+.tram-hores .quan { color: var(--suau); margin-left: -.4rem; }
+.tram-hores .dada { display: inline-flex; align-items: center; gap: .3rem; white-space: nowrap; vertical-align: middle; }
+.tram-hores summary svg { width: 1.15em; height: 1.15em; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; color: var(--enllac); }
+.tram-hores .fenomen { color: var(--compte); font-weight: 600; }
+.tram-hores .fenomen svg { color: var(--compte); }
+.tram-hores .taula-hores { table-layout: fixed; min-width: 19rem; border-radius: 0 0 .6rem .6rem; }
+.tram-hores tbody tr:last-child > * { border-bottom: 0; }
+.tram-hores .cel-text { white-space: normal; }
+.taula-hores .c-hora { width: 3.4em; }
+.taula-hores .c-col-avis { width: 1.4rem; }
+.taula-hores .c-temp { width: 2.4em; }
+.taula-hores .c-mm { width: 3.6em; }
+.taula-hores .c-prob { width: 3.6em; }
+.taula-hores .c-vent { width: 4.4em; }
+/* Cabecera repetida a cada tram: baixa i discreta. */
+.tram-hores .taula-hores thead th { padding-top: .25rem; padding-bottom: .25rem; }
+/* En pantalla ampla, el repartiment de la taula d'abans: l'hora, el cel amb
+   el que sobra i quatre columnes de xifres iguals; la capçalera en una línia. */
+@media (min-width: 640px) {
+  .taula-hores .c-hora { width: 13%; }
+  .taula-hores .c-temp, .taula-hores .c-mm, .taula-hores .c-prob, .taula-hores .c-vent { width: 13%; }
+  .tram-hores .taula-hores thead th { white-space: nowrap; }
 }
-.tram .quan { color: var(--suau); margin-left: -.4rem; }
-.tram .dada { display: inline-flex; align-items: center; gap: .3rem; }
-.tram svg { width: 1.15em; height: 1.15em; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; color: var(--enllac); }
-.tram .fenomen { color: var(--compte); font-weight: 600; }
-.tram .fenomen svg { color: var(--compte); }
+.com.notes-taula { margin-top: .5rem; }
 
 /* Radar a «Ara a casa»: franja pròpia, amb el color del que diu. */
 .radar-ara {
@@ -393,6 +410,7 @@ h1 { margin: 0; font-size: 1.6rem; line-height: 1.2; }
   .taula-hores { font-size: .82rem; }
   .taula-hores th, .taula-hores td { padding-left: .2rem; padding-right: .2rem; }
   .taula-hores .col-avis { width: 1.25rem; min-width: 1.25rem; padding: 0; }
+  .taula-hores .c-col-avis { width: 1.25rem; }
 }
 /* Avisos de l'AEMET: barra vertical entre l'hora i el cel. */
 .taula-hores .col-avis { width: 1.4rem; min-width: 1.4rem; padding: 0; }

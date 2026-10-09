@@ -43,6 +43,16 @@ import transit as TT
 import trens as TR
 
 HORAS = 24
+# La tabla llega como mínimo a 24 horas y hasta las 21 h de mañana, para que
+# mañana salga entero (la mañana y la tarde), y acaba siempre con un tramo del
+# día (matí 7–14, tarda 14–21, nit 21–7: web/casa.js, ADR 0041). «Mañana» es
+# el día siguiente al del tramo en curso: de madrugada, la noche aún es de
+# ayer. Entre 24 y 38 filas (a las 7 h, hasta las 21 h de mañana). AROME llega
+# a unas 40-45 horas; más allá, la lluvia es la de los otros modelos y la
+# probabilidad, la del ensemble. Los riesgos y el registro siguen con las 24
+# primeras.
+FI_TRAMS = (7, 14, 21)
+FI_DEMA = 21
 HORAS_PERSISTENCIA = 4      # las que tiene la tabla de calibracio.json
 # Una lectura de «ahora» con más de estos minutos no vale: un feed congelado
 # no puede decir que llueve (o que no) durante horas.
@@ -243,7 +253,8 @@ def variables_hora(desde, h, prob, i, prever):
 
 def previsio(desde, h, e, ara, avisos, model=None, casa=None, nc=None, planes=None):
     """Una fila por tramo de una hora («de 10 a 11»), de la hora actual a 24
-    horas después. Open-Meteo da la lluvia acumulada en la hora anterior: el
+    horas después como mínimo, hasta las 21 h de mañana y acabando un tramo
+    del día (FI_TRAMS). Open-Meteo da la lluvia acumulada en la hora anterior: el
     tramo de 10 a 11 se lee en la hora 11:00, y los demás valores también."""
     prob = prob_ensemble(e)
     llueve_ahora = llueve_ahora_en(ara, casa)
@@ -254,10 +265,15 @@ def previsio(desde, h, e, ara, avisos, model=None, casa=None, nc=None, planes=No
         return h.get(f"{campo}_meteofrance_seamless", [None] * (i + 1))[i]
 
     primera = desde.replace(minute=0, second=0, microsecond=0) + dt.timedelta(hours=1)
+    dia = desde.date() - dt.timedelta(days=1 if desde.hour < FI_TRAMS[0] else 0)
+    fi_dema = (dt.datetime.combine(dia + dt.timedelta(days=1), dt.time(FI_DEMA))).strftime("%Y-%m-%dT%H:%M")
     filas = []
     for i, t in enumerate(h["time"]):
-        if t < primera.strftime("%Y-%m-%dT%H:%M") or len(filas) >= HORAS:
+        if t < primera.strftime("%Y-%m-%dT%H:%M"):
             continue
+        if (len(filas) >= HORAS and filas[-1]["fins"] >= fi_dema
+                and int(filas[-1]["fins"][11:13]) in FI_TRAMS):
+            break
         fin = dt.datetime.fromisoformat(t).astimezone()
         ini = fin - dt.timedelta(hours=1)
         n = len(filas)
@@ -524,7 +540,7 @@ def recoger(anterior=None):
                 R.apunta_estacio_casa(E.hores(casa["files"]))
             if salida["hores"] and not salida.get("previsio_de"):
                 r = salida.get("riera")
-                R.apunta_casa(P.AHORA, ara, filas_registro(P.AHORA, h, e, ara, salida["hores"], casa,
+                R.apunta_casa(P.AHORA, ara, filas_registro(P.AHORA, h, e, ara, salida["hores"][:HORAS], casa,
                                                            avisos, planes),
                               salida["ara_casa"], {"pluja_1h": r["mm_1h"], "fins": r["fins"]} if r else None)
         except Exception as ex:
