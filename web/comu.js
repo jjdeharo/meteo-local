@@ -569,7 +569,7 @@ document.addEventListener('click', (e) => {
   obreVisor(enllac);
 });
 
-// «Nou!» al costat d'«Avisos al mòbil» (ADR 0048): fins que s'entra a la
+// «Nou!» damunt la campana d'«Avisos al mòbil» (ADR 0048): fins que s'entra a la
 // pàgina «Avisos» (ho recorda el navegador) i, per a tothom, fins al 15-10-2026,
 // una setmana després de publicar-la. El «Nou:» de la pàgina, igual
 // (Juanjo, 08-10-2026).
@@ -588,7 +588,7 @@ function marcaNouAvisos(ara = new Date()) {
     });
   }
   if (vist || ara >= NOU_AVISOS_FINS) return;
-  for (const a of document.querySelectorAll('.enllac-avisos a')) a.append(element('span', 'xip-nou', T('Nou!')));
+  for (const a of document.querySelectorAll('.boto-avisos')) a.append(element('span', 'xip-nou', T('Nou!')));
 }
 
 marcaNouAvisos();

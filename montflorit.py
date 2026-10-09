@@ -60,6 +60,32 @@ def nav_publica(actual, sagnat="  "):
                        for href, text, icona in PAGINES_PUBLIQUES)
     return f'\n{sagnat}<nav class="pagines" aria-label="Pàgines">{enllacos}\n{sagnat}</nav>'
 ROBOTS = '  <meta name="robots" content="noindex">\n'
+DESCRIPCIO = "La predicció del temps del barri, alertes i què cal saber si surts, a Cerdanyola del Vallès."
+
+# Les llengües, amb la seva icona a la botonera de la capçalera i no al text
+# de sota el títol (Juanjo, 09-10-2026). Icona «languages» de Lucide (ISC).
+SIMBOL_IDIOMA = ('<symbol id="i-languages" viewBox="0 0 24 24"><path d="m5 8 6 6M4 14l6-6 2-3M2 5h12M7 2h1'
+                 'm14 20-5-10-5 10M14 18h6"/></symbol>')
+
+
+def selector_idioma(actual, pagina):
+    """Les dues llengües, amb la triada marcada com la pestanya activa del menú:
+    la icona sola no deia en quina s'és (Juanjo, 09-10-2026)."""
+    peces = []
+    for llengua, codi, nom, href in (("ca", "CA", "Català", "../" + pagina), ("es", "ES", "Castellano", "es/" + pagina)):
+        if llengua == actual:
+            peces.append(f'<span lang="{llengua}" aria-current="page" title="{nom}" aria-label="{nom}">{codi}</span>')
+        else:
+            peces.append(f'<a href="{href}" lang="{llengua}" hreflang="{llengua}" title="{nom}" aria-label="{nom}">{codi}</a>')
+    return ('<nav class="idiomes" aria-label="Idioma"><svg aria-hidden="true"><use href="#i-languages"></use></svg>'
+            + "".join(peces) + "</nav>")
+
+
+def idioma(html, nom):
+    """El selector de l'idioma, el primer de la botonera de la capçalera."""
+    html = canvia(html, [('\n    <symbol id="i-moon"', f'\n    {SIMBOL_IDIOMA}\n    <symbol id="i-moon"')], nom)
+    pagina = "" if nom == "index.html" else nom
+    return canvia(html, [('<div class="cap-botons">\n', f'<div class="cap-botons">\n      {selector_idioma("ca", pagina)}\n')], nom)
 
 CANVIS_INDEX = [
     ('<html lang="ca" data-theme="light">',
@@ -68,9 +94,9 @@ CANVIS_INDEX = [
     ('content="El temps ara a casa (Montflorit, Cerdanyola del Vallès) i',
      'content="El temps ara a Montflorit (Cerdanyola del Vallès) i'),
     ("<title>Temps a casa</title>", "<title>Temps a Montflorit</title>"),
+    # Sota el títol, què hi ha a la web (Juanjo, 09-10-2026).
     ('<h1>Temps a casa</h1>\n      <p class="ruta">Montflorit, Cerdanyola del Vallès</p>',
-     '<h1>Temps a Montflorit</h1>\n      <p class="ruta">Cerdanyola del Vallès'
-     ' · <a href="es/" lang="es" hreflang="es">Castellano</a></p>'),
+     f'<h1>Temps a Montflorit</h1>\n      <p class="ruta">{DESCRIPCIO}</p>'),
     ("de l'estació de casa; la pluja, de l'estació de Montflorit de meteocerdanyola.com, a uns 300-400 m, minut a minut",
      "d'una estació particular del barri; la pluja, de l'estació de Montflorit de meteocerdanyola.com, minut a minut"),
     ("amb el que ha mesurat l'estació de casa des de", "amb el que ha mesurat l'estació particular des de"),
@@ -81,9 +107,6 @@ CANVIS_FONTS = [
     ('<html lang="ca" data-theme="light">',
      f'<html lang="ca" data-theme="light" data-dades="{DADES}" data-notes="{NOTES}">'),
     ("<title>Fonts i crèdits · Temps a casa</title>", "<title>Fonts i crèdits · Temps a Montflorit</title>"),
-    ('<p class="ruta">Montflorit, Cerdanyola del Vallès</p>',
-     '<p class="ruta">Montflorit, Cerdanyola del Vallès'
-     ' · <a href="es/fonts.html" lang="es" hreflang="es">Castellano</a></p>'),
     ("<strong>Estació de casa:</strong> una estació pròpia a uns 300-400 m de la de Montflorit, llegida",
      "<strong>Estació particular:</strong> una estació pròpia del mateix barri, llegida"),
     ("<li>Icones del cotxe i del ciclomotor de <a href=\"https://tabler.io/icons\" target=\"_blank\" rel=\"noopener\">"
@@ -95,25 +118,16 @@ CANVIS_SORTIR = [
     ('<html lang="ca" data-theme="light">',
      f'<html lang="ca" data-theme="light" data-dades="{DADES}" data-notes="{NOTES}">'),
     ("<title>Si surts</title>", "<title>Si surts · Temps a Montflorit</title>"),
-    ('<p class="ruta">Montflorit, Cerdanyola del Vallès</p>',
-     '<p class="ruta">Montflorit, Cerdanyola del Vallès'
-     ' · <a href="es/sortir.html" lang="es" hreflang="es">Castellano</a></p>'),
 ]
 CANVIS_TELEGRAM = [
     ('<html lang="ca" data-theme="light">',
      f'<html lang="ca" data-theme="light" data-dades="{DADES}" data-notes="{NOTES}">'),
     ("<title>Avisos a Telegram</title>", "<title>Avisos a Telegram · Temps a Montflorit</title>"),
-    ('<p class="ruta">Montflorit, Cerdanyola del Vallès</p>',
-     '<p class="ruta">Montflorit, Cerdanyola del Vallès'
-     ' · <a href="es/telegram.html" lang="es" hreflang="es">Castellano</a></p>'),
 ]
 CANVIS_AVISOS = [
     ('<html lang="ca" data-theme="light">',
      f'<html lang="ca" data-theme="light" data-dades="{DADES}" data-notes="{NOTES}">'),
     ("<title>Avisos</title>", "<title>Avisos · Temps a Montflorit</title>"),
-    ('<p class="ruta">Montflorit, Cerdanyola del Vallès</p>',
-     '<p class="ruta">Montflorit, Cerdanyola del Vallès'
-     ' · <a href="es/avisos.html" lang="es" hreflang="es">Castellano</a></p>'),
 ]
 # En «Si surts» se habla de medios de transporte: ahí sí van «moto» y «cotxe».
 PROHIBIDES_SORTIR = ("casa", "trajecte")
@@ -207,6 +221,8 @@ def castella(html, nom, taula=None):
     if taula is None:
         with open(TRADUCCIONS, encoding="utf-8") as f:
             taula = json.load(f)
+    pagina = "" if nom == "index.html" else nom
+    html = canvia(html, [(selector_idioma("ca", pagina), selector_idioma("es", pagina))], nom)
     t = canvia(tradueix(html, taula, nom), CANVIS_ES, nom)
     t = canvia(t, {"index.html": CANVIS_ES_INDEX + CANVIS_ES_NAV, "sortir.html": CANVIS_ES_SORTIR + CANVIS_ES_NAV,
                    "telegram.html": CANVIS_ES_TELEGRAM + CANVIS_ES_NAV,
@@ -259,7 +275,7 @@ def menu(text, actual, nom):
 
 def alternes(html, nom):
     """Cada página pública dice dónde está en la otra lengua (hreflang), para
-    los buscadores; el enlace visible ya está junto al municipio."""
+    los buscadores; el enlace visible es el selector del idioma (idioma)."""
     ca = WEB + ("" if nom == "index.html" else nom)
     enllacos = (f'\n  <link rel="alternate" hreflang="ca" href="{ca}">'
                 f'\n  <link rel="alternate" hreflang="es" href="{WEB}es/{"" if nom == "index.html" else nom}">'
@@ -337,7 +353,7 @@ def construeix(desti, web=None):
     pagines = {"index.html": index(llegeix("casa.html")), "sortir.html": sortir(llegeix("sortir.html")),
                "avisos.html": avisos(llegeix("avisos.html")), "telegram.html": telegram(llegeix("telegram.html")),
                "fonts.html": fonts(llegeix("fonts.html"))}
-    pagines = {nom: alternes(html, nom) for nom, html in pagines.items()}
+    pagines = {nom: alternes(idioma(html, nom), nom) for nom, html in pagines.items()}
     os.makedirs(os.path.join(desti, "es"), exist_ok=True)
     for nom, html in pagines.items():
         escriu(nom, html)

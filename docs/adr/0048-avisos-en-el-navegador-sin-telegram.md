@@ -29,7 +29,9 @@ hace, el envoltorio irá en `android/` de este repositorio.
   su página, enlazada al final. Desde la 3.24.1, junto al enlace, una etiqueta
   «Nou!» («¡Nuevo!») azul que desaparece para cada uno al entrar en «Avisos»
   (lo recuerda su navegador) y para todos el 16-10-2026, una semana después;
-  el «Nou:» de la página, también (Juanjo, 08-10-2026).
+  el «Nou:» de la página, también (Juanjo, 08-10-2026). Desde la 3.28.0 el
+  enlace es la campana de la botonera de la cabecera y el «Nou!» va encima
+  (ADR 0050).
 - **Cómo instalarla**: en iPhone y iPad, Apple solo deja recibir avisos a la
   web añadida a la pantalla de inicio y abierta como aplicación; en Safari, la
   página lo explica en vez de las opciones. En Android funcionan desde el

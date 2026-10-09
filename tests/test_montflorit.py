@@ -128,7 +128,13 @@ class Web(unittest.TestCase):
         fonts = self.llegeix("fonts.html")
         self.assertIn('id="btn-fosc"', fonts)
         self.assertIn('<nav class="pagines"', fonts)
-        self.assertIn('<a href="es/fonts.html" lang="es" hreflang="es">Castellano</a>', fonts)
+        # L'idioma, al costat del botó del tema: la llengua triada marcada i l'altra, a la mateixa pàgina.
+        self.assertIn(M.selector_idioma("ca", "fonts.html"), fonts)
+        self.assertIn(M.selector_idioma("es", "fonts.html"), self.llegeix("es/fonts.html"))
+        self.assertIn('id="i-languages"', fonts)
+        self.assertIn('<a href="es/fonts.html" lang="es" hreflang="es"', fonts)
+        self.assertIn('<span lang="ca" aria-current="page"', fonts)
+        self.assertIn('<a href="../fonts.html" lang="ca" hreflang="ca"', self.llegeix("es/fonts.html"))
         self.assertIn('<script src="comu.js"></script>', fonts)
         self.assertIn('data-notes="https://github.com/meteo-montflorit/meteo-local/releases/tag/v', fonts)
         self.assertIn('<script src="../es.js"></script>', self.llegeix("es/fonts.html"))
@@ -149,8 +155,10 @@ class Web(unittest.TestCase):
         self.assertIn("traducida con IA", fonts)
         self.assertIn("El icono de la moto de «Si sales»", fonts)
         # Cada versión enlaza la otra.
-        self.assertIn('<a href="../" lang="ca" hreflang="ca">Català</a>', index)
-        self.assertIn('<a href="es/" lang="es" hreflang="es">Castellano</a>', self.llegeix("index.html"))
+        self.assertIn(M.selector_idioma("es", ""), index)
+        self.assertIn(M.selector_idioma("ca", ""), self.llegeix("index.html"))
+        # Sota el títol, què hi ha a la web.
+        self.assertIn(f'<p class="ruta">{M.DESCRIPCIO}</p>', self.llegeix("index.html"))
         # No queda catalán en lo que se lee.
         for nom, html in (("es/index.html", index), ("es/fonts.html", fonts)):
             M.comprova(nom, html, M.PROHIBIDES_FONTS if "fonts" in nom else M.PROHIBIDES)

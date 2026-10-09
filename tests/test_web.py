@@ -316,7 +316,7 @@ class Web(unittest.TestCase):
         # 15-10-2026 (ADR 0048).
         def nou(ara, vist=None, pagina="/"):
             expr = ("posats = []; enllac = { append: (e) => posats.push(e.textContent) };"
-                    "document.querySelectorAll = (s) => s === '.enllac-avisos a' ? [enllac] : [];"
+                    "document.querySelectorAll = (s) => s === '.boto-avisos' ? [enllac] : [];"
                     f"location.pathname = {json.dumps(pagina)};"
                     f"desat = {json.dumps(vist)}; localStorage.getItem = () => desat;"
                     "localStorage.setItem = (k, v) => { desat = v; };"

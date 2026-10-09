@@ -362,6 +362,10 @@ function taula(hores, aprenentatge) {
   const sec = element('section', 'previsio');
   sec.append(element('h2', 'perque', T('Pròximes 24 hores')));
   const contenidor = element('div', 'taula-contenidor');
+  // Al mòbil la taula es desplaça de costat: s'hi ha de poder arribar amb el teclat (axe-core).
+  contenidor.tabIndex = 0;
+  contenidor.setAttribute('role', 'region');
+  contenidor.setAttribute('aria-label', T('Pròximes 24 hores'));
   const t = element('table', 'taula-hores');
   const cap = element('thead');
   const fila = element('tr');

@@ -16,7 +16,8 @@ de casa, sin una segunda copia que mantener.
 
 - **Dónde**: <https://meteo-montflorit.github.io/es/>, con su
   página de fuentes en `es/fonts.html`. La de la raíz sigue en catalán. Cada
-  una enlaza la otra junto al nombre del municipio («Castellano», «Català»).
+  una enlaza la otra; desde la 3.28.0, con el selector «CA | ES» de la
+  botonera de la cabecera (ADR 0050).
 - **Los textos del programa** (`web/comu.js` y `web/casa.js`) pasan por una
   función, `T`: `` T`Ara a ${lloc}` `` o `T('No plou')`. Sin diccionario
   devuelve el texto tal cual, así que la web de siempre y la pública en

@@ -19,6 +19,8 @@ aplicarla «sin pérdida de datos».
   de Lucide delante (Juanjo, 08-10-2026: «la campanita… es muy visual»). La
   palabra se queda porque el icono solo no se lee ni se entiende; lo que
   sobra es «com funciona». En móvil el enlace baja debajo de los botones.
+  Modificado por el ADR 0050: desde la 3.28.0, «Avisos al mòbil» es la
+  campana de la botonera de la cabecera y la fila solo lleva el menú.
 - **Un solo bloque «Avisos actius»** (`blocAvisos`, en `web/comu.js`) con
   borde fino y sin fondo de color, y dentro cada aviso con la franja lateral
   de su nivel: roja para Protecció Civil, naranja o amarilla para la AEMET
