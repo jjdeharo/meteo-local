@@ -350,6 +350,21 @@ def valida_temperatura(ms, arxiu_t):
             "w": ajustar_ridge(x, error).tolist(), "w_sense_estacio": ajustar_ridge(xs, error).tolist()}
 
 
+def valida_variant(ms, arxiu, noms):
+    """Una variante (Sant Cugat, los avisos), solo con las muestras que llevan
+    su dato, y el modelo base ajustado y comprobado con esas mismas muestras
+    (error_base): un error medido en horas distintas no se puede comparar.
+    Hasta la auditoría del 09-10-2026 la variante se elegía por tener menos
+    error que el base, aunque el suyo saliera de la mitad de las horas."""
+    sub = [m for m in ms if m["obs_pluja"] is not None and rasgos(m, noms) is not None]
+    v = valida_pluja(sub, arxiu, noms)
+    if v:
+        base = valida_pluja(sub, arxiu)
+        v["error_base"] = base["error"] if base else None
+        v["mostres_base"] = base["mostres"] if base else None
+    return v
+
+
 # --- Decisión diaria -------------------------------------------------------------------
 
 def millora(v):
@@ -360,18 +375,25 @@ def candidat(ms, arxiu, arxiu_t, avui):
     """El modelo que tocaría usar con los datos de hoy, y los números."""
     vp, vt = valida_pluja(ms, arxiu), valida_temperatura(ms, arxiu_t)
     # Las variantes con Sant Cugat y con los avisos, aparte: solo con las
-    # muestras que llevan el dato.
+    # muestras que llevan el dato, y el base con esas mismas (valida_variant).
     if vp:
-        vp["xv"] = valida_pluja(ms, arxiu, RASGOS_PROPIS_XV)
-        vp["avis"] = valida_pluja(ms, arxiu, RASGOS_PROPIS_AVIS)
+        vp["xv"] = valida_variant(ms, arxiu, RASGOS_PROPIS_XV)
+        vp["avis"] = valida_variant(ms, arxiu, RASGOS_PROPIS_AVIS)
     model = {"pluja": arxiu, "temperatura": arxiu_t}
-    bons = [v for v in (vp, vp and vp["xv"], vp and vp["avis"])
-            if v and v["hores_pluja"] >= MIN_HORES_PLUJA and v["w"] and millora(v)]
-    if bons:
-        v = min(bons, key=lambda v: v["error"])
+
+    def val(v):
+        return bool(v and v["hores_pluja"] >= MIN_HORES_PLUJA and v["w"] and millora(v))
+    # Una variante, solo si en sus mismas horas mejora también al base en
+    # MILLORA_MINIMA; entre varias, la que más lo mejora en proporción. Si
+    # ninguna, el base, si mejora al archivo.
+    variants = [v for v in ((vp or {}).get("xv"), (vp or {}).get("avis"))
+                if val(v) and v.get("error_base") and v["error"] < (1 - MILLORA_MINIMA) * v["error_base"]]
+    v = max(variants, key=lambda v: 1 - v["error"] / v["error_base"]) if variants else vp if val(vp) else None
+    if v:
         model["pluja"] = {"origen": "local", "des_de": ms[0]["emes"][:10], "fins": avui,
                           "rasgos": v["rasgos"], "w": v["w"], "error": v["error"],
-                          "error_abans": v["error_abans"], "mostres": v["mostres"]}
+                          "error_abans": v["error_abans"], "mostres": v["mostres"],
+                          "error_base": v.get("error_base")}
     if vt and vt["dies"] >= MIN_DIES_TEMPERATURA and millora(vt):
         model["temperatura"] = {"origen": "casa", "des_de": ms[0]["emes"][:10], "fins": avui,
                                 "rasgos": RASGOS_TEMPERATURA, "w": vt["w"],
@@ -396,7 +418,9 @@ def explica(abans, nou, vp, vt):
                       else " i els avisos oficials" if "avis_aemet" in p["rasgos"] else "")
             linies.append(f"Pluja: passa a aprendre de Montflorit i de l'estació de casa{amb_xv} "
                           f"({p['mostres']} mostres). "
-                          f"Error {p['error']:.4f} en setmanes no vistes, abans {p['error_abans']:.4f}.")
+                          f"Error {p['error']:.4f} en setmanes no vistes, abans {p['error_abans']:.4f}."
+                          + (f" Sense aquest rasgo, a les mateixes hores: {p['error_base']:.4f}."
+                             if p.get("error_base") else ""))
         else:
             linies.append("Pluja: torna al model de l'arxiu; el propi ja no millora.")
     if metode(abans)[1] != metode(nou)[1]:
@@ -510,13 +534,14 @@ def avis_sant_cugat(vp):
     lluvia de Sant Cugat, una vez: si ese rasgo acierta más o no, con las
     cifras (Juanjo, 08-10-2026: «¿quién se acordará de mirarlo?»)."""
     xv = (vp or {}).get("xv")
-    if not xv or xv["hores_pluja"] < MIN_HORES_PLUJA or os.path.exists(AVIS_XV):
+    if not xv or xv["hores_pluja"] < MIN_HORES_PLUJA or xv.get("error_base") is None or os.path.exists(AVIS_XV):
         return None
-    sense = valida_pluja_mateixes = vp
-    ajuda = xv["error"] < sense["error"]
+    # Contra el base a las mismas horas, no contra el base de todas (auditoría del 09-10-2026).
+    sense = xv["error_base"]
+    ajuda = xv["error"] < sense
     text = (f"Temps a casa: el registre ja té {xv['hores_pluja']} hores de pluja amb la dada de Sant Cugat. "
-            f"Error en setmanes no vistes: amb la pluja de Sant Cugat {xv['error']:.4f}, sense {sense['error']:.4f} "
-            f"(model de l'arxiu {sense['error_abans']:.4f}). "
+            f"Error en setmanes no vistes, a les mateixes hores: amb la pluja de Sant Cugat {xv['error']:.4f}, "
+            f"sense {sense:.4f} (model de l'arxiu {xv['error_abans']:.4f}). "
             + ("Ajuda: si vols, demana la clau d'OpenData de l'AEMET i afegim l'aeroport de Sabadell."
                if ajuda else "No ajuda: no val la pena afegir l'aeroport de Sabadell."))
     os.makedirs(DIR, exist_ok=True)

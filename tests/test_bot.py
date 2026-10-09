@@ -795,6 +795,18 @@ class RepartimentAmbReintents(unittest.TestCase):
     def tearDown(self):
         self.dir.cleanup()
 
+    def test_qui_treu_la_categoria_no_rep_el_pendent(self):
+        # Auditoría del 09-10-2026: lo mismo que en las notificaciones web.
+        subs = {"2": {"idioma": "es", "avisos": ["riera"], "resum": None}}
+        api, estat = self.ApiQueFalla(falla_chats=["2"]), {}
+        B.reparteix(api, subs, estat, ARA + dt.timedelta(minutes=10))
+        self.assertEqual(estat["pendents"]["riera:1"]["chats"], ["2"])
+        subs["2"]["avisos"] = []
+        api = Api()
+        B.reparteix(api, subs, estat, ARA + dt.timedelta(minutes=11))
+        self.assertEqual([p["chat_id"] for _, p in api.enviats if p["chat_id"] != B.CANAL], [])
+        self.assertEqual(estat["pendents"], {})
+
     def test_un_chat_que_falla_ho_rep_al_minut_seguent(self):
         subs = {"1": {"idioma": "ca", "avisos": ["riera"], "resum": None},
                 "2": {"idioma": "es", "avisos": ["riera"], "resum": None}}

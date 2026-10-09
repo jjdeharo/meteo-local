@@ -22,16 +22,22 @@ mkdir "$t"
 trap 'rm -rf "$t"' EXIT
 head -c $((MAX + 1)) > "$t/in.tgz"
 [ "$(wc -c < "$t/in.tgz")" -le "$MAX" ] || rebutja "més de $MAX bytes"
-# Cada entrada del tar: un archivo normal («-») con uno de los dos nombres.
-tar -tzvf "$t/in.tgz" | awk '
-  { tipus = substr($1, 1, 1); nom = $NF }
+# Cada entrada del tar: un archivo normal («-») con uno de los dos nombres,
+# de MAX bytes como mucho también descomprimido (el tamaño que declara el
+# tar), sin repetirse y no más de dos: un tar.gz de 5 KB podía traer un JSON
+# de 5 MB (auditoría del 09-10-2026).
+tar -tzvf "$t/in.tgz" | awk -v max="$MAX" '
+  { tipus = substr($1, 1, 1); nom = $NF; mida = $3 + 0; total += mida; n++ }
   tipus != "-" || (nom != "montflorit.json" && nom != "avisos.json") { print "rep-dades: rebutjat: " $0 > "/dev/stderr"; mal = 1 }
-  END { exit mal }' || exit 1
+  mida > max { print "rep-dades: rebutjat: " nom " fa " mida " bytes descomprimit" > "/dev/stderr"; mal = 1 }
+  vist[nom]++ { print "rep-dades: rebutjat: " nom " repetit" > "/dev/stderr"; mal = 1 }
+  END { if (total > max || n > 2) { print "rep-dades: rebutjat: " n " entrades, " total " bytes" > "/dev/stderr"; mal = 1 }; exit mal }' || exit 1
 noms=$(tar -tzf "$t/in.tgz")
 [ -n "$noms" ] || rebutja "buit"
 tar -xzf "$t/in.tgz" -C "$t" --no-same-owner --no-same-permissions $noms
 for n in $noms; do
   [ -f "$t/$n" ] && [ ! -L "$t/$n" ] || rebutja "$n no és un fitxer normal"
+  [ "$(wc -c < "$t/$n")" -le "$MAX" ] || rebutja "$n fa més de $MAX bytes"
   python3 -c 'import json, sys; json.load(open(sys.argv[1], encoding="utf-8"))' "$t/$n" 2>/dev/null \
     || rebutja "$n no és JSON"
   chmod 604 "$t/$n"

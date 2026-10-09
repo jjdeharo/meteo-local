@@ -18,7 +18,9 @@ esas 3 horas en la estación de Meteocat de Sant Cugat (29-04-2024) y con 67
 - **El índice**: la lluvia de 3 horas más alta que se alcanzará en la hora
   siguiente, juntando las dos: lo medido en las últimas 3 horas, en las
   últimas 2,5 más la media hora prevista o en las últimas 2 más la hora
-  prevista. Lo mismo con 6 horas.
+  prevista. La de 6 horas, del mismo momento: el nivel se decide con las
+  dos lluvias de cada momento, no con dos máximos de momentos distintos
+  (auditoría del 09-10-2026).
 
 Con RIERA_ATENCIO_MM en 3 horas hay aviso (a los suscriptores, al canal y en
 las notificaciones, avisos_bot.py; hasta el 08-10-2026, también a Juanjo
@@ -131,14 +133,29 @@ def horitzo(fins, ahora):
     return int(math.ceil(((ahora - fins).total_seconds() / 60 + 60) / 30) * 30)
 
 
-def maxim_amb_radar(filas, fins, hores, nc, ahora):
-    """La lluvia de hores horas más alta que se alcanzará de aquí a una hora,
-    y dentro de cuántos minutos (desde ahora)."""
-    opcions = []
+NIVELLS = (None, "registre", "atencio", "perill")
+
+
+def nivell_amb_radar(filas, fins, nc, ahora):
+    """El nivel más alto que se alcanza de aquí a una hora, con la lluvia de
+    3 y de 6 horas del mismo momento: (nivell, mm de 3 h, mm de 6 h, dentro
+    de cuántos minutos desde ahora). Hasta la auditoría del 09-10-2026 el
+    máximo de 3 horas y el de 6 se tomaban por separado, de momentos
+    distintos, y podían dar peligro sin que ningún momento cumpliera las dos
+    condiciones: 50 mm de un chaparrón sobre suelo seco ahora (el caso del
+    13-09-2025, que no se desbordó) y 60 en 6 horas una hora después, con
+    10 mm más. Del nivel alcanzado, el momento con más lluvia de 3 horas."""
+    millor = None
     for minuts in range(0, horitzo(fins, ahora) + 1, 30):
-        mm = acumulat(filas, fins, max(hores - minuts / 60, 0)) + previst(nc, fins, minuts)
-        opcions.append((round(mm, 1), max(0, int(minuts - (ahora - fins).total_seconds() / 60))))
-    return max(opcions)
+        radar = previst(nc, fins, minuts)
+        mm3 = round(acumulat(filas, fins, max(C.RIERA_HORES - minuts / 60, 0)) + radar, 1)
+        mm6 = round(acumulat(filas, fins, max(6 - minuts / 60, 0)) + radar, 1)
+        d_aqui = max(0, int(minuts - (ahora - fins).total_seconds() / 60))
+        n = nivell(mm3, mm6)
+        clau = (NIVELLS.index(n), mm3, d_aqui)
+        if millor is None or clau > millor[0]:
+            millor = (clau, n, mm3, mm6, d_aqui)
+    return millor[1:]
 
 
 def calcula(ahora, nc, lector=None, montflorit_3h=None):
@@ -160,9 +177,7 @@ def calcula(ahora, nc, lector=None, montflorit_3h=None):
            "incomplet": incomplet(filas, fins),
            "radar_1h": previst(nc, fins, (ahora - fins).total_seconds() / 60 + 60) if nc else None,
            "capcalera": None, "montflorit_3h": montflorit_3h}
-    res["index"], res["index_d_aqui_a_min"] = maxim_amb_radar(filas, fins, h, nc, ahora)
-    res["index_6h"] = maxim_amb_radar(filas, fins, 6, nc, ahora)[0]
-    res["nivell"] = nivell(res["index"], res["index_6h"])
+    res["nivell"], res["index"], res["index_6h"], res["index_d_aqui_a_min"] = nivell_amb_radar(filas, fins, nc, ahora)
     try:
         codi, nom = C.RIERA_CAPCALERA
         cap = files(codi, ahora, 6, lector)

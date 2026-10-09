@@ -37,7 +37,8 @@ CLAUS = os.path.join(B.BASE, "vapid.json")
 CADENAT_SUBS = os.path.join(B.BASE, "push.lock")       # el mismo que usa subscripcio.php
 CONTACTE = "mailto:avisos@bilateria.org"
 # Lo que tarda en dejar de valer una notificación que no ha podido entregarse
-# (el móvil apagado): la vigencia del aviso, como en el bot.
+# (el móvil apagado): lo que le queda de vigencia al aviso, como en el bot;
+# la previsión y la prueba, un plazo fijo.
 TTL_RESUM_S = 3 * 3600
 TTL_PROVA_S = 15 * 60
 PROVA_MIN = 10          # una prueba pedida hace más de esto ya no se manda
@@ -56,7 +57,7 @@ PROVA = {"ca": ("Prova de Temps a Montflorit", "Els avisos funcionen en aquest d
 
 # --- Texto -------------------------------------------------------------------------------
 
-def notificacio(text, url="./", etiqueta=None):
+def notificacio(text, url="./", etiqueta=None, expira=None):
     """Título y cuerpo a partir de un mensaje del bot (HTML de Telegram): el
     título, la primera línea en negrita; el cuerpo, el resto sin etiquetas ni
     el enlace a la web, que ya abre la notificación."""
@@ -70,6 +71,10 @@ def notificacio(text, url="./", etiqueta=None):
     res = {"title": html.unescape(titol).strip(), "body": html.unescape(cos), "url": url}
     if etiqueta:
         res["tag"] = etiqueta
+    # Cuándo deja de valer, para que sw.js no la muestre si llega tarde
+    # (auditoría del 09-10-2026).
+    if expira:
+        res["expira"] = expira
     return res
 
 
@@ -164,16 +169,25 @@ def reparteix(estat, moment, envia=envia_push):
             del pendents[clau]
             continue
         queden, motius = [], []
-        ttl = B.VIGENCIA_MIN.get(a["tipus"], 60) * 60
+        # El tiempo de vida que se da al servicio es lo que le queda al aviso,
+        # no toda su vigencia: el servicio lo cuenta desde que recibe el envío
+        # (RFC 8030, 5.2) y un reintento tardío podía entregarse caducado
+        # (auditoría del 09-10-2026). La caducidad va también en la
+        # notificación, y sw.js no la muestra si ya ha pasado.
+        expira = dt.datetime.fromisoformat(a["hora"]) + dt.timedelta(minutes=B.VIGENCIA_MIN.get(a["tipus"], 60))
+        ttl = max(0, int((expira - moment).total_seconds()))
         for e in p["subs"]:
             sub = subs.get(e)
-            if not sub or e in mortes:
+            # Quien ha quitado la categoría mientras se reintentaba ya no lo
+            # recibe (auditoría del 09-10-2026).
+            if not sub or e in mortes or a["tipus"] not in sub.get("avisos", []):
                 continue
             idioma = sub.get("idioma", "ca")
             # El text propi de la notificació, si en porta, i on porta en tocar-la
             # (el de pluja, al radar en directe; avisos_bot.py).
             text = (a.get("push") or a)[idioma]
-            dades = notificacio(text, a.get("url") or url(URL.get(a["tipus"], "./"), idioma), clau)
+            dades = notificacio(text, a.get("url") or url(URL.get(a["tipus"], "./"), idioma), clau,
+                                expira.isoformat(timespec="seconds"))
             r = prova(e, lambda: envia(sub, dades, ttl, a["tipus"] in ("riera", "perill", "pluja")))
             if r is not True:
                 queden.append(e)

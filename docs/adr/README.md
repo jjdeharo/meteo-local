@@ -57,5 +57,7 @@
 | [0053](0053-trenes-y-trafico-a-demanda-y-prevision-de-las-21.md) | Trenes y tráfico a demanda, y la previsión de la noche a las 21 h | aceptado |
 | [0054](0054-pagina-consultes-y-sol-aire-y-polen.md) | Página «Consultes», y el sol, el aire y el polen en la web y en el bot | aceptado |
 | [0055](0055-avisos-oficiales-al-canal-y-prevision-de-la-noche.md) | Avisos oficiales nuevos al canal, y la previsión de la noche aparte | aceptado |
+| [0056](0056-pagina-com-funciona-y-metodologia-completa.md) | Página «Com funciona» y metodología completa | aceptado |
+| [0057](0057-correcciones-de-la-auditoria-del-9-de-octubre.md) | Correcciones de la auditoría del 9 de octubre de 2026 | aceptado |
 
 Plantilla: [0000-plantilla.md](0000-plantilla.md). Para crear uno: `nuevo-adr "Título"`.

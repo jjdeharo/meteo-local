@@ -1137,7 +1137,9 @@ def reparteix(api, subs, estat, moment):
         queden, motius = [], []
         for chat in p["chats"]:
             sub = subs.get(chat)
-            if not sub or (al_canal_ok and al_canal(api, chat, memoria)):
+            # Quien ha quitado la categoría mientras se reintentaba ya no lo
+            # recibe (auditoría del 09-10-2026).
+            if not sub or a["tipus"] not in sub["avisos"] or (al_canal_ok and al_canal(api, chat, memoria)):
                 continue
             try:
                 envia(api, chat, a[sub["idioma"]], html=True)

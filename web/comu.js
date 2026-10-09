@@ -244,15 +244,19 @@ const DADES_URL = 'https://bilateria.org/app/meteo-local/';
 const ESPERA_DADES_MS = 6000;
 const DADES_RESERVA_MIN = 45;
 
+// Baixa un JSON amb un temps màxim que cobreix tota la descàrrega, també el
+// cos: «fetch» es resol amb les capçaleres, i el temporitzador s'aturava
+// abans de llegir el cos, de manera que una connexió penjada a mig cos no es
+// tallava mai (auditoria del 09-10-2026).
 function baixa(url) {
   const control = new AbortController();
   const temps = setTimeout(() => control.abort(), ESPERA_DADES_MS);
   return fetch(`${url}?t=${Date.now()}`, { cache: 'no-store', signal: control.signal })
     .then((r) => {
-      clearTimeout(temps);
       if (!r.ok) throw new Error(r.status);
       return r.json();
-    });
+    })
+    .finally(() => clearTimeout(temps));
 }
 
 function llegeixDades(nom) {

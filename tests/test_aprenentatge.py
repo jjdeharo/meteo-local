@@ -215,13 +215,49 @@ class Diari(unittest.TestCase):
         self.assertEqual(vp["mostres"], len([m for m in ms if m["pluja_1h_xv"] is not None]))
         # El aviso de una vez: solo con bastante lluvia, y deja huella para no repetirse.
         self.assertIsNone(A.avis_sant_cugat({"error": 0.1, "error_abans": 0.12, "xv": {**vp, "hores_pluja": 5}}))
-        text = A.avis_sant_cugat({"error": 0.1, "error_abans": 0.12, "xv": {**vp, "hores_pluja": 30, "error": 0.09}})
+        text = A.avis_sant_cugat({"error": 0.1, "error_abans": 0.12, "xv": {**vp, "hores_pluja": 30, "error": 0.09, "error_base": 0.1}})
         self.assertIn("30 hores de pluja amb la dada de Sant Cugat", text)
         self.assertIn("Ajuda", text)
         self.assertTrue(os.path.exists(A.AVIS_XV))
-        self.assertIsNone(A.avis_sant_cugat({"error": 0.1, "error_abans": 0.12, "xv": {**vp, "hores_pluja": 30, "error": 0.09}}))
+        self.assertIsNone(A.avis_sant_cugat({"error": 0.1, "error_abans": 0.12, "xv": {**vp, "hores_pluja": 30, "error": 0.09, "error_base": 0.1}}))
         os.remove(A.AVIS_XV)
-        self.assertIn("No ajuda", A.avis_sant_cugat({"error": 0.1, "error_abans": 0.12, "xv": {**vp, "hores_pluja": 30, "error": 0.11}}))
+        self.assertIn("No ajuda", A.avis_sant_cugat({"error": 0.1, "error_abans": 0.12, "xv": {**vp, "hores_pluja": 30, "error": 0.11, "error_base": 0.1}}))
+
+    def test_variant_i_base_amb_les_mateixes_mostres(self):
+        # Auditoría del 09-10-2026: la variante de Sant Cugat se comparaba con
+        # el base medido en todas las horas, aunque ella solo tuviera la mitad.
+        ms = []
+        for setmana in range(4):
+            for k in range(28):
+                fins = dt.datetime(2026, 9, 7 + 7 * setmana, 6) + dt.timedelta(hours=k)
+                plou = k % 4 == 0
+                ms.append({**hora(fins.isoformat(timespec="minutes"), mm=2.0 if plou else 0.0, antelacio=1),
+                           "emes": (fins - dt.timedelta(hours=1)).isoformat(timespec="minutes") + "+02:00",
+                           "obs_pluja": 1.0 if plou else 0.0, "pluja_1h_emes": 0.0,
+                           "pluja_1h_xv": (1.0 if plou else 0.0) if setmana >= 2 else None})
+        arxiu = A.modelo_arxiu()
+        base, xv = A.valida_pluja(ms, arxiu), A.valida_variant(ms, arxiu, A.RASGOS_PROPIS_XV)
+        self.assertEqual(base["mostres"], len(ms))
+        self.assertEqual((xv["mostres"], xv["mostres_base"]), (len(ms) // 2, len(ms) // 2))
+        self.assertIsNotNone(xv["error_base"])
+
+    def test_la_variant_nomes_guanya_si_millora_el_base_a_les_seves_hores(self):
+        from unittest.mock import patch
+        arxiu = A.modelo_arxiu()
+        base = {"mostres": 100, "hores_pluja": 40, "rasgos": A.RASGOS_PROPIS, "error": 0.10, "error_abans": 0.12, "w": [0.0]}
+        # Menys error que el base de totes les hores, però no que el base a les seves: no guanya.
+        xv = {**base, "rasgos": A.RASGOS_PROPIS_XV, "mostres": 50, "error": 0.09, "error_base": 0.09, "mostres_base": 50}
+        ms = [{"emes": "2026-09-01T00:00+02:00"}]
+        with patch.object(A, "valida_pluja", return_value=dict(base)), patch.object(A, "valida_temperatura", return_value=None), \
+             patch.object(A, "valida_variant", side_effect=[xv, None]):
+            model, vp, _ = A.candidat(ms, arxiu, None, "2026-10-09")
+        self.assertEqual(model["pluja"]["rasgos"], A.RASGOS_PROPIS)
+        # Amb un 5 % menys d'error que el base a les mateixes hores, sí.
+        with patch.object(A, "valida_pluja", return_value=dict(base)), patch.object(A, "valida_temperatura", return_value=None), \
+             patch.object(A, "valida_variant", side_effect=[{**xv, "error": 0.08}, None]):
+            model, vp, _ = A.candidat(ms, arxiu, None, "2026-10-09")
+        self.assertEqual(model["pluja"]["rasgos"], A.RASGOS_PROPIS_XV)
+        self.assertEqual(model["pluja"]["error_base"], 0.09)
 
     def test_verifica_la_moto_una_vez_por_hora(self):
         # Cada hora, previsiones de 1 a 9 horas antes; llueve de 12 a 13 h.

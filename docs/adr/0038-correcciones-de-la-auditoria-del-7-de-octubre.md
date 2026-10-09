@@ -162,3 +162,12 @@ código con la referencia «auditoría del 07-10-2026».
   orden nueva.
 - Web en Chromium, Firefox y WebKit, escritorio, móvil y tableta, claro y
   oscuro, con `probar-web`, y axe-core sobre «Si surts».
+
+## Cambio del 09-10-2026: tamaño descomprimido
+
+El receptor limitaba el `tar.gz` a 2 MB pero no lo que contenía: un
+paquete de 5 KB podía traer un JSON de 5 MB (auditoría del 09-10-2026, ADR
+0057). Ahora comprueba el tamaño declarado de cada entrada, la suma, los
+nombres repetidos y el número de entradas antes de extraer, y vuelve a
+medir después. Se prueba en local con `sh` y `tar` reales
+(`tests/test_rep_dades.py`).

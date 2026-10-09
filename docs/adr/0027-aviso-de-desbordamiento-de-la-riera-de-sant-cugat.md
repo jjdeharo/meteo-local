@@ -148,3 +148,11 @@ estación e imagen, estación atrasada, un aviso por nivel, peligro sin
 atención previa, cierre y registro del episodio, lluvia débil, y que la web
 pública no lleve la riera. Prueba real el 07-10-2026 sin lluvia: índice 0.
 Simulación de 2013-2026 (arriba). Pendiente de ver un aviso real.
+
+## Cambio del 09-10-2026: las dos lluvias, del mismo momento
+
+El nivel se decidía con el máximo de 3 horas y el máximo de 6 tomados por
+separado, de momentos distintos, y podía dar peligro sin que ningún
+momento cumpliera las dos condiciones (auditoría del 09-10-2026, ADR
+0057). Ahora `nivell_amb_radar` calcula las dos para cada media hora de
+aquí a una hora y aplica la regla a cada pareja. La regla no cambia.

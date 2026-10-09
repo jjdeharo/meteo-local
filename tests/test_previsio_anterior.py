@@ -94,5 +94,31 @@ class TemperaturaDelTram(unittest.TestCase):
             self.assertEqual((files[-1]["fins"], len(files)), (fi, n))
 
 
+class SantCugatAlPreveure(unittest.TestCase):
+    def test_la_pluja_de_sant_cugat_arriba_al_model(self):
+        # Auditoría del 09-10-2026: la variante con Sant Cugat se entrenaba con
+        # ese dato, pero al prever no llegaba y las primeras horas usaban el
+        # modelo del archivo sin decirlo.
+        import config as C
+        desde = dt.datetime(2026, 10, 9, 10, 3).astimezone()
+        h = {"time": [f"2026-10-09T{x:02d}:00" for x in range(24)],
+             "temperature_2m_meteofrance_seamless": [15.0] * 24}
+        for m in C.MODELOS_FINOS:
+            h[f"precipitation_{m}"] = [0.0] * 24
+        riera = {"mm_1h": 3.0}
+        self.assertEqual(casa.al_prever(desde, h, None, None, riera)["pluja_1h_xv"], 3.0)
+        self.assertIsNone(casa.al_prever(desde, h, None, None)["pluja_1h_xv"])
+        # Un modelo propio que necesita Sant Cugat: con el dato lo usa (la
+        # sigmoide de 2, 0,88); sin él, cae al archivo.
+        model = {"pluja": {"origen": "local", "rasgos": ["constant", "sant_cugat"], "w": [2.0, 0.0]}}
+        amb = casa.previsio(desde, h, {}, None, [], model, riera=riera)
+        sense = casa.previsio(desde, h, {}, None, [], model)
+        self.assertAlmostEqual(amb[0]["probabilitat"], 0.88, places=2)
+        self.assertNotAlmostEqual(sense[0]["probabilitat"], 0.88, places=2)
+        # El registro no repite el dato en cada hora: ya va en «sant_cugat», una vez por línea.
+        fila = casa.filas_registro(desde, h, {}, None, amb[:1], riera=riera)[0]
+        self.assertNotIn("pluja_1h_xv", fila)
+
+
 if __name__ == "__main__":
     unittest.main()

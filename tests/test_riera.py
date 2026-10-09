@@ -63,6 +63,21 @@ class Index(unittest.TestCase):
         self.assertGreaterEqual(r["index_6h"], C.RIERA_PERILL_6H_MM)
         self.assertEqual(r["index_d_aqui_a_min"], 60)
 
+    def test_perill_nomes_amb_3_i_6_hores_del_mateix_moment(self):
+        # Auditoria del 09-10-2026: el màxim de 3 hores (ara: 50 mm sobre sòl sec)
+        # i el de 6 (d'aquí a una hora: 60) eren de moments diferents i donaven
+        # perill, i en cap moment es complien les dues condicions.
+        from unittest.mock import patch
+        ara = dt.datetime(2026, 10, 9, 12, 0, tzinfo=UTC)
+        files = lambda pluja: [(ara - RI.MITJA_HORA * (12 - i), mm) for i, mm in enumerate(pluja)]
+        with patch.object(RI, "files", return_value=files([0] * 6 + [20, 0, 0, 0, 15, 15])):
+            r = RI.calcula(ara, nowcast(ara, 10))
+        self.assertEqual((r["nivell"], r["index"], r["index_6h"], r["index_d_aqui_a_min"]), ("atencio", 50.0, 50.0, 0))
+        # Amb 10 mm més abans del xàfec, les dues condicions es donen alhora: perill.
+        with patch.object(RI, "files", return_value=files([0, 0, 0, 0, 10, 0, 20, 0, 0, 0, 15, 15])):
+            r = RI.calcula(ara, nowcast(ara, 10))
+        self.assertEqual((r["nivell"], r["index"], r["index_6h"]), ("perill", 50.0, 60.0))
+
     def test_l_hora_seguent_es_compta_des_d_ara(self):
         # Auditoria del 08-10-2026: amb l'estació mitja hora endarrerida, un xàfec
         # de 37,5 mm entre d'aquí a 35 i 60 minuts quedava fora de l'«hora següent».

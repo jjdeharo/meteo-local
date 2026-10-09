@@ -87,14 +87,19 @@ if [ -z "$DESTINO_MONTFLORIT" ]; then
   [ -z "$ESTAT_DIR" ] || echo "$(date +%s) $codi" > "$estat_gh"
 else
   CLAU_MONTFLORIT=${CLAU_MONTFLORIT:-$HOME/.ssh/id_montflorit}
+  # Cada paso encadenado con &&: dentro de la condición de un «if» Bash no
+  # aplica «set -e», y un fallo del generador seguía con el commit y el push
+  # de una web a medias (auditoría del 09-10-2026). Antes de Git se comprueba
+  # que están las piezas esenciales.
   if (
-    python3 montflorit.py web "$publica"
-    [ ! -f "$CLAU_MONTFLORIT" ] || export GIT_SSH_COMMAND="ssh -i $CLAU_MONTFLORIT -o IdentitiesOnly=yes"
-    git -C "$publica" init -q -b gh-pages
-    git -C "$publica" add -A
-    git -C "$publica" -c user.name="Juan José de Haro" -c user.email="8707929+jjdeharo@users.noreply.github.com" \
-      commit -q -m "Previsió $(date '+%F %H:%M')"
-    git -C "$publica" push -q -f "$DESTINO_MONTFLORIT" gh-pages
+    python3 montflorit.py web "$publica" \
+    && [ -f "$publica/index.html" ] && [ -f "$publica/montflorit.json" ] \
+    && { [ ! -f "$CLAU_MONTFLORIT" ] || export GIT_SSH_COMMAND="ssh -i $CLAU_MONTFLORIT -o IdentitiesOnly=yes"; } \
+    && git -C "$publica" init -q -b gh-pages \
+    && git -C "$publica" add -A \
+    && git -C "$publica" -c user.name="Juan José de Haro" -c user.email="8707929+jjdeharo@users.noreply.github.com" \
+      commit -q -m "Previsió $(date '+%F %H:%M')" \
+    && git -C "$publica" push -q -f "$DESTINO_MONTFLORIT" gh-pages
   ); then
     echo "$(date '+%F %T')  publicada la web de Montflorit"
     [ -z "$ESTAT_DIR" ] || echo "$(date +%s) $codi" > "$estat_gh"

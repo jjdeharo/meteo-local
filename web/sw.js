@@ -36,6 +36,9 @@ self.addEventListener('fetch', (e) => {
 self.addEventListener('push', (e) => {
   let d = {};
   try { d = e.data.json(); } catch (_) { d = { title: e.data ? e.data.text() : '' }; }
+  // Un avís que arriba quan ja ha caducat (el mòbil apagat una estona) no es
+  // mostra: push.py hi posa «expira» (auditoria del 09-10-2026).
+  if (d.expira && Date.now() > Date.parse(d.expira)) return;
   e.waitUntil(self.registration.showNotification(d.title || 'Temps a Montflorit', {
     body: d.body || '',
     icon: 'icones/icona-192.png',

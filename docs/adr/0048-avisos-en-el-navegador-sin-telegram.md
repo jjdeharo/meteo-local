@@ -137,3 +137,12 @@ muertas, previsión a su hora, prueba y altas a Juanjo) y las de la web
 (`tests/test_montflorit.py`: traducciones de la página y de sus textos).
 Página probada con `probar-web` en Chromium y Firefox, escritorio, móvil y
 tableta, claro y oscuro, en los dos idiomas; WebKit no (ver Evidencia).
+
+## Cambio del 09-10-2026: reintentos y tiempo de vida
+
+Auditoría del 09-10-2026 (ADR 0057): quien quitaba una categoría mientras
+un aviso suyo se reintentaba lo recibía igual (ahora cada entrega comprueba
+las categorías actuales), y el tiempo de vida que se daba al servicio era
+toda la vigencia del aviso en vez de lo que le quedaba (RFC 8030, 5.2):
+ahora es lo que queda, la notificación lleva `expira` y `sw.js` no muestra
+la que llega caducada.

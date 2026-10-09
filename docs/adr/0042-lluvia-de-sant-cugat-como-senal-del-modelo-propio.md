@@ -56,3 +56,15 @@ el aviso de la riera (ADR 0027).
   `tests/test_riera.py`: `mm_1h`. 218 pruebas el 08-10-2026.
 - Qué se gana solo lo dirá el registro: la hipótesis queda abierta hasta el
   aviso.
+
+## Cambio del 09-10-2026: la señal llega a la previsión y se compara bien
+
+La auditoría del 09-10-2026 (ADR 0057) encontró dos fallos: `pluja_1h_xv`
+se guardaba en el registro y entrenaba la variante, pero `al_prever` no lo
+pasaba al prever, y en las cuatro primeras horas la variante caía al
+archivo sin decirlo; y la variante se comparaba con el base medido en
+todas las horas, cuando ella solo tenía las que llevan el dato. Ahora
+`al_prever` recibe `riera["mm_1h"]`, y `valida_variant` ajusta y valida el
+base con las mismas muestras (`error_base`): la variante solo se adopta si
+lo mejora en un 5 % en esas horas, y el aviso de una vez compara con ese
+error.

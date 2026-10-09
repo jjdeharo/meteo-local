@@ -486,6 +486,18 @@ class Web(unittest.TestCase):
         expr = self.fetch_fals([None, noves]) + "llegeixDades('casa.json').then((d) => d.generat)"
         self.assertEqual(self.avalua(ara, expr, arnes=ARNES_ASYNC), noves["generat"])
 
+    def test_la_descarrega_es_talla_tambe_a_mig_cos(self):
+        # Auditoria del 09-10-2026: «fetch» es resol amb les capçaleres i el
+        # temporitzador s'aturava abans de llegir el cos: un cos que no acabava
+        # mai deixava la lectura penjada i no s'anava a la còpia.
+        ara = "2026-10-09T18:00:00+02:00"
+        expr = ("fetch = (url, opts) => Promise.resolve({ ok: true, json: () => new Promise((_, no) => "
+                "opts.signal.addEventListener('abort', () => no(new Error('abortat')))) });"
+                "baixa('x.json').then(() => 'ok', (e) => e.message)")
+        self.assertEqual(self.avalua(ara, expr, arnes=ARNES_ASYNC), "abortat")
+        expr = "fetch = () => Promise.resolve({ ok: true, json: () => Promise.resolve({ a: 1 }) }); baixa('x.json')"
+        self.assertEqual(self.avalua(ara, expr, arnes=ARNES_ASYNC), {"a": 1})
+
     def test_en_fallar_una_lectura_es_torna_a_pintar(self):
         # Auditoria del 07-10-2026: amb la pestanya oberta i la xarxa caiguda,
         # les dades velles es quedaven a la pantalla. Ara cada lectura fallida

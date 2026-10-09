@@ -137,6 +137,13 @@ CANVIS_AVISOS = [
      f'<html lang="ca" data-theme="light" data-dades="{DADES}" data-notes="{NOTES}">'),
     ("<title>Avisos</title>", "<title>Avisos · Temps a Montflorit</title>"),
 ]
+# «Com funciona» (Juanjo, 09-10-2026): por qué nació, qué ofrece, cómo aprende
+# y de qué fuentes sale.
+CANVIS_COM_FUNCIONA = [
+    ('<html lang="ca" data-theme="light">',
+     f'<html lang="ca" data-theme="light" data-dades="{DADES}" data-notes="{NOTES}">'),
+    ("<title>Com funciona · Temps a casa</title>", "<title>Com funciona · Temps a Montflorit</title>"),
+]
 # En «Si surts» se habla de medios de transporte: ahí sí van «moto» y «cotxe».
 PROHIBIDES_SORTIR = ("casa", "trajecte")
 # Los créditos y el README enlazan el código fuente y los ADR, que están en
@@ -150,8 +157,9 @@ PROHIBIDES_README = ("casa", "trajecte")
 FORA_FONTS = [re.compile(r"\n      <li>Icones de roba i pluja de .*?</li>")]
 
 SW_PECES = re.compile(r"const PECES = \[.*?\];", re.S)
-PECES = ["./", "index.html", "sortir.html", "consultes.html", "avisos.html", "telegram.html", "fonts.html", "es/",
-         "es/sortir.html", "es/consultes.html", "es/avisos.html", "es/telegram.html", "es/fonts.html", "estil.css",
+PECES = ["./", "index.html", "sortir.html", "consultes.html", "avisos.html", "telegram.html", "fonts.html",
+         "com-funciona.html", "es/", "es/sortir.html", "es/consultes.html", "es/avisos.html", "es/telegram.html",
+         "es/fonts.html", "es/com-funciona.html", "estil.css",
          "comu.js", "casa.js", "sortir.js", "consultes.js", "avisos.js", "es.js", "manifest.webmanifest",
          "icones/icona-192.png"]
 
@@ -201,6 +209,10 @@ CANVIS_ES_CONSULTES = [
     ('<script src="consultes.js"></script>', '<script src="../consultes.js"></script>'),
     (">Què vols veure</legend>", ">Qué quieres ver</legend>"),
 ]
+CANVIS_ES_COM_FUNCIONA = [
+    (f'data-dades="{DADES}"', f'data-dades="{DADES}" data-arrel="../"'),
+    ('<script src="comu.js"></script>', '<script src="../es.js"></script>\n  <script src="../comu.js"></script>'),
+]
 CANVIS_ES_NAV = [(">El temps</a>", ">El tiempo</a>"), (">Si surts</a>", ">Si sales</a>"),
                  (">Consultes</a>", ">Consultas</a>")]
 # La traducción es automática: se dice en los créditos.
@@ -244,7 +256,8 @@ def castella(html, nom, taula=None):
                    "consultes.html": CANVIS_ES_CONSULTES + CANVIS_ES_NAV,
                    "telegram.html": CANVIS_ES_TELEGRAM + CANVIS_ES_NAV,
                    "avisos.html": CANVIS_ES_AVISOS + CANVIS_ES_NAV,
-                   "fonts.html": CANVIS_ES_FONTS + CANVIS_ES_NAV + [CREDIT_TRADUCCIO]}[nom], nom)
+                   "fonts.html": CANVIS_ES_FONTS + CANVIS_ES_NAV + [CREDIT_TRADUCCIO],
+                   "com-funciona.html": CANVIS_ES_COM_FUNCIONA + CANVIS_ES_NAV}[nom], nom)
     if nom == "telegram.html":     # les captures, les de Telegram en castellà
         t = t.replace('img/telegram/ca/', 'img/telegram/es/').replace('="img/', '="../img/')
     comprova("es/" + nom, t, PROHIBIDES_SORTIR if nom in ("sortir.html", "telegram.html", "consultes.html") else
@@ -351,6 +364,14 @@ def fonts(fonts_html):
     return t
 
 
+def com_funciona(html):
+    t = menu(canvia(html, CANVIS_COM_FUNCIONA, "com-funciona.html"), "com-funciona.html", "com-funciona.html")
+    if INDEXABLE:
+        t = canvia(t, [(ROBOTS, "")], "com-funciona.html")
+    comprova("com-funciona.html", t)
+    return t
+
+
 def service_worker(sw):
     t = canvia(sw, [("const MAGATZEM = 'meteo-local';", "const MAGATZEM = 'meteo-montflorit';")], "sw.js")
     t, n = SW_PECES.subn("const PECES = " + json.dumps(PECES).replace('"', "'") + ";", t)
@@ -379,7 +400,8 @@ def construeix(desti, web=None):
     pagines = {"index.html": index(llegeix("casa.html")), "sortir.html": sortir(llegeix("sortir.html")),
                "consultes.html": consultes_html(llegeix("consultes.html")),
                "avisos.html": avisos(llegeix("avisos.html")), "telegram.html": telegram(llegeix("telegram.html")),
-               "fonts.html": fonts(llegeix("fonts.html"))}
+               "fonts.html": fonts(llegeix("fonts.html")),
+               "com-funciona.html": com_funciona(llegeix("com-funciona.html"))}
     pagines = {nom: alternes(idioma(html, nom), nom) for nom, html in pagines.items()}
     os.makedirs(os.path.join(desti, "es"), exist_ok=True)
     for nom, html in pagines.items():

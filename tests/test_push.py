@@ -98,6 +98,32 @@ class Push(unittest.TestCase):
         P.reparteix(estat, ARA + dt.timedelta(minutes=30), Envia(fallen={ES}))
         self.assertNotIn("pluja:2", estat["pendents"])
 
+    def test_qui_treu_la_categoria_no_rep_el_pendent(self):
+        # Auditoria del 09-10-2026: un avís que no havia entrat es reintentava
+        # encara que, mentrestant, se n'hagués desactivat la categoria.
+        self.avisos([self.avis("pluja")])
+        estat = {"resums": {CA: ARA.date().isoformat()}}
+        P.reparteix(estat, ARA, Envia(fallen={ES}))
+        self.assertEqual(estat["pendents"]["pluja:1"]["subs"], [ES])
+        subs = B.llegeix(P.SUBS, {})
+        subs[ES]["avisos"] = []
+        B.desa(P.SUBS, subs)
+        envia = Envia()
+        P.reparteix(estat, ARA + dt.timedelta(minutes=1), envia)
+        self.assertEqual(envia.enviats, [])
+        self.assertNotIn("pluja:1", estat["pendents"])
+
+    def test_el_temps_de_vida_es_el_que_queda(self):
+        # Auditoria del 09-10-2026: el TTL era tota la vigència (20 min) encara
+        # que l'avís tingués 19 minuts, i el servei el podia entregar caducat.
+        self.avisos([self.avis("pluja", ARA - dt.timedelta(minutes=19))])
+        envia = Envia()
+        P.reparteix({"resums": {CA: ARA.date().isoformat()}}, ARA, envia)
+        [(e, d, ttl, _)] = envia.enviats
+        self.assertEqual((e, ttl), (ES, 60))
+        self.assertEqual(d["expira"], (ARA + dt.timedelta(minutes=1)).isoformat(timespec="seconds"))
+        self.assertNotIn("expira", P.notificacio("<b>T</b>\nx"))
+
     def test_la_subscripcio_morta_s_esborra(self):
         self.avisos([self.avis("pluja")])
         P.reparteix({}, ARA, Envia(mortes={ES}))
