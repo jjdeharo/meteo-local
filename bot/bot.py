@@ -1176,7 +1176,7 @@ def reparteix(api, subs, estat, moment):
     canal_resum_ok = hora in CANAL_RESUMS and canal.get(hora) == avui
     resums = estat.setdefault("resums", {})
     for chat, sub in list(subs.items()):
-        fets = resums.get(chat) if isinstance(resums.get(chat), dict) else {}
+        fets = fets_resum(resums.get(chat), sub)
         toca = sub.get("resum") == hora or (hora == HORA_NIT and sub.get("nit"))
         if toca and fets.get(hora) != avui:
             if canal_resum_ok and al_canal(api, chat, memoria):
@@ -1191,6 +1191,14 @@ def reparteix(api, subs, estat, moment):
                 esborra(estat, chat)
             except Exception as ex:
                 registra(f"un resumen de las {hora} h no ha entrado: {ex}")
+
+
+def fets_resum(fet, sub):
+    """Les previsions ja enviades avui a un subscriptor, per hora. Abans del
+    09-10-2026 era una sola data: la de la seva hora (ADR 0055)."""
+    if isinstance(fet, dict):
+        return fet
+    return {sub.get("resum"): fet} if fet and sub.get("resum") else {}
 
 
 def actualitza_repo(estat):

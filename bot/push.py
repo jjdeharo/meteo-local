@@ -191,13 +191,18 @@ def reparteix(estat, moment, envia=envia_push):
     resums = estat.setdefault("resums", {})
     dades_web = None
     for e, sub in subs.items():
-        if sub.get("resum") == hora and resums.get(e) != avui and e not in mortes:
+        # La del matí, a la seva hora; la de la nit, si s'ha triat (ADR 0055).
+        # Les 21 h com a hora del matí són d'abans del 09-10-2026: també és la de la nit.
+        nit = sub.get("nit") or sub.get("resum") in ("20", "21")
+        toca = sub.get("resum") == hora or (hora == B.HORA_NIT and nit)
+        fets = B.fets_resum(resums.get(e), sub)
+        if toca and fets.get(hora) != avui and e not in mortes:
             dades_web = dades_web or B.llegeix(os.path.join(B.DADES, "montflorit.json"), {})
             idioma = sub.get("idioma", "ca")
             n = notificacio(B.resum(dades_web, idioma, moment), url("./", idioma), "resum")
             r = prova(e, lambda: envia(sub, n, TTL_RESUM_S))
             if r is True:
-                resums[e] = avui
+                resums[e] = {**fets, hora: avui}
             else:
                 B.registra(f"push: una previsión de las {hora} h no ha entrado: {r[:200]}")
     # La prueba que pide la página: una notificación en el minuto siguiente.

@@ -40,7 +40,7 @@ function tria(clau) {
 function pintaOpcions() {
   const caixa = $('opcions');
   for (const [clau, nom, icon] of OPCIONS) {
-    const etiqueta = element('label', 'opcio');
+    const etiqueta = element('label', 'consulta-opcio');
     const boto = element('input');
     boto.type = 'radio';
     boto.name = 'consulta';

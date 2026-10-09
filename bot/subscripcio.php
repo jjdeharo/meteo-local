@@ -15,7 +15,8 @@ date_default_timezone_set('Europe/Madrid');
 const ORIGENS = ['https://meteo-montflorit.github.io'];
 // Els trens i el trànsit no són avisos: es consulten (ADR 0053).
 const TIPUS = ['riera', 'perill', 'pluja'];
-const HORES = ['', '6', '7', '8', '21'];
+// La del matí, una hora o cap; la de demà a les 21 h, a part (ADR 0055).
+const HORES = ['', '6', '7', '8'];
 const IDIOMES = ['ca', 'es'];
 // Els serveis de notificacions dels navegadors: cap altra adreça s'accepta.
 const SERVEIS = '/^https:\/\/(fcm\.googleapis\.com|android\.googleapis\.com|[a-z0-9.-]*push\.services\.mozilla\.com'
@@ -73,7 +74,10 @@ function desa_subs($base, $subs) {
 }
 
 function opcions($s) {
-    return ['avisos' => $s['avisos'], 'resum' => $s['resum'] ?? '', 'idioma' => $s['idioma']];
+    // Abans del 09-10-2026 les 21 h eren una de les hores: ara van a part.
+    $antiga = in_array($s['resum'] ?? '', ['20', '21'], true);
+    return ['avisos' => $s['avisos'], 'resum' => $antiga ? '' : ($s['resum'] ?? ''),
+            'nit' => $antiga || !empty($s['nit']), 'idioma' => $s['idioma']];
 }
 
 if ($accio === 'desa') {
@@ -86,14 +90,15 @@ if ($accio === 'desa') {
     }
     $avisos = array_values(array_intersect(TIPUS, is_array($p['avisos'] ?? null) ? $p['avisos'] : []));
     $resum = (string)($p['resum'] ?? '');
-    // Una pàgina vella encara pot enviar les 20 h: ara són les 21 h (ADR 0053).
-    if ($resum === '20') $resum = '21';
+    $nit = !empty($p['nit']);
+    // Una pàgina vella encara pot enviar les 20 o les 21 h: és la de la nit (ADR 0053 i 0055).
+    if ($resum === '20' || $resum === '21') { $resum = ''; $nit = true; }
     $idioma = (string)($p['idioma'] ?? 'ca');
     if (!in_array($resum, HORES, true) || !in_array($idioma, IDIOMES, true)) respon(400, ['error' => 'opcions']);
     $nou = !isset($subs[$endpoint]);
     if ($nou && count($subs) >= MAXIM) respon(503, ['error' => 'ple']);
     $subs[$endpoint] = ['keys' => ['p256dh' => $claus['p256dh'], 'auth' => $claus['auth']],
-                        'avisos' => $avisos, 'resum' => $resum, 'idioma' => $idioma,
+                        'avisos' => $avisos, 'resum' => $resum, 'nit' => $nit, 'idioma' => $idioma,
                         'alta' => $subs[$endpoint]['alta'] ?? date('Y-m-d')]
                        + (isset($subs[$endpoint]['prova']) ? ['prova' => $subs[$endpoint]['prova']] : []);
     desa_subs($base, $subs);

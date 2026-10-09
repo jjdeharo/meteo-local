@@ -111,6 +111,18 @@ class Push(unittest.TestCase):
         P.reparteix(estat, ARA + dt.timedelta(minutes=5), envia)
         self.assertEqual(len(envia.enviats), 1)
 
+    def test_mati_i_nit(self):
+        # ADR 0055: la del matí a la seva hora i la de demà a les 21 h, si s'ha triat.
+        self.avisos([])
+        subs = json.load(open(os.path.join(self.dir.name, "push.json")))
+        for e in subs:
+            subs[e]["resum"], subs[e]["nit"] = "", e == CA
+        json.dump(subs, open(os.path.join(self.dir.name, "push.json"), "w"))
+        envia, estat = Envia(), {}
+        P.reparteix(estat, ARA.replace(hour=21, minute=0), envia)
+        self.assertEqual([e for e, _, _, _ in envia.enviats], [CA])
+        self.assertEqual(estat["resums"][CA], {"21": ARA.date().isoformat()})
+
     def test_prova(self):
         subs = B.llegeix(P.SUBS, {})
         subs[ES]["prova"] = (ARA - dt.timedelta(minutes=1)).isoformat()

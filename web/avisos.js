@@ -12,8 +12,8 @@ const TIPUS_PUSH = [
 ];
 // Per començar, com al bot: la riera i el perill.
 const PER_DEFECTE_PUSH = ['riera', 'perill'];
-const HORES_PUSH = [['', T('No vull rebre la previsió')], ['6', T('6 h')], ['7', T('7 h')], ['8', T('8 h')],
-  ['21', T('21 h (per a demà)')]];
+// Com al bot (ADR 0055): una hora al matí, o cap, i, a part, la de demà a les 21 h.
+const HORES_PUSH = [['', T('Cap')], ['6', T('6 h')], ['7', T('7 h')], ['8', T('8 h')]];
 const IDIOMA_PUSH = document.documentElement.lang === 'es' ? 'es' : 'ca';
 
 let registrePush = null;
@@ -48,6 +48,7 @@ function triat() {
   return {
     avisos: [...form.querySelectorAll('input[name="tipus"]:checked')].map((c) => c.value),
     resum: form.elements.resum.value,
+    nit: form.elements.nit.checked,
   };
 }
 
@@ -147,7 +148,7 @@ function pinta(opcions) {
     etiqueta.append(casella, icona(icon), element('span', null, nom));
     tipus.append(etiqueta);
   }
-  const resum = element('label', 'push-resum', T('Previsió, un cop al dia, a les:'));
+  const resum = element('label', 'push-resum', T('Previsió del dia, al matí, a les:'));
   const select = element('select');
   select.name = 'resum';
   for (const [valor, text] of HORES_PUSH) {
@@ -157,13 +158,19 @@ function pinta(opcions) {
   }
   select.value = opcions.resum || '';
   resum.append(select);
+  const nit = element('label', 'xip push-nit');
+  const casellaNit = element('input');
+  casellaNit.type = 'checkbox';
+  casellaNit.name = 'nit';
+  casellaNit.checked = Boolean(opcions.nit);
+  nit.append(casellaNit, element('span', null, T('A les 21 h, la previsió de demà')));
   const botons = element('p', 'push-botons');
   if (subscripcioPush) {
     botons.append(boto(T('Envia’m una prova'), 'boto', prova), boto(T('Desactiva'), 'boto secundari', desactiva));
   } else {
     botons.append(boto(T('Activa els avisos'), 'boto', activa));
   }
-  form.replaceChildren(tipus, resum, botons);
+  form.replaceChildren(tipus, resum, nit, botons);
   form.hidden = false;
   estat(subscripcioPush ? T('Avisos activats en aquest dispositiu. Si canvies què reps, es desa sol.')
     : T('Tria què vols rebre i toca «Activa els avisos». El navegador et demanarà permís.'));
@@ -181,7 +188,7 @@ async function iniciaPush() {
   // instal·lades (Juanjo, 08-10-2026).
   const installada = matchMedia('(display-mode: standalone)').matches;
   $('push-instala').hidden = !/Android/.test(navigator.userAgent) || installada;
-  let opcions = { avisos: PER_DEFECTE_PUSH, resum: '' };
+  let opcions = { avisos: PER_DEFECTE_PUSH, resum: '', nit: false };
   try {
     // El registra comu.js; dos registres alhora encallen WebKit. Si no està
     // a punt en 15 s, no s'espera més.

@@ -100,6 +100,12 @@ Juanjo pidió las tres cosas propuestas, sin quitar las barras de colores:
   se corrigen. Es una corrección media, hipótesis a validar: no cambia según la
   hora ni el tipo de día.
 
+Corrección del 09-10-2026 (3.39.0): la clase `.opcio` de los botones de
+«Consultes» ya existía en las páginas «Avisos» y «Avisos a Telegram», y sus
+estilos (fondo oscuro al estar marcado, forma de pastilla) se les aplicaban:
+el recuadro de «Avisos» salía oscuro y con poco contraste. Pasa a
+`.consulta-opcio`.
+
 ## Alternativas descartadas
 
 - **Un botón en la cabecera** que desplegara las consultas, y **una página con

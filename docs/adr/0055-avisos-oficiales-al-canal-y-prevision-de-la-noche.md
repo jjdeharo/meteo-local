@@ -40,8 +40,11 @@ hora por la mañana y, si se quiere, también la de la noche.
 - El estado del canal pasa de `canal_resum` a `canal_resums` (una fecha por
   hora) y el de cada suscriptor, de una fecha a una por hora; el estado viejo
   se convierte solo.
-- La página «Avisos» del navegador sigue con una sola hora a elegir (6, 7, 8 o
-  21).
+- La página «Avisos» del navegador, igual que el bot desde la 3.39.0: una hora
+  por la mañana (o ninguna) y, aparte, «A les 21 h, la previsió de demà»
+  (`subscripcio.php` guarda `nit`; una página vieja que mande las 20 o las 21 h
+  pasa a la noche). El estado de los resúmenes, por hora; una fecha suelta de
+  antes cuenta como la de la hora de la mañana (`fets_resum`).
 
 ## Validación
 
