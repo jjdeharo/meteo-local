@@ -294,11 +294,6 @@ class Web(unittest.TestCase):
         self.assertEqual(v("cotxe", False, transit[2:])["nivell"], "be")
         self.assertEqual(v("cotxe", False, None)["nivell"], "be")
 
-    def test_des_de_quan_el_transit(self):
-        ara = "2026-10-09T09:30:00+02:00"
-        self.assertEqual(self.avalua(ara, "desDe('2026-10-09T07:34+02:00')", "sortir.js"), "des de les 07:34")
-        self.assertEqual(self.avalua(ara, "desDe('2026-04-22T20:57+02:00')", "sortir.js"), "des del 22/4")
-
     def test_roba_bici(self):
         self.assertEqual(self.roba("bici", (9, 22, 0), (11, 22, 0)), "Màniga curta.")
         self.assertEqual(self.roba("bici", (9, 19, 0), (11, 19, 0), pluja=True),

@@ -239,8 +239,6 @@ var IDIOMA = {
     "Trànsit ara: 1 incidència": "Tráfico ahora: 1 incidencia",
     "Trànsit ara: {0} incidències": "Tráfico ahora: {0} incidencias",
     "Trànsit ara: cap incidència a prop.": "Tráfico ahora: ninguna incidencia cerca.",
-    "des de les {0}": "desde las {0}",
-    "des del {0}/{1}": "desde el {0}/{1}",
     "Obres: {0}": "Obras: {0}",
     "km {0}": "km {0}",
     "Dades del Servei Català de Trànsit de les {0}, consultades automàticament: l\u2019autor no es fa responsable de la seva exactitud.": "Datos del Servei Català de Trànsit de las {0}, consultados automáticamente: el autor no se hace responsable de su exactitud.",

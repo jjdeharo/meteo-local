@@ -523,13 +523,11 @@ function blocTrens(trens) {
 const COLOR_TRANSIT = (nivell) => (nivell >= 5 ? 'no' : nivell >= NIVELL_TRANSIT ? 'compte' : 'neutre');
 const ESTAT_TRANSIT = () => `https://transit.gencat.cat/${IDIOMA.codi === 'es' ? 'es' : 'ca'}/informacio-viaria/estat-transit/`;
 
-function desDe(data, ara = new Date()) {
-  const d = new Date(data);
-  if (d.toDateString() === ara.toDateString()) return T`des de les ${horaCurta(data)}`;
-  return T`des del ${d.getDate()}/${d.getMonth() + 1}`;
-}
-
-function filaTransit(i, ara = new Date()) {
+// Sense hora per incidència: la del fitxer és la de l'última actualització, no
+// la de l'inici, i semblava que no estigués al dia. El que surt és el que el
+// Servei Català de Trànsit dona com a vigent a l'hora de la consulta, que es
+// diu a sota (Juanjo, 09-10-2026; ADR 0052).
+function filaTransit(i) {
   const li = element('li', 'tren ' + COLOR_TRANSIT(i.nivell));
   const cap = element('p', 'tren-cap');
   cap.append(element('span', 'tren-linia', i.carretera));
@@ -537,8 +535,7 @@ function filaTransit(i, ara = new Date()) {
   cap.append(' ', element('span', 'tren-estat', i.descripcio || ''));
   // «Circulació» com a causa no diu res que no digui ja l'estat.
   const causa = i.tipus === 'obres' ? T`Obres: ${i.causa}` : i.causa !== 'Circulació' && i.causa;
-  const detall = [causa, i.sentit,
-    i.pk && T`km ${i.pk}`, i.des_de && desDe(i.des_de, ara)].filter(Boolean);
+  const detall = [causa, i.sentit, i.pk && T`km ${i.pk}`].filter(Boolean);
   li.append(cap, element('p', 'transit-detall', detall.join(' · ')));
   return li;
 }

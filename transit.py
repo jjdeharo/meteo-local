@@ -9,7 +9,9 @@ Generalitat, las mismas que muestra su mapa:
   afectado), la carretera, los puntos kilométricos, el tipo (2, retención; 3,
   obras), el nivel (2, circulación intensa o calzada restringida; 3,
   retenciones o desvíos; 4, congestión o corte con desvíos; 5, calzada
-  cortada), la causa, el texto «cap a» y la hora.
+  cortada), la causa, el texto «cap a» y la hora de su última actualización,
+  que no se usa: no es la del inicio, y vista sola parecía que el dato no
+  estaba al día (ADR 0052).
 - `incidenciesRSS.xml`: las mismas, con el municipio y el sentido escritos
   («Sentit Sud cap a TARRAGONA»). Se cruzan por el identificador; si falla,
   las incidencias salen sin ellos.
@@ -23,7 +25,6 @@ de Trànsit, en catalán, y no se traducen. Sin IA.
     python3 transit.py        las de ahora, en JSON
 """
 import datetime as dt
-import email.utils
 import json
 import math
 import re
@@ -68,13 +69,6 @@ def nom_municipi(text):
     return " ".join(res)
 
 
-def hora_local(text):
-    try:
-        return email.utils.parsedate_to_datetime(text).astimezone().isoformat(timespec="minutes")
-    except (TypeError, ValueError):
-        return None
-
-
 def llegeix_gml(dades):
     res = []
     for f in ET.fromstring(dades).iter(CITE + "mct2_v_afectacions_data"):
@@ -85,8 +79,7 @@ def llegeix_gml(dades):
             res.append({"id": d["identificador"], "tipus": int(d["tipus"]), "nivell": int(d["nivell"]),
                         "carretera": d.get("carretera"), "pk": (d.get("pk_inici"), d.get("pk_fi")),
                         "causa": d.get("causa") or None, "descripcio": d.get("descripcio") or None,
-                        "cap_a": d.get("cap_a") or None, "sentit_gml": d.get("sentit") or None,
-                        "des_de": hora_local(d.get("data")), "lat": lat, "lon": lon})
+                        "cap_a": d.get("cap_a") or None, "sentit_gml": d.get("sentit") or None, "lat": lat, "lon": lon})
         except (AttributeError, KeyError, ValueError):
             continue
     return res
@@ -135,8 +128,7 @@ def filtra(gml, rss=None, casa=C.CASA):
         res.append({"id": i["id"], "tipus": "retencio" if i["tipus"] == 2 else "obres", "nivell": i["nivell"],
                     "carretera": i["carretera"], "municipi": municipi,
                     "sentit": sentit or (i["cap_a"] and f"Cap a {i['cap_a']}"),
-                    "causa": i["causa"], "descripcio": i["descripcio"], "pk": pk(*i["pk"]),
-                    "des_de": i["des_de"], "km": round(dist, 1)})
+                    "causa": i["causa"], "descripcio": i["descripcio"], "pk": pk(*i["pk"]), "km": round(dist, 1)})
     # Primer les retencions, de la més greu a la més lleu; després les obres.
     return sorted(res, key=lambda i: (i["tipus"] != "retencio", -i["nivell"], i["km"]))
 

@@ -524,12 +524,9 @@ def text_transit_bot(dades, idioma, moment):
         causa = i.get("causa") if i.get("causa") != "Circulació" else None
         if causa and i.get("tipus") == "obres":
             causa = ("Obras: " if es else "Obres: ") + causa
-        h = dt.datetime.fromisoformat(i["des_de"]) if i.get("des_de") else None
-        quan = None
-        if h:
-            quan = ((f"desde las {h:%H:%M}" if es else f"des de les {h:%H:%M}") if h.date() == moment.date()
-                    else (f"desde el {h.day}/{h.month}" if es else f"des del {h.day}/{h.month}"))
-        detall = ", ".join(x for x in (causa, i.get("sentit"), i.get("pk") and f"km {i['pk']}", quan) if x)
+        # Sense hora per incidència: la de la font és la de l'última actualització
+        # (Juanjo, 09-10-2026). La de la consulta va al peu.
+        detall = ", ".join(x for x in (causa, i.get("sentit"), i.get("pk") and f"km {i['pk']}") if x)
         files.append(f"<b>{html.escape(i.get('carretera') or '?')}</b>{html.escape(lloc)}: "
                      + html.escape(f"{i.get('descripcio') or ''}. {detall}." if detall else f"{i.get('descripcio') or ''}.",
                                    quote=False))

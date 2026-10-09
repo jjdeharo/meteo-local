@@ -64,8 +64,7 @@ class Transit(unittest.TestCase):
         self.assertEqual(ap7, {"id": "151666901", "tipus": "retencio", "nivell": 2, "carretera": "AP-7",
                                "municipi": "Cerdanyola del Vallès",
                                "sentit": "Sentit Sud cap a TARRAGONA-UN CARRIL TALLAT", "causa": "Avaria",
-                               "descripcio": "Circulació intensa", "pk": "150-149,5",
-                               "des_de": "2026-10-09T07:34+02:00", "km": ap7["km"]})
+                               "descripcio": "Circulació intensa", "pk": "150-149,5", "km": ap7["km"]})
 
     def test_sense_rss_surten_igual(self):
         # Sense el RSS, sense municipi i amb el «cap a» del GML.

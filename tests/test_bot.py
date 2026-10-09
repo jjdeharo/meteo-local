@@ -481,18 +481,17 @@ class Consultes(unittest.TestCase):
         d["transit"] = {"hora": ARA.isoformat(), "incidencies": [
             {"id": "t1", "tipus": "retencio", "nivell": 3, "carretera": "C-58", "municipi": "Barcelona",
              "sentit": "Sentit Sud cap a NUS TRINITAT", "causa": "Circulació", "descripcio": "Circulació amb retencions",
-             "pk": "0-1,5", "des_de": ARA.isoformat()},
+             "pk": "0-1,5"},
             {"id": "t2", "tipus": "obres", "nivell": 2, "carretera": "BV-1414", "municipi": "Cerdanyola del Vallès",
              "sentit": "Sentit Sud cap a C-58", "causa": "Reasfaltat", "descripcio": "Calçada restringida",
-             "pk": "4-0", "des_de": "2026-04-22T20:57+02:00"}]}
+             "pk": "4-0"}]}
         json.dump(d, open(os.path.join(self.dir.name, "montflorit.json"), "w"))
         subs = {"7": {"idioma": "ca", "avisos": [], "resum": None}}
         r = self.ordre("/transit", subs)
-        h = ARA.strftime("%H:%M")
         self.assertIn("<b>Trànsit a prop de Montflorit</b>\n<b>C-58</b> (Barcelona): Circulació amb retencions. "
-                      f"Sentit Sud cap a NUS TRINITAT, km 0-1,5, des de les {h}.", r)
+                      "Sentit Sud cap a NUS TRINITAT, km 0-1,5.", r)
         self.assertIn("<b>BV-1414</b> (Cerdanyola del Vallès): Calçada restringida. Obres: Reasfaltat, "
-                      "Sentit Sud cap a C-58, km 4-0, des del 22/4.", r)
+                      "Sentit Sud cap a C-58, km 4-0.", r)
         self.assertIn("Servei Català de Trànsit", r)
         subs["7"]["idioma"] = "es"
         r = self.ordre("/transit", subs)

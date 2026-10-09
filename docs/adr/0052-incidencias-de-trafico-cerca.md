@@ -14,7 +14,8 @@ moto solo tenían en cuenta el tiempo.
 - **Fuente: el Servei Català de Trànsit**, en el portal de datos abiertos de la
   Generalitat («Incidències viàries en temps real a Catalunya»), los mismos
   datos de su mapa: `incidenciesGML.xml` (punto de inicio del tramo,
-  carretera, puntos kilométricos, tipo, nivel, causa, «cap a» y hora) y
+  carretera, puntos kilométricos, tipo, nivel, causa, «cap a» y la hora de su
+  última actualización) y
   `incidenciesRSS.xml` (municipio y sentido escritos), cruzados por el
   identificador (`transit.py`). Sin el RSS, las incidencias salen igual, sin
   municipio. Sin el GML, el bloque no sale y el error queda en `errors`.
@@ -29,7 +30,14 @@ moto solo tenían en cuenta el tiempo.
 - **Dónde**: dentro de las fichas del coche y de la moto, plegado al final
   («Trànsit ara: N incidències»), con la carretera, el municipio, el estado con
   el color de su nivel (gris, 2; ámbar, 3 y 4; rojo, 5), la causa, el sentido,
-  los puntos kilométricos y desde cuándo; sin incidencias, una línea lo dice.
+  los puntos kilométricos; sin incidencias, una línea lo dice. **Sin hora por
+  incidencia** (3.32.1): la del fichero es la de su última actualización, no
+  la del inicio (el 09-10-2026 a las 11:11 la lista oficial daba la retención
+  de la C-58 con «Inici» 06:29, y el fichero, 09:03), y vista sola parecía que
+  el dato no estaba al día. Juanjo: «no aporta nada decir que empezó a las 6
+  porque lo que interesa es ahora… lo que se muestra es lo que hay ahora». Lo
+  que sale es lo que el Servei Català de Trànsit da como vigente a la hora de
+  la consulta, que figura al pie.
   Abierto, la ficha ocupa todo el ancho. La primera versión, sin publicar, lo
   ponía en un bloque aparte debajo de los trenes con un enlace desde las
   fichas; Juanjo no quería saltar a otro sitio de la página («creo que
@@ -107,7 +115,8 @@ moto solo tenían en cuenta el tiempo.
 - La distancia es la del punto de inicio del tramo, no la de todo el tramo:
   una incidencia larga que empiece lejos y llegue cerca no sale.
 - Las obras pueden seguir «activas» en la fuente mucho después de acabar
-  (hay alguna de abril); se muestran desde cuándo están para que se vea.
+  (hay alguna de abril); sin la fecha, no se nota. Se muestra lo que la fuente
+  da por vigente, como su propia lista.
 - Nivel y tipo vienen como números sin documentación pública: su significado
   se ha deducido de los textos que los acompañan (Evidencia).
 
@@ -117,8 +126,7 @@ moto solo tenían en cuenta el tiempo.
 RSS, obras, municipios, puntos kilométricos, el mismo nivel que la página,
 qué cortes avisan y el aviso al empezar, una sola vez, sin fuente y al acabar),
 `tests/test_bot.py` (bloque de `/avisos_actius`) y
-`tests/test_web.py` (consejo del coche y la moto ahora y más tarde, y «des
-de»). `probar-web` en Chromium, Firefox y WebKit, escritorio, móvil y tableta,
+`tests/test_web.py` (consejo del coche y la moto ahora y más tarde). `probar-web` en Chromium, Firefox y WebKit, escritorio, móvil y tableta,
 claro y oscuro, con los plegables abiertos, sin errores; el enlace
 `sortir.html#trens` abre el plegable en Chromium y Firefox, en las dos
 lenguas; axe-core sin fallos en «Si surts» (las dos lenguas, plegables
