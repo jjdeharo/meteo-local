@@ -55,5 +55,6 @@
 | [0051](0051-prealerta-y-mas-planes-de-proteccion-civil-con-su-fase-explicada.md) | Prealerta y más planes de Protección Civil, con su fase explicada | aceptado |
 | [0052](0052-incidencias-de-trafico-cerca.md) | Incidencias de tráfico de cerca en «Si surts» | aceptado |
 | [0053](0053-trenes-y-trafico-a-demanda-y-prevision-de-las-21.md) | Trenes y tráfico a demanda, y la previsión de la noche a las 21 h | aceptado |
+| [0054](0054-pagina-consultes-y-sol-aire-y-polen.md) | Página «Consultes», y el sol, el aire y el polen en la web y en el bot | aceptado |
 
 Plantilla: [0000-plantilla.md](0000-plantilla.md). Para crear uno: `nuevo-adr "Título"`.

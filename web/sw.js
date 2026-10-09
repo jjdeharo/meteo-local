@@ -4,7 +4,7 @@
 // connexió, les pàgines i els estils guardats. Les dades (.json) no es guarden
 // mai: una previsió vella no s'ha de mostrar com si fos d'ara.
 const MAGATZEM = 'meteo-local';
-const PECES = ['casa.html', 'sortir.html', 'avisos.html', 'fonts.html', 'estil.css', 'comu.js', 'casa.js', 'sortir.js', 'avisos.js',
+const PECES = ['casa.html', 'sortir.html', 'consultes.html', 'avisos.html', 'fonts.html', 'estil.css', 'comu.js', 'casa.js', 'sortir.js', 'consultes.js', 'avisos.js',
   'manifest.webmanifest', 'icones/icona-192.png'];
 
 self.addEventListener('install', (e) => {

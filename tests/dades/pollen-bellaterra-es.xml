@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<reports>
+  <credit>
+    <creditName>Punt Informació Aerobiològica</creditName>
+    <creditURL lang="es">https://aerobiologia.cat/pia/es/aboutus</creditURL>
+    <license>CC BY-NC-SA 4.0</license>
+    <termsURL lang="es">https://aerobiologia.cat/pia/es/terms</termsURL>
+  </credit>
+  <taxons>
+    <pollens>
+      <URTI es="Parietaria">Urticaceae</URTI>
+      <GRAM es="Gramíneas">Gramineae (Poaceae)</GRAM>
+      <OLEA es="Olivo">Olea</OLEA>
+      <ARTE es="Artemisia">Artemisia</ARTE>
+      <CASU es="Casuarina">Casuarina</CASU>
+      <QUAM es="Céñigos">Amaranthaceae</QUAM>
+      <CUPR es="Cipreses">Cupressaceae</CUPR>
+      <COMP es="Compuestas">Compositae (Asteraceae)</COMP>
+      <PLAN es="Llantén">Plantago</PLAN>
+      <PALM es="Palmeras">Palmae (Arecaceae)</PALM>
+      <PINU es="Pino">Pinus</PINU>
+      <PLAT es="Plátano">Platanus</PLAT>
+    </pollens>
+    <spores>
+      <ALTE es="Alternaria">Alternaria</ALTE>
+      <CLAD es="Cladosporium">Cladosporium</CLAD>
+    </spores>
+  </taxons>
+  <legend>
+    <current>
+      <value es="Nulo">0</value>
+      <value es="Bajo">1</value>
+      <value es="Medio">2</value>
+      <value es="Alto">3</value>
+      <value es="Máximo">4</value>
+    </current>
+    <forecast>
+      <value es="Augmenta">A</value>
+      <value es="Estable">=</value>
+      <value es="Descenso">D</value>
+      <value es="Situación excepcional">!</value>
+    </forecast>
+  </legend>
+  <report>
+    <station>
+      <name>Bellaterra</name>
+      <latitude format="DD">41.500604</latitude>
+      <longitude format="DD">2.108034</longitude>
+      <altitude>
+        <aboveSea units="m">120</aboveSea>
+        <aboveSoil units="m">30</aboveSoil>
+      </altitude>
+      <url lang="es">https://aerobiologia.cat/pia/es/forecast/bellaterra</url>
+      <graphsURL lang="es">https://aerobiologia.cat/pia/es/historical/bellaterra</graphsURL>
+    </station>
+    <date format="ISO8601">
+      <start>2026-10-05</start>
+      <end>2026-10-11</end>
+    </date>
+    <current>
+      <pollens>
+        <URTI>1</URTI>
+        <GRAM>1</GRAM>
+        <OLEA>0</OLEA>
+        <ARTE>2</ARTE>
+        <CASU>0</CASU>
+        <QUAM>1</QUAM>
+        <CUPR>0</CUPR>
+        <COMP>2</COMP>
+        <PLAN>0</PLAN>
+        <PALM>0</PALM>
+        <PINU>1</PINU>
+        <PLAT>0</PLAT>
+      </pollens>
+      <spores>
+        <ALTE>4</ALTE>
+        <CLAD>4</CLAD>
+      </spores>
+    </current>
+    <forecast>
+      <pollens>
+        <URTI>=</URTI>
+        <GRAM>=</GRAM>
+        <OLEA>=</OLEA>
+        <ARTE>=</ARTE>
+        <CASU>=</CASU>
+        <QUAM>=</QUAM>
+        <CUPR>A</CUPR>
+        <COMP>=</COMP>
+        <PLAN>=</PLAN>
+        <PALM>=</PALM>
+        <PINU>D</PINU>
+        <PLAT>=</PLAT>
+      </pollens>
+      <spores>
+        <ALTE>=</ALTE>
+        <CLAD>=</CLAD>
+      </spores>
+    </forecast>
+  </report>
+</reports>

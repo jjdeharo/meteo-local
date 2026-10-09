@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Llista les claus de tots els textos que passen per T a web/comu.js,
-// web/casa.js, web/sortir.js i web/avisos.js, tal com les calcula T: el text amb {0}, {1}…
+// web/casa.js, web/sortir.js, web/consultes.js i web/avisos.js, tal com les calcula T: el text amb {0}, {1}…
 // on van els valors. Ho fan servir les proves per comprovar que no en falta cap a
 // montflorit/es.js (ADR 0025).
 //
@@ -11,7 +11,7 @@ const path = require('path');
 
 const web = process.argv[2] || path.join(__dirname, '..', 'web');
 const claus = new Set();
-for (const fitxer of ['comu.js', 'casa.js', 'sortir.js', 'avisos.js']) {
+for (const fitxer of ['comu.js', 'casa.js', 'sortir.js', 'consultes.js', 'avisos.js']) {
   // Sense comentaris de línia, que també parlen de T`…`.
   const codi = fs.readFileSync(path.join(web, fitxer), 'utf8').replace(/^\s*\/\/.*$/gm, '');
   for (const m of codi.matchAll(/\bT`((?:[^`\\]|\\.)*)`/g)) {

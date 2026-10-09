@@ -68,6 +68,7 @@ ENTORN = dict(os.environ,
               RADAR_CACHE=os.path.join(ESTAT, "radar-cache"),
               CACHE_WEB=os.path.join(ESTAT, "cache-web"),
               TRENS_DIR=ESTAT,
+              POLLEN_DIR=ESTAT,           # el pol·len, guardat 3 hores (pollen.py)
               PATH=os.path.join(BASE, "bin") + os.pathsep + os.environ.get("PATH", ""))
 
 

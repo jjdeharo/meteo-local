@@ -14,6 +14,9 @@ y en [castellano](https://meteo-montflorit.github.io/es/). Tiene dos páginas:
   ponerse, consejos (lluvia, sol, noche, calor), si circulan los trenes que
   paran en Cerdanyola (ADR 0029) y las incidencias de tráfico de cerca (ADR
   0052). Cada persona elige qué medios ve.
+- **Consultes**: lo mismo que el bot, eligiendo qué ver: hoy, mañana, el sol,
+  la calidad del aire, el polen, los trenes o el tráfico; sale solo lo elegido,
+  con los mismos textos del bot (ADR 0054).
 
 La probabilidad de lluvia sale de una regresión logística ajustada con lo que
 llovió de verdad y comprobada con todo el archivo (ADR 0021); la temperatura se
@@ -97,6 +100,12 @@ Fuentes de la previsión:
 6. **Tráfico**: las incidencias del Servei Català de Trànsit a 5 km o menos
    (retenciones, accidentes, averías y obras que desvían o cortan la vía), de
    los datos abiertos de la Generalitat (`transit.py`, ADR 0052).
+7. **Polen**: los niveles de la semana en Bellaterra del Punt d'Informació
+   Aerobiològica de la UAB, con su API (`pollen.py`, ADR 0054; CC BY-NC-SA 4.0).
+8. **Calidad del aire**: el índice europeo del modelo CAMS de Copernicus, a
+   través de Open-Meteo, que es una previsión y no una medida (`aire.py`,
+   ADR 0054). La salida y la puesta del sol y el índice UV máximo, también de
+   Open-Meteo.
 
 Umbrales y lugares, en `config.py`. El porqué, en los ADR.
 
@@ -107,7 +116,7 @@ Umbrales y lugares, en `config.py`. El porqué, en los ADR.
 | `casa.py` | Datos de la web (`casa.json`): lo de ahora, la previsión hora a hora, el índice UV, los trenes, el tráfico y la riera |
 | `prevision.py` | Recogida de datos que usa `casa.py`: avisos de AEMET, planes de Protección Civil, radar, lluvia y viento de las estaciones, y el modo aviso |
 | `config.py` | Coordenadas, horario, estaciones, zonas de aviso, modelos y umbrales |
-| `web/` | Las fuentes de la web pública: `casa.html` y `casa.js` (el tiempo ahora), `sortir.html` y `sortir.js` («Si surts»), `avisos.html` y `avisos.js` (avisos en el navegador), `telegram.html` (ayuda de Telegram), `comu.js` (lo común), `estil.css`, `fonts.html` (fuentes y créditos), `manifest.webmanifest`, `sw.js` e `icones/` |
+| `web/` | Las fuentes de la web pública: `casa.html` y `casa.js` (el tiempo ahora), `sortir.html` y `sortir.js` («Si surts»), `consultes.html` y `consultes.js` («Consultes»), `avisos.html` y `avisos.js` (avisos en el navegador), `telegram.html` (ayuda de Telegram), `comu.js` (lo común), `estil.css`, `fonts.html` (fuentes y créditos), `manifest.webmanifest`, `sw.js` e `icones/` |
 | `montflorit.py`, `montflorit/` | Genera la web pública a partir de `web/` y sus datos sin lo privado; manifiesto, iconos y README propios (ADR 0024), y `es.js`, los textos del programa en castellano (ADR 0025) |
 | `i18n/` | `es.json`, la traducción de los textos fijos, y `claus.js`, que saca del programa los textos por traducir (ADR 0025) |
 | `publica.sh` | Calcula y publica (lo usa el NAS) |
@@ -122,6 +131,8 @@ Umbrales y lugares, en `config.py`. El porqué, en los ADR.
 | `RESTAURAR.md` | Cómo volver a montarlo todo en otro NAS o en otro hosting, con las claves y el registro de la copia privada (ADR 0044 y 0045) |
 | `trens.py` | Estado de las líneas de tren de Cerdanyola con los datos en tiempo real de Renfe y FGC (ADR 0029) |
 | `transit.py` | Incidencias de tráfico de cerca, del Servei Català de Trànsit (ADR 0052) |
+| `pollen.py` | Polen y esporas de la semana en Bellaterra, del Punt d'Informació Aerobiològica (ADR 0054) |
+| `aire.py` | Calidad del aire ahora y lo peor de hoy, del modelo CAMS por Open-Meteo (ADR 0054) |
 | `nowcast.py` | La lluvia del radar llevada hacia delante hasta 2 horas (ADR 0019 y 0023) |
 | `ecowitt.py` | La estación particular con la API oficial de Ecowitt; las claves, fuera del repositorio (ADR 0017) |
 | `pluviometre.py` | Comprueba una vez, tras limpiarlo, si el pluviómetro marca la lluvia débil y avisa por Telegram (ADR 0017) |
@@ -145,6 +156,8 @@ python3 montflorit.py web /tmp/web             # la web pública
 python3 montflorit.py dades /tmp/casa.json /tmp/web/montflorit.json
 python3 trens.py                               # el estado de los trenes
 python3 transit.py                             # las incidencias de tráfico de cerca
+python3 pollen.py                              # el polen de la semana en Bellaterra
+python3 aire.py                                # la calidad del aire
 python3 riera.py ara                           # el índice de la riera
 python3 calibracio/regla_moto.py               # la regla de lluvia de la moto, con el archivo
 python3 -m unittest discover -s tests          # pruebas
@@ -188,7 +201,11 @@ incidencias de tráfico del
 [Servei Català de Trànsit](https://transit.gencat.cat/es/informacio-viaria/estat-transit/)
 (Generalitat de Catalunya, Departament d'Interior i Seguretat Pública), de los
 [datos abiertos de la Generalitat](https://analisi.transparenciacatalunya.cat/d/uyam-bs37),
-con la [licencia abierta de uso de información de Cataluña](https://web.gencat.cat/es/generalitat/dades-indicadors/dades-obertes/llicencies).
+con la [licencia abierta de uso de información de Cataluña](https://web.gencat.cat/es/generalitat/dades-indicadors/dades-obertes/llicencies);
+el polen de Bellaterra, del [Punt d'Informació Aerobiològica de la UAB](https://aerobiologia.cat/pia/es/forecast/bellaterra)
+(CC BY-NC-SA 4.0: no se puede usar con fines comerciales), y la calidad del
+aire, del [Copernicus Atmosphere Monitoring Service](https://atmosphere.copernicus.eu/)
+a través de Open-Meteo.
 Iconos de [Lucide](https://lucide.dev/) (ISC). Los datos de terceros se
 consultan automáticamente: el autor no se hace responsable de su exactitud.
 

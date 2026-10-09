@@ -453,6 +453,32 @@ h1 { margin: 0; font-size: 1.6rem; line-height: 1.2; }
 .xip:has(input:checked) span::after { content: "✓"; color: var(--verd); }
 .xip:has(input:not(:checked)) span::after { content: "✕"; color: var(--vermell); }
 .explica-triats { margin: .35rem 0 0; }
+/* «Consultes» (ADR 0054): una opció a la vegada, marcada com la pestanya
+   activa del menú; el text del bot, a sota, en una targeta. */
+.opcions { display: flex; flex-wrap: wrap; gap: .4rem; margin: 1rem 0 0; padding: 0; border: 0; }
+.opcions[hidden] { display: none; }
+.opcio {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  padding: .3rem .8rem;
+  border: 1px solid var(--vora);
+  border-radius: 999px;
+  background: var(--superficie);
+  color: var(--text);
+  cursor: pointer;
+  user-select: none;
+}
+.opcio input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.opcio:has(input:checked) { background: var(--text); color: var(--fons); border-color: var(--text); }
+.opcio:has(input:focus-visible) { outline: 2px solid var(--enllac); outline-offset: 2px; }
+.opcio svg { width: 1.1rem; height: 1.1rem; fill: none; stroke: currentColor; stroke-width: 2;
+  stroke-linecap: round; stroke-linejoin: round; flex: none; }
+.consulta { margin: 1rem 0 0; padding: .8rem 1rem; border: 1px solid var(--vora); border-radius: .5rem;
+  background: var(--superficie); line-height: 1.5; overflow-wrap: anywhere; }
+.consulta p { margin: 0; }
+.consulta p + p { margin-top: .7rem; }
 .xip:has(input:focus-visible) { outline: 2px solid var(--enllac); outline-offset: 2px; }
 .xip svg, .mitja-nom svg {
   width: 1.15rem;

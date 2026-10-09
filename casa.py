@@ -25,12 +25,14 @@ import json
 import sys
 import urllib.parse
 
+import aire as AI
 import aprenentatge as A
 import config as C
 import ecowitt as E
 import entorn as EN
 import fi_pluja as FP
 import nowcast as N
+import pollen as PO
 import pluja_arriba as PA
 import prevision as P
 import radar_fonts as RF
@@ -116,6 +118,17 @@ def indice_uv(desde):
                                 "timezone": P.TZ, "start_date": dias[0], "end_date": dias[1]})
     h = json.loads(P.get(f"https://api.open-meteo.com/v1/forecast?{q}"))["hourly"]
     return {t: v for t, v in zip(h["time"], h["uv_index"]) if v is not None}
+
+
+def sol(desde):
+    """Salida y puesta del sol e índice UV máximo de hoy y mañana, para
+    «Consultes» y /sol (ADR 0054). Del modelo por defecto de Open-Meteo."""
+    q = urllib.parse.urlencode({"latitude": C.CASA[0], "longitude": C.CASA[1], "timezone": P.TZ,
+                                "daily": "sunrise,sunset,uv_index_max", "start_date": desde.date().isoformat(),
+                                "end_date": (desde + dt.timedelta(days=1)).date().isoformat()})
+    d = json.loads(P.get(f"https://api.open-meteo.com/v1/forecast?{q}"))["daily"]
+    return [{"dia": t, "sortida": s, "posta": p, "uv_max": uv}
+            for t, s, p, uv in zip(d["time"], d["sunrise"], d["sunset"], d["uv_index_max"])]
 
 
 def estacio_casa():
@@ -482,6 +495,19 @@ def recoger(anterior=None):
     except Exception as ex:
         salida["transit"] = None
         salida["errors"].append(f"trànsit: {ex}")
+    # El sol y la calidad del aire, para «Consultes», /sol y /aire (ADR 0054).
+    for clau, funcio in (("sol", lambda: sol(P.AHORA)), ("aire", lambda: AI.calcula(P.AHORA))):
+        try:
+            salida[clau] = funcio()
+        except Exception as ex:
+            salida[clau] = None
+            salida["errors"].append(f"{clau}: {ex}")
+    # El polen de la semana en Bellaterra, para «Consultes» y /pollen (ADR 0054).
+    try:
+        salida["pollen"] = PO.calcula(P.AHORA)
+    except Exception as ex:
+        salida["pollen"] = None
+        salida["errors"].append(f"pol·len: {ex}")
     # Incendios cerca, Pla Alfa y acceso a Collserola (ADR 0046).
     salida["entorn"] = EN.calcula(P.AHORA)
     salida["errors"] += [f"entorn: {e}" for e in salida["entorn"].pop("errors")]

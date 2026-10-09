@@ -77,7 +77,8 @@ T = {
         "resum": "Previsió, un cop al dia, a les:", "no": "No vull rebre la previsió", "h": "{} h", "dema": "{} h (per a demà)",
         "baixa": "Fet: s'han esborrat les teves dades i ja no rebràs res. Amb /start pots tornar-hi.",
         "ajuda": ("/avisos tria què reps · /resum la previsió d'avui · /dema la de demà · /ara el temps ara · "
-                  "/radar el radar ara · /trens els trens · /transit el trànsit · /avisos_actius els avisos oficials · "
+                  "/radar el radar ara · /sol el sol · /aire la qualitat de l'aire · /pollen el pol·len · /trens els trens · "
+                  "/transit el trànsit · /avisos_actius els avisos oficials · "
                   "/baixa deixa de rebre'n i esborra les teves dades"),
         "velles": "Les dades de Temps a Montflorit no s'actualitzen des de les {}: ara no puc donar la previsió.",
         "velles_ara": "Les dades de Temps a Montflorit no s'actualitzen des de les {}: ara no puc dir el temps que fa.",
@@ -101,7 +102,8 @@ T = {
         "resum": "Previsión, una vez al día, a las:", "no": "No quiero recibir la previsión", "h": "{} h", "dema": "{} h (para mañana)",
         "baixa": "Hecho: se han borrado tus datos y ya no recibirás nada. Con /start puedes volver.",
         "ajuda": ("/avisos elige qué recibes · /resum la previsión de hoy · /dema la de mañana · /ara el tiempo ahora · "
-                  "/radar el radar ahora · /trens los trenes · /transit el tráfico · /avisos_actius los avisos oficiales · "
+                  "/radar el radar ahora · /sol el sol · /aire la calidad del aire · /pollen el polen · /trens los trenes · "
+                  "/transit el tráfico · /avisos_actius los avisos oficiales · "
                   "/baixa deja de recibir y borra tus datos"),
         "velles": "Los datos de Temps a Montflorit no se actualizan desde las {}: ahora no puedo dar la previsión.",
         "velles_ara": "Los datos de Temps a Montflorit no se actualizan desde las {}: ahora no puedo decir el tiempo que hace.",
@@ -548,6 +550,136 @@ def text_transit_bot(dades, idioma, moment):
             + enllac(TRANSIT.format("es" if es else "ca"), f"Servei Català de Trànsit, {h}"))
 
 
+# --- Sol, aire i pol·len (ADR 0054) -------------------------------------------------
+
+def hm(iso):
+    return dt.datetime.fromisoformat(iso).strftime("%H:%M")
+
+
+UV_NIVELLS = ((2, "baix", "bajo"), (5, "moderat", "moderado"), (7, "alt", "alto"), (10, "molt alt", "muy alto"),
+              (99, "extrem", "extremo"))
+
+
+def text_sol_bot(dades, idioma, moment):
+    """La sortida i la posta del sol i l'índex UV màxim, avui i demà. Els
+    consells, els de «Si surts» (UV de 3 o més)."""
+    vell = dades_velles(dades, idioma, moment)
+    if vell:
+        return vell
+    es = idioma == "es"
+    dies = {d["dia"]: d for d in dades.get("sol") or []}
+    avui, dema = moment.date().isoformat(), (moment + dt.timedelta(days=1)).date().isoformat()
+    if avui not in dies:
+        return "Ahora no hay datos del sol." if es else "Ara no hi ha dades del sol."
+    d = dies[avui]
+    llum = dt.datetime.fromisoformat(d["posta"]) - dt.datetime.fromisoformat(d["sortida"])
+    h, m = divmod(round(llum.total_seconds() / 60), 60)
+    linies = [f"<b>{'El sol hoy en Montflorit' if es else 'El sol avui a Montflorit'}</b>",
+              (f"Sale a las {hm(d['sortida'])} y se pone a las {hm(d['posta'])}: {h} h {m} min de luz." if es else
+               f"Surt a les {hm(d['sortida'])} i es pon a les {hm(d['posta'])}: {h} h {m} min de llum.")]
+    if d.get("uv_max") is not None:
+        uv = round(d["uv_max"])
+        nom = next(n for lim, ca, es_ in UV_NIVELLS if uv <= lim for n in [(es_ if es else ca)])
+        linia = f"Índice UV máximo: {uv} ({nom})." if es else f"Índex UV màxim: {uv} ({nom})."
+        if uv >= 3:
+            linia += (" A las horas centrales, protector solar, gorra y gafas de sol." if es
+                      else " A les hores centrals, protector solar, gorra i ulleres de sol.")
+        linies.append(linia)
+    if dema in dies:
+        dm = dies[dema]
+        linies.append(f"Mañana sale a las {hm(dm['sortida'])} y se pone a las {hm(dm['posta'])}." if es
+                      else f"Demà surt a les {hm(dm['sortida'])} i es pon a les {hm(dm['posta'])}.")
+    return "\n".join(linies)
+
+
+AIRE_NOMS = {"ca": {"bona": "bona", "raonablement_bona": "raonablement bona", "regular": "regular",
+                    "desfavorable": "desfavorable", "molt_desfavorable": "molt desfavorable",
+                    "extremadament_desfavorable": "extremadament desfavorable",
+                    "pm2_5": "les partícules fines (PM2,5)", "pm10": "les partícules (PM10)",
+                    "nitrogen_dioxide": "el diòxid de nitrogen (NO₂)", "ozone": "l'ozó (O₃)",
+                    "sulphur_dioxide": "el diòxid de sofre (SO₂)"},
+             "es": {"bona": "buena", "raonablement_bona": "razonablemente buena", "regular": "regular",
+                    "desfavorable": "desfavorable", "molt_desfavorable": "muy desfavorable",
+                    "extremadament_desfavorable": "extremadamente desfavorable",
+                    "pm2_5": "las partículas finas (PM2,5)", "pm10": "las partículas (PM10)",
+                    "nitrogen_dioxide": "el dióxido de nitrógeno (NO₂)", "ozone": "el ozono (O₃)",
+                    "sulphur_dioxide": "el dióxido de azufre (SO₂)"}}
+MAPA_AIRE = "https://mediambient.gencat.cat/{}/05_ambits_dactuacio/atmosfera/qualitat_de_laire/vols-saber-que-respires/"
+
+
+def text_aire_bot(dades, idioma, moment):
+    """L'índex europeu de qualitat de l'aire del model CAMS (aire.py): ara i el
+    pitjor moment del que queda d'avui. Es diu que és un model."""
+    vell = dades_velles(dades, idioma, moment)
+    if vell:
+        return vell
+    es = idioma == "es"
+    a = dades.get("aire")
+    if not a or a.get("index") is None:
+        return "Ahora no hay datos de la calidad del aire." if es else "Ara no hi ha dades de la qualitat de l'aire."
+    n = AIRE_NOMS[idioma]
+    linies = [f"<b>{'Calidad del aire en Montflorit' if es else 'Qualitat de l’aire a Montflorit'}</b>",
+              (f"Ahora: {n[a['categoria']]} (índice europeo {a['index']})." if es
+               else f"Ara: {n[a['categoria']]} (índex europeu {a['index']}).")]
+    if a.get("contaminant") and a["categoria"] != "bona":
+        linies[-1] += (f" Lo que más pesa es {n[a['contaminant']]}." if es else f" El que més pesa és {n[a['contaminant']]}.")
+    p = a.get("pitjor")
+    if p and p["index"] > a["index"] and p["categoria"] != a["categoria"]:
+        linies.append(f"Lo peor de hoy: {n[p['categoria']]} hacia las {hm(p['hora'])}." if es
+                      else f"El pitjor d'avui: {n[p['categoria']]} cap a les {hm(p['hora'])}.")
+    linies.append("<i>" + ("Es la previsión del modelo europeo CAMS (Copernicus), no una medida."
+                           if es else "És la previsió del model europeu CAMS (Copernicus), no una mesura.") + "</i>")
+    # Les mesures de les estacions, al web de la Generalitat (les dades obertes
+    # arriben amb hores de retard: aire.py).
+    linies.append(enllac(MAPA_AIRE.format("es" if es else "ca"),
+                         "Medidas de las estaciones (Generalitat)" if es else "Mesures de les estacions (Generalitat)"))
+    return "\n".join(linies)
+
+
+NIVELL_POLLEN = {"ca": ("nul", "baix", "mig", "alt", "màxim"), "es": ("nulo", "bajo", "medio", "alto", "máximo")}
+TENDENCIA = {"ca": {"A": "en augment", "D": "en descens", "!": "situació excepcional"},
+             "es": {"A": "en aumento", "D": "en descenso", "!": "situación excepcional"}}
+
+
+def text_pollen_bot(dades, idioma, moment):
+    """El pol·len i les espores de la setmana a Bellaterra (pollen.py): de cada
+    nivell, de més a menys, els tipus que hi són, amb la tendència si no és
+    estable; dels que no n'hi ha, només els que van en augment."""
+    es = idioma == "es"
+    p = dades.get("pollen")
+    if not p:
+        return "Ahora no hay datos del polen." if es else "Ara no hi ha dades del pol·len."
+    nivell, tend = NIVELL_POLLEN[idioma], TENDENCIA[idioma]
+    ini, fi = dt.date.fromisoformat(p["inici"]), dt.date.fromisoformat(p["fi"])
+    setmana = (f"semana del {ini.day}/{ini.month} al {fi.day}/{fi.month}" if es
+               else f"setmana del {ini.day}/{ini.month} al {fi.day}/{fi.month}")
+    linies = [f"<b>{'Polen en Bellaterra' if es else 'Pol·len a Bellaterra'}</b> ({setmana}, "
+              + (f"a {str(p['km']).replace('.', ',')} km)" if p.get("km") is not None else "")]
+    if fi < moment.date():
+        linies.append("<i>" + ("Son los datos de la última semana publicada." if es
+                               else "Són les dades de l'última setmana publicada.") + "</i>")
+
+    def grup(tipus, titol):
+        files = []
+        for n in range(4, 0, -1):
+            noms = [t["nom"][idioma] + (f" ({tend[t['tendencia']]})" if t.get("tendencia") in tend else "")
+                    for t in tipus if t["nivell"] == n]
+            if noms:
+                files.append(f"{nivell[n].capitalize()}: {', '.join(noms)}.")
+        pugen = [t["nom"][idioma] for t in tipus if t["nivell"] == 0 and t.get("tendencia") in ("A", "!")]
+        if pugen:
+            files.append((f"Empiezan a subir: {', '.join(pugen)}." if es else f"Comencen a pujar: {', '.join(pugen)}."))
+        if not files:
+            files.append("Nulo en todos." if es else "Nul en tots.")
+        return [f"<b>{titol}</b>"] + [html.escape(f, quote=False) for f in files]
+
+    linies += grup(p.get("pollens") or [], "Polen" if es else "Pol·len")
+    linies += grup(p.get("espores") or [], "Esporas de hongos" if es else "Espores de fongs")
+    url = (p.get("url") or {}).get(idioma) or (p.get("url") or {}).get("ca") or "https://aerobiologia.cat/"
+    linies.append(enllac(url, "Punt d’Informació Aerobiològica (UAB)") + " · CC BY-NC-SA 4.0")
+    return "\n".join(linies)
+
+
 DIRECCIO_ES = {"al nord": "el norte", "al nord-est": "el nordeste", "a l'est": "el este", "al sud-est": "el sudeste",
                "al sud": "el sur", "al sud-oest": "el sudoeste", "a l'oest": "el oeste", "al nord-oest": "el noroeste"}
 RADAR_EN_DIRECTE = {"rainviewer": "https://www.rainviewer.com/map.html?loc=41.482,2.135,9&layer=radar",
@@ -705,8 +837,8 @@ def linies_riscos(riscos, idioma, moment):
 # no existeix compta com «altres», sense guardar què s'ha escrit.
 
 COMPTADOR = os.path.join(BASE, "comptador.json")
-ORDRES = ("/start", "/avisos", "/menu", "/resum", "/dema", "/ara", "/radar", "/trens", "/transit", "/avisos_actius",
-          "/baixa")
+ORDRES = ("/start", "/avisos", "/menu", "/resum", "/dema", "/ara", "/radar", "/sol", "/aire", "/pollen", "/trens",
+          "/transit", "/avisos_actius", "/baixa")
 COMPTADOR_DIES = 400
 
 
@@ -828,7 +960,7 @@ def canvi_canal(api, cm):
     avisa_juanjo(f"Temps a Montflorit: {que}, {nom}.{total}")
 
 
-CONSULTES = ("/dema", "/trens", "/transit", "/radar", "/avisos_actius")
+CONSULTES = ("/dema", "/trens", "/transit", "/radar", "/sol", "/aire", "/pollen", "/avisos_actius")
 
 
 def atén(api, subs, update, estat=None):
@@ -886,6 +1018,7 @@ def atén(api, subs, update, estat=None):
     elif ordre in CONSULTES:
         dades = llegeix(os.path.join(DADES, "montflorit.json"), {})
         funcio = {"/trens": text_trens_bot, "/transit": text_transit_bot, "/radar": text_radar_bot,
+                  "/sol": text_sol_bot, "/aire": text_aire_bot, "/pollen": text_pollen_bot,
                   "/avisos_actius": text_avisos_actius}[ordre]
         envia(api, chat, funcio(dades, sub["idioma"], ara()) + "\n" + WEB, html=True)
     else:
