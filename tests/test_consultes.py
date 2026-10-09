@@ -33,11 +33,12 @@ def pollen():
         return PO.llegeix(ca.read(), es.read())
 
 
-AIRE = {"current": {"time": "2026-10-09T11:00", "european_aqi": 38, "european_aqi_pm2_5": 23,
-                    "european_aqi_pm10": 13, "european_aqi_nitrogen_dioxide": 38, "european_aqi_ozone": 17},
-        "hourly": {"time": [f"2026-10-09T{h:02d}:00" for h in range(24)],
-                   "european_aqi": [46, 44, 43, 40, 36, 34, 37, 43, 51, 55, 47, 38, 28, 26, 31, 31, 29, 29, 38, 46,
-                                    63, 72, 71, 68]}}
+HORES = [f"2026-10-09T{h:02d}:00" for h in range(24)]
+# Hora a hora d'avui, del model (µg/m³): el NO₂ puja al vespre.
+AIRE = {"hourly": {"time": HORES,
+                   "nitrogen_dioxide": [20.0] * 19 + [40.0, 70.0, 80.0, 60.0, 50.0],
+                   "ozone": [50.0] * 24, "pm10": [10.0] * 24, "pm2_5": [4.0] * 24,
+                   "sulphur_dioxide": [2.0] * 24}}
 SOL = [{"dia": "2026-10-09", "sortida": "2026-10-09T07:56", "posta": "2026-10-09T19:20", "uv_max": 4.85},
        {"dia": "2026-10-10", "sortida": "2026-10-10T07:57", "posta": "2026-10-10T19:18", "uv_max": 4.65}]
 
@@ -66,21 +67,49 @@ class Pollen(unittest.TestCase):
 
 
 class Aire(unittest.TestCase):
-    def test_categories(self):
+    def test_index_de_cada_contaminant(self):
+        # Taula de l'índex europeu d'Open-Meteo: el NO₂ de 10 a 25 µg/m³ és 20-40.
+        self.assertEqual([AI.index_de("nitrogen_dioxide", x) for x in (0, 10, 17.5, 25, 60, 150, 200)],
+                         [0, 20, 30, 40, 60, 100, 120])
         self.assertEqual([AI.categoria(x) for x in (0, 20, 21, 59, 80, 101)],
                          ["bona", "bona", "raonablement_bona", "regular", "desfavorable", "extremadament_desfavorable"])
 
-    def test_ara_i_el_pitjor_d_avui(self):
-        a = AI.llegeix(AIRE, ARA)
-        self.assertEqual((a["index"], a["categoria"], a["contaminant"]), (38, "raonablement_bona", "nitrogen_dioxide"))
-        self.assertEqual(a["pitjor"], {"hora": "2026-10-09T21:00", "index": 72, "categoria": "desfavorable"})
-        self.assertEqual(a["contaminants"]["ozone"], 17)
-        self.assertEqual([h["hora"][11:13] for h in a["hores"]][:2], ["11", "12"])
-        self.assertEqual(len(a["hores"]), 13)
+    def test_factors_amb_dues_estacions(self):
+        model = {"time": HORES[:80 // 1][:24] * 4, "nitrogen_dioxide": [20.0] * 96, "pm10": [10.0] * 96}
+        model["time"] = [f"2026-10-0{d}T{h:02d}:00" for d in range(5, 9) for h in range(24)]
+        mesures = {}
+        for t in model["time"]:
+            mesures[("Sant Cugat del Vallès", "nitrogen_dioxide", t)] = 8.0
+            mesures[("Barberà del Vallès", "nitrogen_dioxide", t)] = 12.0
+            mesures[("Montcada i Reixac", "pm10", t)] = 25.0        # una sola estació: no es corregeix
+        f = AI.factors(model, mesures)
+        self.assertEqual(f, {"nitrogen_dioxide": {"factor": 0.5, "hores": 96}})
+
+    def test_ultimes_mesures(self):
+        files = [{"nom_estacio": "Sant Cugat del Vallès", "contaminant": "NO2", "data": "2026-10-09T00:00:00.000",
+                  "h01": "11", "h04": "7"},
+                 {"nom_estacio": "Sant Cugat del Vallès", "contaminant": "O3", "data": "2026-10-09T00:00:00.000",
+                  "h04": "32"}]
+        m = AI.ultimes(AI.per_hora(files))
+        self.assertEqual(m, [{"estacio": "Sant Cugat del Vallès", "km": 3.9, "hora": "2026-10-09T04:00",
+                              "valors": {"nitrogen_dioxide": 7.0, "ozone": 32.0}, "index": 14}])
+
+    def test_ara_i_el_pitjor_d_avui_corregits(self):
+        corr = {"factors": {"nitrogen_dioxide": {"factor": 0.5, "hores": 700}},
+                "mesures": [{"estacio": "Sant Cugat del Vallès", "km": 3.9, "hora": "2026-10-09T04:00",
+                             "valors": {"nitrogen_dioxide": 7.0, "ozone": 32.0}, "index": 14}]}
+        a = AI.llegeix(AIRE, ARA, corr)
+        # 11:40: el NO₂ de 20 passa a 10 (índex 20); l'ozó, sense corregir, 50 µg/m³ (índex 17).
+        self.assertEqual((a["hora"], a["index"], a["contaminant"], a["corregit"]),
+                         ("2026-10-09T11:00", 20, "nitrogen_dioxide", True))
+        self.assertEqual(a["pitjor"], {"hora": "2026-10-09T21:00", "index": 49, "categoria": "regular"})
+        sense = AI.llegeix(AIRE, ARA)
+        self.assertEqual((sense["index"], sense["corregit"]), (33, False))
         t = B.text_aire_bot({"generat": ARA.isoformat(), "aire": a}, "ca", ARA)
-        self.assertIn("Ara: raonablement bona (índex europeu 38). El que més pesa és el diòxid de nitrogen (NO₂).", t)
-        self.assertIn("El pitjor d'avui: desfavorable cap a les 21:00.", t)
-        self.assertIn("no una mesura", t)
+        self.assertIn("Ara: bona (índex europeu 20).", t)
+        self.assertIn("El pitjor d'avui: regular cap a les 21:00.", t)
+        self.assertIn("no mesurada a Montflorit; NO₂, corregits amb les mesures", t)
+        self.assertIn("Sant Cugat del Vallès (3,9 km), a les 4 h: NO₂ 7, ozó 32 µg/m³ (bona).", t)
 
 
 class Sol(unittest.TestCase):

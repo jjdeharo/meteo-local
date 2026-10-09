@@ -244,11 +244,47 @@ function pintaAire(a) {
       peces.push(element('p', 'nota', T`El pitjor moment: ${noms[a.pitjor.categoria].toLowerCase()} cap a les ${horaCurta(a.pitjor.hora)}.`));
     }
   }
+  // Que és una estimació d'una zona, i què s'ha corregit amb les estacions
+  // (Juanjo, 09-10-2026: «¿realmente es la de Montflorit?»).
+  const curts = CURT_AIRE();
+  const corregits = ORDRE_AIRE.filter((c) => (a.factors || {})[c]).map((c) => curts[c]);
+  let nota = T('Estimació del model europeu CAMS per a una zona d’uns 10 km al voltant de Bellaterra, no mesurada a Montflorit');
+  if (corregits.length) {
+    const llista = corregits.length > 1 ? `${corregits.slice(0, -1).join(', ')} ${T('i')} ${corregits.at(-1)}` : corregits[0];
+    nota += T`; ${llista}, corregits amb les mesures de les estacions dels últims 30 dies.`;
+  } else nota += '.';
+  peces.push(element('p', 'nota', nota));
+  // Les últimes mesures de cada estació, amb la seva hora.
+  if ((a.mesures || []).length) {
+    const llistaM = element('ul', 'aire-mesures');
+    for (const m of a.mesures) {
+      const k = categoriaAire(m.index);
+      const li = element('li');
+      const valors = ORDRE_AIRE.filter((c) => m.valors[c] != null).map((c) => `${curts[c]} ${m.valors[c]}`).join(', ');
+      li.append(element('span', 'aire-xip aire-xip-petit aire-' + k, noms[k]), ' ',
+        element('strong', null, m.estacio), ` (${distancia(m.km)}), ${quanMesura(m.hora)}: ${valors} µg/m³`);
+      llistaM.append(li);
+    }
+    peces.push(element('h2', 'pollen-grup', T('Últimes mesures de les estacions')), llistaM);
+  }
   const peu = element('p', 'nota');
-  peu.append(T('És la previsió del model europeu CAMS (Copernicus), no una mesura. '),
-    enllacExtern(T('Mesures de les estacions (Generalitat)'), MESURES_AIRE()));
+  peu.append(enllacExtern(T('Mesures de les estacions (Generalitat)'), MESURES_AIRE()));
   peces.push(peu);
   return peces;
+}
+
+const ORDRE_AIRE = ['nitrogen_dioxide', 'ozone', 'pm10', 'pm2_5', 'sulphur_dioxide'];
+const CURT_AIRE = () => ({ nitrogen_dioxide: 'NO₂', ozone: T('ozó'), pm10: 'PM10', pm2_5: 'PM2,5', sulphur_dioxide: 'SO₂' });
+
+// «a les 4 h», «ahir a les 23 h»: les mesures arriben amb hores de retard.
+function quanMesura(iso) {
+  const t = new Date(iso);
+  const avui = new Date();
+  const ahir = new Date(avui);
+  ahir.setDate(avui.getDate() - 1);
+  if (t.toDateString() === avui.toDateString()) return T`a les ${t.getHours()} h`;
+  if (t.toDateString() === ahir.toDateString()) return T`ahir a les ${t.getHours()} h`;
+  return `${t.getDate()}/${t.getMonth() + 1} ${t.getHours()} h`;
 }
 
 // --- Sol: el dia en una barra (la llum entre la sortida i la posta, i ara), i

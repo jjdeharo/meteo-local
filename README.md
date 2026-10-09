@@ -103,8 +103,9 @@ Fuentes de la previsión:
 7. **Polen**: los niveles de la semana en Bellaterra del Punt d'Informació
    Aerobiològica de la UAB, con su API (`pollen.py`, ADR 0054; CC BY-NC-SA 4.0).
 8. **Calidad del aire**: el índice europeo del modelo CAMS de Copernicus, a
-   través de Open-Meteo, que es una previsión y no una medida (`aire.py`,
-   ADR 0054). La salida y la puesta del sol y el índice UV máximo, también de
+   través de Open-Meteo, para una zona de unos 10 km, corregido con las
+   medidas de las estaciones de la Generalitat del último mes, y las últimas
+   medidas de Barberà, Sant Cugat y Montcada (`aire.py`, ADR 0054). La salida y la puesta del sol y el índice UV máximo, también de
    Open-Meteo.
 
 Umbrales y lugares, en `config.py`. El porqué, en los ADR.

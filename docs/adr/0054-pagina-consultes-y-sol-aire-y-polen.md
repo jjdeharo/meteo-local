@@ -74,6 +74,31 @@ el resto de fichas. En la web, ya no todas son el texto del bot:
 
 El bot sigue en texto: Telegram no admite colores ni barras.
 
+## Cambio del 09-10-2026 (3.37.0): el aire, corregido con las estaciones
+
+Juanjo preguntó si la calidad del aire era de verdad la de Montflorit. No lo
+es: CAMS da un valor por celda de 0,1° (unos 11 × 8 km); la de Montflorit tiene
+el centro en Bellaterra (41,5 N, 2,1 E). Comparado con las estaciones de la
+Generalitat la noche del 8 al 9 de octubre, el modelo daba de NO₂ 22-36 µg/m³
+y las estaciones 6-26; de partículas PM10, 9-10 frente a 16-26 en Montcada.
+Juanjo pidió las tres cosas propuestas, sin quitar las barras de colores:
+
+- **La ficha dice qué es**: «Estimació del model europeu CAMS per a una zona
+  d'uns 10 km al voltant de Bellaterra, no mesurada a Montflorit», y qué se ha
+  corregido.
+- **Las últimas medidas de Barberà, Sant Cugat y Montcada**, con su hora y su
+  categoría (llegan con 7 u 8 horas de retraso).
+- **El modelo, corregido con lo medido** (`aire.py`): una vez al día, para cada
+  contaminante, el cociente entre la suma de lo medido (media de las
+  estaciones) y la del modelo en las horas del último mes que tienen las dos
+  cosas (Open-Meteo guarda los días pasados); las concentraciones se
+  multiplican por él y el índice se recalcula con la tabla del índice europeo
+  de Open-Meteo. Solo con al menos dos estaciones y 72 horas: el 09-10-2026,
+  NO₂ ×0,70 y ozono ×0,71 (725 horas). Las PM10 solo las mide Montcada, junto a
+  la cementera, y su factor (×2,5) diría más de Montcada que de Montflorit: no
+  se corrigen. Es una corrección media, hipótesis a validar: no cambia según la
+  hora ni el tipo de día.
+
 ## Alternativas descartadas
 
 - **Un botón en la cabecera** que desplegara las consultas, y **una página con
