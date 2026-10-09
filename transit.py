@@ -28,6 +28,7 @@ import datetime as dt
 import json
 import math
 import re
+import time
 import urllib.request
 import xml.etree.ElementTree as ET
 
@@ -133,12 +134,23 @@ def filtra(gml, rss=None, casa=C.CASA):
     return sorted(res, key=lambda i: (i["tipus"] != "retencio", -i["nivell"], i["km"]))
 
 
+def llegeix_sencer(url, llegeix, espera=3):
+    """Si el fitxer arriba tallat (el 09-10-2026 a les 12:27, «unclosed token»:
+    el Servei Català de Trànsit el devia estar reescrivint), es torna a demanar
+    una vegada al cap d'uns segons."""
+    try:
+        return llegeix(get(url))
+    except ET.ParseError:
+        time.sleep(espera)
+        return llegeix(get(url))
+
+
 def calcula(ara=None):
     """Per a casa.json i les dades públiques. Sense GML, None (es diu que falla)."""
     ara = ara or dt.datetime.now().astimezone()
-    gml = llegeix_gml(get(GML))
+    gml = llegeix_sencer(GML, llegeix_gml)
     try:
-        rss = llegeix_rss(get(RSS))
+        rss = llegeix_sencer(RSS, llegeix_rss)
     except Exception:
         rss = None
     return {"hora": ara.isoformat(timespec="minutes"), "incidencies": filtra(gml, rss)}

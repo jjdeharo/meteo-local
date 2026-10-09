@@ -115,6 +115,11 @@ moto solo tenían en cuenta el tiempo.
 
 ## Riesgos y limitaciones
 
+- El fichero puede llegar cortado si se descarga mientras el Servei Català de
+  Trànsit lo reescribe (09-10-2026, 12:27: «unclosed token»; las cinco
+  descargas siguientes llegaron enteras). Desde la 3.35.1, si no se puede leer,
+  se vuelve a pedir una vez a los 3 segundos.
+
 - La distancia es en línea recta hasta el punto que da la fuente para el
   tramo, no la de todo el tramo ni por carretera: una incidencia larga que
   empiece lejos y llegue cerca no sale, y la misma puede salir a distancias

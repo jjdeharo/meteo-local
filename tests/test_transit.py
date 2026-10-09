@@ -93,6 +93,15 @@ class Transit(unittest.TestCase):
         self.assertEqual([T.pk("150.00", "149.50"), T.pk("7.20", "7.20"), T.pk("4.00", None), T.pk(None, None)],
                          ["150-149,5", "7,2", "4", None])
 
+    def test_si_arriba_tallat_es_torna_a_demanar(self):
+        respostes = [GML[:500], GML]
+        original = T.get
+        T.get = lambda url: respostes.pop(0)
+        try:
+            self.assertEqual(len(T.llegeix_sencer("x", T.llegeix_gml, espera=0)), 5)
+        finally:
+            T.get = original
+
     def test_mateix_nivell_que_la_pagina(self):
         web = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "web", "comu.js")
         with open(web, encoding="utf-8") as f:
