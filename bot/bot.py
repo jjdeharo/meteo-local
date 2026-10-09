@@ -584,6 +584,8 @@ def text_avisos_actius(dades, idioma, moment):
         blocs.append(("AEMET", [html.escape(x, quote=False) for x in net]))
     # Incendis a prop i Pla Alfa des del nivell 3 (ADR 0046).
     blocs += blocs_entorn(dades.get("entorn") or {}, idioma)
+    # Carreteres tallades a prop, les mateixes que avisen (ADR 0052).
+    blocs += blocs_talls(dades.get("transit") or {}, idioma)
     # El temps excepcional que calcula la pàgina amb els llindars de l'AEMET
     # (el mateix de l'avís «perill», ADR 0018), dit que no és oficial.
     propis = linies_riscos(dades.get("riscos") or [], idioma, moment)
@@ -632,6 +634,28 @@ def blocs_entorn(entorn, idioma):
     if nivells:
         blocs.append(("Plan Alfa" if es else "Pla Alfa", nivells + [enllac(PLA_ALFA, "Mapa")]))
     return blocs
+
+
+TRANSIT = "https://transit.gencat.cat/{}/informacio-viaria/estat-transit/"
+
+
+def blocs_talls(transit, idioma):
+    """Les calçades tallades a prop que avisen (transit.py marca «tall»). La
+    causa és la del Servei Català de Trànsit, en català."""
+    es = idioma == "es"
+    linies = []
+    for i in transit.get("incidencies") or []:
+        if not i.get("tall"):
+            continue
+        h = dt.datetime.fromisoformat(i["des_de"]).strftime("%H:%M") if i.get("des_de") else "?"
+        lloc = (f" en {i['municipi']}" if es else f" a {i['municipi']}") if i.get("municipi") else ""
+        causa = f" ({i['causa']})" if i.get("causa") else ""
+        linies.append(html.escape(f"{i['carretera']}{lloc}: calzada cortada{causa}, desde las {h}." if es
+                                  else f"{i['carretera']}{lloc}: calçada tallada{causa}, des de les {h}.", quote=False))
+    if not linies:
+        return []
+    return [("Carreteras cortadas" if es else "Carreteres tallades",
+             linies + [enllac(TRANSIT.format("es" if es else "ca"), "Servei Català de Trànsit")])]
 
 
 def linies_riscos(riscos, idioma, moment):

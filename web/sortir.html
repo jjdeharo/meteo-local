@@ -5,7 +5,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex">
-  <meta name="description" content="Si surts de Montflorit (Cerdanyola del Vallès): com anirà cada mitjà de transport, què et cal posar i si circulen els trens, segons l'hora de sortir i de tornar.">
+  <meta name="description" content="Si surts de Montflorit (Cerdanyola del Vallès): com anirà cada mitjà de transport, què et cal posar, si circulen els trens i com està el trànsit, segons l'hora de sortir i de tornar.">
   <title>Si surts</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232563eb' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 14.9A7 7 0 1 1 15.7 8h1.8a4.5 4.5 0 0 1 2.5 8.2'/%3E%3Cpath d='M16 14v6M8 14v6M12 16v6'/%3E%3C/svg%3E">
   <script>
@@ -70,13 +70,6 @@
     <div id="sortida">
       <p class="carregant">Carregant la previsió…</p>
     </div>
-    <section id="trens" class="trens" aria-labelledby="titol-trens" hidden>
-      <h2 id="titol-trens" class="seccio">Trens ara</h2>
-      <ul id="llista-trens" class="llista-trens"></ul>
-      <p id="estat-operadors" class="nota"></p>
-      <p id="hora-trens" class="nota"></p>
-    </section>
-
     <details class="com">
       <summary>Com es decideix</summary>
       <p>Per a l'anada compta l'hora de sortir i, per a la tornada, l'hora de tornar; la pluja que pugui caure mentre ets fora decideix el paraigua. Un avís de l'AEMET per pluja o tempestes compta com a pluja probable (en bici, patinet i moto, com a risc de pluja); si cap altra dada no hi veu pluja, es diu. Les dades són les de la previsió hora a hora de Montflorit: valen per moure's per la zona (Cerdanyola, Sant Cugat, Sabadell, la UAB o Barcelona). Amb un pla de Protecció Civil en alerta o emergència, es diu a dalt; els consells de cada mitjà no el tenen en compte.</p>
@@ -89,6 +82,7 @@
         <li><strong>Roba:</strong> segons la temperatura que es nota a l'anada i a la tornada, amb el vent previst si vas a peu i amb la velocitat del mitjà en bici (uns 18&nbsp;km/h) i en moto (45&nbsp;km/h). Si la tornada demana una altra peça, es diu a part; en moto, una sola jaqueta, la del moment més fred.</li>
         <li><strong>Consells:</strong> protector solar, gorra i ulleres de sol amb índex UV de 3 o més mentre ets fora; roba visible o llum si surts o tornes de nit; aigua amb 32&nbsp;°C o més.</li>
         <li><strong>Trens:</strong> els de Rodalies (R4, R7 i R8) i d'FGC (S2) que paren a Cerdanyola. Una línia circula si en l'última hora s'hi ha vist algun tren movent-se a prop de l'estació, segons les dades en temps real de Renfe i d'FGC; abans del primer tren del dia a Cerdanyola o després de l'últim, és «fora d'horari». Els avisos són els seus, en l'idioma en què els publiquen, del més nou al més vell. Si l'operador ha publicat diversos avisos de la línia, el servei per carretera es decideix pel més recent dels vigents: un avís per a més endavant es mostra, però no decideix. Si les posicions de Renfe tenen més de 10 minuts, la línia surt «sense dades».</li>
+        <li><strong>Trànsit:</strong> les incidències del Servei Català de Trànsit que comencen a 6&nbsp;km o menys de Montflorit: retencions, accidents i avaries, i les obres que desvien o tallen la via (les que només restringeixen un carril, no). Si surts ara i n'hi ha alguna amb retencions, congestió o la calçada tallada, el cotxe i la moto passen a «compte»; la circulació intensa només es llista. Els textos són els del Servei Català de Trànsit, en català.</li>
       </ul>
       <p>Els llindars de la bici, el patinet i a peu encara no s'han comprovat amb dades: són una primera proposta que s'anirà ajustant.</p>
     </details>

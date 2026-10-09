@@ -15,7 +15,9 @@ Tipos:
 - perill: lo medido o previsto llega a los umbrales de aviso de AEMET (la de
   riscos.py, ADR 0018), al aparecer o subir de nivel; y, desde el 08-10-2026,
   un incendio forestal en curso a menos de 5 km (Bombers) al empezar y al
-  dejar de constar (entorn.py, ADR 0046).
+  dejar de constar (entorn.py, ADR 0046); y, desde el 09-10-2026, una calzada
+  cortada a 4 km o menos (Servei Català de Trànsit), al empezar y al acabar
+  (transit.py, ADR 0052).
 - riera: riesgo de desbordamiento de la riera de Sant Cugat (la de riera.py,
   ADR 0027), atención y peligro, siempre con el aviso de que es orientativo.
 - trens: una línea de Cerdanyola deja de circular o vuelve (trens.py,
@@ -217,6 +219,30 @@ def text_incendi(i, acabat=False):
                   f"desde las {hhmm(i.get('inici'))}. Sigue las indicaciones de Bombers y de Protección Civil."}
 
 
+# --- Carreteras cortadas cerca (ADR 0052) -----------------------------------------
+# También con los de peligro: afectan a todo el que sale en coche o en moto.
+# Qué corte avisa lo decide transit.py («tall»). Los textos del Servei Català
+# de Trànsit (causa y sentido) van tal cual, en catalán.
+
+def text_tall(i, acabat=False):
+    via = i.get("carretera") or "?"
+    lloc_ca = f" a {i['municipi']}" if i.get("municipi") else ""
+    lloc_es = f" en {i['municipi']}" if i.get("municipi") else ""
+    if acabat:
+        return {"ca": negreta(f"Carretera: la {via}{lloc_ca} ja no consta com a tallada")
+                      + "\nEl Servei Català de Trànsit ja no hi indica la calçada tallada.",
+                "es": negreta(f"Carretera: la {via}{lloc_es} ya no consta como cortada")
+                      + "\nEl Servei Català de Trànsit ya no indica allí la calzada cortada."}
+    detall = "; ".join(x for x in (i.get("causa"), i.get("sentit"), i.get("pk") and f"km {i['pk']}") if x)
+    detall = f" ({html.escape(detall, quote=False)})" if detall else ""
+    return {"ca": negreta(f"Carretera tallada a prop de Montflorit: {via}{lloc_ca}")
+                  + f"\nEl Servei Català de Trànsit hi indica la calçada tallada{detall}, des de les "
+                  f"{hhmm(i.get('des_de'))}. Si havies de passar per allà, busca un altre camí.",
+            "es": negreta(f"Carretera cortada cerca de Montflorit: {via}{lloc_es}")
+                  + f"\nEl Servei Català de Trànsit indica allí la calzada cortada{detall}, desde las "
+                  f"{hhmm(i.get('des_de'))}. Si tenías que pasar por allí, busca otro camino."}
+
+
 def text_trens(linia, estacio, estat):
     if estat == "bus":
         return {"ca": negreta(f"Trens: l'{linia} no circula a {estacio}") + "\nHi ha servei per carretera.",
@@ -283,6 +309,21 @@ def decideix(estat, salida, ahora):
                 if iid not in ara_ids:
                     afegeix("perill", f"incendi:{iid}:fi", text_incendi(i, acabat=True), "fi")
         estat.setdefault("entorn", {"incendis": {}})["incendis"] = ara_ids
+    # Carreteras cortadas cerca (ADR 0052), igual que los incendios: la primera
+    # vez solo se apunta lo que hay. Si el Servei Català de Trànsit no ha
+    # respondido, no se mira: no es que se hayan acabado.
+    transit = salida.get("transit")
+    if transit and transit.get("incidencies") is not None:
+        talls = {i["id"]: i for i in transit["incidencies"] if i.get("tall")}
+        e = estat.get("talls")
+        if e is not None:
+            for tid, i in talls.items():
+                if tid not in e:
+                    afegeix("perill", f"tall:{tid}", text_tall(i), "tall")
+            for tid, i in e.items():
+                if tid not in talls:
+                    afegeix("perill", f"tall:{tid}:fi", text_tall(i, acabat=True), "fi")
+        estat["talls"] = talls
     # Riera: atención y peligro, una vez cada nivel por episodio.
     riera = salida.get("riera")
     if riera:

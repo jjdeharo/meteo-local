@@ -272,6 +272,33 @@ class Web(unittest.TestCase):
         self.assertEqual(cotxe(0, 0.05), {"nivell": "be", "motius": ["Sense pluja ni vent fort."]})
         self.assertEqual(cotxe(0, 0.05, 0)["motius"], ["0\u00a0°C: compte amb el gel a primera hora."])
 
+    def test_transit_al_cotxe_i_la_moto(self):
+        # ADR 0052: si surts ara, retencions o talls a prop posen el cotxe i la moto en «compte».
+        tram = [{"hora": f"2026-10-09T{h:02d}:00", "fins": f"2026-10-09T{h + 1:02d}:00", "temperatura": 20,
+                 "ratxa": 10, "pluja_mm": 0, "probabilitat": 0.02, "avisos": []} for h in (9, 10)]
+        transit = [{"tipus": "retencio", "nivell": 3, "carretera": "C-58"},
+                   {"tipus": "retencio", "nivell": 4, "carretera": "C-58"},
+                   {"tipus": "retencio", "nivell": 2, "carretera": "AP-7"},
+                   {"tipus": "obres", "nivell": 5, "carretera": "BV-1414"}]
+        def v(mitja, futur, t=transit):
+            return self.avalua("2026-10-09T09:30:00+02:00",
+                               f"avalua('{mitja}', {json.dumps(tram)}, [], {json.dumps(futur)}, {json.dumps(t)})",
+                               "sortir.js")
+        self.assertEqual(v("cotxe", False), {"nivell": "compte", "motius": [
+            "Sense pluja ni vent fort.", "Ara hi ha retencions o talls a prop: C-58."]})
+        self.assertEqual(v("moto", False)["nivell"], "compte")
+        # Més tard, el trànsit d'ara no compta; a peu o en bici, tampoc.
+        self.assertEqual(v("cotxe", True), {"nivell": "be", "motius": ["Sense pluja ni vent fort."]})
+        self.assertEqual(v("bici", False)["nivell"], "be")
+        # Només circulació intensa i obres: es llisten, però no canvien el consell.
+        self.assertEqual(v("cotxe", False, transit[2:])["nivell"], "be")
+        self.assertEqual(v("cotxe", False, None)["nivell"], "be")
+
+    def test_des_de_quan_el_transit(self):
+        ara = "2026-10-09T09:30:00+02:00"
+        self.assertEqual(self.avalua(ara, "desDe('2026-10-09T07:34+02:00')", "sortir.js"), "des de les 07:34")
+        self.assertEqual(self.avalua(ara, "desDe('2026-04-22T20:57+02:00')", "sortir.js"), "des del 22/4")
+
     def test_roba_bici(self):
         self.assertEqual(self.roba("bici", (9, 22, 0), (11, 22, 0)), "Màniga curta.")
         self.assertEqual(self.roba("bici", (9, 19, 0), (11, 19, 0), pluja=True),
@@ -436,7 +463,7 @@ class Web(unittest.TestCase):
         plans = [{"pla": "INUNCAT", "nom": "d'inundacions", "fase": "emergència"}]
         # El pla ja surt a «Avisos actius»: aquí, una línia sense repetir-lo (08-10-2026).
         self.assertEqual(self.avalua(ara, f"avisPlaSortida({json.dumps(plans)})", "sortir.js"),
-                         "El consell de cada mitjà surt només de la pluja i el vent previstos: no té en compte l’emergència de Protecció Civil (vegeu l’avís de dalt).")
+                         "El consell de cada mitjà surt del temps previst i del trànsit: no té en compte l’emergència de Protecció Civil (vegeu l’avís de dalt).")
         plans[0]["fase"] = "alerta"
         self.assertIn("no té en compte l’alerta de Protecció Civil", self.avalua(ara, f"avisPlaSortida({json.dumps(plans)})", "sortir.js"))
         plans[0]["fase"] = "prealerta"

@@ -37,6 +37,7 @@ import radar_fonts as RF
 import registre as R
 import riera as RI
 import riscos as RS
+import transit as TT
 import trens as TR
 
 HORAS = 24
@@ -475,6 +476,12 @@ def recoger(anterior=None):
     except Exception as ex:
         salida["trens"] = None
         salida["errors"].append(f"trens: {ex}")
+    # Incidencias de tráfico de cerca, para el coche y la moto (ADR 0052).
+    try:
+        salida["transit"] = TT.calcula(P.AHORA)
+    except Exception as ex:
+        salida["transit"] = None
+        salida["errors"].append(f"trànsit: {ex}")
     # Incendios cerca, Pla Alfa y acceso a Collserola (ADR 0046).
     salida["entorn"] = EN.calcula(P.AHORA)
     salida["errors"] += [f"entorn: {e}" for e in salida["entorn"].pop("errors")]

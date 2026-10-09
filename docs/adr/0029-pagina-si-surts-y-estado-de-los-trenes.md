@@ -47,8 +47,11 @@ y otros transportes.
   moto y no llovió.
 - **Transporte público según los trenes**: «Bé» si circulan todos, «Amb
   incidències» si alguno no circula, va por carretera o tiene avisos, «Sense
-  trens» si no circula ninguno; con un enlace al bloque «Trens ara» de debajo,
-  para que la ficha no crezca.
+  trens» si no circula ninguno. El estado de cada línea iba en un bloque
+  «Trens ara» debajo de las fichas; desde el 09-10-2026 va dentro de la ficha,
+  plegado («Estat de cada línia»), para no tener que saltar a otro sitio de la
+  página (Juanjo: «creo que debería estar todo junto», ADR 0052). El enlace
+  `sortir.html#trens` de los avisos abre ese plegable.
 - **Ropa por medio**, según la temperatura que se nota a la ida y a la vuelta:
   con la velocidad del medio en bici (18 km/h) y en moto (45 km/h), y con el
   viento previsto a pie, en coche y en transporte público (el rato a pie hasta
@@ -101,8 +104,9 @@ y otros transportes.
   identificadores de los viajes completos.
 - **Retrasos**: Renfe los publica tren a tren, pero «Sense incidències» se
   refiere a los avisos; se añadirán si hace falta.
-- **Incidencias de tráfico, polen y calidad del aire**: fuentes nuevas que
-  mantener, fuera del núcleo.
+- **Polen y calidad del aire**: fuentes nuevas que mantener, fuera del núcleo.
+  Las incidencias de tráfico, que también estaban aquí, se añadieron el
+  09-10-2026 (ADR 0052).
 
 ## Consecuencias
 

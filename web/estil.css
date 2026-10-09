@@ -485,13 +485,19 @@ h1 { margin: 0; font-size: 1.6rem; line-height: 1.2; }
 .mitja-roba { font-size: .9rem; color: var(--suau); margin-top: .15rem !important; }
 .consells { margin: .9rem 0 0; padding-left: 1.2rem; }
 .consells li { margin: .2rem 0; }
-.trens { margin-top: 1.4rem; scroll-margin-top: 1rem; }
-.mitja-detall { font-size: .9rem; }
 .seccio { font-size: .8rem; text-transform: uppercase; letter-spacing: .05em; color: var(--suau); margin: 0; }
 .tren-avisos { margin-top: .3rem; font-size: .9rem; }
 .tren-avisos summary { cursor: pointer; color: var(--suau); }
 .tren-avisos p { margin: .3rem 0 0; }
-.trens .nota { margin-top: .5rem; }
+/* Trens i trànsit dins de la fitxa del mitjà, plegats (ADR 0029 i 0052). Obert,
+   la fitxa ocupa tota l'amplada per llegir-los bé. */
+.mitja-plec { margin-top: .4rem; font-size: .9rem; scroll-margin-top: 1rem; }
+.mitja-plec > summary { cursor: pointer; color: var(--enllac); }
+.mitja-plec .llista-trens { margin-top: .5rem; }
+.mitja-plec .tren { padding: .45rem .65rem; background: var(--fons); }
+.mitja-plec .nota { margin-top: .5rem; }
+.mitja:has(> .mitja-plec[open]) { grid-column: 1 / -1; }
+.tren .transit-detall { margin-top: .3rem; }
 
 /* El text dels avisos de l'AEMET, citat tal com el publica (ADR 0033). */
 .avis q, .avis-item q { quotes: "«" "»"; font-style: italic; }

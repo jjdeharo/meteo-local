@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // «Si surts» (ADR 0029): per a qui surt de Montflorit a una hora i torna a una
-// altra, com anirà cada mitjà, quina roba cal, consells i si circulen els
-// trens. Tot surt de la previsió hora a hora de casa.json (o, a la web
-// pública, montflorit.json): no cal res més del servidor que l'índex UV i
-// l'estat dels trens.
+// altra, com anirà cada mitjà, quina roba cal, consells, si circulen els
+// trens i el trànsit de prop. Tot surt de la previsió hora a hora de casa.json
+// (o, a la web pública, montflorit.json): no cal res més del servidor que
+// l'índex UV, l'estat dels trens i les incidències de trànsit (ADR 0052).
 
 const FITXER_DADES = document.documentElement.dataset.dades || 'casa.json';
 const TORNADA_PER_DEFECTE_H = 3;
@@ -34,6 +34,11 @@ const CANVI_TEMPERATURA = 6;
 const CALOR = 32;
 const UV_MINIM = 3;
 const ORDRE = ['neutre', 'be', 'compte', 'no'];
+// Trànsit (config.TRANSIT_NIVELL_SORTIDA): des d'aquest nivell (3, retencions;
+// 4, congestió; 5, calçada tallada), si surts ara, el cotxe i la moto passen a
+// «compte». La circulació intensa (2) només es llista (ADR 0052).
+const NIVELL_TRANSIT = 3;
+const MITJANS_TRANSIT = ['cotxe', 'moto'];
 
 function avisPluja(f) {
   return (f.avisos || []).some((a) => a.tipus.some((t) => t === 'pluja' || t === 'tempestes'));
@@ -99,7 +104,7 @@ function quan(anada, tornada, cond) {
 }
 
 // Veredicte d'un mitjà: {nivell: be|compte|no, motius: [...]}.
-function avalua(mitja, tram, trens, futur) {
+function avalua(mitja, tram, trens, futur, transit) {
   const anada = tram[0];
   const tornada = tram[tram.length - 1];
   const viatge = [anada, tornada];
@@ -159,6 +164,14 @@ function avalua(mitja, tram, trens, futur) {
   }
   if (mitja === 'public') return avaluaPublic(trens, futur);
   if (!res.motius.length) res.motius.push(T('Sense pluja ni vent fort.'));
+  // El trànsit és el d'ara: només compta si surts ara (ADR 0052).
+  if (MITJANS_TRANSIT.includes(mitja) && !futur) {
+    const greus = (transit || []).filter((i) => i.tipus === 'retencio' && i.nivell >= NIVELL_TRANSIT);
+    if (greus.length) {
+      const carreteres = [...new Set(greus.map((i) => i.carretera))].join(', ');
+      puja('compte', T`Ara hi ha retencions o talls a prop: ${carreteres}.`);
+    }
+  }
   return res;
 }
 
@@ -184,15 +197,15 @@ function estatPublic(trens) {
   const malament = deDia.filter((l) => l.estat !== 'circula');
   // Si falten dades d'alguna línia, no es pot dir que tot vagi bé (auditoria del 08-10-2026).
   if (!malament.length) {
-    if (!senseDades.length) return { nivell: 'be', motius: [T('Cap incidència als trens de Cerdanyola.')], detall: true };
+    if (!senseDades.length) return { nivell: 'be', motius: [T('Cap incidència als trens de Cerdanyola.')] };
     return { nivell: 'neutre', etiqueta: 'Dades parcials',
-      motius: [T`${noms(deDia)} sense incidències; de ${noms(senseDades)} ara no hi ha dades.`], detall: true };
+      motius: [T`${noms(deDia)} sense incidències; de ${noms(senseDades)} ara no hi ha dades.`] };
   }
   const quines = malament.map((l) => `${l.linia} ${TD(TEXT_ESTAT[l.estat]).toLowerCase()}`).join(', ');
   const cap = deDia.every((l) => l.estat === 'sense_trens' || l.estat === 'bus');
   const motius = [T`Trens: ${quines}.`];
   if (senseDades.length) motius.push(T`De ${noms(senseDades)} ara no hi ha dades.`);
-  return { nivell: cap ? 'no' : 'compte', etiqueta: cap ? 'Sense trens' : 'Amb incidències', motius, detall: true };
+  return { nivell: cap ? 'no' : 'compte', etiqueta: cap ? 'Sense trens' : 'Amb incidències', motius };
 }
 
 // Peça per a una temperatura que es nota (arrodonida) i un mitjà.
@@ -365,10 +378,7 @@ function pintaTriats() {
         try { localStorage.setItem(CLAU_EXPLICAT, '1'); } catch (_) {}
         explica.hidden = true;
       }
-      if (DADES) {
-        pintaTrens(DADES.trens);
-        pintaSortida();
-      }
+      if (DADES) pintaSortida();
     });
     etiqueta.append(casella, icona(icon), element('span', null, TD(nom)));
     caixa.append(etiqueta);
@@ -400,8 +410,8 @@ function avisPlaSortida(plans) {
   // El pla ja surt sencer a «Avisos actius»: aquí només el que cal saber
   // dels veredictes (Juanjo, 08-10-2026: «sale repetido»).
   return pla.fase === 'emergència'
-    ? T('El consell de cada mitjà surt només de la pluja i el vent previstos: no té en compte l’emergència de Protecció Civil (vegeu l’avís de dalt).')
-    : T('El consell de cada mitjà surt només de la pluja i el vent previstos: no té en compte l’alerta de Protecció Civil (vegeu l’avís de dalt).');
+    ? T('El consell de cada mitjà surt del temps previst i del trànsit: no té en compte l’emergència de Protecció Civil (vegeu l’avís de dalt).')
+    : T('El consell de cada mitjà surt del temps previst i del trànsit: no té en compte l’alerta de Protecció Civil (vegeu l’avís de dalt).');
 }
 
 function pintaSortida() {
@@ -417,28 +427,34 @@ function pintaSortida() {
   const j = hores.findIndex((f) => f.hora === $('torno').value);
   const tram = hores.slice(i, j + 1);
   const trens = dades.trens && dades.trens.linies;
+  const transit = dades.transit && dades.transit.incidencies;
   const llista = element('ul', 'mitjans');
   const fora = amagats();
   for (const [clau, nom, icon] of MITJANS) {
     if (fora.has(clau)) continue;
-    const v = avalua(clau, tram, trens, i > 0);
+    const v = avalua(clau, tram, trens, i > 0, transit);
     const li = element('li', 'mitja ' + v.nivell);
     const cap = element('p', 'mitja-cap');
     const titol = element('span', 'mitja-nom');
     titol.append(icona(icon), TD(nom));
     cap.append(titol, ' ', element('span', 'mitja-nivell', TD(v.etiqueta || TEXT_NIVELL[v.nivell])));
     li.append(cap, element('p', 'mitja-motiu', v.motius.join(' ')));
-    // Els detalls de cada línia, al bloc «Trens ara» de sota: la fitxa no creix.
-    if (v.detall && !$('trens').hidden) {
-      const a = element('a', 'mitja-detall', T('Estat de cada línia ↓'));
-      a.href = '#trens';
-      const p = element('p', 'mitja-motiu');
-      p.append(a);
-      li.append(p);
-    }
     const plujaViatge = clau === 'moto' || clau === 'bici' ? mullaRodes : mulla;
     const r = roba(clau, tram, v.nivell !== 'be' && [tram[0], tram[tram.length - 1]].some(plujaViatge));
     if (r) li.append(element('p', 'mitja-roba', T`Roba: ${r}`));
+    // Les incidències, dins de la fitxa i plegades, sempre al final: no cal
+    // anar a cap altre lloc de la pàgina (Juanjo, 09-10-2026).
+    if (clau === 'public' && trens && trens.length) {
+      li.append(plec('trens', T('Estat de cada línia'), blocTrens(dades.trens)));
+    }
+    if (MITJANS_TRANSIT.includes(clau) && dades.transit) {
+      const n = (transit || []).length;
+      if (!n) li.append(element('p', 'mitja-roba', T('Trànsit ara: cap incidència a prop.')));
+      else {
+        li.append(plec(`transit-${clau}`, n === 1 ? T('Trànsit ara: 1 incidència') : T`Trànsit ara: ${n} incidències`,
+          blocTransit(dades.transit)));
+      }
+    }
     llista.append(li);
   }
   const parts = llista.children.length ? [llista]
@@ -454,14 +470,29 @@ function pintaSortida() {
   cont.replaceChildren(...parts);
 }
 
-function pintaTrens(trens) {
-  const sec = $('trens');
-  if (!trens || !trens.linies || !trens.linies.length || amagats().has('public')) {
-    sec.hidden = true;
-    return;
-  }
-  const llista = $('llista-trens');
-  llista.replaceChildren();
+// Plec d'una fitxa. Es recorda quins estan oberts mentre no es recarrega la
+// pàgina: canviar l'hora o els mitjans torna a pintar les fitxes.
+const PLECS_OBERTS = new Set();
+function plec(clau, titol, peces) {
+  const d = element('details', 'mitja-plec');
+  d.id = clau;
+  d.open = PLECS_OBERTS.has(clau);
+  d.addEventListener('toggle', () => (d.open ? PLECS_OBERTS.add(clau) : PLECS_OBERTS.delete(clau)));
+  d.append(element('summary', null, titol), ...peces);
+  return d;
+}
+
+function enllacExtern(text, href) {
+  const a = element('a', null, text);
+  a.href = href;
+  a.target = '_blank';
+  a.rel = 'noopener';
+  return a;
+}
+
+// L'estat de cada línia de tren, per al plec del transport públic.
+function blocTrens(trens) {
+  const llista = element('ul', 'llista-trens');
   for (const l of trens.linies) {
     const li = element('li', 'tren ' + COLOR_ESTAT[l.estat]);
     const cap = element('p', 'tren-cap');
@@ -471,25 +502,55 @@ function pintaTrens(trens) {
     // Els avisos, tal com els publica l'operador: no es tradueixen.
     const textos = (l.avisos || []).map((a) => (IDIOMA.codi === 'es' ? a.es : a.ca) || a.ca || a.es);
     if (textos.length) {
-      const plec = element('details', 'tren-avisos');
-      plec.append(element('summary', null, l.operador === 'fgc' ? T('Avís d’FGC') : T('Avís de Rodalies')));
-      for (const t of textos) plec.append(element('p', null, t));
-      li.append(plec);
+      const plecAvisos = element('details', 'tren-avisos');
+      plecAvisos.append(element('summary', null, l.operador === 'fgc' ? T('Avís d’FGC') : T('Avís de Rodalies')));
+      for (const t of textos) plecAvisos.append(element('p', null, t));
+      li.append(plecAvisos);
     }
     llista.append(li);
   }
-  $('hora-trens').textContent = T`Dades de Renfe i d’FGC de les ${horaCurta(trens.hora)}, consultades automàticament: l’autor no es fa responsable de la seva exactitud.`;
   // On publiquen els operadors l'estat del servei.
-  const p = $('estat-operadors');
-  p.replaceChildren(T('Estat del servei: '));
-  Object.values(ESTAT_OPERADOR).forEach((e, n) => {
-    const a = element('a', null, e.text());
-    a.href = e.href();
-    a.target = '_blank';
-    a.rel = 'noopener';
-    p.append(...(n ? [' · ', a] : [a]));
-  });
-  sec.hidden = false;
+  const estat = element('p', 'nota');
+  estat.append(T('Estat del servei: '));
+  Object.values(ESTAT_OPERADOR).forEach((e, n) => estat.append(...(n ? [' · '] : []), enllacExtern(e.text(), e.href())));
+  return [llista, estat, element('p', 'nota',
+    T`Dades de Renfe i d’FGC de les ${horaCurta(trens.hora)}, consultades automàticament: l’autor no es fa responsable de la seva exactitud.`)];
+}
+
+// Les incidències de trànsit de prop (ADR 0052), tal com les publica el Servei
+// Català de Trànsit, en català: no es tradueixen. Es veuen si es mira el cotxe
+// o la moto.
+const COLOR_TRANSIT = (nivell) => (nivell >= 5 ? 'no' : nivell >= NIVELL_TRANSIT ? 'compte' : 'neutre');
+const ESTAT_TRANSIT = () => `https://transit.gencat.cat/${IDIOMA.codi === 'es' ? 'es' : 'ca'}/informacio-viaria/estat-transit/`;
+
+function desDe(data, ara = new Date()) {
+  const d = new Date(data);
+  if (d.toDateString() === ara.toDateString()) return T`des de les ${horaCurta(data)}`;
+  return T`des del ${d.getDate()}/${d.getMonth() + 1}`;
+}
+
+function filaTransit(i, ara = new Date()) {
+  const li = element('li', 'tren ' + COLOR_TRANSIT(i.nivell));
+  const cap = element('p', 'tren-cap');
+  cap.append(element('span', 'tren-linia', i.carretera));
+  if (i.municipi) cap.append(' ', element('span', 'tren-estacio', i.municipi));
+  cap.append(' ', element('span', 'tren-estat', i.descripcio || ''));
+  // «Circulació» com a causa no diu res que no digui ja l'estat.
+  const causa = i.tipus === 'obres' ? T`Obres: ${i.causa}` : i.causa !== 'Circulació' && i.causa;
+  const detall = [causa, i.sentit,
+    i.pk && T`km ${i.pk}`, i.des_de && desDe(i.des_de, ara)].filter(Boolean);
+  li.append(cap, element('p', 'transit-detall', detall.join(' · ')));
+  return li;
+}
+
+// Les incidències de trànsit de prop, per al plec del cotxe i de la moto.
+function blocTransit(transit) {
+  const llista = element('ul', 'llista-trens');
+  for (const i of transit.incidencies) llista.append(filaTransit(i));
+  const estat = element('p', 'nota');
+  estat.append(T('Estat del trànsit: '), enllacExtern('Servei Català de Trànsit', ESTAT_TRANSIT()));
+  return [llista, estat, element('p', 'nota',
+    T`Dades del Servei Català de Trànsit de les ${horaCurta(transit.hora)}, consultades automàticament: l’autor no es fa responsable de la seva exactitud.`)];
 }
 
 // Les franges que encara no han acabat: la primera és «Ara». Sense això, amb
@@ -509,7 +570,6 @@ function pinta(dades) {
   if (velles) {
     if (explica) explica.hidden = true;
     $('avisos').replaceChildren();
-    $('trens').hidden = true;
     $('sortida').replaceChildren(blocDadesVelles(dades));
     pintaHorari(dades);
     posaVersio(dades.versio);
@@ -521,10 +581,22 @@ function pinta(dades) {
   const actius = blocAvisos(dades);
   if (actius) avisos.append(actius);
   if (dades.hores && dades.hores.length >= 2) pintaSelectors(dades.hores, new Date());
-  pintaTrens(dades.trens);
   pintaSortida();
+  obreDelEnllac();
   pintaHorari(dades);
   posaVersio(dades.versio);
+}
+
+// Un enllaç a un plec (els avisos dels trens porten a «sortir.html#trens»):
+// s'obre i s'hi va, només la primera vegada que es pinta.
+let enllacFet = false;
+function obreDelEnllac() {
+  if (enllacFet) return;
+  enllacFet = true;
+  const desti = location.hash && document.getElementById(location.hash.slice(1));
+  if (!desti || desti.tagName !== 'DETAILS') return;
+  desti.open = true;
+  desti.scrollIntoView({ block: 'center' });
 }
 
 pintaTriats();

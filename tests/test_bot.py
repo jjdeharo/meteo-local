@@ -472,6 +472,23 @@ class Consultes(unittest.TestCase):
         subs["7"]["idioma"] = "es"
         self.assertIn("<b>Plan Alfa</b>\nNivel 4 hoy en Cerdanyola", self.ordre("/avisos_actius", subs))
 
+    def test_carreteres_tallades_a_avisos_actius(self):
+        # ADR 0052: les mateixes que avisen, amb el text del Servei Català de Trànsit.
+        d = json.load(open(os.path.join(self.dir.name, "montflorit.json")))
+        d["transit"] = {"hora": ARA.isoformat(), "incidencies": [
+            {"id": "t1", "carretera": "BV-1415", "municipi": "Cerdanyola del Vallès", "causa": "Esfondraments",
+             "des_de": "2026-10-09T07:34+02:00", "tall": True},
+            {"id": "t2", "carretera": "C-58", "municipi": "Barcelona", "causa": "Circulació", "tall": False}]}
+        json.dump(d, open(os.path.join(self.dir.name, "montflorit.json"), "w"))
+        subs = {"7": {"idioma": "ca", "avisos": [], "resum": None}}
+        r = self.ordre("/avisos_actius", subs)
+        self.assertIn("<b>Carreteres tallades</b>\nBV-1415 a Cerdanyola del Vallès: calçada tallada (Esfondraments), "
+                      "des de les 07:34.", r)
+        self.assertNotIn("C-58", r)
+        subs["7"]["idioma"] = "es"
+        self.assertIn("<b>Carreteras cortadas</b>\nBV-1415 en Cerdanyola del Vallès: calzada cortada (Esfondraments)",
+                      self.ordre("/avisos_actius", subs))
+
     def test_el_menu_cap_en_una_linia(self):
         # «Situacions de perill», curt (Juanjo, 08-10-2026: amb el parèntesi no hi cabia).
         self.assertEqual(B.T["ca"]["perill"], "Situacions de perill")
