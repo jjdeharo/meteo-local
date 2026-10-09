@@ -55,12 +55,18 @@ function cel(f) {
     if (esNeu(f.codi)) return [T('Possible neu'), 'i-cloud-snow'];
     return [tempesta ? T('Possible tempesta') : T('Possible pluja'), nit ? 'i-cloud-moon-rain' : 'i-cloud-sun-rain'];
   }
-  if (f.codi === 45 || f.codi === 48) return [T('Boira'), 'i-cloud-fog'];
+  if (esBoira(f)) return [T('Boira'), 'i-cloud-fog'];
   if (f.nuvols == null) return ['', null];
   // Si algun model hi posa pluja (0,2 mm o més, el que ja mulla), el cel no
   // pot sortir serè encara que la probabilitat sigui baixa: com a mínim, núvols.
-  const nuvols = (f.pluja_mm || 0) >= 0.2 ? Math.max(f.nuvols, 50) : f.nuvols;
-  // Per vuitens de cel tapat: serè 0, poc 1-2, mig 3-5, molt 6-7, cobert 8.
+  return celNuvols(nuvolsHora(f), nit);
+}
+
+const nuvolsHora = (f) => ((f.pluja_mm || 0) >= 0.2 ? Math.max(f.nuvols, 50) : f.nuvols);
+const esBoira = (f) => f.codi === 45 || f.codi === 48;
+
+// Per vuitens de cel tapat: serè 0, poc 1-2, mig 3-5, molt 6-7, cobert 8.
+function celNuvols(nuvols, nit) {
   if (nuvols < 20) return [T('Serè'), nit ? 'i-moon-cel' : 'i-sun'];
   if (nuvols < 45) return [T('Poc ennuvolat'), nit ? 'i-cloud-moon' : 'i-cloud-sun'];
   if (nuvols < 70) return [T('Mig ennuvolat'), 'i-cloud'];
@@ -92,9 +98,11 @@ function dada(id, text) {
 }
 
 // Resum del que ve per trams del dia (matí 7–14, tarda 14–21, nit 21–7), per
-// a la targeta d'ara (Juanjo, 08-10-2026): probabilitat de pluja i
-// temperatures sempre; els fenòmens, només quan es donen, amb els llindars
-// grocs del Pla Meteoalerta que ja usa config.RISC_LLINDARS, més neu i gel.
+// a la targeta d'ara (Juanjo, 08-10-2026): el cel i les temperatures sempre;
+// la pluja, només si alguna hora en té com a mínim de possible (Juanjo,
+// 09-10-2026: «símbolo de lluvia solo si va a llover»); els fenòmens, només
+// quan es donen, amb els llindars grocs del Pla Meteoalerta que ja usa
+// config.RISC_LLINDARS, més neu i gel.
 const TRAMS = [[7, 14, 'Matí'], [14, 21, 'Tarda'], [21, 7, 'Nit']];
 const FENOMENS = { pluja_forta: INTENSITAT_PLUJA[1], pluja_torrencial: INTENSITAT_PLUJA[2], ratxa: 70, calor: 36, glaçada: 0 };
 // Els noms, amb T() literal perquè les proves de traducció els trobin.
@@ -113,6 +121,14 @@ function tramDe(f) {
   const dia = new Date(d);
   if (nom === 'Nit' && h < 7) dia.setDate(dia.getDate() - 1);
   return { clau: `${dia.toDateString()}|${nom}`, nom, ini, fi, dia };
+}
+
+// El cel del tram: boira si n'hi ha la major part de les hores; si no, la
+// mitjana dels núvols. Només el cel: la pluja la diu el paraigua.
+function celTram(files, nit) {
+  if (files.filter(esBoira).length * 2 > files.length) return [T('Boira'), 'i-cloud-fog'];
+  const n = files.filter((f) => f.nuvols != null).map(nuvolsHora);
+  return n.length ? celNuvols(n.reduce((a, b) => a + b, 0) / n.length, nit) : null;
 }
 
 function resumTrams(hores, ara) {
@@ -143,6 +159,8 @@ function resumTrams(hores, ara) {
     return {
       nom: (esDema ? NOM_TRAM_DEMA : NOM_TRAM)[g.nom](),
       hores: actual ? T`fins a les ${g.fi} h` : `${g.ini}–${g.fi} h`,
+      cel: celTram(g.files, g.nom === 'Nit'),
+      plou: g.files.some((f) => plujaHora(f) !== null),
       prob: Math.max(...g.files.map((f) => f.probabilitat || 0)),
       mm: g.files.reduce((s, f) => s + (f.pluja_mm || 0), 0),
       tMin: temps.length ? Math.min(...temps) : null, tMax: temps.length ? Math.max(...temps) : null,
@@ -159,20 +177,23 @@ function blocTrams(hores, ara) {
   for (const t of trams) {
     const li = element('li', 'tram');
     li.append(element('strong', null, t.nom), element('span', 'quan', ` (${t.hores})`));
-    const pluja = element('span', 'dada');
-    const mm = t.mm >= 1 ? T`, uns ${coma(t.mm, 0)} mm` : '';
-    pluja.append(icona('i-umbrella'), `${Math.round(t.prob * 100)} %${mm}`);
-    li.append(pluja);
-    for (const [text, id] of t.fenomens) {
-      const s = element('span', 'dada fenomen');
+    const peca = (id, text, classe = 'dada') => {
+      const s = element('span', classe);
       s.append(icona(id), text);
       li.append(s);
+    };
+    if (t.cel) peca(t.cel[1], t.cel[0]);
+    if (t.tMin != null) {
+      const [min, max] = [Math.round(t.tMin), Math.round(t.tMax)];
+      peca('i-thermometer', min === max ? `${min} °C` : `${min}–${max} °C`);
     }
-    if (t.tMin != null) li.append(element('span', 'dada', `${Math.round(t.tMin)}–${Math.round(t.tMax)} °C`));
+    if (t.plou) peca('i-umbrella', `${Math.round(t.prob * 100)} %` + (t.mm >= 1 ? T`, uns ${coma(t.mm, 0)} mm` : ''));
+    for (const [text, id] of t.fenomens) peca(id, text, 'dada fenomen');
     cont.append(li);
   }
   return cont;
 }
+
 
 function blocAra(ara, casa, radarDades, vent, hores) {
   const base = casa || ara;

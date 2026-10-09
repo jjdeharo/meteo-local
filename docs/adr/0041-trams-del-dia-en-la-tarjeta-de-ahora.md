@@ -18,9 +18,16 @@ temps», porque la página lleva además la previsión.
   muestran los tres primeros tramos con horas por delante: el tramo en
   curso dice «fins a les 14 h»; los que vienen, «14–21 h»; a partir de las
   21 h salen «Nit», «Demà matí» y «Demà tarda» (la previsión llega a 24 h).
-- **Siempre**: la probabilidad de lluvia del tramo (la máxima de sus horas)
-  con el paraguas de Lucide, los milímetros sumados si llegan a 1 («uns
-  5 mm») y la temperatura mínima–máxima.
+- **Siempre**, en este orden: el cielo del tramo con su icono y su nombre
+  (la media de las nubes de sus horas, con los nombres de Meteocat del
+  ADR 0043; «Boira» si hay niebla en la mayoría de las horas; de noche, la
+  luna) y la temperatura mínima–máxima con el termómetro («9 °C» si son
+  iguales). El cielo no dice la lluvia: la dice el paraguas.
+- **El paraguas, solo si va a llover** (Juanjo, 09-10-2026: «símbolo de
+  lluvia solo si va a llover»): si alguna hora del tramo llega a «possible»
+  (20 % o más, el mismo criterio que el cielo de la tabla), con la
+  probabilidad máxima de sus horas y los milímetros sumados si llegan a 1
+  («uns 5 mm»). Hasta la 3.28.0 salía siempre, también con un 0 %.
 - **Solo cuando se dan**, en ámbar y con su icono: tempesta (código de
   tormenta de Open-Meteo, 95 o más, o aviso de AEMET por tormentas en la
   hora), pluja forta (20 mm en una hora), ratxes de vent (70 km/h), calor
@@ -46,6 +53,9 @@ temps», porque la página lleva además la previsión.
 - `tests/test_web.py`, `test_resum_per_trams_del_dia`: tramos, horas,
   probabilidad, milímetros, temperaturas y los seis fenómenos, de día y de
   noche; `tests/test_montflorit.py`: traducciones y menú.
+- Desde el 09-10-2026, `test_cel_de_cada_tram` (cielo, niebla, luna y lluvia
+  que sube las nubes) y cuándo sale el paraguas; Firefox y Chromium con los
+  datos reales y con lluvia simulada, y axe-core sin incidencias.
 - `probar-web` en Chromium, Firefox y WebKit, escritorio, móvil y tableta,
   claro y oscuro, en catalán y castellano, y axe-core sin incidencias, el
   08-10-2026. Juanjo vio las capturas antes de publicar.

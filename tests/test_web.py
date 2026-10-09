@@ -194,6 +194,8 @@ class Web(unittest.TestCase):
         r = self.avalua("2026-10-08T09:30:00+02:00", f"resumTrams({json.dumps(hores)}, new Date())")
         self.assertEqual([(t["nom"], t["hores"]) for t in r], [("Matí", "fins a les 14 h"), ("Tarda", "14–21 h"), ("Nit", "21–7 h")])
         self.assertEqual((r[0]["prob"], r[0]["tMin"], r[0]["tMax"], r[0]["fenomens"]), (0.1, 17, 21, []))
+        # Juanjo, 09-10-2026: la pluja, només si va a ploure (alguna hora amb un 20 % o més).
+        self.assertEqual([t["plou"] for t in r], [False, True, False])
         self.assertEqual([f[0] for f in r[1]["fenomens"]], ["tempesta", "pluja forta", "ratxes de 75\u00a0km/h"])
         self.assertEqual(r[1]["mm"], 57)
         self.assertEqual([f[0] for f in r[2]["fenomens"]], ["neu", "glaçada"])
@@ -202,6 +204,20 @@ class Web(unittest.TestCase):
         self.assertEqual([t["nom"] for t in r], ["Nit", "Demà matí"])
         self.assertEqual([f[0] for f in r[1]["fenomens"]], ["calor"])
         self.assertEqual(self.avalua("2026-10-08T22:30:00+02:00", f"resumTrams({json.dumps(hores)}, new Date())", "casa.js", ARNES)[0]["hores"], "fins a les 7 h")
+
+    def test_cel_de_cada_tram(self):
+        # El cel del tram, amb el seu nom i la seva icona: la mitjana dels núvols, i de nit, la lluna.
+        def fila(h, nuvols, codi=0, mm=0):
+            return {"hora": f"2026-10-08T{h:02d}:00", "fins": f"2026-10-08T{h + 1:02d}:00", "probabilitat": 0,
+                    "pluja_mm": mm, "temperatura": 20, "nuvols": nuvols, "codi": codi, "avisos": []}
+        hores = ([fila(h, 10) for h in range(9, 14)] + [fila(h, 40, 45 if h < 18 else 0) for h in range(14, 21)]
+                 + [fila(h, 30) for h in range(21, 23)])
+        r = self.avalua("2026-10-08T09:30:00+02:00", f"resumTrams({json.dumps(hores)}, new Date()).map((t) => t.cel)")
+        self.assertEqual(r, [["Serè", "i-sun"], ["Boira", "i-cloud-fog"], ["Poc ennuvolat", "i-cloud-moon"]])
+        # Si algun model hi posa pluja, com a mínim mig ennuvolat, com a la taula.
+        r = self.avalua("2026-10-08T09:30:00+02:00",
+                        f"resumTrams({json.dumps([fila(10, 10, mm=0.5)])}, new Date())[0].cel")
+        self.assertEqual(r, ["Mig ennuvolat", "i-cloud"])
 
     def test_les_franges_acabades_no_compten(self):
         hores = [{"hora": "2026-10-08T06:00", "fins": "2026-10-08T07:00"}, {"hora": "2026-10-08T07:00", "fins": "2026-10-08T08:00"},
