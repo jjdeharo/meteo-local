@@ -15,13 +15,12 @@ Tipos:
 - perill: lo medido o previsto llega a los umbrales de aviso de AEMET (la de
   riscos.py, ADR 0018), al aparecer o subir de nivel; y, desde el 08-10-2026,
   un incendio forestal en curso a menos de 5 km (Bombers) al empezar y al
-  dejar de constar (entorn.py, ADR 0046); y, desde el 09-10-2026, una calzada
-  cortada a 4 km o menos (Servei Català de Trànsit), al empezar y al acabar
-  (transit.py, ADR 0052).
+  dejar de constar (entorn.py, ADR 0046).
 - riera: riesgo de desbordamiento de la riera de Sant Cugat (la de riera.py,
   ADR 0027), atención y peligro, siempre con el aviso de que es orientativo.
-- trens: una línea de Cerdanyola deja de circular o vuelve (trens.py,
-  ADR 0029), cuando el cambio se repite en dos pasadas seguidas.
+
+Los trenes y el tráfico no avisan desde el 09-10-2026: se consultan en «Si
+surts» y con /trens y /transit del bot (ADR 0053).
 
 Uso: python3 avisos_bot.py CASA.json AVISOS.json
 """
@@ -54,8 +53,6 @@ RISCOS_ES = {
     "fred": ("Frío intenso previsto: hasta {v} °C, {q}.", "Ahora hace frío intenso: {v} °C."),
     "neu_24h": ("Nieve prevista: {v} cm en las próximas 24 horas.", None),
 }
-VA = ("circula", "incidencies")
-NO_VA = ("sense_trens", "bus")
 
 
 def coma(x):
@@ -219,41 +216,6 @@ def text_incendi(i, acabat=False):
                   f"desde las {hhmm(i.get('inici'))}. Sigue las indicaciones de Bombers y de Protección Civil."}
 
 
-# --- Carreteras cortadas cerca (ADR 0052) -----------------------------------------
-# También con los de peligro: afectan a todo el que sale en coche o en moto.
-# Qué corte avisa lo decide transit.py («tall»). Los textos del Servei Català
-# de Trànsit (causa y sentido) van tal cual, en catalán.
-
-def text_tall(i, acabat=False):
-    via = i.get("carretera") or "?"
-    lloc_ca = f" a {i['municipi']}" if i.get("municipi") else ""
-    lloc_es = f" en {i['municipi']}" if i.get("municipi") else ""
-    if acabat:
-        return {"ca": negreta(f"Carretera: la {via}{lloc_ca} ja no consta com a tallada")
-                      + "\nEl Servei Català de Trànsit ja no hi indica la calçada tallada.",
-                "es": negreta(f"Carretera: la {via}{lloc_es} ya no consta como cortada")
-                      + "\nEl Servei Català de Trànsit ya no indica allí la calzada cortada."}
-    detall = "; ".join(x for x in (i.get("causa"), i.get("sentit"), i.get("pk") and f"km {i['pk']}") if x)
-    detall = f" ({html.escape(detall, quote=False)})" if detall else ""
-    return {"ca": negreta(f"Carretera tallada a prop de Montflorit: {via}{lloc_ca}")
-                  + f"\nEl Servei Català de Trànsit hi indica la calçada tallada{detall}, des de les "
-                  f"{hhmm(i.get('des_de'))}. Si havies de passar per allà, busca un altre camí.",
-            "es": negreta(f"Carretera cortada cerca de Montflorit: {via}{lloc_es}")
-                  + f"\nEl Servei Català de Trànsit indica allí la calzada cortada{detall}, desde las "
-                  f"{hhmm(i.get('des_de'))}. Si tenías que pasar por allí, busca otro camino."}
-
-
-def text_trens(linia, estacio, estat):
-    if estat == "bus":
-        return {"ca": negreta(f"Trens: l'{linia} no circula a {estacio}") + "\nHi ha servei per carretera.",
-                "es": negreta(f"Trenes: la {linia} no circula en {estacio}") + "\nHay servicio por carretera."}
-    if estat == "sense_trens":
-        return {"ca": negreta(f"Trens: l'{linia} no circula a {estacio}"),
-                "es": negreta(f"Trenes: la {linia} no circula en {estacio}")}
-    return {"ca": negreta(f"Trens: l'{linia} torna a circular a {estacio}"),
-            "es": negreta(f"Trenes: la {linia} vuelve a circular en {estacio}")}
-
-
 # --- Decidir -----------------------------------------------------------------
 
 def decideix(estat, salida, ahora):
@@ -309,21 +271,6 @@ def decideix(estat, salida, ahora):
                 if iid not in ara_ids:
                     afegeix("perill", f"incendi:{iid}:fi", text_incendi(i, acabat=True), "fi")
         estat.setdefault("entorn", {"incendis": {}})["incendis"] = ara_ids
-    # Carreteras cortadas cerca (ADR 0052), igual que los incendios: la primera
-    # vez solo se apunta lo que hay. Si el Servei Català de Trànsit no ha
-    # respondido, no se mira: no es que se hayan acabado.
-    transit = salida.get("transit")
-    if transit and transit.get("incidencies") is not None:
-        talls = {i["id"]: i for i in transit["incidencies"] if i.get("tall")}
-        e = estat.get("talls")
-        if e is not None:
-            for tid, i in talls.items():
-                if tid not in e:
-                    afegeix("perill", f"tall:{tid}", text_tall(i), "tall")
-            for tid, i in e.items():
-                if tid not in talls:
-                    afegeix("perill", f"tall:{tid}:fi", text_tall(i, acabat=True), "fi")
-        estat["talls"] = talls
     # Riera: atención y peligro, una vez cada nivel por episodio.
     riera = salida.get("riera")
     if riera:
@@ -339,22 +286,9 @@ def decideix(estat, salida, ahora):
         # L'episodi s'ha tancat (3 hores de calma) després d'un avís: es diu que ha passat.
         if episodi_abans and not e.get("episodi") and abans:
             afegeix("riera", f"{episodi_abans['inici']}:fi", text_riera_fi(riera, episodi_abans), "fi")
-    # Trenes: el cambio cuenta si se repite en dos pasadas seguidas.
-    trens = estat.setdefault("trens", {})
-    for l in ((salida.get("trens") or {}).get("linies") or []):
-        if l["estat"] not in VA + NO_VA:
-            continue
-        ara = "va" if l["estat"] in VA else l["estat"]
-        t = trens.setdefault(l["linia"], {"avisat": "va", "candidat": None})
-        if ara == t["avisat"]:
-            t["candidat"] = None
-            continue
-        if t["candidat"] == ara:
-            t["avisat"], t["candidat"] = ara, None
-            afegeix("trens", f"{l['linia']}:{hora}", text_trens(l["linia"], l["estacio"], l["estat"]),
-                    "va" if ara == "va" else "no_va")
-        else:
-            t["candidat"] = ara
+    # Los avisos de trenes y de cortes ya no existen (ADR 0053): fuera su estado.
+    estat.pop("trens", None)
+    estat.pop("talls", None)
     return nous
 
 

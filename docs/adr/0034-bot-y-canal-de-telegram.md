@@ -52,7 +52,8 @@ internet en casa, que suele llegar con las tormentas.
   - **pluja**: lluvia en Montflorit en unos 15 minutos según el radar
     (ADR 0022);
   - **trens**: una línea de Cerdanyola deja de circular o vuelve, si el cambio
-    se repite en dos pasadas (ADR 0029).
+    se repite en dos pasadas (ADR 0029). Retirado el 09-10-2026: los trenes se
+    consultan con /trens (ADR 0053).
   Un aviso que llega tarde no se manda (lluvia, a los 20 minutos; los demás, a
   las 3 horas).
 - **Cada persona elige** en un menú con botones (al darse de alta, el menú
@@ -61,7 +62,8 @@ internet en casa, que suele llegar con las tormentas.
   «sí»; sin marca, «no» (Juanjo, 07-10-2026: con «·» para el no, «el check
   siempre es afirmación»). Los cuatro tipos (por
   defecto, riera y peligro), la previsión, un mensaje al día a las 6, 7 u
-  8 h (el tiempo ahora y el resto del día) o a las 20 h (la de mañana: la
+  8 h (el tiempo ahora y el resto del día) o a las 20 h, desde el 09-10-2026
+  a las 21 h (ADR 0053) (la de mañana: la
   noche solo si se espera lluvia, temperaturas, lluvia y avisos de AEMET de
   mañana; sin trenes), o «No vull rebre la previsió» (el menú lo explica), y el
   idioma (catalán o castellano, al principio el de su Telegram). Órdenes:
@@ -70,7 +72,8 @@ internet en casa, que suele llegar con las tormentas.
   /resum da siempre la de hoy, lo que queda del día y, de noche, la lluvia
   antes de las 6, mientras el resumen programado de las 20 h sigue siendo el
   de mañana), /radar (lo que ve
-  el radar y el enlace en directo), /trens (cada línea y su último aviso) y
+  el radar y el enlace en directo), /trens (cada línea y su último aviso),
+  desde el 09-10-2026 /transit (el tráfico de cerca, ADR 0053) y
   /avisos_actius (AEMET, Protección Civil y el tiempo excepcional que calcula
   la página, dicho que no es oficial), que solo leen los datos públicos
   y no tocan la lista de suscriptores. Cada descripción del menú cabe en una

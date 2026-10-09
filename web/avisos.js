@@ -9,12 +9,11 @@ const TIPUS_PUSH = [
   ['perill', T('Situacions de perill'), 'i-triangle-alert'],
   ['riera', T('Desbordament de la riera de Sant Cugat (en proves)'), 'i-waves'],
   ['pluja', T('Pluja a punt de començar (15 min abans)'), 'i-cloud-rain'],
-  ['trens', T('Trens de Cerdanyola (si no circulen)'), 'i-train-front'],
 ];
 // Per començar, com al bot: la riera i el perill.
 const PER_DEFECTE_PUSH = ['riera', 'perill'];
 const HORES_PUSH = [['', T('No vull rebre la previsió')], ['6', T('6 h')], ['7', T('7 h')], ['8', T('8 h')],
-  ['20', T('20 h (per a demà)')]];
+  ['21', T('21 h (per a demà)')]];
 const IDIOMA_PUSH = document.documentElement.lang === 'es' ? 'es' : 'ca';
 
 let registrePush = null;

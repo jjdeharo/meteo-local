@@ -24,11 +24,12 @@ cuenta hacia dónde va la lluvia del radar (ADR 0019).
 
 Los vecinos pueden recibir los avisos como notificaciones del móvil o del
 ordenador, sin Telegram, desde la página «Avisos» de la web («Avisos al mòbil»;
-ADR 0048): riera de Sant Cugat, peligro, lluvia en unos minutos, trenes y la
+ADR 0048): riera de Sant Cugat, peligro, lluvia en unos minutos y la
 previsión del día, lo que elija cada uno. También por Telegram: el «Bot Temps a Montflorit»
 ([@TempsMontfloritBot](https://t.me/TempsMontfloritBot)), donde cada uno elige
-riera de Sant Cugat, peligro, lluvia en unos minutos, trenes y la previsión
-del día, y el «Canal Temps a Montflorit»
+riera de Sant Cugat, peligro, lluvia en unos minutos y la previsión del día,
+y al que se puede preguntar por los trenes (/trens) y el tráfico (/transit)
+(ADR 0053), y el «Canal Temps a Montflorit»
 ([@TempsMontflorit](https://t.me/TempsMontflorit)), igual para todos, con la
 riera, el peligro y la previsión de las 7. La web tiene una página de ayuda
 con capturas, «Avisos a Telegram». El bot y el envío de las notificaciones

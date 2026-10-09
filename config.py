@@ -2,7 +2,7 @@
 """Datos fijos de «Temps a Montflorit»: lugares, horario, fuentes y umbrales.
 Se cambian aquí, no en los programas."""
 
-VERSION = "3.31.0"
+VERSION = "3.32.0"
 
 # Coordenadas con tres decimales (unos 100 m), no las exactas: para el tiempo
 # da igual una calle u otra, y el repositorio es público.
@@ -211,12 +211,6 @@ ALFA_NIVELL_MOSTRAR = 3
 TRANSIT_RADI_KM = 6
 TRANSIT_NIVELL_OBRES = 3
 TRANSIT_NIVELL_SORTIDA = 3
-# Aviso a los vecinos (bot, canal y navegador, con los de peligro): una calzada
-# cortada a TRANSIT_AVIS_KM o menos, al empezar y al acabar. De las obras, solo
-# si el corte lo causa algo imprevisto (TRANSIT_AVIS_CAUSES, en el texto de la
-# causa): los cortes programados, como los nocturnos, avisarían cada noche.
-TRANSIT_AVIS_KM = 4
-TRANSIT_AVIS_CAUSES = r"esllavissad|esfondrament|despreniment|inundaci|aigua|riuada|accident|arbre|incendi|neu|gel"
 
 TRENS_ESTACIONS = {"R4": (41.493, 2.148), "R7": (41.497, 2.115), "R8": (41.497, 2.115),
                    "S2": (41.502, 2.091)}

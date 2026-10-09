@@ -35,17 +35,19 @@ NOM = "Bot Temps a Montflorit"
 TEXTOS = {
     "ca": ([("avisos", "Tria quins avisos reps"), ("resum", "La previsió d'avui"), ("dema", "La previsió de demà"),
             ("ara", "El temps ara"), ("radar", "El radar ara"), ("trens", "Els trens de Cerdanyola"),
+            ("transit", "El trànsit a prop"),
             ("avisos_actius", "Avisos oficials vigents"), ("baixa", "Dona't de baixa")],
            "Bot personal: tu tries quins avisos del temps a Montflorit (Cerdanyola del Vallès) vols rebre: "
-           "riera de Sant Cugat (en proves), perill per pluja o vent, pluja a punt de començar, trens i la previsió "
-           "diària. Orientatiu, no oficial. Si no vols triar res, hi ha el Canal Temps a Montflorit: @TempsMontflorit.",
+           "riera de Sant Cugat (en proves), perill per pluja o vent, pluja a punt de començar i la previsió diària; "
+           "i li pots preguntar pels trens i el trànsit. Orientatiu, no oficial. Si no vols triar res, hi ha el Canal Temps a Montflorit: @TempsMontflorit.",
            "Bot personal: tria quins avisos del temps a Montflorit vols rebre."),
     "es": ([("avisos", "Elige qué avisos recibes"), ("resum", "La previsión de hoy"), ("dema", "La previsión de mañana"),
             ("ara", "El tiempo ahora"), ("radar", "El radar ahora"), ("trens", "Los trenes de Cerdanyola"),
+            ("transit", "El tráfico cerca"),
             ("avisos_actius", "Avisos oficiales vigentes"), ("baixa", "Darse de baja")],
            "Bot personal: tú eliges qué avisos del tiempo en Montflorit (Cerdanyola del Vallès) quieres recibir: "
-           "riera de Sant Cugat (en pruebas), peligro por lluvia o viento, lluvia a punto de empezar, trenes y la "
-           "previsión diaria. Orientativo, no oficial. Si no quieres elegir nada, está el Canal Temps a Montflorit: @TempsMontflorit.",
+           "riera de Sant Cugat (en pruebas), peligro por lluvia o viento, lluvia a punto de empezar y la previsión "
+           "diaria; y le puedes preguntar por los trenes y el tráfico. Orientativo, no oficial. Si no quieres elegir nada, está el Canal Temps a Montflorit: @TempsMontflorit.",
            "Bot personal: elige qué avisos del tiempo en Montflorit quieres recibir."),
 }
 for idioma, (ordres, descripcio, curta) in TEXTOS.items():

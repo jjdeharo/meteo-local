@@ -46,7 +46,9 @@ moto solo tenían en cuenta el tiempo.
   la versión en castellano, como los avisos de Renfe y FGC. Solo los nombres
   de municipio pasan de mayúsculas a la forma normal.
 - **Aviso a los vecinos de una carretera cortada** (Juanjo, 09-10-2026: «eso
-  afecta a la circulación de los vecinos»): una calzada cortada (el texto dice
+  afecta a la circulación de los vecinos»). Retirado el mismo día, en la
+  3.32.0 (ADR 0053): un corte no es una situación de peligro, y el tráfico se
+  consulta con /transit. Lo que se hizo en la 3.31.0: una calzada cortada (el texto dice
   «tallada») a `TRANSIT_AVIS_KM` (4 km) o menos, un mensaje al empezar y otro
   al dejar de constar. Va con los de «Situacions de perill», como los
   incendios (ADR 0046): llega a todos los suscriptores que lo tienen por

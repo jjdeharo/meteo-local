@@ -13,8 +13,9 @@
 
 date_default_timezone_set('Europe/Madrid');
 const ORIGENS = ['https://meteo-montflorit.github.io'];
-const TIPUS = ['riera', 'perill', 'pluja', 'trens'];
-const HORES = ['', '6', '7', '8', '20'];
+// Els trens i el trànsit no són avisos: es consulten (ADR 0053).
+const TIPUS = ['riera', 'perill', 'pluja'];
+const HORES = ['', '6', '7', '8', '21'];
 const IDIOMES = ['ca', 'es'];
 // Els serveis de notificacions dels navegadors: cap altra adreça s'accepta.
 const SERVEIS = '/^https:\/\/(fcm\.googleapis\.com|android\.googleapis\.com|[a-z0-9.-]*push\.services\.mozilla\.com'
@@ -85,6 +86,8 @@ if ($accio === 'desa') {
     }
     $avisos = array_values(array_intersect(TIPUS, is_array($p['avisos'] ?? null) ? $p['avisos'] : []));
     $resum = (string)($p['resum'] ?? '');
+    // Una pàgina vella encara pot enviar les 20 h: ara són les 21 h (ADR 0053).
+    if ($resum === '20') $resum = '21';
     $idioma = (string)($p['idioma'] ?? 'ca');
     if (!in_array($resum, HORES, true) || !in_array($idioma, IDIOMES, true)) respon(400, ['error' => 'opcions']);
     $nou = !isset($subs[$endpoint]);

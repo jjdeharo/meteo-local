@@ -6,9 +6,6 @@ import sys
 import unittest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-import datetime as dt  # noqa: E402
-
-import avisos_bot as AB  # noqa: E402
 import config as C  # noqa: E402
 import transit as T  # noqa: E402
 
@@ -68,7 +65,7 @@ class Transit(unittest.TestCase):
                                "municipi": "Cerdanyola del Vallès",
                                "sentit": "Sentit Sud cap a TARRAGONA-UN CARRIL TALLAT", "causa": "Avaria",
                                "descripcio": "Circulació intensa", "pk": "150-149,5",
-                               "des_de": "2026-10-09T07:34+02:00", "km": ap7["km"], "tall": False})
+                               "des_de": "2026-10-09T07:34+02:00", "km": ap7["km"]})
 
     def test_sense_rss_surten_igual(self):
         # Sense el RSS, sense municipi i amb el «cap a» del GML.
@@ -101,50 +98,6 @@ class Transit(unittest.TestCase):
         web = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "web", "sortir.js")
         with open(web, encoding="utf-8") as f:
             self.assertIn(f"const NIVELL_TRANSIT = {C.TRANSIT_NIVELL_SORTIDA};", f.read())
-
-    def test_quins_talls_avisen(self):
-        def tall(tipus, desc, causa, dist=2.0):
-            return T.es_tall({"tipus": tipus, "descripcio": desc, "causa": causa}, dist)
-        self.assertTrue(tall(2, "Calçada tallada", "Esfondraments"))
-        self.assertTrue(tall(2, "Calçada tallada", "Accident"))
-        self.assertTrue(tall(3, "Calçada tallada. Desviaments", "Esllavissada"))
-        self.assertFalse(tall(3, "Calçada tallada", "Reasfaltat"))              # obres programades
-        self.assertFalse(tall(2, "Circulació amb congestió", "Accident"))       # no tallada
-        self.assertFalse(tall(2, "Calçada tallada", "Accident", C.TRANSIT_AVIS_KM + 0.5))
-        r = T.filtra(T.llegeix_gml(GML), T.llegeix_rss(RSS))
-        self.assertFalse(any(i["tall"] for i in r))
-
-
-ARA = dt.datetime(2026, 10, 9, 8, 0).astimezone()
-TALL = {"id": "t1", "tipus": "retencio", "nivell": 5, "carretera": "BV-1415", "municipi": "Cerdanyola del Vallès",
-        "sentit": "Sentit Ambdós sentits", "causa": "Esfondraments", "descripcio": "Calçada tallada",
-        "pk": "6,9-6,4", "des_de": "2026-10-09T07:34+02:00", "km": 3.9, "tall": True}
-
-
-class Avisos(unittest.TestCase):
-    """L'avís als veïns d'una carretera tallada a prop (ADR 0052)."""
-
-    def passada(self, estat, incidencies, minuts=0):
-        salida = {"transit": None if incidencies is None else {"incidencies": incidencies}}
-        return [a for a in AB.decideix(estat, salida, ARA + dt.timedelta(minutes=minuts)) if a["tipus"] == "perill"]
-
-    def test_tall_i_quan_s_acaba(self):
-        estat = {}
-        self.assertEqual(self.passada(estat, [TALL]), [])               # la primera vegada, només s'apunta
-        estat = {}
-        self.passada(estat, [])
-        nous = self.passada(estat, [TALL, {**TALL, "id": "t2", "tall": False}], 6)
-        self.assertEqual(len(nous), 1)
-        self.assertEqual(nous[0]["ca"].splitlines()[0],
-                         "<b>Carretera tallada a prop de Montflorit: BV-1415 a Cerdanyola del Vallès</b>")
-        self.assertIn("calçada tallada (Esfondraments; Sentit Ambdós sentits; km 6,9-6,4), des de les 07:34",
-                      nous[0]["ca"])
-        self.assertIn("busca otro camino", nous[0]["es"])
-        self.assertEqual(self.passada(estat, [TALL], 12), [])          # una sola vegada
-        self.assertEqual(self.passada(estat, None, 18), [])            # el SCT no respon: no «s'ha acabat»
-        fi = self.passada(estat, [], 24)
-        self.assertEqual(fi[0]["ca"].splitlines()[0],
-                         "<b>Carretera: la BV-1415 a Cerdanyola del Vallès ja no consta com a tallada</b>")
 
 
 if __name__ == "__main__":

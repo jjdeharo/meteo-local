@@ -73,7 +73,10 @@ class Menu(unittest.TestCase):
         self.assertIn("✓ Lluvia a punto de empezar (15 min antes)", textos)
         self.assertIn("Desbordamiento de la riera de Sant Cugat (en pruebas)", textos)
         self.assertIn("✓ 7 h", textos)
-        self.assertIn("20 h (para mañana)", textos)
+        self.assertIn("21 h (para mañana)", textos)
+        # Els trens ja no són un avís: es consulten amb /trens (ADR 0053).
+        self.assertFalse(any("Tren" in t for t in textos))
+        self.assertFalse(B.canvia(sub, "t:trens"))
 
     def test_start_i_baixa(self):
         api, subs = Api(), {}
@@ -81,9 +84,9 @@ class Menu(unittest.TestCase):
         self.assertIn("5", subs)
         self.assertIn("orientatius, no oficials", api.enviats[0][1]["text"])
         self.assertIn("inline_keyboard", api.enviats[1][1]["reply_markup"])
-        B.atén(api, subs, {"callback_query": {"id": "q", "data": "t:trens", "from": {},
+        B.atén(api, subs, {"callback_query": {"id": "q", "data": "t:pluja", "from": {},
                                               "message": {"chat": {"id": 5}, "message_id": 9}}})
-        self.assertIn("trens", subs["5"]["avisos"])
+        self.assertIn("pluja", subs["5"]["avisos"])
         estat = {"resums": {"5": "2026-10-07", "6": "2026-10-07"},
                  "pendents": {"riera:1": {"avis": {}, "canal": False, "chats": ["5", "6"]}}}
         B.atén(api, subs, {"message": {"chat": {"id": 5, "type": "private"}, "from": {}, "text": "/baixa"}}, estat)
@@ -472,22 +475,47 @@ class Consultes(unittest.TestCase):
         subs["7"]["idioma"] = "es"
         self.assertIn("<b>Plan Alfa</b>\nNivel 4 hoy en Cerdanyola", self.ordre("/avisos_actius", subs))
 
-    def test_carreteres_tallades_a_avisos_actius(self):
-        # ADR 0052: les mateixes que avisen, amb el text del Servei Català de Trànsit.
+    def test_transit(self):
+        # /transit: les incidències de la fitxa del cotxe, amb els textos del SCT (ADR 0053).
         d = json.load(open(os.path.join(self.dir.name, "montflorit.json")))
         d["transit"] = {"hora": ARA.isoformat(), "incidencies": [
-            {"id": "t1", "carretera": "BV-1415", "municipi": "Cerdanyola del Vallès", "causa": "Esfondraments",
-             "des_de": "2026-10-09T07:34+02:00", "tall": True},
-            {"id": "t2", "carretera": "C-58", "municipi": "Barcelona", "causa": "Circulació", "tall": False}]}
+            {"id": "t1", "tipus": "retencio", "nivell": 3, "carretera": "C-58", "municipi": "Barcelona",
+             "sentit": "Sentit Sud cap a NUS TRINITAT", "causa": "Circulació", "descripcio": "Circulació amb retencions",
+             "pk": "0-1,5", "des_de": ARA.isoformat()},
+            {"id": "t2", "tipus": "obres", "nivell": 2, "carretera": "BV-1414", "municipi": "Cerdanyola del Vallès",
+             "sentit": "Sentit Sud cap a C-58", "causa": "Reasfaltat", "descripcio": "Calçada restringida",
+             "pk": "4-0", "des_de": "2026-04-22T20:57+02:00"}]}
         json.dump(d, open(os.path.join(self.dir.name, "montflorit.json"), "w"))
         subs = {"7": {"idioma": "ca", "avisos": [], "resum": None}}
-        r = self.ordre("/avisos_actius", subs)
-        self.assertIn("<b>Carreteres tallades</b>\nBV-1415 a Cerdanyola del Vallès: calçada tallada (Esfondraments), "
-                      "des de les 07:34.", r)
-        self.assertNotIn("C-58", r)
+        r = self.ordre("/transit", subs)
+        h = ARA.strftime("%H:%M")
+        self.assertIn("<b>Trànsit a prop de Montflorit</b>\n<b>C-58</b> (Barcelona): Circulació amb retencions. "
+                      f"Sentit Sud cap a NUS TRINITAT, km 0-1,5, des de les {h}.", r)
+        self.assertIn("<b>BV-1414</b> (Cerdanyola del Vallès): Calçada restringida. Obres: Reasfaltat, "
+                      "Sentit Sud cap a C-58, km 4-0, des del 22/4.", r)
+        self.assertIn("Servei Català de Trànsit", r)
         subs["7"]["idioma"] = "es"
-        self.assertIn("<b>Carreteras cortadas</b>\nBV-1415 en Cerdanyola del Vallès: calzada cortada (Esfondraments)",
-                      self.ordre("/avisos_actius", subs))
+        r = self.ordre("/transit", subs)
+        self.assertIn("<b>Tráfico cerca de Montflorit</b>", r)
+        self.assertIn("Obras: Reasfaltat", r)
+        d["transit"]["incidencies"] = []
+        json.dump(d, open(os.path.join(self.dir.name, "montflorit.json"), "w"))
+        self.assertIn("Ninguna incidencia en las carreteras cercanas (6 km).", self.ordre("/transit", subs))
+        # Ja no surten a /avisos_actius: no són una situació de perill.
+        self.assertNotIn("Carreter", self.ordre("/avisos_actius", subs))
+
+    def test_migracio_del_9_d_octubre(self):
+        # ADR 0053: les 20 h passen a les 21 h, i a qui tenia els trens se li diu una sola vegada.
+        api = Api()
+        subs = {"1": {"idioma": "ca", "avisos": ["perill", "trens"], "resum": "20"},
+                "2": {"idioma": "es", "avisos": ["riera"], "resum": "7"}}
+        B.migra(api, subs, {})
+        self.assertEqual(subs["1"], {"idioma": "ca", "avisos": ["perill"], "resum": "21"})
+        self.assertEqual(subs["2"]["resum"], "7")
+        self.assertEqual([(m, p["chat_id"]) for m, p in api.enviats], [("sendMessage", "1")])
+        self.assertIn("amb /trens", api.enviats[0][1]["text"])
+        B.migra(api, subs, {})
+        self.assertEqual(len(api.enviats), 1)
 
     def test_el_menu_cap_en_una_linia(self):
         # «Situacions de perill», curt (Juanjo, 08-10-2026: amb el parèntesi no hi cabia).
@@ -554,17 +582,14 @@ class AvisosPublics(unittest.TestCase):
         self.assertIn("Avís en proves", nous[1]["ca"])
         self.assertEqual(nous[0]["tipus"], nous[1]["tipus"], "riera")
 
-    def test_trens_dues_passades(self):
-        estat = {}
+    def test_trens_ja_no_avisen(self):
+        # ADR 0053: els trens es consulten amb /trens; l'estat vell es treu.
+        estat = {"trens": {"R7": {"avisat": "va", "candidat": None}}, "talls": {}}
         linia = {"linies": [{"linia": "R7", "estacio": "Cerdanyola Universitat", "estat": "sense_trens"}]}
-        self.assertEqual(AB.decideix(estat, {"trens": linia}, ARA), [])
-        nous = AB.decideix(estat, {"trens": linia}, ARA + dt.timedelta(minutes=15))
-        self.assertEqual(nous[0]["ca"], "<b>Trens: l'R7 no circula a Cerdanyola Universitat</b>")
-        self.assertEqual(AB.decideix(estat, {"trens": linia}, ARA + dt.timedelta(minutes=30)), [])
-        torna = {"linies": [dict(linia["linies"][0], estat="circula")]}
-        AB.decideix(estat, {"trens": torna}, ARA + dt.timedelta(minutes=45))
-        nous = AB.decideix(estat, {"trens": torna}, ARA + dt.timedelta(minutes=60))
-        self.assertEqual(nous[0]["es"], "<b>Trenes: la R7 vuelve a circular en Cerdanyola Universitat</b>")
+        for m in (0, 15, 30):
+            self.assertEqual(AB.decideix(estat, {"trens": linia}, ARA + dt.timedelta(minutes=m)), [])
+        self.assertNotIn("trens", estat)
+        self.assertNotIn("talls", estat)
 
     def test_riera_amb_avis_orientatiu(self):
         estat = {}

@@ -17,8 +17,7 @@ Generalitat, las mismas que muestra su mapa:
 Se quedan las que empiezan a C.TRANSIT_RADI_KM o menos de casa: todas las
 retenciones (accidentes, averías, circulación) y, de las obras, solo las que
 desvían o cortan la vía; el resto son trabajos con un carril restringido que
-duran semanas y taparían lo que importa. Las que son una calzada cortada cerca
-y no un corte de obras programado llevan «tall»: se avisa a los vecinos. Los textos son los del Servei Català
+duran semanas y taparían lo que importa. Los textos son los del Servei Català
 de Trànsit, en catalán, y no se traducen. Sin IA.
 
     python3 transit.py        las de ahora, en JSON
@@ -125,14 +124,6 @@ def es_mostra(i):
     return i["tipus"] == 2 or (i["tipus"] == 3 and (i["nivell"] >= C.TRANSIT_NIVELL_OBRES or tallada(i)))
 
 
-def es_tall(i, dist):
-    """Calzada cortada a C.TRANSIT_AVIS_KM o menos que no sea un corte de obras
-    programado: se avisa a los vecinos (avisos_bot.py)."""
-    if "tallada" not in (i["descripcio"] or "").lower() or dist > C.TRANSIT_AVIS_KM:
-        return False
-    return i["tipus"] == 2 or bool(re.search(C.TRANSIT_AVIS_CAUSES, i["causa"] or "", re.I))
-
-
 def filtra(gml, rss=None, casa=C.CASA):
     rss = rss or {}
     res = []
@@ -145,7 +136,7 @@ def filtra(gml, rss=None, casa=C.CASA):
                     "carretera": i["carretera"], "municipi": municipi,
                     "sentit": sentit or (i["cap_a"] and f"Cap a {i['cap_a']}"),
                     "causa": i["causa"], "descripcio": i["descripcio"], "pk": pk(*i["pk"]),
-                    "des_de": i["des_de"], "km": round(dist, 1), "tall": es_tall(i, dist)})
+                    "des_de": i["des_de"], "km": round(dist, 1)})
     # Primer les retencions, de la més greu a la més lleu; després les obres.
     return sorted(res, key=lambda i: (i["tipus"] != "retencio", -i["nivell"], i["km"]))
 

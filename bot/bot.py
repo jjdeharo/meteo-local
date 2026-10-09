@@ -47,13 +47,17 @@ ESTAT = os.path.join(BASE, "estat.json")
 CANAL = os.environ.get("BOT_CANAL", "@TempsMontflorit")
 WEB = "https://meteo-montflorit.github.io/"
 DURADA_S = 50
-TIPUS = ("riera", "perill", "pluja", "trens")
+# Els trens i el trànsit no són avisos: es consulten amb /trens i /transit
+# (Juanjo, 09-10-2026: «el que le interese lo mira en el menú»; ADR 0053).
+TIPUS = ("riera", "perill", "pluja")
 PER_DEFECTE = ["riera", "perill"]
 CANAL_TIPUS = ("riera", "perill")
-HORES_RESUM = ("6", "7", "8", "20")
+# La de la nit, a les 21 h i no a les 20 h: a les 21 ja hi ha entrat sempre la
+# passada de les 17 h d'AROME i ICON-EU, que arriba cap a les 19:45 (ADR 0053).
+HORES_RESUM = ("6", "7", "8", "21")
 CANAL_RESUM = "7"
 # Un aviso que llega tarde ya no sirve: lluvia en 15 minutos, como mucho 20.
-VIGENCIA_MIN = {"pluja": 20, "perill": 180, "riera": 180, "trens": 180}
+VIGENCIA_MIN = {"pluja": 20, "perill": 180, "riera": 180}
 DADES_VELLES_H = 2
 
 T = {
@@ -69,16 +73,17 @@ T = {
                  "de la riera i de perill i la previsió de les 7 h.\n\n"
                  "Només es desa el teu identificador de Telegram i el que triïs aquí. Amb /baixa s'esborra tot."),
         "riera": "Desbordament de la riera de Sant Cugat (en proves)", "perill": "Situacions de perill",
-        "pluja": "Pluja a punt de començar (15 min abans)", "trens": "Trens de Cerdanyola (si no circulen)",
+        "pluja": "Pluja a punt de començar (15 min abans)",
         "resum": "Previsió, un cop al dia, a les:", "no": "No vull rebre la previsió", "h": "{} h", "dema": "{} h (per a demà)",
         "baixa": "Fet: s'han esborrat les teves dades i ja no rebràs res. Amb /start pots tornar-hi.",
         "ajuda": ("/avisos tria què reps · /resum la previsió d'avui · /dema la de demà · /ara el temps ara · "
-                  "/radar el radar ara · /trens els trens · /avisos_actius els avisos oficials · "
+                  "/radar el radar ara · /trens els trens · /transit el trànsit · /avisos_actius els avisos oficials · "
                   "/baixa deixa de rebre'n i esborra les teves dades"),
         "velles": "Les dades de Temps a Montflorit no s'actualitzen des de les {}: ara no puc donar la previsió.",
         "velles_ara": "Les dades de Temps a Montflorit no s'actualitzen des de les {}: ara no puc dir el temps que fa.",
         "sense_previsio": "Ara no hi ha previsió disponible: les dades de les {} no en porten.",
         "mesura": " (mesura de les {})",
+        "sense_trens": "Els avisos de trens ja no s'envien automàticament. Pots consultar l'estat dels trens quan vulguis amb /trens.",
     },
     "es": {
         "benvinguda": ("<b>Bot Temps a Montflorit</b>\nTe enviaré, solo a ti, los avisos del tiempo en Montflorit "
@@ -92,16 +97,17 @@ T = {
                  "catalán: los avisos de la riera y de peligro y la previsión de las 7 h.\n\n"
                  "Solo se guarda tu identificador de Telegram y lo que elijas aquí. Con /baixa se borra todo."),
         "riera": "Desbordamiento de la riera de Sant Cugat (en pruebas)", "perill": "Situaciones de peligro",
-        "pluja": "Lluvia a punto de empezar (15 min antes)", "trens": "Trenes de Cerdanyola (si no circulan)",
+        "pluja": "Lluvia a punto de empezar (15 min antes)",
         "resum": "Previsión, una vez al día, a las:", "no": "No quiero recibir la previsión", "h": "{} h", "dema": "{} h (para mañana)",
         "baixa": "Hecho: se han borrado tus datos y ya no recibirás nada. Con /start puedes volver.",
         "ajuda": ("/avisos elige qué recibes · /resum la previsión de hoy · /dema la de mañana · /ara el tiempo ahora · "
-                  "/radar el radar ahora · /trens los trenes · /avisos_actius los avisos oficiales · "
+                  "/radar el radar ahora · /trens los trenes · /transit el tráfico · /avisos_actius los avisos oficiales · "
                   "/baixa deja de recibir y borra tus datos"),
         "velles": "Los datos de Temps a Montflorit no se actualizan desde las {}: ahora no puedo dar la previsión.",
         "velles_ara": "Los datos de Temps a Montflorit no se actualizan desde las {}: ahora no puedo decir el tiempo que hace.",
         "sense_previsio": "Ahora no hay previsión disponible: los datos de las {} no la traen.",
         "mesura": " (medida de las {})",
+        "sense_trens": "Los avisos de trenes ya no se envían automáticamente. Puedes consultar el estado de los trenes cuando quieras con /trens.",
     },
 }
 
@@ -498,6 +504,43 @@ def text_trens_bot(dades, idioma, moment):
     return f"<b>{cap}</b>\n" + "\n".join(files)
 
 
+TRANSIT = "https://transit.gencat.cat/{}/informacio-viaria/estat-transit/"
+
+
+def text_transit_bot(dades, idioma, moment):
+    """Les incidències de trànsit a prop, com a la fitxa del cotxe de «Si surts»
+    (ADR 0052 i 0053). Els textos del Servei Català de Trànsit, en català."""
+    vell = dades_velles(dades, idioma, moment)
+    if vell:
+        return vell
+    es = idioma == "es"
+    transit = dades.get("transit")
+    if not transit:
+        return "Ahora no hay datos del tráfico." if es else "Ara no hi ha dades del trànsit."
+    cap = "Tráfico cerca de Montflorit" if es else "Trànsit a prop de Montflorit"
+    files = []
+    for i in transit.get("incidencies") or []:
+        lloc = f" ({i['municipi']})" if i.get("municipi") else ""
+        causa = i.get("causa") if i.get("causa") != "Circulació" else None
+        if causa and i.get("tipus") == "obres":
+            causa = ("Obras: " if es else "Obres: ") + causa
+        h = dt.datetime.fromisoformat(i["des_de"]) if i.get("des_de") else None
+        quan = None
+        if h:
+            quan = ((f"desde las {h:%H:%M}" if es else f"des de les {h:%H:%M}") if h.date() == moment.date()
+                    else (f"desde el {h.day}/{h.month}" if es else f"des del {h.day}/{h.month}"))
+        detall = ", ".join(x for x in (causa, i.get("sentit"), i.get("pk") and f"km {i['pk']}", quan) if x)
+        files.append(f"<b>{html.escape(i.get('carretera') or '?')}</b>{html.escape(lloc)}: "
+                     + html.escape(f"{i.get('descripcio') or ''}. {detall}." if detall else f"{i.get('descripcio') or ''}.",
+                                   quote=False))
+    if not files:
+        files = ["Ninguna incidencia en las carreteras cercanas (6 km)." if es
+                 else "Cap incidència a les carreteres de prop (6 km)."]
+    h = dt.datetime.fromisoformat(transit["hora"]).strftime("%H:%M") if transit.get("hora") else "?"
+    return (f"<b>{cap}</b>\n" + "\n".join(files) + "\n"
+            + enllac(TRANSIT.format("es" if es else "ca"), f"Servei Català de Trànsit, {h}"))
+
+
 DIRECCIO_ES = {"al nord": "el norte", "al nord-est": "el nordeste", "a l'est": "el este", "al sud-est": "el sudeste",
                "al sud": "el sur", "al sud-oest": "el sudoeste", "a l'oest": "el oeste", "al nord-oest": "el noroeste"}
 RADAR_EN_DIRECTE = {"rainviewer": "https://www.rainviewer.com/map.html?loc=41.482,2.135,9&layer=radar",
@@ -584,8 +627,6 @@ def text_avisos_actius(dades, idioma, moment):
         blocs.append(("AEMET", [html.escape(x, quote=False) for x in net]))
     # Incendis a prop i Pla Alfa des del nivell 3 (ADR 0046).
     blocs += blocs_entorn(dades.get("entorn") or {}, idioma)
-    # Carreteres tallades a prop, les mateixes que avisen (ADR 0052).
-    blocs += blocs_talls(dades.get("transit") or {}, idioma)
     # El temps excepcional que calcula la pàgina amb els llindars de l'AEMET
     # (el mateix de l'avís «perill», ADR 0018), dit que no és oficial.
     propis = linies_riscos(dades.get("riscos") or [], idioma, moment)
@@ -636,28 +677,6 @@ def blocs_entorn(entorn, idioma):
     return blocs
 
 
-TRANSIT = "https://transit.gencat.cat/{}/informacio-viaria/estat-transit/"
-
-
-def blocs_talls(transit, idioma):
-    """Les calçades tallades a prop que avisen (transit.py marca «tall»). La
-    causa és la del Servei Català de Trànsit, en català."""
-    es = idioma == "es"
-    linies = []
-    for i in transit.get("incidencies") or []:
-        if not i.get("tall"):
-            continue
-        h = dt.datetime.fromisoformat(i["des_de"]).strftime("%H:%M") if i.get("des_de") else "?"
-        lloc = (f" en {i['municipi']}" if es else f" a {i['municipi']}") if i.get("municipi") else ""
-        causa = f" ({i['causa']})" if i.get("causa") else ""
-        linies.append(html.escape(f"{i['carretera']}{lloc}: calzada cortada{causa}, desde las {h}." if es
-                                  else f"{i['carretera']}{lloc}: calçada tallada{causa}, des de les {h}.", quote=False))
-    if not linies:
-        return []
-    return [("Carreteras cortadas" if es else "Carreteres tallades",
-             linies + [enllac(TRANSIT.format("es" if es else "ca"), "Servei Català de Trànsit")])]
-
-
 def linies_riscos(riscos, idioma, moment):
     """Una línia per risc, en l'idioma de qui pregunta. Els textos en castellà
     són els de l'avís (avisos_bot.py); si no es pot carregar, el català de les dades."""
@@ -679,7 +698,8 @@ def linies_riscos(riscos, idioma, moment):
 # no existeix compta com «altres», sense guardar què s'ha escrit.
 
 COMPTADOR = os.path.join(BASE, "comptador.json")
-ORDRES = ("/start", "/avisos", "/menu", "/resum", "/dema", "/ara", "/radar", "/trens", "/avisos_actius", "/baixa")
+ORDRES = ("/start", "/avisos", "/menu", "/resum", "/dema", "/ara", "/radar", "/trens", "/transit", "/avisos_actius",
+          "/baixa")
 COMPTADOR_DIES = 400
 
 
@@ -757,6 +777,27 @@ def neteja(subs, estat):
         p["chats"] = [c for c in p["chats"] if c in subs]
 
 
+def migra(api, subs, estat):
+    """Canvis del 09-10-2026 (ADR 0053), sense que ningú hagi de fer res: la
+    previsió de les 20 h passa a les 21 h, i a qui tenia els avisos de trens
+    se li diu una sola vegada que ja no arriben i que hi ha /trens. Si el
+    missatge no entra, es torna a provar a la volta següent."""
+    for chat, sub in list(subs.items()):
+        if sub.get("resum") == "20":
+            sub["resum"] = "21"
+        if "trens" in sub.get("avisos", []):
+            try:
+                envia(api, chat, T[sub["idioma"]]["sense_trens"])
+            except Bloquejat:
+                subs.pop(chat, None)
+                esborra(estat, chat)
+                continue
+            except Exception as ex:
+                registra(f"l'avís de la fi dels avisos de trens no ha entrat: {ex}")
+                continue
+            sub["avisos"] = [x for x in sub["avisos"] if x in TIPUS]
+
+
 def canvi_canal(api, cm):
     """Juanjo quiere saber quién entra y quién sale del canal (08-10-2026).
     Telegram lo cuenta al bot porque es administrador del canal. El nombre va
@@ -780,7 +821,7 @@ def canvi_canal(api, cm):
     avisa_juanjo(f"Temps a Montflorit: {que}, {nom}.{total}")
 
 
-CONSULTES = ("/dema", "/trens", "/radar", "/avisos_actius")
+CONSULTES = ("/dema", "/trens", "/transit", "/radar", "/avisos_actius")
 
 
 def atén(api, subs, update, estat=None):
@@ -837,7 +878,8 @@ def atén(api, subs, update, estat=None):
         envia(api, chat, resum(llegeix(os.path.join(DADES, "montflorit.json"), {}), sub["idioma"], ara(), dema=True), html=True)
     elif ordre in CONSULTES:
         dades = llegeix(os.path.join(DADES, "montflorit.json"), {})
-        funcio = {"/trens": text_trens_bot, "/radar": text_radar_bot, "/avisos_actius": text_avisos_actius}[ordre]
+        funcio = {"/trens": text_trens_bot, "/transit": text_transit_bot, "/radar": text_radar_bot,
+                  "/avisos_actius": text_avisos_actius}[ordre]
         envia(api, chat, funcio(dades, sub["idioma"], ara()) + "\n" + WEB, html=True)
     else:
         envia(api, chat, t["ajuda"])
@@ -996,6 +1038,7 @@ def volta():
     subs = llegeix(SUBS, {})
     estat = llegeix(ESTAT, {})
     neteja(subs, estat)
+    migra(api, subs, estat)
     actualitza_repo(estat)
     fi = time.time() + DURADA_S
     while True:
@@ -1047,7 +1090,7 @@ def text_push():
     push = llegeix(os.path.join(BASE, "push.json"), {})
     n = lambda x: sum(x in s.get("avisos", []) for s in push.values())
     return (f"Avisos en el navegador: {len(push)} dispositivos (riera {n('riera')}, peligro {n('perill')}, "
-            f"lluvia {n('pluja')}, trenes {n('trens')}, previsión diaria "
+            f"lluvia {n('pluja')}, previsión diaria "
             f"{sum(bool(s.get('resum')) for s in push.values())}).\n")
 
 
@@ -1061,7 +1104,7 @@ def informe():
     except Exception:
         canal = "?"
     text = (f"Temps a Montflorit: {len(subs)} suscriptores en el bot (riera {n('riera')}, peligro {n('perill')}, "
-            f"lluvia {n('pluja')}, trenes {n('trens')}, previsión diaria "
+            f"lluvia {n('pluja')}, previsión diaria "
             f"{sum(bool(s.get('resum')) for s in subs.values())}) y {canal} miembros en el canal.\n"
             + text_push()
             + text_estadistiques(dies=(7,)))

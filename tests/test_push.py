@@ -59,8 +59,8 @@ class Push(unittest.TestCase):
         self.assertEqual(n, {"title": "Pluja d'aquí a uns 15 minuts", "url": "./", "tag": "pluja:1",
                              "body": "Segons el radar & l'estació.\n\nOrientatiu."})
         self.assertTrue(P.notificacio("<b>T</b>\n" + "x" * 3000)["body"].endswith("…"))
-        self.assertEqual([P.url("./", "es"), P.url("sortir.html#trens", "es"), P.url("./", "ca")],
-                         ["es/", "es/sortir.html#trens", "./"])
+        self.assertEqual([P.url("./", "es"), P.url("sortir.html", "es"), P.url("./", "ca")],
+                         ["es/", "es/sortir.html", "./"])
 
     def test_cada_avis_a_qui_l_ha_triat_i_una_sola_vegada(self):
         self.avisos([self.avis("riera"), self.avis("pluja"), self.avis("trens")])
