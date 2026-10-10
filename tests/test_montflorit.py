@@ -228,7 +228,7 @@ class Castella(unittest.TestCase):
         self.assertEqual(js("textRadar({arriba: null, possible: null}, false)[1]"), "No se acerca lluvia en 2 horas")
         self.assertEqual(js("textRadar({arriba: '2026-10-06T11:15:00+02:00'}, false)[1]"), "Llegaría lluvia hacia las\u00a011:15")
         self.assertEqual(js("TD('al nord-est')"), "el nordeste")
-        self.assertEqual(js("textHorari({trams: [['00:00', '23:54']], cada_min: 6, mode_avis: ['pluja al radar']})"), "Modo aviso")
+        self.assertEqual(js("textHorari({trams: [['00:00', '23:54']], cada_min: 6, mode_avis: ['pluja al radar']})"), "Seguimiento de cerca")
         # Juanjo, 09-10-2026: el ritmo normal no se dice (la próxima hora ya lo dice) y el modo aviso se explica con un «?».
         self.assertEqual(js("textHorari({trams: [['00:00', '23:45']], cada_min: 15, mode_avis: []})"), "")
         self.assertEqual(js("textModeAvis({cada_min: 6, normal_min: 15, radar_km: 15})"),

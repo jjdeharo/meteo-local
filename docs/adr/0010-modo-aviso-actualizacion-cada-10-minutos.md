@@ -81,3 +81,13 @@ radar.» Los 15 km y los 15 minutos van en los datos (`radar_km` y
 un ? que al pulsarlo salga la descripción». Antes decía «Mode avís: dades
 cada 6 min.», y fuera del modo aviso, «Dades en directe cada 15 min.», que
 se quita porque la próxima hora ya lo dice.
+
+## Cambio del 10-10-2026: «Seguiment de prop»
+
+En la página, el modo aviso se llama «Seguiment de prop» («Seguimiento de
+cerca»), con el mismo «?» que explica cuándo y por qué. Juanjo: «modo aviso
+no me gusta, ¿qué tal modo alerta Montflorit?». «Alerta» se descartó porque
+es el nombre de una fase de los planes de Protección Civil que la misma
+página muestra, y se habría leído como una alerta oficial. En el código y en
+los datos sigue siendo `mode_avis`. Desde la 3.49.0, un plan sin motivo
+meteorológico a la vista no lo activa (ADR 0062).

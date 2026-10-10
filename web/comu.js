@@ -129,12 +129,13 @@ function horesActualitzacio(horari) {
 
 // El que s'afegeix a «Actualitzat a les… · propera…»: res si és el ritme
 // normal de tot el dia, perquè la propera hora ja diu cada quan (Juanjo,
-// 09-10-2026); «Mode avís» si està actiu, amb un «?» que explica què és.
+// 09-10-2026); «Seguiment de prop» (el mode avís) si està actiu, amb un «?» que explica què és; abans
+// «Mode avís» (Juanjo, 10-10-2026: «modo aviso no me gusta»).
 function textHorari(horari) {
   const [[inici]] = horari.trams;
   const totElDia = horari.trams.length === 1 && inici === '00:00';
   const trams = horari.trams.map(([a, b]) => `${a}\u2013${b}`).join(T(' i '));
-  if (horari.mode_avis && horari.mode_avis.length) return totElDia ? T('Mode avís') : T`Mode avís (${trams})`;
+  if (horari.mode_avis && horari.mode_avis.length) return totElDia ? T('Seguiment de prop') : T`Seguiment de prop (${trams})`;
   return totElDia ? '' : T`Dades en directe cada ${horari.cada_min} min (${trams}).`;
 }
 
@@ -198,7 +199,7 @@ function pintaHorari(dades, fonts = FONTS_TEMPS) {
     const span = element('span', 'mode', mode);
     $('horari').append(' ', span);
     if (dades.horari.mode_avis && dades.horari.mode_avis.length) {
-      const [boto, sentit] = botoAjuda(textModeAvis(dades.horari), T('Què és el mode avís?'), ajudaModeOberta,
+      const [boto, sentit] = botoAjuda(textModeAvis(dades.horari), T('Què és el seguiment de prop?'), ajudaModeOberta,
         (obert) => { ajudaModeOberta = obert; });
       span.append(boto);
       $('horari').append(sentit);
