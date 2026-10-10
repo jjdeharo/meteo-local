@@ -170,7 +170,7 @@ let ajudaModeOberta = false;
 // pàgina avisa només de les fonts que fa servir (Juanjo, 09-10-2026: «cada
 // pagina solo avisa de lo que usa»): un error del sol, per exemple, no fa
 // menys segura la previsió. Els noms són els que posa casa.py davant de «:».
-const FONTS_TEMPS = ['previsió', 'ensemble', 'estació', 'estació de casa', 'vent', 'radar',
+const FONTS_TEMPS = ['previsió', 'ensemble', 'estació', 'estació de casa', 'estacions veïnes', 'vent', 'radar',
   'final de la pluja', 'avisos', 'plans', 'riera', 'entorn'];
 
 // Si ha fallat alguna de les fonts de la pàgina. La previsió que falla i

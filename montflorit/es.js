@@ -126,6 +126,7 @@ var IDIOMA = {
     "baixant": "bajando",
     " ràpid": " rápido",
     "No plou": "No llueve",
+    "Plou en una estació veïna": "Llueve en una estación vecina",
     "Pluja a sobre": "Lluvia encima",
     " · pararia cap a les\u00a0{0}": " · pararía hacia las\u00a0{0}",
     " · no s\u2019acaba en 2 hores": " · no acaba en 2 horas",

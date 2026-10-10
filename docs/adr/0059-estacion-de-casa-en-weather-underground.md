@@ -34,10 +34,9 @@ Underground, pidió que la subiera el NAS («hazlo por el nas, tengo prisa»).
 - **Si la subida falla**, no es un error de la página: se apunta en el
   registro del NAS y no sale en la web (cada página solo avisa de lo que
   usa, ADR 0031).
-- **Lo que viene después**, cuando Juanjo genere la clave de lectura: leer
-  ICERDA28 (e ICERDA48 de reserva) como estación del barrio para «plou
-  ara», el modo aviso y la verdad de la lluvia por horas, con atribución a
-  Weather Underground en «Fonts». Se decidirá y registrará entonces.
+- **Lo que vino después**: la clave de lectura se generó el 10-10-2026 y
+  el uso de las vecinas (cuáles cuentan para «plou ara», cuál confirma las
+  horas secas, el registro y la atribución) está en el ADR 0060.
 
 ## Alternativas descartadas
 
@@ -61,7 +60,9 @@ con la ubicación que él eligió en el mapa.
 
 - Protocolo de subida de estaciones personales de Weather Underground
   (`updateweatherstation.php`, `action=updateraw`, respuesta «success»),
-  comprobado con la primera subida desde el NAS el 09-10-2026.
+  comprobado con la primera subida desde el NAS el 09-10-2026; el
+  10-10-2026 la red da la estación por conectada y acepta cada subida a la
+  primera.
 - Documentación de las API para contribuidores («APIs for Personal Weather
   Station Contributors», The Weather Company): observaciones actuales,
   historial rápido de un día, 7 días por horas y estaciones cercanas.
@@ -74,8 +75,9 @@ con la ubicación que él eligió en el mapa.
   la 3.45.1 cada subida se intenta hasta tres veces; además la pasada
   siguiente vuelve a probar.
 
-- Las condiciones de la clave de lectura (uso personal, no comercial) se
-  revisarán al generarla; la web es pública pero no comercial.
+- Las condiciones de la clave de lectura (uso personal, no comercial,
+  atribución, sin obras derivadas) se revisaron al generarla (ADR 0060); la
+  web es pública pero no comercial.
 - Si cambia el protocolo de subida o la red cierra las claves gratuitas, se
   deja de subir sin que la página lo note.
 

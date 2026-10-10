@@ -258,10 +258,11 @@ def _num(x):
 
 def pluja_observada(casa, meteocat=()):
     """mm de la hora según la estación de casa. Lo que marca es lluvia; su
-    cero solo vale como hora seca si las estaciones de Meteocat de alrededor
-    (meteocat: lo que midió cada una, si lo hay) tampoco recogieron nada: el
-    pluviómetro a veces no marca la lluvia débil (ADR 0017 y 0058). Sin casa,
-    o con casa a cero y lluvia cerca, no se sabe."""
+    cero solo vale como hora seca si las estaciones de alrededor (meteocat:
+    lo que midió cada una, si lo hay: las de Meteocat y la vecina fiable de
+    Weather Underground) tampoco recogieron nada: el pluviómetro a veces no
+    marca la lluvia débil (ADR 0017, 0058 y 0060). Sin casa, o con casa a
+    cero y lluvia cerca, no se sabe."""
     c = _num((casa or {}).get("pluja_mm"))
     if c is None:
         return None
@@ -273,14 +274,18 @@ def pluja_observada(casa, meteocat=()):
 
 
 def _meteocat():
-    """Lo medido por horas en cada estación de Meteocat del registro."""
-    return [_llegeix(f"meteocat-{codi}.csv") for codi in C.ESTACIONES]
+    """Lo medido por horas en cada estación de Meteocat del registro y en
+    las vecinas de Weather Underground cuyo cero confirma una hora seca
+    (config.VEINES, ADR 0060)."""
+    return ([_llegeix(f"meteocat-{codi}.csv") for codi in C.ESTACIONES]
+            + [_llegeix(f"veina-{estacio}.csv") for estacio, v in C.VEINES.items() if v.get("sec")])
 
 
 def mostres():
     """Una muestra por hora prevista y pasada de cada previsión registrada, con
     lo que pasó: la lluvia y la temperatura de casa (ADR 0017), con las
-    estaciones de Meteocat para confirmar las horas secas (ADR 0058)."""
+    estaciones de Meteocat y la vecina fiable para confirmar las horas secas
+    (ADR 0058 y 0060)."""
     casa, meteocat = _llegeix("estacio-casa.csv"), _meteocat()
     res = []
     for arxiu in sorted(glob.glob(os.path.join(REGISTRE, "casa-*.jsonl"))):

@@ -80,7 +80,9 @@ Al subir cambios a `main`, una acción de GitHub pasa las pruebas, y el NAS, que
 mira cada minuto si hay código nuevo, publica. Solo publica el NAS.
 
 En cada pasada, la estación particular se sube también a la red de
-estaciones personales de Weather Underground (`wunderground.py`, ADR 0059).
+estaciones personales de Weather Underground (`wunderground.py`, ADR 0059),
+y con la clave de lectura de esa red se leen tres estaciones vecinas del
+barrio (ADR 0060).
 A las 16:00 el NAS rellena las horas que falten de la estación particular y la
 previsión aprende de sus aciertos (`aprenentatge.py`). En `main` no hay commits
 automáticos.
@@ -89,8 +91,11 @@ Fuentes de la previsión:
 
 1. **Estaciones**: la particular del barrio (Ecowitt), al minuto, cuya lluvia
    solo cuenta cuando marca (ADR 0017) y cuya presión se reduce al nivel del
-   mar (ADR 0037), y las de Meteocat en Sabadell y Sant Cugat, que además
-   confirman las horas secas para aprender (ADR 0058). El viento de ahora es
+   mar (ADR 0037); tres vecinas de la red de Weather Underground, cada cinco
+   minutos, que también hacen que «plou ara» cuente si alguna marca, y la
+   más fiable confirma las horas secas (ADR 0060); y las de Meteocat en
+   Sabadell y Sant Cugat, que también confirman las horas secas para
+   aprender (ADR 0058). El viento de ahora es
    el de Sant Cugat, por medias horas: el anemómetro de la particular no
    funciona bien (ADR 0037). La estación de Montflorit de meteocerdanyola.com
    se usó del 05-10-2026 al 09-10-2026 (ADR 0004 y 0058).
@@ -142,6 +147,7 @@ Umbrales y lugares, en `config.py`. El porqué, en los ADR.
 | `aire.py` | Calidad del aire ahora y lo peor de hoy, del modelo CAMS por Open-Meteo (ADR 0054) |
 | `nowcast.py` | La lluvia del radar llevada hacia delante hasta 2 horas (ADR 0019 y 0023) |
 | `ecowitt.py` | La estación particular con la API oficial de Ecowitt; las claves, fuera del repositorio (ADR 0017) |
+| `wunderground.py` | La estación particular, subida a Weather Underground, y las vecinas de esa red, leídas con su API; las claves, fuera del repositorio (ADR 0059 y 0060) |
 | `pluviometre.py` | Comprueba una vez, tras limpiarlo, si el pluviómetro marca la lluvia débil y avisa por Telegram (ADR 0017) |
 | `riscos.py` | Situaciones de peligro según lo medido y lo previsto, que usan la página y los avisos (ADR 0018) |
 | `fi_pluja.py` | Comprueba a qué hora para la lluvia según el radar, antes de enseñarlo (ADR 0049) |
@@ -197,6 +203,8 @@ Previsión de [Open-Meteo](https://open-meteo.com/) (CC BY 4.0), observaciones
 de [Meteocat](https://www.meteo.cat/observacions/xema) y del
 [portal de datos abiertos de la Generalitat](https://analisi.transparenciacatalunya.cat/d/nzvn-apee),
 estación particular con la [API de Ecowitt](https://doc.ecowitt.net/web/#/apiv3en?page_id=1),
+estaciones vecinas de [Weather Underground](https://www.wunderground.com/) (The
+Weather Company; uso personal y no comercial),
 radar y advección de [Meteocat](https://www.meteo.cat/observacions/radar) y,
 de reserva, de [RainViewer](https://www.rainviewer.com/), avisos de AEMET a
 través de [Meteoalarm](https://meteoalarm.org/), y trenes de

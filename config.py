@@ -2,7 +2,7 @@
 """Datos fijos de «Temps a Montflorit»: lugares, horario, fuentes y umbrales.
 Se cambian aquí, no en los programas."""
 
-VERSION = "3.45.1"
+VERSION = "3.46.0"
 
 # Coordenadas con tres decimales (unos 100 m), no las exactas: para el tiempo
 # da igual una calle u otra, y el repositorio es público.
@@ -34,6 +34,23 @@ ESTACIONES = {
     "XF": "Sabadell (Parc Agrari)",
     "XV": "Sant Cugat (CAR)",
 }
+
+# Estaciones vecinas de la red de estaciones personales de Weather Underground
+# (ADR 0060), leídas con la clave de lectura que da la red a quien aporta una
+# estación (ADR 0059). De cada una: dónde está (sin dirección exacta), si su
+# lluvia cuenta para «plou ara» y si su cero confirma las horas secas para
+# aprender (examen del 05 al 10-10-2026 contra la estación de casa: ADR 0060).
+VEINES = {
+    "ICERDA6": {"nom": "a 1 km a l'est, vora la riera", "plou": True, "sec": True},
+    "ICERDA18": {"nom": "al Puig de la Guàrdia", "plou": True, "sec": False},
+    "ICERDA28": {"nom": "a 400 m al nord", "plou": True, "sec": False},
+    "ICERDA48": {"nom": "a 600 m al nord-est", "plou": False, "sec": False},
+}
+# La clave de lectura caduca a los seis meses (generada el 10-10-2026): antes
+# de esta fecha hay que regenerarla en wunderground.com (Member Settings > API
+# Keys, en la versión antigua del sitio) y cambiarla en el NAS (RESTAURAR.md).
+WU_CLAU_CADUCA = "2027-04-10"
+WU_AVIS_CADUCITAT_DIES = 21
 
 # Horario de actualización con datos en directo (hora local): previsión a 24
 # horas, actualizada cada cuarto de hora todo el día. La web lo muestra tal

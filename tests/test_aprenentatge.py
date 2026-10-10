@@ -134,6 +134,22 @@ class Rasgos(unittest.TestCase):
         self.assertIsNone(A.pluja_observada(None, [sec, sec]))
         self.assertIsNone(A.pluja_observada({"pluja_mm": ""}, [sec, sec]))
 
+    def test_la_veina_fiable_confirma_les_hores_seques(self):
+        # Les referències són les de Meteocat i les veïnes amb «sec» (ADR 0060).
+        import tempfile
+        with tempfile.TemporaryDirectory() as d:
+            vell = A.REGISTRE
+            A.REGISTRE = d
+            try:
+                for nom in ("meteocat-XF", "meteocat-XV", "veina-ICERDA6", "veina-ICERDA28"):
+                    with open(os.path.join(d, nom + ".csv"), "w") as f:
+                        f.write("fins,pluja_mm\n2026-10-07T03:00," + ("0.2" if nom == "veina-ICERDA28" else "0.0") + "\n")
+                refs = A._meteocat()
+                self.assertEqual(len(refs), 3)                      # XF, XV i ICERDA6; ICERDA28 no
+                self.assertEqual(A.pluja_observada({"pluja_mm": "0.0"}, [r.get("2026-10-07T03:00") for r in refs]), 0.0)
+            finally:
+                A.REGISTRE = vell
+
 
 class Moto(unittest.TestCase):
     """La regla de lluvia de la moto de «Si surts» (ADR 0047)."""

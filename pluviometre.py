@@ -28,6 +28,8 @@ import os
 import subprocess
 import sys
 
+import config as C
+
 # Los registros guardan la hora local sin zona; aquí todo va igual.
 def local(t=None):
     return (t or dt.datetime.now().astimezone()).astimezone().replace(tzinfo=None)
@@ -35,7 +37,9 @@ def local(t=None):
 
 DIR = os.environ.get("REGISTRE_DIR", "/estat/registre")
 ESTADO = os.path.join(os.path.dirname(DIR), "vigila-pluviometre.json")
-REFERENCIA = [os.path.join(DIR, f"meteocat-{codi}.csv") for codi in ("XF", "XV")]
+# Las estaciones de Meteocat y la vecina fiable de Weather Underground (ADR 0060).
+REFERENCIA = ([os.path.join(DIR, f"meteocat-{codi}.csv") for codi in ("XF", "XV")]
+              + [os.path.join(DIR, f"veina-{e}.csv") for e, v in C.VEINES.items() if v.get("sec")])
 CASA = os.path.join(DIR, "estacio-casa.csv")
 
 UMBRAL_MM = 0.2                 # una hora con lluvia

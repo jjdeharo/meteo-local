@@ -179,6 +179,9 @@ class Resum(unittest.TestCase):
         self.assertEqual(B.text_ara({"ara_casa": {"temperatura": 20, "plou": True}}, "ca"),
                          "Ara mateix: 20 °C, plou.")
         self.assertIsNone(B.text_ara({"ara_casa": None}, "ca"))
+        # Des de la 3.46.0 les dades porten «plou_ara», que compta les veïnes (ADR 0060).
+        self.assertEqual(B.text_ara({"ara_casa": {"temperatura": 20, "plou": False}, "plou_ara": True}, "ca"),
+                         "Ara mateix: 20 °C, plou.")
         # Dades d'abans de la 3.44.0, amb «ara» de l'estació retirada: no es fan servir.
         self.assertIsNone(B.text_ara({"ara": {"temperatura": 20, "intensitat": 0}, "ara_casa": None}, "ca"))
 

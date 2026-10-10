@@ -198,7 +198,7 @@ function resumTram(t) {
   return sum;
 }
 
-function blocAra(casa, radarDades, vent) {
+function blocAra(casa, radarDades, vent, veines) {
   const sec = element('section', 'decisio targeta ara');
   sec.setAttribute('aria-label', T`El temps ara a ${LLOC}`);
   sec.append(element('h2', 'data', T`Ara a ${LLOC} (${horaCurta(casa.hora)})`));
@@ -208,11 +208,16 @@ function blocAra(casa, radarDades, vent) {
   temp.append(termometre, `${coma(casa.temperatura)} °C`);
   sec.append(temp);
   // Plou si el pluviòmetre ha recollit res en els últims 15 minuts
-  // (config.PLOU_ARA_MIN, ecowitt.resum_ara).
-  const plou = !!casa.plou;
-  const intensitat = (plou && casa.intensitat) || 0;
+  // (config.PLOU_ARA_MIN, ecowitt.resum_ara) o si ho ha fet alguna de les
+  // estacions veïnes de Weather Underground que compten (ADR 0060).
+  const plouCasa = !!casa.plou;
+  const plouVeines = (veines || []).some((v) => v.plou && v.compta);
+  const plou = plouCasa || plouVeines;
+  const intensitat = (plouCasa && casa.intensitat) || 0;
   const llista = element('ul', 'dades-ara');
-  llista.append(plou ? dada('i-umbrella', T`Plou: ${coma(intensitat)} mm/h`) : dada('i-umbrella-off', T('No plou')));
+  llista.append(plouCasa ? dada('i-umbrella', T`Plou: ${coma(intensitat)} mm/h`)
+    : plouVeines ? dada('i-umbrella', T('Plou en una estació veïna'))
+      : dada('i-umbrella-off', T('No plou')));
   llista.append(dada('i-cloud-rain', T`${coma(casa.pluja_avui || 0)} mm avui`));
   llista.append(dada('i-droplets', T`Humitat ${coma(casa.humitat, 0)} %`));
   if (casa.pressio != null) llista.append(dada('i-gauge', textPressio(casa)));
@@ -562,7 +567,7 @@ function pinta(dades) {
     const m = dades.models;
     avisos.append(element('p', 'avis', T`Avui els models no veuen aquesta pluja: en les darreres ${m.hores} hores han caigut ${coma(m.mesurada_mm)}\u00a0mm a Montflorit i en preveien ${coma(m.prevista_mm)}. Les primeres hores de la taula parteixen del que mesura l\u2019estació; per a la resta, fes més cas dels avisos.`));
   }
-  if (dades.ara_casa) cont.append(blocAra(dades.ara_casa, dades.radar, dades.vent));
+  if (dades.ara_casa) cont.append(blocAra(dades.ara_casa, dades.radar, dades.vent, dades.veines));
   const previsio = dades.hores && taula(dades.hores, dades.aprenentatge);
   if (previsio) {
     cont.append(previsio);

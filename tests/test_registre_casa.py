@@ -3,6 +3,7 @@
 import datetime as dt
 import os
 import sys
+import tempfile
 import unittest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -82,6 +83,36 @@ class Registre(unittest.TestCase):
         self.assertEqual(list(h), [dt.datetime(2026, 10, 5, 9, 0, tzinfo=TZ)])
         self.assertAlmostEqual(h[dt.datetime(2026, 10, 5, 9, 0, tzinfo=TZ)], 0.4)
         self.assertEqual(R.hores_meteocat([]), {})
+
+    def test_hores_d_una_veina_amb_el_vent(self):
+        # Lectures cada 5 minuts d'una veïna (wunderground.files): la pluja de
+        # l'hora per diferències i el vent de la lectura més a prop de l'hora.
+        def v(hhmm, tot, vent):
+            return {**lectura(hhmm, tot), "temperatura": 17.5, "humitat": 90.0, "rosada": 16.5, "pressio": 1010.0,
+                    "vent": vent, "ratxa": vent * 2}
+        filas = [v("06:00", 0.0, 1), v("06:30", 0.4, 3), v("07:00", 1.0, 5), v("07:30", 1.0, 2), v("08:00", 1.6, 4)]
+        h = R.hores_veina(filas)
+        set_, vuit = (dt.datetime(2026, 10, 5, x, 0, tzinfo=TZ) for x in (7, 8))
+        self.assertEqual(list(h), [set_, vuit])
+        self.assertAlmostEqual(h[set_]["pluja_mm"], 1.0)
+        self.assertEqual((h[set_]["vent"], h[set_]["ratxa"], h[vuit]["vent"]), (5, 10, 4))
+        self.assertNotIn("solar", h[set_])
+        with tempfile.TemporaryDirectory() as d:
+            vell = R.DIR
+            R.DIR = d
+            try:
+                ara = dt.datetime(2026, 10, 6, 0, 10, tzinfo=TZ)
+                self.assertTrue(R.falta_ahir_veina("ICERDA6", ara))       # sense registre
+                R.apunta_veina("ICERDA6", h)
+                with open(os.path.join(d, "veina-ICERDA6.csv")) as f:
+                    linies = f.read().splitlines()
+                self.assertEqual(linies[0], "fins,pluja_mm,temperatura,humitat,rosada,pressio,vent,ratxa")
+                self.assertEqual(linies[1], "2026-10-05T07:00,1.0,17.5,90.0,16.5,1010.0,5,10")
+                self.assertTrue(R.falta_ahir_veina("ICERDA6", ara))       # falta la de 23 a 24
+                R.apunta_veina("ICERDA6", {dt.datetime(2026, 10, 6, 0, 0, tzinfo=TZ): {"pluja_mm": 0.0, "temperatura": 15.0}})
+                self.assertFalse(R.falta_ahir_veina("ICERDA6", ara))
+            finally:
+                R.DIR = vell
 
     def test_apunta_meteocat_i_cinc_minuts(self):
         import tempfile

@@ -53,6 +53,16 @@ class Ecowitt(unittest.TestCase):
                   "pluja_30min": 1.2, "intensitat": 4.0}
         self.assertEqual(E.observacio(mojado, "Casa")["mm_ultima_media_hora"], 1.2)
 
+    def test_plou_ara_amb_les_veines(self):
+        # Plou si casa marca o si ho fa una veïna que compta (ADR 0060); la que no compta, no.
+        sec = {"plou": False}
+        compta, no_compta = {"plou": True, "compta": True}, {"plou": True, "compta": False}
+        self.assertFalse(casa.llueve_ahora_en(sec, []))
+        self.assertFalse(casa.llueve_ahora_en(sec, [no_compta]))
+        self.assertTrue(casa.llueve_ahora_en(sec, [no_compta, compta]))
+        self.assertTrue(casa.llueve_ahora_en({"plou": True}, None))
+        self.assertFalse(casa.llueve_ahora_en(None, None))
+
     def test_sin_claves_no_esta_disponible(self):
         with mock.patch.dict(os.environ, {"HOME": tempfile.mkdtemp()}, clear=True):
             self.assertFalse(E.disponible())

@@ -250,14 +250,23 @@ def franges(hores):
     return res
 
 
+def plou_ara(dades):
+    """Llueve ahora según los datos: en casa o en una vecina que cuenta
+    (casa.py; los datos de antes de la 3.46.0 solo tienen la de casa)."""
+    if "plou_ara" in dades:
+        return bool(dades["plou_ara"])
+    return bool((dades.get("ara_casa") or {}).get("plou"))
+
+
 def text_ara(dades, idioma, lloc=""):
     """Como la web: la temperatura y la lluvia de la estación particular del
-    barrio («plou» si ha recogido lluvia en los últimos minutos; ADR 0058)."""
+    barrio («plou» si ha recogido lluvia en los últimos minutos, o si lo ha
+    hecho una vecina de Weather Underground que cuenta; ADR 0058 y 0060)."""
     c = dades.get("ara_casa") or {}
     t = c.get("temperatura")
     if t is None:
         return None
-    plou = bool(c.get("plou"))
+    plou = plou_ara(dades)
     if idioma == "es":
         return f"Ahora mismo{lloc and ' en ' + lloc}: {graus(t)}, {'llueve' if plou else 'no llueve'}."
     return f"Ara mateix{lloc and ' a ' + lloc}: {graus(t)}, {'plou' if plou else 'no plou'}."
@@ -725,7 +734,7 @@ def text_radar_bot(dades, idioma, moment):
     es = idioma == "es"
     # El que es mesura mana, com a la web: si ja plou, «pluja a sobre», amb
     # l'hora en què pararia si el radar la veu (ADR 0049).
-    plou = bool((dades.get("ara_casa") or {}).get("plou"))
+    plou = plou_ara(dades)
     aviat = r.get("arriba") and dt.datetime.fromisoformat(r["arriba"]) <= moment + dt.timedelta(minutes=5)
     if (plou and (r.get("arriba") or r.get("possible"))) or aviat:
         que = "Lluvia encima." if es else "Pluja a sobre."

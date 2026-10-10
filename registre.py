@@ -12,9 +12,10 @@ Lo ejecuta el reloj del NAS, sin IA:
 Además, casa.py apunta en cada pasada lo que mide la estación de casa hora a
 hora (estacio-casa.csv, ADR 0017) y cada 5 minutos (estacio-casa-5min.csv,
 ADR 0049), la lluvia por horas de las estaciones de Meteocat de Sabadell y
-Sant Cugat (meteocat-XF.csv y meteocat-XV.csv, ADR 0058) y, una vez por
-hora, lo que daban los modelos para las 24 horas siguientes
-(casa-AAAA-MM.jsonl), para aprender de los fallos (ADR 0012).
+Sant Cugat (meteocat-XF.csv y meteocat-XV.csv, ADR 0058), lo que miden por
+horas las estaciones vecinas de Weather Underground (veina-<id>.csv, ADR
+0060) y, una vez por hora, lo que daban los modelos para las 24 horas
+siguientes (casa-AAAA-MM.jsonl), para aprender de los fallos (ADR 0012).
 
 Los datos van a REGISTRE_DIR (en el NAS, /estat/registre), no al repositorio.
 """
@@ -113,6 +114,53 @@ def apunta_meteocat(codi, hores):
     _desa_per_hores(os.path.join(DIR, f"meteocat-{codi}.csv"), CAMPOS_METEOCAT,
                     {fin.strftime("%Y-%m-%dT%H:%M"): {"fins": fin.strftime("%Y-%m-%dT%H:%M"), "pluja_mm": mm}
                      for fin, mm in hores.items()})
+
+
+# Lo que miden por horas las estaciones vecinas de Weather Underground
+# (veina-<id>.csv, ADR 0060): la lluvia de la hora y las lecturas más
+# cercanas a la hora en punto, como en estacio-casa.csv. La presión es la
+# que publica cada estación (no todas la reducen al nivel del mar).
+CAMPOS_VEINA = ["fins", "pluja_mm", "temperatura", "humitat", "rosada", "pressio", "vent", "ratxa"]
+
+
+def hores_veina(filas):
+    """Horas completas ({fin: valores}) de las lecturas de una vecina
+    (wunderground.files), con la lluvia de la hora y el viento."""
+    hores = E.hores(filas)
+    vent = {}
+    for f in filas:
+        if f.get("vent") is None:
+            continue
+        marca = (f["t"] + dt.timedelta(minutes=30)).replace(minute=0, second=0, microsecond=0)
+        dist = abs((f["t"] - marca).total_seconds())
+        if dist <= 300 and dist < vent.get(marca, (999, None))[0]:
+            vent[marca] = (dist, f)
+    for fin, h in hores.items():
+        h.pop("solar", None)
+        f = vent.get(fin, (None, {}))[1]
+        h["vent"], h["ratxa"] = f.get("vent"), f.get("ratxa")
+    return hores
+
+
+def apunta_veina(estacio, hores):
+    nuevas = {}
+    for fin, h in hores.items():
+        if h.get("pluja_mm") is None and h.get("temperatura") is None:
+            continue
+        clave = fin.strftime("%Y-%m-%dT%H:%M")
+        nuevas[clave] = {"fins": clave, **{k: h.get(k) for k in CAMPOS_VEINA[1:]}}
+    _desa_per_hores(os.path.join(DIR, f"veina-{estacio}.csv"), CAMPOS_VEINA, nuevas)
+
+
+def falta_ahir_veina(estacio, ahora):
+    """Si al registro de una vecina le falta la última hora de ayer (las
+    lecturas de hoy no la cierran): se pide el historial de ayer una vez."""
+    ruta = os.path.join(DIR, f"veina-{estacio}.csv")
+    mitjanit = ahora.replace(hour=0, minute=0, second=0, microsecond=0).strftime("%Y-%m-%dT%H:%M")
+    if not os.path.exists(ruta):
+        return True
+    with open(ruta, encoding="utf-8") as f:
+        return not any(r["fins"] == mitjanit for r in csv.DictReader(f))
 # Cuánto se rellena hacia atrás como mucho: Ecowitt guarda 90 días cada 5 minutos.
 ESTACIO_CASA_DIES_MAX = 89
 

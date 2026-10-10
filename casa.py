@@ -118,10 +118,12 @@ def estacio_casa():
     return casa
 
 
-def llueve_ahora_en(casa):
-    """Llueve ahora en casa: el pluviómetro ha recogido lluvia en los últimos
-    PLOU_ARA_MIN minutos (config.py). Solo cuenta el sí (ADR 0017)."""
-    return bool(casa and casa.get("plou"))
+def llueve_ahora_en(casa, veines=None):
+    """Llueve ahora: el pluviómetro de casa ha recogido lluvia en los últimos
+    PLOU_ARA_MIN minutos (config.py), o lo ha hecho alguna de las estaciones
+    vecinas de Weather Underground que cuentan (config.VEINES, ADR 0060).
+    Solo cuenta el sí (ADR 0017)."""
+    return bool(casa and casa.get("plou")) or WU.plou_a_les_veines(veines)
 
 
 def temperatura_model_ara(h, ahora):
@@ -224,13 +226,13 @@ def variables_hora(desde, h, prob, i, prever):
     return d
 
 
-def previsio(desde, h, e, avisos, model=None, casa=None, nc=None, planes=None, riera=None):
+def previsio(desde, h, e, avisos, model=None, casa=None, nc=None, planes=None, riera=None, veines=None):
     """Una fila por tramo de una hora («de 10 a 11»), de la hora actual a 24
     horas después como mínimo, hasta las 21 h de mañana y acabando un tramo
     del día (FI_TRAMS). Open-Meteo da la lluvia acumulada en la hora anterior: el
     tramo de 10 a 11 se lee en la hora 11:00, y los demás valores también."""
     prob = prob_ensemble(e)
-    llueve_ahora = llueve_ahora_en(casa)
+    llueve_ahora = llueve_ahora_en(casa, veines)
     prever = al_prever(desde, h, casa, riera)
     ultima_hora = prever["pluja_1h_emes"] or 0.0
 
@@ -329,7 +331,7 @@ def filas_registro(desde, h, e, mostradas, casa=None, avisos=None, planes=None, 
     return filas
 
 
-def previsio_anterior(origen, avisos, casa=None):
+def previsio_anterior(origen, avisos, casa=None, veines=None):
     """Las horas que aún no han pasado de la última previsión buena, con los
     avisos y la lluvia de ahora. None si no la hay o tiene más de
     CASA_PREVISION_ANTERIOR_MAX_H horas."""
@@ -352,7 +354,7 @@ def previsio_anterior(origen, avisos, casa=None):
     hores = [dict(f) for f in antes["hores"] if f["fins"] > ara_hora]
     if not hores:
         return None
-    llueve_ahora = llueve_ahora_en(casa)
+    llueve_ahora = llueve_ahora_en(casa, veines)
     for n, f in enumerate(hores):
         fin = dt.datetime.fromisoformat(f["fins"]).astimezone()
         f["avisos"] = avisos_del_tramo(fin - dt.timedelta(hours=1), fin, avisos)
@@ -400,6 +402,24 @@ def recoger(anterior=None):
             WU.puja(casa, P.AHORA)
         except Exception as ex:
             print("No he podido subir la estación a Weather Underground:", ex, file=sys.stderr)
+    # Las estaciones vecinas de Weather Underground (ADR 0060): si falla una,
+    # solo se apunta; si no se puede leer ninguna teniendo clave (caducada,
+    # red caída), la página lo dice, porque «plou ara» cuenta con ellas.
+    veines = []
+    if WU.lectura_disponible():
+        veines, fallos = WU.veines_ara(P.AHORA)
+        for fallo in fallos:
+            print("No he podido leer la estación vecina", fallo, file=sys.stderr)
+        if fallos and not veines:
+            salida["errors"].append(f"estacions veïnes: {fallos[0]}")
+        dies = WU.dies_fins_caducitat(P.AHORA)
+        if dies <= C.WU_AVIS_CADUCITAT_DIES:
+            print(f"La clau de lectura de Weather Underground caduca d'aquí a {dies} dies "
+                  f"({C.WU_CLAU_CADUCA}): cal regenerar-la (RESTAURAR.md).", file=sys.stderr)
+    salida["veines"] = [{k: v for k, v in x.items() if k != "files"} for x in veines]
+    # Si llueve ahora, en casa o en una vecina que cuenta: lo que miran el
+    # bot, los avisos y la web (plou_ara de la primera hora de la tabla).
+    salida["plou_ara"] = llueve_ahora_en(casa, veines)
     # El viento de ahora, de la estación de Meteocat más cercana (ADR 0037).
     try:
         salida["vent"] = P.vent_meteocat(C.VENT_ESTACIO)
@@ -422,7 +442,7 @@ def recoger(anterior=None):
         radar = P.radar()
     except Exception as ex:
         salida["errors"].append(f"radar: {ex}")
-    obs = [o for o in [E.observacio(casa, C.ESTACIO_CASA)] if o]
+    obs = [o for o in [E.observacio(casa, C.ESTACIO_CASA)] + [WU.observacio(v) for v in veines] if o]
     motivos = P.motivos_modo_aviso(avisos, planes, obs, radar)
     # En modo aviso, todo el día: hasta las 23:50, no solo hasta las 23:00.
     nc = (radar or {}).get("nowcast")
@@ -456,13 +476,13 @@ def recoger(anterior=None):
         h, e = modelos(P.AHORA, salida["errors"])
         model = A.carrega()
         salida["aprenentatge"] = A.resum_pagina(model)
-        salida["hores"] = previsio(P.AHORA, h, e, avisos, model, casa, nc, planes, salida.get("riera"))
+        salida["hores"] = previsio(P.AHORA, h, e, avisos, model, casa, nc, planes, salida.get("riera"), veines)
         salida["models"] = comprobacion_modelos(P.AHORA, h, (casa or {}).get("files", []))
     except Exception as ex:
         salida["hores"] = salida["models"] = None
         salida["errors"].append(f"previsió: {ex}")
         # Sin modelos: la última previsión buena, si es reciente, avisando.
-        antes = previsio_anterior(anterior, avisos, casa)
+        antes = previsio_anterior(anterior, avisos, casa, veines)
         if antes:
             salida.update(antes)
     # Para «Si surts» (ADR 0029): el índice UV de cada hora y si circulan los
@@ -505,7 +525,8 @@ def recoger(anterior=None):
     salida["riscos"] = RS.detecta(salida, P.AHORA)
     # Registro para aprender (solo en el NAS, que tiene /estat): lo que medía
     # la estación de casa, por horas y cada 5 minutos, la lluvia por horas de
-    # las estaciones de Meteocat y, una vez por hora, lo que daban los modelos.
+    # las estaciones de Meteocat, lo que medían las vecinas y, una vez por
+    # hora, lo que daban los modelos.
     if R.hay_registro():
         try:
             if casa:
@@ -523,6 +544,16 @@ def recoger(anterior=None):
                 R.apunta_meteocat(codi, R.hores_meteocat(RI.files(codi, P.AHORA, 6, None)))
             except Exception as ex:
                 print(f"No he podido apuntar la estación {codi} de Meteocat:", ex, file=sys.stderr)
+        # Las vecinas por horas (ADR 0060): las de hoy en cada pasada y, una
+        # vez al día, las de ayer, para cerrar la última hora del día.
+        for v in veines:
+            try:
+                files = v["files"]
+                if R.falta_ahir_veina(v["estacio"], P.AHORA):
+                    files = WU.hores_ahir(v["estacio"], P.AHORA) + files
+                R.apunta_veina(v["estacio"], R.hores_veina(files))
+            except Exception as ex:
+                print(f"No he podido apuntar la estación vecina {v['estacio']}:", ex, file=sys.stderr)
         # Lo que daba cada radar, para saber cuál acierta más (ADR 0026).
         try:
             RF.apunta(P.AHORA, nc, salida["ara_casa"])
