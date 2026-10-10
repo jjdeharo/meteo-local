@@ -34,6 +34,7 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
+from zoneinfo import ZoneInfo
 
 # La hora local de Montflorit, pase lo que pase con la del hosting.
 os.environ.setdefault("TZ", "Europe/Madrid")
@@ -258,7 +259,132 @@ def plou_ara(dades):
     return bool((dades.get("ara_casa") or {}).get("plou"))
 
 
-def text_ara(dades, idioma, lloc=""):
+# --- Icones (Juanjo, 10-10-2026: «que sirvan para leer y entender mejor los
+# mensajes, no poner por poner»; ADR 0065) ------------------------------------------
+# Telegram només mostra emojis. N'hi ha on diuen el que el text no diu (el cel
+# d'ara) o on deixen veure d'una ullada el que s'hauria de llegir línia a línia
+# (la pluja, només quan n'hi ha, i els nivells, amb una sola escala de colors).
+# Res de temes: cada línia ja comença pel seu rètol.
+CERCLE = {"nul": "⚪", "baix": "🟢", "mig": "🟡", "alt": "🟠", "maxim": "🔴", "extrem": "🟣"}
+# Els nivells d'avís (AEMET i els propis) en la mateixa escala; el mateix a avisos_bot.py.
+CERCLE_AVIS = {"groc": CERCLE["mig"], "taronja": CERCLE["alt"], "vermell": CERCLE["maxim"]}
+CERCLE_FASE = {"prealerta": CERCLE["mig"], "alerta": CERCLE["alt"], "emergència": CERCLE["maxim"]}
+
+# El cel, amb la mateixa regla que web/casa.js (plujaHora, cel i celNuvols):
+# les proves comparen les dues. Les icones de Lucide de la web, en emojis.
+PROB_PLUJA = 0.5
+PROB_POSSIBLE = 0.2
+INTENSITAT_PLUJA = (6, 40, 80)
+CASA_COORD = (41.5, 2.1)       # com web/comu.js
+ZONA = ZoneInfo("Europe/Madrid")
+
+
+def altura_sol(t):
+    """Altura del sol en graus, com alturaSol de web/comu.js."""
+    rad = math.pi / 180
+    dies = t.timestamp() / 86400 + 2440587.5 - 2451545
+    l = (280.46 + 0.9856474 * dies) % 360
+    g = ((357.528 + 0.9856003 * dies) % 360) * rad
+    lam = (l + 1.915 * math.sin(g) + 0.02 * math.sin(2 * g)) * rad
+    eps = (23.439 - 0.0000004 * dies) * rad
+    dec = math.asin(math.sin(eps) * math.sin(lam))
+    ar = math.atan2(math.cos(eps) * math.sin(lam), math.cos(lam))
+    gmst = (18.697374558 + 24.06570982441908 * dies) % 24
+    angle = (gmst * 15 + CASA_COORD[1]) * rad - ar
+    lat = CASA_COORD[0] * rad
+    return math.asin(math.sin(lat) * math.sin(dec) + math.cos(lat) * math.cos(dec) * math.cos(angle)) / rad
+
+
+def pluja_hora(f):
+    p = f.get("probabilitat")
+    if f.get("plou_ara") or (((f.get("pluja_mm") or 0) >= 0.2) if p is None else p >= PROB_PLUJA):
+        return "pluja"
+    return "possible" if p is not None and p >= PROB_POSSIBLE else None
+
+
+def es_neu(c):
+    return c is not None and (71 <= c <= 77 or c in (85, 86))
+
+
+def es_nit(f):
+    """De nit, a mitja hora de l'hora (com la web)."""
+    t = dt.datetime.fromisoformat(f["hora"])
+    t = t if t.tzinfo else t.replace(tzinfo=ZONA)
+    return altura_sol(t + dt.timedelta(minutes=30)) < 0
+
+
+def icona_cel(f):
+    """La icona de Lucide que la web posa a l'hora f (cel de web/casa.js)."""
+    nit = es_nit(f)
+    pluja = pluja_hora(f)
+    codi = f.get("codi")
+    tempesta = codi is not None and codi >= 95
+    if pluja == "pluja":
+        if tempesta:
+            return "i-cloud-hail" if codi in (96, 99) else "i-cloud-lightning"
+        if es_neu(codi):
+            return "i-cloud-snow"
+        if codi in (56, 57, 66, 67):
+            return "i-cloud-rain"
+        mm = f.get("pluja_mm") or 0
+        if mm >= INTENSITAT_PLUJA[1]:
+            return "i-cloud-rain-wind"
+        if mm >= INTENSITAT_PLUJA[0]:
+            return "i-cloud-rain"
+        return "i-cloud-drizzle"
+    if pluja == "possible":
+        if es_neu(codi):
+            return "i-cloud-snow"
+        return "i-cloud-moon-rain" if nit else "i-cloud-sun-rain"
+    if codi in (45, 48):
+        return "i-cloud-fog"
+    if f.get("nuvols") is None:
+        return None
+    n = max(f["nuvols"], 50) if (f.get("pluja_mm") or 0) >= 0.2 else f["nuvols"]
+    if n < 20:
+        return "i-moon-cel" if nit else "i-sun"
+    if n < 45:
+        return "i-cloud-moon" if nit else "i-cloud-sun"
+    return "i-cloud" if n < 70 else "i-cloudy"
+
+
+# Mig ennuvolat: de dia, el sol rere el núvol, que és com tothom el coneix; de
+# nit no hi ha emoji de lluna amb núvol, i amb pocs núvols es queda la lluna.
+EMOJI_CEL = {"i-sun": "☀️", "i-moon-cel": "🌙", "i-cloud-sun": "🌤️", "i-cloud-moon": "🌙", "i-cloud": "⛅",
+             "i-cloudy": "☁️", "i-cloud-fog": "🌫️", "i-cloud-sun-rain": "🌦️", "i-cloud-moon-rain": "🌧️",
+             "i-cloud-drizzle": "🌧️", "i-cloud-rain": "🌧️", "i-cloud-rain-wind": "🌧️", "i-cloud-snow": "🌨️",
+             "i-cloud-lightning": "⛈️", "i-cloud-hail": "⛈️"}
+# De menys a més: la icona de la línia de la pluja és la de l'hora pitjor.
+ORDRE_PLUJA = ("i-cloud-moon-rain", "i-cloud-sun-rain", "i-cloud-drizzle", "i-cloud-rain", "i-cloud-rain-wind",
+               "i-cloud-snow", "i-cloud-lightning", "i-cloud-hail")
+
+
+def emoji_cel(f):
+    i = icona_cel(f)
+    if i == "i-cloud" and es_nit(f):
+        return "☁️"
+    return EMOJI_CEL.get(i)
+
+
+def emoji_pluja(tram):
+    """La de l'hora amb la pluja pitjor; cap si no se n'espera."""
+    ids = [i for i in (icona_cel(f) for f in tram if pluja_hora(f)) if i in ORDRE_PLUJA]
+    return EMOJI_CEL[max(ids, key=ORDRE_PLUJA.index)] if ids else None
+
+
+def amb_icona(icona, text):
+    return f"{icona} {text}" if icona and text else text
+
+
+def hora_ara(dades, moment):
+    ara_n = moment.astimezone(ZONA).replace(tzinfo=None)
+    for f in dades.get("hores") or []:
+        if dt.datetime.fromisoformat(f["hora"]) <= ara_n < dt.datetime.fromisoformat(f["fins"]):
+            return f
+    return None
+
+
+def text_ara(dades, idioma, lloc="", moment=None):
     """Como la web: la temperatura y la lluvia de la estación particular del
     barrio («plou» si ha recogido lluvia en los últimos minutos, o si lo ha
     hecho una vecina de Weather Underground que cuenta; ADR 0058 y 0060)."""
@@ -267,9 +393,12 @@ def text_ara(dades, idioma, lloc=""):
     if t is None:
         return None
     plou = plou_ara(dades)
+    # El cel de l'hora, el de la taula de la web; si plou, el paraigua, com allà.
+    f = hora_ara(dades, moment or ara())
+    icona = "☔" if plou else (f and emoji_cel(f))
     if idioma == "es":
-        return f"Ahora mismo{lloc and ' en ' + lloc}: {graus(t)}, {'llueve' if plou else 'no llueve'}."
-    return f"Ara mateix{lloc and ' a ' + lloc}: {graus(t)}, {'plou' if plou else 'no plou'}."
+        return amb_icona(icona, f"Ahora mismo{lloc and ' en ' + lloc}: {graus(t)}, {'llueve' if plou else 'no llueve'}.")
+    return amb_icona(icona, f"Ara mateix{lloc and ' a ' + lloc}: {graus(t)}, {'plou' if plou else 'no plou'}.")
 
 
 def text_ara_bot(dades, idioma, moment):
@@ -284,7 +413,7 @@ def text_ara_bot(dades, idioma, moment):
     mesura = hora and dt.datetime.fromisoformat(hora)
     if mesura and moment - mesura > dt.timedelta(hours=DADES_VELLES_H):
         return t["velles_ara"].format(mesura.strftime("%H:%M"))
-    text = text_ara(dades, idioma, "Montflorit")
+    text = text_ara(dades, idioma, "Montflorit", moment)
     if not text:
         return t["ajuda"]
     return text + (t["mesura"].format(mesura.strftime("%H:%M")) if mesura else "")
@@ -296,13 +425,18 @@ DIES = {"ca": ("dilluns", "dimarts", "dimecres", "dijous", "divendres", "dissabt
 HORA_DEMA = 18
 
 
-def text_pluja(tram, idioma):
+def text_pluja(tram, idioma, icona=True):
+    """Sense pluja, sense icona: la línia destaca només quan n'hi ha (ADR 0065)."""
     pluges = franges(tram)
+    if not pluges:
+        return "Sin lluvia prevista." if idioma == "es" else "Sense pluja prevista."
     if idioma == "es":
-        return ("Lluvia: " + "; ".join(f"posible de {a.hour} a {b.hour} h (probabilidad hasta el {round(p * 100)} %)"
-                                       for a, b, p in pluges) + ".") if pluges else "Sin lluvia prevista."
-    return ("Pluja: " + "; ".join(f"possible de {a.hour} a {b.hour} h (probabilitat fins al {round(p * 100)} %)"
-                                  for a, b, p in pluges) + ".") if pluges else "Sense pluja prevista."
+        text = "Lluvia: " + "; ".join(f"posible de {a.hour} a {b.hour} h (probabilidad hasta el {round(p * 100)} %)"
+                                      for a, b, p in pluges) + "."
+    else:
+        text = "Pluja: " + "; ".join(f"possible de {a.hour} a {b.hour} h (probabilitat fins al {round(p * 100)} %)"
+                                     for a, b, p in pluges) + "."
+    return amb_icona(emoji_pluja(tram) if icona else None, text)
 
 
 # Cuántos grados más o menos que el día anterior (Juanjo, 10-10-2026: «la
@@ -435,10 +569,10 @@ def text_avisos_aemet(dades, idioma, dia, moment):
             nom = {"vermell": "rojo", "taronja": "naranja", "groc": "amarillo"}[nivell]
             que = " y ".join({"pluja": "lluvia", "tempestes": "tormentas"}.get(x, x) for x in tipus)
             quan = f"hasta las {fi}" if dia == moment.date() else f"de {ini} a {fi}"
-            res.append(f"Aviso {nom} de la AEMET por {que} {quan}.")
+            res.append(f"{CERCLE_AVIS[nivell]} Aviso {nom} de la AEMET por {que} {quan}.")
         else:
             quan = f"fins a les {fi}" if dia == moment.date() else f"de {ini} a {fi}"
-            res.append(f"Avís {nivell} de l'AEMET per {' i '.join(tipus)} {quan}.")
+            res.append(f"{CERCLE_AVIS[nivell]} Avís {nivell} de l'AEMET per {' i '.join(tipus)} {quan}.")
     return res
 
 
@@ -473,8 +607,8 @@ def resum(dades, idioma, moment, dema=False, avui=False):
         linies = [(f"<b>Previsión para mañana, {nom_dia}, en Montflorit</b>" if idioma == "es"
                    else f"<b>Previsió per a demà, {nom_dia}, a Montflorit</b>") + fins]
         if franges(nit):    # la noche, solo si se espera lluvia
-            linies.append(("Esta noche: lluvia " if idioma == "es" else "Aquesta nit: pluja ")
-                          + text_pluja(nit, idioma).split(": ", 1)[1])
+            linies.append(amb_icona(emoji_pluja(nit), ("Esta noche: lluvia " if idioma == "es" else "Aquesta nit: pluja ")
+                                    + text_pluja(nit, idioma, icona=False).split(": ", 1)[1]))
         linies.append(text_temperatura(dia, idioma, "Temperatura", compara_temp(dades, dia), "avui"))
         linies.append(text_pluja(dia, idioma))
         roba = text_roba(dia, idioma)
@@ -484,10 +618,10 @@ def resum(dades, idioma, moment, dema=False, avui=False):
         tram = [f for f in hores if hora(f) < fi_dia]
         nom_dia = DIES[idioma][moment.weekday()]
         if not tram:    # sense hores d'avui, no hi ha previsió, i es diu (auditoria del 08-10-2026)
-            return "\n".join(x for x in (text_ara(dades, idioma), t["sense_previsio"].format(generat.strftime("%H:%M")), WEB) if x)
+            return "\n".join(x for x in (text_ara(dades, idioma, moment=moment), t["sense_previsio"].format(generat.strftime("%H:%M")), WEB) if x)
         linies = [f"<b>El tiempo hoy, {nom_dia}, en Montflorit</b>" if idioma == "es"
                   else f"<b>El temps avui, {nom_dia}, a Montflorit</b>",
-                  text_ara(dades, idioma),
+                  text_ara(dades, idioma, moment=moment),
                   text_temperatura(tram, idioma, "Temperatura de aquí a medianoche" if idioma == "es"
                                    else "Temperatura d'aquí a mitjanit", compara_temp(dades, tram), "ahir"),
                   text_pluja(tram, idioma)]
@@ -497,8 +631,8 @@ def resum(dades, idioma, moment, dema=False, avui=False):
             fi_nit = dt.datetime.combine(moment.date() + dt.timedelta(days=1), dt.time(6))
             nit = [f for f in hores if fi_dia <= hora(f) < fi_nit]
             if franges(nit):
-                linies.append(("Esta noche: lluvia " if idioma == "es" else "Aquesta nit: pluja ")
-                              + text_pluja(nit, idioma).split(": ", 1)[1])
+                linies.append(amb_icona(emoji_pluja(nit), ("Esta noche: lluvia " if idioma == "es" else "Aquesta nit: pluja ")
+                                        + text_pluja(nit, idioma, icona=False).split(": ", 1)[1]))
         linies += text_avisos_aemet(dades, idioma, moment.date(), moment)
         linies.append(text_trens_resum(dades, idioma))
     # La ropa, al final y aparte (Juanjo, 08-10-2026: «muy desordenado»).
@@ -518,10 +652,11 @@ def text_trens_resum(dades, idioma):
     if all(l["estat"] == "sense_dades" for l in linies):
         return ("Trenes de Cerdanyola: ahora mismo no hay datos de Renfe ni de FGC." if idioma == "es"
                 else "Trens de Cerdanyola: ara mateix no hi ha dades de Renfe ni d'FGC.")
-    mal = [f"{l['linia']} {no[l['estat']]}" for l in linies if l["estat"] in no]
+    mal = [f"{cercle_tren(l)} {l['linia']} {no[l['estat']]}" for l in linies if l["estat"] in no]
     if not mal:
         return None if all(l["estat"] == "fora_horari" for l in linies) else \
-            ("Trenes de Cerdanyola sin incidencias." if idioma == "es" else "Trens de Cerdanyola sense incidències.")
+            (f"{CERCLE['baix']} Trenes de Cerdanyola sin incidencias." if idioma == "es"
+             else f"{CERCLE['baix']} Trens de Cerdanyola sense incidències.")
     return ("Trenes de Cerdanyola: " if idioma == "es" else "Trens de Cerdanyola: ") + ", ".join(mal) + "."
 
 
@@ -542,6 +677,19 @@ ESTAT_TREN = {"ca": {"circula": "sense incidències", "incidencies": "amb incid�
                      "sense_trens": "sin trenes", "fora_horari": "fuera de horario", "sense_dades": "sin datos"}}
 
 
+# Verd, circula; ambre, amb incidències, o diu que circula però no s'hi ha vist
+# cap tren; vermell, sense trens (també per carretera); blanc, sense dades o
+# fora d'horari: no se'n sap res.
+CERCLE_TREN = {"circula": CERCLE["baix"], "incidencies": CERCLE["alt"], "bus": CERCLE["maxim"],
+               "sense_trens": CERCLE["maxim"], "fora_horari": CERCLE["nul"], "sense_dades": CERCLE["nul"]}
+
+
+def cercle_tren(l):
+    if l["estat"] == "circula" and l.get("no_vist"):
+        return CERCLE["mig"]
+    return CERCLE_TREN.get(l["estat"], CERCLE["nul"])
+
+
 def text_trens_bot(dades, idioma, moment):
     vell = dades_velles(dades, idioma, moment)
     if vell:
@@ -553,7 +701,7 @@ def text_trens_bot(dades, idioma, moment):
     # l'idioma original de l'operador (Juanjo, 07-10-2026 i 08-10-2026).
     files = []
     for l in linies:
-        fila = f"<b>{html.escape(l['linia'])}</b> ({html.escape(l.get('estacio', ''))}): {ESTAT_TREN[idioma].get(l['estat'], l['estat'])}"
+        fila = f"{cercle_tren(l)} <b>{html.escape(l['linia'])}</b> ({html.escape(l.get('estacio', ''))}): {ESTAT_TREN[idioma].get(l['estat'], l['estat'])}"
         if l.get("no_vist"):
             fila += (" (dice que circula, pero en la última hora no se ha visto ningún tren cerca de la estación)"
                      if idioma == "es" else
@@ -618,6 +766,8 @@ def hm(iso):
 
 UV_NIVELLS = ((2, "baix", "bajo"), (5, "moderat", "moderado"), (7, "alt", "alto"), (10, "molt alt", "muy alto"),
               (99, "extrem", "extremo"))
+CERCLE_UV = {"baix": CERCLE["baix"], "moderat": CERCLE["mig"], "alt": CERCLE["alt"], "molt alt": CERCLE["maxim"],
+             "extrem": CERCLE["extrem"]}
 
 
 def text_sol_bot(dades, idioma, moment):
@@ -639,8 +789,9 @@ def text_sol_bot(dades, idioma, moment):
                f"Surt a les {hm(d['sortida'])} i es pon a les {hm(d['posta'])}: {h} h {m} min de llum.")]
     if d.get("uv_max") is not None:
         uv = round(d["uv_max"])
-        nom = next(n for lim, ca, es_ in UV_NIVELLS if uv <= lim for n in [(es_ if es else ca)])
-        linia = f"Índice UV máximo: {uv} ({nom})." if es else f"Índex UV màxim: {uv} ({nom})."
+        ca = next(ca for lim, ca, es_ in UV_NIVELLS if uv <= lim)
+        nom = next(n for lim, ca_, es_ in UV_NIVELLS if uv <= lim for n in [(es_ if es else ca_)])
+        linia = CERCLE_UV[ca] + (f" Índice UV máximo: {uv} ({nom})." if es else f" Índex UV màxim: {uv} ({nom}).")
         if uv >= 3:
             linia += (" A las horas centrales, protector solar, gorra y gafas de sol." if es
                       else " A les hores centrals, protector solar, gorra i ulleres de sol.")
@@ -664,6 +815,9 @@ AIRE_NOMS = {"ca": {"bona": "bona", "raonablement_bona": "raonablement bona", "r
                     "pm2_5": "las partículas finas (PM2,5)", "pm10": "las partículas (PM10)",
                     "nitrogen_dioxide": "el dióxido de nitrógeno (NO₂)", "ozone": "el ozono (O₃)",
                     "sulphur_dioxide": "el dióxido de azufre (SO₂)"}}
+CERCLE_AIRE = {"bona": CERCLE["baix"], "raonablement_bona": CERCLE["baix"], "regular": CERCLE["mig"],
+               "desfavorable": CERCLE["alt"], "molt_desfavorable": CERCLE["maxim"],
+               "extremadament_desfavorable": CERCLE["extrem"]}
 MAPA_AIRE = "https://mediambient.gencat.cat/{}/05_ambits_dactuacio/atmosfera/qualitat_de_laire/vols-saber-que-respires/"
 
 
@@ -681,16 +835,18 @@ def text_aire_bot(dades, idioma, moment):
         return "Ahora no hay datos de la calidad del aire." if es else "Ara no hi ha dades de la qualitat de l'aire."
     n = AIRE_NOMS[idioma]
     linies = [f"<b>{'Calidad del aire en Montflorit' if es else 'Qualitat de l’aire a Montflorit'}</b>",
-              (f"Ahora: {n[a['categoria']]} (índice europeo {a['index']})." if es
-               else f"Ara: {n[a['categoria']]} (índex europeu {a['index']}).")]
+              amb_icona(CERCLE_AIRE.get(a["categoria"]),
+                        f"Ahora: {n[a['categoria']]} (índice europeo {a['index']})." if es
+                        else f"Ara: {n[a['categoria']]} (índex europeu {a['index']}).")]
     if a.get("contaminant") and a["categoria"] != "bona":
         plural = a["contaminant"] in ("pm2_5", "pm10")
         verb = ("son" if plural else "es") if es else ("són" if plural else "és")
         linies[-1] += (f" Lo que más pesa {verb} {n[a['contaminant']]}." if es else f" El que més pesa {verb} {n[a['contaminant']]}.")
     p = a.get("pitjor")
     if p and p["index"] > a["index"] and p["categoria"] != a["categoria"]:
-        linies.append(f"Lo peor de hoy: {n[p['categoria']]} hacia las {hm(p['hora'])}." if es
-                      else f"El pitjor d'avui: {n[p['categoria']]} cap a les {hm(p['hora'])}.")
+        linies.append(amb_icona(CERCLE_AIRE.get(p["categoria"]),
+                                f"Lo peor de hoy: {n[p['categoria']]} hacia las {hm(p['hora'])}." if es
+                                else f"El pitjor d'avui: {n[p['categoria']]} cap a les {hm(p['hora'])}."))
     linies.append("<i>" + html.escape(nota_aire(a, idioma), quote=False) + "</i>")
     linies.append(enllac(MAPA_AIRE.format("es" if es else "ca"),
                          "Medidas de las estaciones (Generalitat)" if es else "Mesures de les estacions (Generalitat)"))
@@ -721,6 +877,8 @@ def nota_aire(a, idioma):
 
 
 NIVELL_POLLEN = {"ca": ("nul", "baix", "mig", "alt", "màxim"), "es": ("nulo", "bajo", "medio", "alto", "máximo")}
+# Els colors de les barres de la web (estil.css, .nivell-N).
+CERCLE_POLLEN = (CERCLE["nul"], CERCLE["baix"], CERCLE["mig"], CERCLE["alt"], CERCLE["maxim"])
 TENDENCIA = {"ca": {"A": "en augment", "D": "en descens", "!": "situació excepcional"},
              "es": {"A": "en aumento", "D": "en descenso", "!": "situación excepcional"}}
 
@@ -749,14 +907,14 @@ def text_pollen_bot(dades, idioma, moment):
             noms = [t["nom"][idioma] + (f" ({tend[t['tendencia']]})" if t.get("tendencia") in tend else "")
                     for t in tipus if t["nivell"] == n]
             if noms:
-                files.append(f"{nivell[n].capitalize()}: {', '.join(noms)}.")
+                files.append(f"{CERCLE_POLLEN[n]} {nivell[n].capitalize()}: {', '.join(noms)}.")
         # Els que són a zero, també: a qui hi és al·lèrgic també li serveix
         # (Juanjo, 09-10-2026). Si van en augment, a part.
         pugen = [t["nom"][idioma] for t in tipus if t["nivell"] == 0 and t.get("tendencia") in ("A", "!")]
         nuls = [t["nom"][idioma] for t in tipus if t["nivell"] == 0 and t["nom"][idioma] not in pugen]
         if nuls:
-            files.append(f"{nivell[0].capitalize()}: {', '.join(nuls)}." if files or pugen
-                         else ("Nulo en todos." if es else "Nul en tots."))
+            files.append(CERCLE_POLLEN[0] + " " + (f"{nivell[0].capitalize()}: {', '.join(nuls)}." if files or pugen
+                                                   else ("Nulo en todos." if es else "Nul en tots.")))
         if pugen:
             files.append((f"Empiezan a subir: {', '.join(pugen)}." if es else f"Comencen a pujar: {', '.join(pugen)}."))
         return [f"<b>{titol}</b>"] + [html.escape(f, quote=False) for f in files]
@@ -840,7 +998,7 @@ def text_avisos_actius(dades, idioma, moment):
             # «d'alerta», «d'emergència», però «de prealerta», com a la web.
             de = "d'" if p["fase"][:1] in "aeiouàèéíòóú" else "de "
             frase = f"Pla {p['nom']} ({p['pla']}) en fase {de}{p['fase']}."
-        linia = html.escape(frase, quote=False)
+        linia = amb_icona(CERCLE_FASE.get(p["fase"]), html.escape(frase, quote=False))
         if p.get("comunicat"):
             linia += " " + enllac(p["comunicat"], "Comunicado (PDF)" if es else "Comunicat (PDF)")
         blocs.append(("Protección Civil" if es else "Protecció Civil", [linia]))
@@ -900,7 +1058,8 @@ def blocs_entorn(entorn, idioma):
         n = alfa.get(dia)
         if n is not None and n >= ALFA_NIVELL_MOSTRAR:
             quan = {"avui": ("hoy" if es else "avui"), "dema": ("mañana" if es else "demà")}[dia]
-            nivells.append(html.escape(ALFA[idioma].format(n=n, quan=quan), quote=False))
+            nivells.append(amb_icona(CERCLE["maxim"] if n >= 4 else CERCLE["alt"],
+                                     html.escape(ALFA[idioma].format(n=n, quan=quan), quote=False)))
     nivells += [html.escape(f"Cerrado: {t['espai']}." if es else f"Tancat: {t['espai']}.", quote=False)
                 for t in alfa.get("tancaments") or []]
     if nivells:
@@ -915,10 +1074,10 @@ def linies_riscos(riscos, idioma, moment):
         try:
             sys.path.insert(0, REPO)
             import avisos_bot as AB
-            return [AB.linia_risc_es(r, moment) for r in riscos]
+            return [amb_icona(CERCLE_AVIS.get(r.get("nivell")), AB.linia_risc_es(r, moment)) for r in riscos]
         except Exception:
             pass
-    return [r.get("text", "") for r in riscos]
+    return [amb_icona(CERCLE_AVIS.get(r.get("nivell")), r.get("text", "")) for r in riscos]
 
 
 # --- Mensajes recibidos -------------------------------------------------------------

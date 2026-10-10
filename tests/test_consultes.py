@@ -55,10 +55,10 @@ class Pollen(unittest.TestCase):
     def test_text_del_bot(self):
         t = B.text_pollen_bot({"pollen": pollen()}, "ca", ARA)
         self.assertIn("<b>Pol·len a Bellaterra</b> (setmana del 5/10 al 11/10, a 3,1 km)", t)
-        self.assertIn("Mig: Artemísia, Compostes.\nBaix: Parietària, Gramínies, Blets, Pi (en descens).\n"
-                      "Nul: Olivera, Casuarina, Palmeres, Plantatge, Plàtan.", t)
+        self.assertIn("🟡 Mig: Artemísia, Compostes.\n🟢 Baix: Parietària, Gramínies, Blets, Pi (en descens).\n"
+                      "⚪ Nul: Olivera, Casuarina, Palmeres, Plantatge, Plàtan.", t)
         self.assertIn("Comencen a pujar: Xiprers.", t)
-        self.assertIn("<b>Espores de fongs</b>\nMàxim: Alternària, Cladosporium.", t)
+        self.assertIn("<b>Espores de fongs</b>\n🔴 Màxim: Alternària, Cladosporium.", t)
         self.assertIn("CC BY-NC-SA 4.0", t)
         self.assertNotIn("última setmana", t)
         # Si la setmana ja ha passat, es diu.

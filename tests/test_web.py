@@ -290,6 +290,33 @@ class Web(unittest.TestCase):
         r = self.avalua("2026-10-10T13:30:00+02:00", f"resumTrams({json.dumps(hores)}, new Date(), {json.dumps(mes)}).map((t) => t.compara)")
         self.assertEqual(r, ["11° més que ahir"])                          # 26,5 contra 15
 
+    def test_el_cel_del_bot_es_el_de_la_web(self):
+        # ADR 0065: la icona del cel als missatges del bot surt de la mateixa
+        # regla que la taula de la web (cel de casa.js): les dues han de coincidir.
+        sys.path.insert(0, os.path.join(os.path.dirname(WEB), "bot"))
+        import bot as B
+        files = []
+        # De dia, al vespre (la posta, cap a les 19:15 l'octubre) i de nit.
+        for dia, h in (("2026-10-10", 12), ("2026-10-10", 18), ("2026-10-10", 19), ("2026-10-10", 23),
+                       ("2026-10-11", 7), ("2026-01-15", 17), ("2026-06-21", 21)):
+            base = {"hora": f"{dia}T{h:02d}:00", "fins": f"{dia}T{h:02d}:59"}
+            for nuvols in (0, 30, 60, 80, 95, None):
+                files.append({**base, "nuvols": nuvols, "codi": 3, "probabilitat": 0.05, "pluja_mm": 0})
+            files.append({**base, "nuvols": 10, "codi": 3, "probabilitat": 0.1, "pluja_mm": 0.4})   # mulla: núvols
+            files.append({**base, "nuvols": 50, "codi": 45, "probabilitat": 0.0, "pluja_mm": 0})    # boira
+            for p, mm, codi in ((0.3, 0.5, 61), (0.3, 0, 95), (0.3, 1, 73), (0.6, 0.5, 61), (0.6, 7, 63),
+                                (0.6, 45, 65), (0.6, 90, 65), (0.6, 2, 95), (0.6, 2, 96), (0.6, 2, 75),
+                                (0.6, 2, 66), (None, 0.3, 61), (None, 0.1, 61)):
+                files.append({**base, "nuvols": 90, "codi": codi, "probabilitat": p, "pluja_mm": mm, "neu": 3})
+            files.append({**base, "nuvols": 20, "codi": 1, "probabilitat": 0.0, "pluja_mm": 0, "plou_ara": True})
+        js = self.avalua("2026-10-10T13:00:00+02:00", f"{json.dumps(files)}.map((f) => cel(f)[1])")
+        self.assertEqual(js, [B.icona_cel(f) for f in files])
+        # Cada icona de la web té el seu emoji, i de nit no surt el sol.
+        self.assertTrue(set(js) - {None} <= set(B.EMOJI_CEL))
+        self.assertEqual(B.emoji_cel(files[0]), "☀️")                      # dia 10, 12 h, serè
+        nit = next(f for f in files if f["hora"] == "2026-10-10T23:00" and f["nuvols"] == 60)
+        self.assertEqual(B.emoji_cel(nit), "☁️")
+
     def test_la_previsio_de_dema_tocada_despres_de_mitjanit(self):
         # La de les 21 h porta a «Demà»; si es toca quan aquell dia ja ha arribat, a «Avui».
         def desti(ara, url, dia):

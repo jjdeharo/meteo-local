@@ -32,7 +32,8 @@ internet en casa, que suele llegar con las tormentas.
   los deja en `avisos.json` junto a `montflorit.json`, en catalán y
   castellano, cada uno con un identificador: el bot no repite ninguno. Cada
   aviso empieza por lo que pasa en negrita («Atenció: possible desbordament de
-  la riera de Sant Cugat») y lo explica sin dar nada por sabido (de dónde baja
+  la riera de Sant Cugat»), con el círculo de su nivel delante desde el
+  10-10-2026 (ADR 0065), y lo explica sin dar nada por sabido (de dónde baja
   el agua, qué hacer), porque lo lee gente que no conoce la web (Juanjo,
   07-10-2026). El de peligro dice que lo calcula el programa y no es oficial.
   Tipos:
