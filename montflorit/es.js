@@ -116,6 +116,7 @@ var IDIOMA = {
     "Possible tempesta": "Posible tormenta",
     "Possible pluja": "Posible lluvia",
     "Possible neu": "Posible nieve",
+    "Pluja": "Lluvia", "Neu": "Nieve",
     "Boira": "Niebla",
     "Serè": "Despejado",
     "Poc ennuvolat": "Poco nuboso",

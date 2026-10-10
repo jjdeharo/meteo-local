@@ -68,7 +68,7 @@
 
 /* On es pinten les icones del temps amb els colors del cel. Fora d'aquí (els
    botons, les pestanyes) les mateixes icones queden del color del text. */
-.taula-hores, .tram-hores > summary, .dades-ara {
+.taula-hores, .tram-hores > summary, .dades-ara, .resum-linia {
   --ic-sol: var(--c-sol); --ic-sol-fons: var(--c-sol-fons);
   --ic-nuvol: var(--c-nuvol); --ic-nuvol-fons: var(--c-nuvol-fons);
   --ic-aigua: var(--c-aigua); --ic-aigua-fons: var(--c-aigua-fons);
@@ -634,12 +634,20 @@ h1 { margin: 0; font-size: 1.6rem; line-height: 1.2; }
 .uv-xip { display: inline-block; padding: 0 .6rem; border-radius: 999px; font-weight: 700; color: #111; line-height: 1.6; }
 .uv-baix { background: #3ea72d; color: #fff; } .uv-moderat { background: #fff300; } .uv-alt { background: #f18b00; }
 .uv-molt-alt { background: #e53210; color: #fff; } .uv-extrem { background: #b567a4; color: #fff; }
-/* Avui i demà: una icona per línia. */
+/* Avui i demà: la icona, només si el text en porta (ADR 0065), a la seva columna. */
 .resum-linia { display: grid; grid-template-columns: 1.3rem 1fr; gap: .5rem; align-items: start; }
 .resum-linia:first-child { display: block; }
 .resum-linia svg, .resum-buit { width: 1.15rem; height: 1.15rem; margin-top: .15rem; fill: none; stroke: var(--suau);
   stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .consulta .resum-linia + .resum-linia { margin-top: .45rem; }
+.icona-cel { display: inline-flex; }
+/* Els nivells, un cercle amb els colors de les barres del pol·len i de l'UV. */
+.punt-nivell { display: inline-block; width: .8rem; height: .8rem; border-radius: 50%; background: var(--c);
+  vertical-align: -.05rem; margin-right: .3rem; }
+.resum-linia > .punt-nivell { margin: .35rem auto 0; }
+.punt-nul { --c: transparent; box-shadow: inset 0 0 0 1.5px var(--suau); }
+.punt-baix { --c: var(--verd); } .punt-mig { --c: #eab308; } .punt-alt { --c: #fb923c; }
+.punt-maxim { --c: #ef4444; } .punt-extrem { --c: #b567a4; }
 .consulta .llista-trens { margin-top: .6rem; }
 .xip:has(input:focus-visible) { outline: 2px solid var(--enllac); outline-offset: 2px; }
 .xip svg, .mitja-nom svg {

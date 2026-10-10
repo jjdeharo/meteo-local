@@ -117,7 +117,10 @@ class DadesDeLaWeb(unittest.TestCase):
                  "hores": [], "trens": {"linies": []}, "transit": {"hora": ARA.isoformat(), "incidencies": []}}
         c = M.dades_publiques(dades)["consultes"]
         self.assertEqual(list(c["ca"]), list(M.CONSULTES))
-        self.assertEqual(c["ca"]["sol"], B.text_sol_bot(dades, "ca", ARA))
+        # El mateix text, amb les icones com a marques per a la web (ADR 0065).
+        self.assertEqual(c["ca"]["sol"], B.text_sol_bot(dades, "ca", ARA).replace("🟡", "⟦mig⟧"))
+        self.assertIn("⟦mig⟧ Índex UV màxim", c["ca"]["sol"])
+        self.assertEqual(B.ICONES, "emoji")                      # el bot hi torna
         self.assertNotIn(B.WEB, json.dumps(c))                   # sense l'enllaç a la web: ja s'hi és
 
 
@@ -140,6 +143,21 @@ class Pagina(unittest.TestCase):
         l = self.trossos("En directe: https://www.meteo.cat/radar.\n<a href=\"javascript:x\">x</a>")
         self.assertEqual(l[0][1]["href"], "https://www.meteo.cat/radar")
         self.assertIsNone(l[1][0]["href"])
+
+    def test_les_marques_de_les_icones(self):
+        # ADR 0065: «⟦clau⟧ » es treu del text i queda com a marca, també enmig de la línia.
+        js = llegeix_js()
+        marques = ("const MARCA" + js.split("const MARCA", 1)[1].split("const NOM_CEL", 1)[0]
+                   + "function ambMarques" + js.split("function ambMarques", 1)[1].split("function nodesAmbMarques", 1)[0])
+        codi = ("const T = (x) => x; const $ = () => null; const element = () => ({});"
+                + llegeix_js().split("// Paràgrafs")[0].split("let triada = triadaInicial();")[1] + marques
+                + "console.log(JSON.stringify(trossos(" + json.dumps("<b>Títol</b>\n⟦i-sun⟧ Ara mateix: 22 °C.\n"
+                                                                   "Trens: ⟦alt⟧ R4 amb incidències, ⟦baix⟧ S2.")
+                + ").map(ambMarques)));")
+        l = json.loads(subprocess.run(["node", "-e", codi], capture_output=True, text=True, check=True).stdout)
+        self.assertEqual(l[1][0], {"marca": "i-sun"})
+        self.assertEqual(l[1][1]["t"], "Ara mateix: 22 °C.")
+        self.assertEqual([x.get("marca") or x["t"] for x in l[2]], ["Trens: ", "alt", "R4 amb incidències, ", "baix", "S2."])
 
     def test_opcions_en_l_ordre_del_bot(self):
         js = llegeix_js()

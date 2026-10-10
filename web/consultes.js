@@ -118,7 +118,7 @@ function pintaText(text) {
     if (!linia.length) { p = null; continue; }
     if (p) p.append(element('br'));
     else { p = element('p'); peces.push(p); }
-    p.append(...nodesLinia(linia));
+    p.append(...nodesAmbMarques(ambMarques(linia)));
   }
   return peces;
 }
@@ -326,26 +326,69 @@ function pintaSol(dies) {
   return peces;
 }
 
-// --- Avui i demà: el text del bot, amb una icona per línia segons de què parla. ---
-const ICONA_LINIA = [
-  [/^(Ara mateix|Ahora mismo|Temperatura)/, 'i-thermometer'],
-  [/(pluja|lluvia|plou|llueve)/i, 'i-umbrella'],
-  [/AEMET/, 'i-triangle-alert'],
-  [/^(Trens|Trenes)/, 'i-train-front'],
-  [/^(Roba|Ropa)/, 'i-shirt'],
-];
+// --- Avui i demà: el text del bot. Les icones, només les que porta el text
+// (ADR 0065): el bot hi posa emojis i, per a la web, marques («⟦i-sun⟧»,
+// «⟦alt⟧») que aquí es dibuixen amb les icones de colors de la web. La que
+// obre la línia va a la columna de les icones. ---
+const MARCA = /⟦([a-z-]+)⟧ ?/;
+const NOM_CEL = () => ({
+  'i-sun': T('Serè'), 'i-moon-cel': T('Serè'), 'i-cloud-sun': T('Poc ennuvolat'), 'i-cloud-moon': T('Poc ennuvolat'),
+  'i-cloud': T('Mig ennuvolat'), 'i-cloudy': T('Molt ennuvolat'), 'i-cloud-fog': T('Boira'),
+  'i-cloud-sun-rain': T('Possible pluja'), 'i-cloud-moon-rain': T('Possible pluja'), 'i-cloud-drizzle': T('Pluja feble'),
+  'i-cloud-rain': T('Pluja'), 'i-cloud-rain-wind': T('Pluja forta'), 'i-cloud-snow': T('Neu'),
+  'i-cloud-lightning': T('Tempesta'), 'i-cloud-hail': T('Tempesta amb calamarsa'), 'i-umbrella': T('Plou ara'),
+});
+const NIVELLS_MARCA = ['nul', 'baix', 'mig', 'alt', 'maxim', 'extrem'];
+
+// Una marca, com a element: el cel, amb la icona i el seu nom per a qui no la
+// veu; el nivell, un cercle del seu color (el text ja diu quin és).
+function nodeMarca(clau) {
+  if (NIVELLS_MARCA.includes(clau)) {
+    const punt = element('span', 'punt-nivell punt-' + clau);
+    punt.setAttribute('aria-hidden', 'true');
+    return punt;
+  }
+  const nom = NOM_CEL()[clau];
+  const s = element('span', 'icona-cel');
+  s.append(icona(clau));
+  if (nom) {
+    s.setAttribute('role', 'img');
+    s.setAttribute('aria-label', nom);
+    s.title = nom;
+  }
+  return s;
+}
+
+// Els trossos d'una línia amb les marques separades: [{marca}] o el tros.
+function ambMarques(linia) {
+  const res = [];
+  for (const tros of linia) {
+    tros.t.split(MARCA).forEach((part, n) => {
+      if (n % 2) res.push({ marca: part });
+      else if (part) res.push({ ...tros, t: part });
+    });
+  }
+  return res;
+}
+
+function nodesAmbMarques(trossos) {
+  const nodes = [];
+  for (const tros of trossos) nodes.push(...(tros.marca ? [nodeMarca(tros.marca)] : nodesLinia([tros])));
+  return nodes;
+}
 
 function pintaResum(text) {
   const peces = [];
   for (const linia of trossos(text)) {
     if (!linia.length) continue;
-    const pla = linia.map((t) => t.t).join('');
+    const trs = ambMarques(linia);
     const fila = element('p', 'resum-linia');
-    const icon = (ICONA_LINIA.find(([re]) => re.test(pla)) || [])[1];
-    if (icon && peces.length) fila.append(icona(icon));
-    else if (peces.length) fila.append(element('span', 'resum-buit'));
+    if (peces.length) {
+      const primera = trs[0] && trs[0].marca ? trs.shift() : null;
+      fila.append(primera ? nodeMarca(primera.marca) : element('span', 'resum-buit'));
+    }
     const cos = element('span');
-    cos.append(...nodesLinia(linia));
+    cos.append(...nodesAmbMarques(trs));
     fila.append(cos);
     peces.push(fila);
   }

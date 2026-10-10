@@ -458,12 +458,17 @@ def consultes(dades):
         "transit": lambda i: B.text_transit_bot(dades, i, moment),
     }
     res = {}
-    for idioma in ("ca", "es"):
-        res[idioma] = {}
-        for clau in CONSULTES:
-            # Sin el enlace a la web del final: ya se está en ella.
-            linies = [l for l in funcions[clau](idioma).rstrip().split("\n") if l.strip() != B.WEB]
-            res[idioma][clau] = "\n".join(linies).strip()
+    # Los iconos, como marcas que web/consultes.js dibuja con los de la web (ADR 0065).
+    B.ICONES = "web"
+    try:
+        for idioma in ("ca", "es"):
+            res[idioma] = {}
+            for clau in CONSULTES:
+                # Sin el enlace a la web del final: ya se está en ella.
+                linies = [l for l in funcions[clau](idioma).rstrip().split("\n") if l.strip() != B.WEB]
+                res[idioma][clau] = "\n".join(linies).strip()
+    finally:
+        B.ICONES = "emoji"
     return res
 
 

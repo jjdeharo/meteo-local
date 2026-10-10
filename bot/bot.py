@@ -265,10 +265,34 @@ def plou_ara(dades):
 # d'ara) o on deixen veure d'una ullada el que s'hauria de llegir línia a línia
 # (la pluja, només quan n'hi ha, i els nivells, amb una sola escala de colors).
 # Res de temes: cada línia ja comença pel seu rètol.
-CERCLE = {"nul": "⚪", "baix": "🟢", "mig": "🟡", "alt": "🟠", "maxim": "🔴", "extrem": "🟣"}
+#
+# Els mateixos textos van a «Consultes» de la web (montflorit.py), que hi posa
+# les seves icones de Lucide amb colors (ADR 0063) en lloc dels emojis: amb
+# ICONES = "web", cada icona surt com una marca, «⟦i-cloud-moon⟧» o «⟦alt⟧»,
+# amb la icona exacta, i web/consultes.js la dibuixa.
+ICONES = "emoji"
+NIVELLS_EMOJI = {"nul": "⚪", "baix": "🟢", "mig": "🟡", "alt": "🟠", "maxim": "🔴", "extrem": "🟣"}
+
+
+def marca(clau, emoji=None):
+    if ICONES == "web":
+        return f"⟦{clau}⟧"
+    return emoji or NIVELLS_EMOJI.get(clau) or EMOJI_CEL[clau]
+
+
+class Escala(dict):
+    """De cada valor, el seu nivell; en llegir-lo, la marca (emoji o web)."""
+    def __getitem__(self, clau):
+        return marca(dict.__getitem__(self, clau))
+
+    def get(self, clau, defecte=None):
+        return self[clau] if clau in self else defecte
+
+
+CERCLE = Escala({n: n for n in NIVELLS_EMOJI})
 # Els nivells d'avís (AEMET i els propis) en la mateixa escala; el mateix a avisos_bot.py.
-CERCLE_AVIS = {"groc": CERCLE["mig"], "taronja": CERCLE["alt"], "vermell": CERCLE["maxim"]}
-CERCLE_FASE = {"prealerta": CERCLE["mig"], "alerta": CERCLE["alt"], "emergència": CERCLE["maxim"]}
+CERCLE_AVIS = Escala(groc="mig", taronja="alt", vermell="maxim")
+CERCLE_FASE = Escala({"prealerta": "mig", "alerta": "alt", "emergència": "maxim"})
 
 # El cel, amb la mateixa regla que web/casa.js (plujaHora, cel i celNuvols):
 # les proves comparen les dues. Les icones de Lucide de la web, en emojis.
@@ -353,7 +377,7 @@ def icona_cel(f):
 EMOJI_CEL = {"i-sun": "☀️", "i-moon-cel": "🌙", "i-cloud-sun": "🌤️", "i-cloud-moon": "🌙", "i-cloud": "⛅",
              "i-cloudy": "☁️", "i-cloud-fog": "🌫️", "i-cloud-sun-rain": "🌦️", "i-cloud-moon-rain": "🌧️",
              "i-cloud-drizzle": "🌧️", "i-cloud-rain": "🌧️", "i-cloud-rain-wind": "🌧️", "i-cloud-snow": "🌨️",
-             "i-cloud-lightning": "⛈️", "i-cloud-hail": "⛈️"}
+             "i-cloud-lightning": "⛈️", "i-cloud-hail": "⛈️", "i-umbrella": "☔"}
 # De menys a més: la icona de la línia de la pluja és la de l'hora pitjor.
 ORDRE_PLUJA = ("i-cloud-moon-rain", "i-cloud-sun-rain", "i-cloud-drizzle", "i-cloud-rain", "i-cloud-rain-wind",
                "i-cloud-snow", "i-cloud-lightning", "i-cloud-hail")
@@ -361,15 +385,15 @@ ORDRE_PLUJA = ("i-cloud-moon-rain", "i-cloud-sun-rain", "i-cloud-drizzle", "i-cl
 
 def emoji_cel(f):
     i = icona_cel(f)
-    if i == "i-cloud" and es_nit(f):
-        return "☁️"
-    return EMOJI_CEL.get(i)
+    if not i:
+        return None
+    return marca(i, "☁️" if i == "i-cloud" and es_nit(f) else None)
 
 
 def emoji_pluja(tram):
     """La de l'hora amb la pluja pitjor; cap si no se n'espera."""
     ids = [i for i in (icona_cel(f) for f in tram if pluja_hora(f)) if i in ORDRE_PLUJA]
-    return EMOJI_CEL[max(ids, key=ORDRE_PLUJA.index)] if ids else None
+    return marca(max(ids, key=ORDRE_PLUJA.index)) if ids else None
 
 
 def amb_icona(icona, text):
@@ -395,7 +419,7 @@ def text_ara(dades, idioma, lloc="", moment=None):
     plou = plou_ara(dades)
     # El cel de l'hora, el de la taula de la web; si plou, el paraigua, com allà.
     f = hora_ara(dades, moment or ara())
-    icona = "☔" if plou else (f and emoji_cel(f))
+    icona = marca("i-umbrella") if plou else (f and emoji_cel(f))
     if idioma == "es":
         return amb_icona(icona, f"Ahora mismo{lloc and ' en ' + lloc}: {graus(t)}, {'llueve' if plou else 'no llueve'}.")
     return amb_icona(icona, f"Ara mateix{lloc and ' a ' + lloc}: {graus(t)}, {'plou' if plou else 'no plou'}.")
@@ -680,8 +704,8 @@ ESTAT_TREN = {"ca": {"circula": "sense incidències", "incidencies": "amb incid�
 # Verd, circula; ambre, amb incidències, o diu que circula però no s'hi ha vist
 # cap tren; vermell, sense trens (també per carretera); blanc, sense dades o
 # fora d'horari: no se'n sap res.
-CERCLE_TREN = {"circula": CERCLE["baix"], "incidencies": CERCLE["alt"], "bus": CERCLE["maxim"],
-               "sense_trens": CERCLE["maxim"], "fora_horari": CERCLE["nul"], "sense_dades": CERCLE["nul"]}
+CERCLE_TREN = Escala(circula="baix", incidencies="alt", bus="maxim", sense_trens="maxim", fora_horari="nul",
+                     sense_dades="nul")
 
 
 def cercle_tren(l):
@@ -766,8 +790,7 @@ def hm(iso):
 
 UV_NIVELLS = ((2, "baix", "bajo"), (5, "moderat", "moderado"), (7, "alt", "alto"), (10, "molt alt", "muy alto"),
               (99, "extrem", "extremo"))
-CERCLE_UV = {"baix": CERCLE["baix"], "moderat": CERCLE["mig"], "alt": CERCLE["alt"], "molt alt": CERCLE["maxim"],
-             "extrem": CERCLE["extrem"]}
+CERCLE_UV = Escala({"baix": "baix", "moderat": "mig", "alt": "alt", "molt alt": "maxim", "extrem": "extrem"})
 
 
 def text_sol_bot(dades, idioma, moment):
@@ -815,9 +838,8 @@ AIRE_NOMS = {"ca": {"bona": "bona", "raonablement_bona": "raonablement bona", "r
                     "pm2_5": "las partículas finas (PM2,5)", "pm10": "las partículas (PM10)",
                     "nitrogen_dioxide": "el dióxido de nitrógeno (NO₂)", "ozone": "el ozono (O₃)",
                     "sulphur_dioxide": "el dióxido de azufre (SO₂)"}}
-CERCLE_AIRE = {"bona": CERCLE["baix"], "raonablement_bona": CERCLE["baix"], "regular": CERCLE["mig"],
-               "desfavorable": CERCLE["alt"], "molt_desfavorable": CERCLE["maxim"],
-               "extremadament_desfavorable": CERCLE["extrem"]}
+CERCLE_AIRE = Escala(bona="baix", raonablement_bona="baix", regular="mig", desfavorable="alt",
+                     molt_desfavorable="maxim", extremadament_desfavorable="extrem")
 MAPA_AIRE = "https://mediambient.gencat.cat/{}/05_ambits_dactuacio/atmosfera/qualitat_de_laire/vols-saber-que-respires/"
 
 
@@ -878,7 +900,7 @@ def nota_aire(a, idioma):
 
 NIVELL_POLLEN = {"ca": ("nul", "baix", "mig", "alt", "màxim"), "es": ("nulo", "bajo", "medio", "alto", "máximo")}
 # Els colors de les barres de la web (estil.css, .nivell-N).
-CERCLE_POLLEN = (CERCLE["nul"], CERCLE["baix"], CERCLE["mig"], CERCLE["alt"], CERCLE["maxim"])
+CERCLE_POLLEN = Escala(enumerate(("nul", "baix", "mig", "alt", "maxim")))
 TENDENCIA = {"ca": {"A": "en augment", "D": "en descens", "!": "situació excepcional"},
              "es": {"A": "en aumento", "D": "en descenso", "!": "situación excepcional"}}
 

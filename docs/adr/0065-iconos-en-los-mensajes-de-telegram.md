@@ -1,4 +1,4 @@
-# 65. Iconos en los mensajes de Telegram, solo donde ayudan a leer
+# 65. Iconos en los mensajes de Telegram y de «Consultes», solo donde ayudan a leer
 
 Fecha: 2026-10-10 · Estado: aceptado
 
@@ -59,12 +59,35 @@ mismo criterio.
   los enlaces y los títulos de las consultas.
 - Los círculos están en `CERCLE` de `bot/bot.py` y de `avisos_bot.py` (el bot
   no importa el resto del programa); una prueba comprueba que coinciden.
+- **«Consultes» de la web sigue el mismo patrón** (Juanjo, 10-10-2026: «los
+  has añadido a los mensajes de la web? deben seguir el mismo patrón»; desde
+  la 3.53.1). Sus fichas «Avui» y «Demà» muestran el texto del bot y ponían
+  delante de cada línea un icono gris de tema (termómetro, paraguas, aviso,
+  tren, camisa), que se retira. Para que la web dibuje sus propios iconos de
+  Lucide con los colores del cielo (ADR 0063) y no emojis, `montflorit.py`
+  genera esos textos con `bot.ICONES = "web"`: cada icono sale como una marca
+  con su clave exacta («⟦i-cloud-moon⟧», «⟦alt⟧»), sin la pérdida de pasar
+  por el emoji (de noche, por ejemplo, la luna con nube). `web/consultes.js`
+  pone la marca que abre la línea en la columna de los iconos y dibuja el
+  resto donde está: el cielo, con su nombre para los lectores de pantalla;
+  los niveles, como un círculo del color de las barras del polen y del UV de
+  la web (el texto ya dice el nivel). Las notificaciones del navegador
+  siguen con los emojis, como Telegram.
 
 ## Consecuencias
 
-- El canal y los suscriptores reciben los mismos cambios: los textos salen de
-  las mismas funciones.
+- El canal, los suscriptores, las notificaciones y «Consultes» reciben los
+  mismos cambios: los textos salen de las mismas funciones.
 - Si cambia la regla del cielo de la web, hay que cambiar también
   `icona_cel`; la prueba de `tests/test_web.py` avisa.
 - Cada sistema dibuja los emojis a su manera: el aspecto exacto no se puede
   fijar, pero el significado sí.
+
+## Validación
+
+Pruebas: la regla del cielo del bot contra la de la web (`tests/test_web.py`),
+el icono de la lluvia, la escala única, las marcas de «Consultes» y su lectura
+en `web/consultes.js` (`tests/test_consultes.py`). «Consultes» comprobada con
+`probar-web` en Chromium, Firefox y WebKit, escritorio, móvil y tableta, tema
+claro y oscuro, con datos reales y con unos simulados con lluvia y aviso, y
+con axe-core sin fallos.
