@@ -13,16 +13,6 @@ era deducido, no expreso, y el ADR 0004 ya dejaba escrito que si su
 responsable lo pedía, se quitaba. El 09-10-2026 Juanjo pidió quitar toda
 referencia a esa estación. El motivo es personal y no se escribe aquí.
 
-El mismo día preguntó si podía usarse en su lugar la estación meteorológica
-de Can Coll, a 1-2 km. Es una estación manual de la red secundaria de AEMET
-(desde el 01-07-2008; dos termómetros de máxima y mínima y un pluviómetro en
-una garita), observada una vez al día por colaboradores voluntarios. Los
-datos son de AEMET y no se publican: no está en el inventario de AEMET
-OpenData (947 estaciones; la más cercana es Sabadell Aeropuerto, 0229I) y
-solo se obtendrían pidiéndolos al Banco Nacional de Datos Climatológicos, en
-valores diarios y con retraso. Aunque se tuvieran, una lectura al día no
-sirve para «¿llueve ahora?» ni para aprender por horas.
-
 ## Decisión
 
 - **No se lee nada de meteocerdanyola.com** y ninguna página, README ni
@@ -82,10 +72,6 @@ sirve para «¿llueve ahora?» ni para aprender por horas.
   4,6 km, por medias horas y con retraso; la lluvia convectiva no coincide.
   Sirven para confirmar que no llovió en la zona, no para decir que llovió
   en casa.
-- **La estación de Can Coll**: véase el contexto. Lo único que aportaría
-  es el total diario de lluvia a 1-2 km, con meses de retraso, para
-  contrastar el pluviómetro de casa; Sabadell y Sant Cugat ya lo hacen cada
-  día.
 - **La estación del Consorci del Parc de Collserola** (Davis, en el Centre
   d'Informació, en Vallvidrera): publica solo las condiciones actuales en
   una página sin hora de actualización ni historial, y está más lejos que
@@ -119,13 +105,6 @@ sirve para «¿llueve ahora?» ni para aprender por horas.
 
 ## Evidencia
 
-- Can Coll: artículos de Cerdanyola.info del 08-02-2007 (AEMET aprueba la
-  estación, promovida por Joaquim Ibáñez y Víctor Cano) y del 15-07-2008
-  («Cerdanyola disposa d'una nova estació meteorològica manual a Can Coll»:
-  AEMET paga la instalación, los datos son suyos, la observan a diario los
-  dos colaboradores). Inventario de estaciones de AEMET OpenData
-  (`inventarioestaciones/todasestaciones`, copia pública del 2025 con 947
-  estaciones): ninguna en Cerdanyola, Sant Cugat ni Collserola.
 - Consorci de Collserola: `parcnaturalcollserola.cat/meteo/Current_Vantage.htm`
   (09-10-2026): condiciones actuales sin hora ni historial.
 
