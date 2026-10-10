@@ -405,12 +405,15 @@ def text_roba(tram, idioma):
     if peca(fred[2], idioma) == peca(calor[2], idioma):
         return cap + peca(fred[2], idioma).lower() + "."
 
+    # Primer l'hora i la temperatura i després la peça: amb la peça davant,
+    # «màniga curta» quedava rere «(10 °C);» i semblava que hi anés (Juanjo,
+    # 10-10-2026: «manga corta para 10º?»).
     def moment(x):
         h, t, s = x
         nota = (f", se notan como {graus(s)}" if idioma == "es" else f", es noten com {graus(s)}") \
             if s < math.floor(t + 0.5) else ""
         a = "a las" if idioma == "es" else "a les"
-        return f"{peca(s, idioma).lower()} {a} {h.hour} h ({graus(t)}{nota})"
+        return f"{a} {h.hour} h ({graus(t)}{nota}), {peca(s, idioma).lower()}"
     return cap + "; ".join(moment(x) for x in sorted((fred, calor))) + "."
 
 
