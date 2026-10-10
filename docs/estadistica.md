@@ -72,7 +72,7 @@ servicio meteorológico alemán, a 7 km. En cada pasada, el servidor guarda:
   Estatal de Meteorología (AEMET) por lluvia o tormentas y si el plan de
   inundaciones de Protección Civil de Cataluña (INUNCAT) estaba en alerta o
   emergencia (ADR 0047).
-- **El veredicto de lluvia de la moto en «Si surts»** (apartado 14).
+- **El veredicto de cada medio en «Si surts»** (apartado 14).
 
 Al cruzar lo previsto con lo medido se obtiene, para cada hora prevista, qué
 se dijo y qué pasó. Con eso se ajustan dos regresiones, una para la lluvia y
@@ -844,12 +844,8 @@ El precio es recomendar el impermeable unos 19 días secos más de cada 900. El
 archivo no tiene avisos de la AEMET, radar ni conjunto de simulaciones: esas
 partes no están comprobadas.
 
-**Comprobación con lo que pasa.** Cada día se apunta, de cada hora pasada de 6
-a 22 h con lluvia medida, qué nivel daba la regla nueva y cuál la de antes,
-con dos antelaciones: al salir (la previsión más reciente de 1 a 3 horas
-antes) y la vuelta decidida por la mañana (de 6 a 10 horas antes). A los 28
-días se comunica una vez el número de horas secas con «no» y con «compte» y
-el de horas de lluvia con «bé» de las dos reglas.
+**Comprobación con lo que pasa** (desde el 10-10-2026, de todos los medios:
+apartado siguiente).
 
 ### Los demás medios
 
@@ -866,6 +862,20 @@ Estos umbrales son de criterio, no ajustados con datos:
   «compte» desde 1 °C.
 - **Transporte público**: el estado de los trenes de Cerdanyola en tiempo
   real, sin umbrales meteorológicos.
+
+**Comprobación con lo que pasa, de todos los medios** (ADR 0047 y 0068).
+Las reglas son comunes: si fallan en un medio, fallan en los demás. Cada día
+se apunta en `sortir.csv`, de cada hora pasada de 7 a 22 h, lo que mostró la
+página con dos antelaciones (al salir, la previsión más reciente de 1 a 3
+horas antes; la vuelta decidida por la mañana, de 6 a 10 horas antes): la
+probabilidad, los milímetros, la lluvia ahora, el aviso de la AEMET, la
+racha y la temperatura; y lo que se midió: la lluvia (con las mismas reglas
+de hora seca del aprendizaje), la racha máxima de la hora en Sant Cugat y la
+temperatura de casa. El resumen juzga con las reglas de ahora: de cada
+medio (a pie, bici o patinete, moto y coche) y de cada regla (lluvia,
+rachas y frío), cuántas horas dio cada nivel y en cuántas pasó; la moto,
+también con su regla de lluvia de antes. Llega una vez a los 28 días; las
+pruebas comprueban que el nivel de cada hora es el mismo que da la página.
 
 ### La ropa
 
@@ -1018,7 +1028,7 @@ hora), `estacio-casa-5min.csv` (la lluvia de casa cada 5 minutos),
 Sant Cugat), `veina-<id>.csv` (lo que miden por horas las estaciones vecinas de
 Weather Underground), `casa-AAAA-MM.jsonl` (lo previsto),
 `radar-fonts-*.jsonl` (lo que daba cada radar), `radar-a-prop-*.jsonl` (los
-ecos de cada radar a 15 km o menos de casa, en cada pasada), `moto.csv` (la regla de la moto), `avisos-pluja.csv`
+ecos de cada radar a 15 km o menos de casa, en cada pasada), `sortir.csv` (lo que dijo «Si surts» de cada medio y lo que pasó), `avisos-pluja.csv`
 (episodios del aviso de lluvia) y `riera.csv` (episodios de la riera). Los
 modelos aprendidos, en `/estat/aprenentatge/`: `model.json`, `proposat.json`,
 `fi-pluja.json` y `historial.csv`, con las muestras, las horas de lluvia y
@@ -1027,13 +1037,13 @@ los errores de cada método día a día.
 **Cuándo se ejecuta.** A las 16:00 (`HORA_VERIFICACION` de `config.py`) el
 reloj del NAS (`nas/reloj.sh`) completa la estación de casa con
 `registre.py estacio` y ejecuta `aprenentatge.py diari`, que además compara
-los radares, juzga el final de la lluvia y apunta la regla de la moto.
+los radares, juzga el final de la lluvia y apunta lo que dijo «Si surts» de cada medio.
 
 **Avisos al responsable.** Llegan a Juanjo por Telegram:
 
 - cada cambio de método propuesto, con las cifras;
 - el resultado de la variante con Sant Cugat, a las 30 horas de lluvia;
-- el del final de la lluvia, a los 5 episodios, y el de la moto, a los 28 días;
+- el del final de la lluvia, a los 5 episodios, y el de «Si surts», a los 28 días;
 - cada cambio de radar o de regla del final de la lluvia.
 
 **Parar un cambio.** El archivo `/estat/aprenentatge/atura` detiene la
@@ -1041,7 +1051,7 @@ aplicación de una propuesta, los cambios de radar y los de regla del final de
 la lluvia.
 
 **Consultas.** `python3 aprenentatge.py estat` (qué se usa y las últimas
-cifras), `python3 aprenentatge.py moto`, `python3 fi_pluja.py resum`,
+cifras), `python3 aprenentatge.py sortir`, `python3 fi_pluja.py resum`,
 `python3 pluja_arriba.py resum` y `python3 riera.py resum`.
 
 **El pluviómetro de casa** (`pluviometre.py`, ADR 0017). Su cero no es
@@ -1057,7 +1067,7 @@ vuelve a fiarse de su cero.
 
 | Archivo | Qué hace |
 |---|---|
-| `aprenentatge.py` | Señales, regresiones, validación y decisión diaria; veredicto de la moto y lo que pasó |
+| `aprenentatge.py` | Señales, regresiones, validación y decisión diaria; veredicto de cada medio de «Si surts» y lo que pasó |
 | `casa.py` | Calcula cada hora de la tabla (apartado 6) y guarda las previsiones |
 | `nowcast.py` | El radar llevado hacia delante |
 | `radar_fonts.py` | Compara los dos radares |

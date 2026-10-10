@@ -325,7 +325,8 @@ def filas_registro(desde, h, e, mostradas, casa=None, avisos=None, planes=None, 
         # «plou_ara», para saber qué veredicto dio «Si surts» (ADR 0047).
         d["mostrat"] = {"pluja_mm": f["pluja_mm"], "probabilitat": f["probabilitat"],
                         "temperatura": f["temperatura"], "segons_estacio": f["segons_estacio"],
-                        "segons_radar": f.get("segons_radar", False), "plou_ara": f.get("plou_ara", False)}
+                        "segons_radar": f.get("segons_radar", False), "plou_ara": f.get("plou_ara", False),
+                        "ratxa": f.get("ratxa")}
         # Lo que daba el radar llevado hacia delante, para aprender (ADR 0019).
         d["radar_mm"] = (f.get("radar") or {}).get("mm")
         d["radar_prob"] = (f.get("radar") or {}).get("prob")

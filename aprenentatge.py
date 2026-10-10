@@ -26,7 +26,7 @@ exista el archivo «atura»; un nuevo ajuste del mismo método se aplica directa
 Uso:
   python3 aprenentatge.py diari     ajusta, compara y propone o aplica
   python3 aprenentatge.py estat     qué se usa ahora y con qué resultados
-  python3 aprenentatge.py moto      cómo va la regla de lluvia de la moto de «Si surts»
+  python3 aprenentatge.py sortir    cómo van las reglas de cada medio de «Si surts» (también «moto»)
 """
 import csv
 import datetime as dt
@@ -505,14 +505,14 @@ def diari(avui=None, avisa=True):
         smp.comprova(P.get, os.path.join(DIR, "smp-falla"), avisa)
     except Exception as ex:
         print("No he pogut comprovar els avisos de Meteocat:", ex)
-    # Qué dijo la regla de la moto de «Si surts» y si llovió (ADR 0047).
+    # Qué dijo «Si surts» de cada medio y qué pasó (ADR 0047 y 0068).
     try:
-        print("Moto: hores noves verificades:", verifica_moto())
-        text_moto = avis_moto(avisa)
-        if text_moto:
-            print(text_moto)
+        print("Si surts: hores noves verificades:", verifica_sortir())
+        text_sortir = avis_sortir(avisa)
+        if text_sortir:
+            print(text_sortir)
     except Exception as ex:
-        print("No he pogut verificar la moto:", ex)
+        print("No he pogut verificar Si surts:", ex)
     # El viento con las vecinas: factores, comprobación y, una vez, el
     # resultado a Juanjo para que decida (ADR 0064).
     try:
@@ -580,60 +580,120 @@ def avis_sant_cugat(vp):
     return text
 
 
-# --- «Si surts»: el veredicto de la moto y lo que pasó (ADR 0047) ------------------------
+# --- «Si surts»: el veredicto de cada medio y lo que pasó (ADR 0047 y 0068) -----------
+# Hasta el 10-10-2026 solo se comprobaba la lluvia en moto (moto.csv). Juanjo,
+# ese día: «si un medio como la moto falla, es de suponer que el resto también
+# lo hará ya que se rigen por las mismas reglas, por eso es necesario no poner
+# parches a un elemento sino buscar que todo funcione bien». Se comprueban
+# todos los medios con sus tres reglas (lluvia, viento y frío), con lo que
+# mostró la página y lo que pasó: sortir.csv guarda las entradas y lo medido,
+# y el resumen juzga con las reglas de ahora (C.SORTIR_*, las de web/sortir.js,
+# que las pruebas comparan ejecutando la página).
 
-MOTO = os.path.join(REGISTRE, "moto.csv")
-CAMPS_MOTO = ["fins", "termini", "emes", "antelacio_h", "probabilitat", "pluja_mm", "plou_ara",
-              "avis", "nivell", "nivell_abans", "pluja_obs"]
+SORTIR = os.path.join(REGISTRE, "sortir.csv")
+MOTO_VELL = os.path.join(REGISTRE, "moto.csv")       # el de antes del 10-10-2026, sustituido
+CAMPS_SORTIR = ["fins", "termini", "emes", "antelacio_h", "probabilitat", "pluja_mm", "plou_ara", "avis",
+                "ratxa", "temperatura", "pluja_obs", "ratxa_obs", "temperatura_obs"]
 # Con qué antelación se juzga: al salir (la previsión de 1 a 3 horas antes) y
 # la vuelta, decidida por la mañana (de 6 a 10 horas antes); de cada hora, la
 # previsión más reciente dentro de ese margen.
-TERMINIS_MOTO = {"sortida": (1, 3), "tornada": (6, 10)}
+TERMINIS_SORTIR = {"sortida": (1, 3), "tornada": (6, 10)}
 # Solo las horas en que se circula: tramos que acaban de las 7 a las 22 h.
-HORES_MOTO = range(7, 23)
-DIES_RESUM_MOTO = 28            # resumen por Telegram, una vez
-AVIS_MOTO = os.path.join(DIR, "avis-moto")
-# La regla de antes del 08-10-2026, para comparar: 50 % o 1 mm, «no»; 20 % o
-# 0,2 mm, «compte»; un aviso de AEMET solo, «no».
+HORES_SORTIR = range(7, 23)
+DIES_RESUM_SORTIR = 28          # resumen por Telegram, una vez
+AVIS_SORTIR = os.path.join(DIR, "avis-sortir")
+MITJANS_SORTIR = ("peu", "bici", "moto", "cotxe")     # el transporte público no depende del tiempo
+NOM_MITJA = {"peu": "A peu", "bici": "Bici o patinet", "moto": "Moto", "cotxe": "Cotxe"}
+ORDRE_NIVELLS = ("be", "compte", "no")
+# La regla de lluvia de la moto de antes del 08-10-2026, para comparar: 50 % o
+# 1 mm, «no»; 20 % o 0,2 mm, «compte»; un aviso de AEMET solo, «no».
 ABANS_MOTO = (0.2, 0.5, 0.2, 1.0)
 
 
-def nivell_moto(m, avis, abans=False):
-    """Veredicto de lluvia de la moto en una hora, como web/sortir.js: «be»,
-    «compte» o «no». m: lo que mostró la página («mostrat»)."""
-    p, mm, plou = m.get("probabilitat"), m.get("pluja_mm") or 0, m.get("plou_ara")
-    if abans:
-        risc, pluja, mm_risc, mm_pluja = ABANS_MOTO
-        if plou or avis or (p or 0) >= pluja or mm >= mm_pluja:
+def _sobre(p, mm, prob, llindar_mm):
+    return mm >= llindar_mm if p is None else p >= prob
+
+
+def nivell_pluja(mitja, h):
+    """El nivel por lluvia de una hora, como avalua() de web/sortir.js. h:
+    probabilitat, pluja_mm, plou_ara y avis (aviso de AEMET por lluvia)."""
+    p, mm, plou, avis = h.get("probabilitat"), h.get("pluja_mm") or 0, bool(h.get("plou_ara")), bool(h.get("avis"))
+    if mitja in ("bici", "moto"):
+        if plou or _sobre(p, mm, C.MOTO_PROB_PLUJA, C.MOTO_MM_PLUJA):
             return "no"
-        return "compte" if (p or 0) >= risc or mm >= mm_risc else "be"
+        return "compte" if avis or _sobre(p, mm, C.MOTO_PROB_RISC, C.MOTO_MM_RISC) else "be"
+    if mitja == "cotxe":
+        if mm >= C.SORTIR_PLUJA_COTXE[1]:
+            return "no"
+        clar = (p or 0) >= C.SORTIR_PROB_PLUJA or mm >= C.SORTIR_MM_PLUJA or plou or avis
+        return "compte" if mm >= C.SORTIR_PLUJA_COTXE[0] or clar else "be"
+    if mitja == "peu":
+        mulla = (p or 0) >= C.SORTIR_PROB_RISC or mm >= C.SORTIR_MM_RISC or plou or avis
+        return "compte" if mulla else "be"
+    return "be"
 
-    def sobre(prob, llindar_mm):
-        return mm >= llindar_mm if p is None else p >= prob
-    if plou or sobre(C.MOTO_PROB_PLUJA, C.MOTO_MM_PLUJA):
+
+def nivell_moto_abans(h):
+    p, mm, plou, avis = h.get("probabilitat"), h.get("pluja_mm") or 0, h.get("plou_ara"), h.get("avis")
+    risc, pluja, mm_risc, mm_pluja = ABANS_MOTO
+    if plou or avis or (p or 0) >= pluja or mm >= mm_pluja:
         return "no"
-    return "compte" if avis or sobre(C.MOTO_PROB_RISC, C.MOTO_MM_RISC) else "be"
+    return "compte" if (p or 0) >= risc or mm >= mm_risc else "be"
 
 
-def verifica_moto(ahora=None):
-    """Apunta en moto.csv, de cada hora pasada que tenga lluvia medida y que
-    aún no esté, qué decía la regla de la moto (la de ahora y la de antes) y
-    si llovió. Devuelve cuántas horas ha añadido."""
+def nivell_llindar(valor, llindars, baix=False):
+    """«no», «compte» o «be» de un valor con (compte, no); baix: cuanto menos,
+    peor (el frío)."""
+    if valor is None:
+        return None
+    compte, no = llindars
+    passa = (lambda l: l is not None and valor <= l) if baix else (lambda l: l is not None and valor >= l)
+    return "no" if passa(no) else "compte" if passa(compte) else "be"
+
+
+def nivells_sortir(mitja, h):
+    """{pluja, vent, fred} de una hora para un medio (sin el tráfico)."""
+    ll = C.SORTIR_LLINDARS[mitja]
+    return {"pluja": nivell_pluja(mitja, h), "vent": nivell_llindar(h.get("ratxa"), ll["ratxa"]),
+            "fred": nivell_llindar(h.get("temperatura"), ll["fred"], baix=True)}
+
+
+def nivell_sortir(mitja, h):
+    """El nivel de una hora: el peor de las tres reglas."""
+    return max((n for n in nivells_sortir(mitja, h).values() if n), key=ORDRE_NIVELLS.index, default="be")
+
+
+def ratxa_observada(vent, fins):
+    """La racha máxima de la estación del viento (C.VENT_ESTACIO) en la hora que
+    acaba en fins: las dos medias horas (vent-mitges-hores.csv)."""
+    t = dt.datetime.fromisoformat(fins)
+    vals = [_num((vent.get((t - dt.timedelta(minutes=m)).strftime("%Y-%m-%dT%H:%M")) or {}).get(f"{C.VENT_ESTACIO}_ratxa"))
+            for m in (0, 30)]
+    vals = [v for v in vals if v is not None]
+    return max(vals) if len(vals) == 2 else None
+
+
+def verifica_sortir(ahora=None):
+    """Apunta en sortir.csv, de cada hora pasada que aún no esté, lo que mostró
+    la página (al salir y la vuelta decidida por la mañana) y lo que se midió:
+    lluvia, racha y temperatura. Devuelve cuántas horas ha añadido."""
     ahora = ahora or dt.datetime.now().astimezone()
+    if os.path.exists(MOTO_VELL):                 # sustituido por sortir.csv (ADR 0068)
+        os.remove(MOTO_VELL)
     fetes = set()
-    if os.path.exists(MOTO):
-        with open(MOTO, encoding="utf-8") as f:
+    if os.path.exists(SORTIR):
+        with open(SORTIR, encoding="utf-8") as f:
             fetes = {(r["fins"], r["termini"]) for r in csv.DictReader(f)}
-    casa, meteocat = _llegeix("estacio-casa.csv"), _meteocat()
+    casa, meteocat, vent = _llegeix("estacio-casa.csv"), _meteocat(), _llegeix("vent-mitges-hores.csv")
     millor = {}
     for arxiu in sorted(glob.glob(os.path.join(REGISTRE, "casa-*.jsonl"))):
         with open(arxiu, encoding="utf-8") as f:
             for linea in map(json.loads, f):
                 for h in linea["hores"]:
                     # Sin el aviso registrado (antes del 08-10-2026) no se sabe qué dijo.
-                    if not h.get("mostrat") or h.get("avis_pluja") is None or int(h["fins"][11:13]) not in HORES_MOTO:
+                    if not h.get("mostrat") or h.get("avis_pluja") is None or int(h["fins"][11:13]) not in HORES_SORTIR:
                         continue
-                    for termini, (a, b) in TERMINIS_MOTO.items():
+                    for termini, (a, b) in TERMINIS_SORTIR.items():
                         clau = (h["fins"], termini)
                         if a <= h["antelacio_h"] < b and (clau not in millor
                                                           or h["antelacio_h"] < millor[clau][1]["antelacio_h"]):
@@ -643,76 +703,115 @@ def verifica_moto(ahora=None):
         if (fins, termini) in fetes or dt.datetime.fromisoformat(fins).astimezone() > ahora:
             continue
         obs = pluja_observada(casa.get(fins), [m.get(fins) for m in meteocat])
-        if obs is None:
+        ratxa_obs, temp_obs = ratxa_observada(vent, fins), _num((casa.get(fins) or {}).get("temperatura"))
+        if obs is None and ratxa_obs is None and temp_obs is None:
             continue
-        m, avis = h["mostrat"], bool(h["avis_pluja"])
+        m = h["mostrat"]
+        # La racha que mostró la página es la del modelo (casa.py); desde el
+        # 10-10-2026 va también en «mostrat».
+        ratxa = m.get("ratxa", h.get("wind_gusts_10m"))
+        temp = m.get("temperatura", h.get("temperature_2m"))
         noves.append({"fins": fins, "termini": termini, "emes": emes, "antelacio_h": h["antelacio_h"],
                       "probabilitat": m.get("probabilitat"), "pluja_mm": m.get("pluja_mm"),
-                      "plou_ara": int(bool(m.get("plou_ara"))), "avis": int(avis),
-                      "nivell": nivell_moto(m, avis), "nivell_abans": nivell_moto(m, avis, abans=True),
-                      "pluja_obs": obs})
+                      "plou_ara": int(bool(m.get("plou_ara"))), "avis": int(bool(h["avis_pluja"])),
+                      "ratxa": ratxa, "temperatura": temp, "pluja_obs": obs, "ratxa_obs": ratxa_obs,
+                      "temperatura_obs": temp_obs})
     if noves:
-        os.makedirs(os.path.dirname(MOTO), exist_ok=True)
-        nou = not os.path.exists(MOTO)
-        with open(MOTO, "a", newline="", encoding="utf-8") as f:
-            w = csv.DictWriter(f, fieldnames=CAMPS_MOTO)
+        os.makedirs(os.path.dirname(SORTIR), exist_ok=True)
+        nou = not os.path.exists(SORTIR)
+        with open(SORTIR, "a", newline="", encoding="utf-8") as f:
+            w = csv.DictWriter(f, fieldnames=CAMPS_SORTIR)
             if nou:
                 w.writeheader()
             w.writerows(noves)
     return len(noves)
 
 
-def resum_moto():
-    """Qué ha pasado con la regla de la moto desde que se registra, frente a la
-    de antes. None si aún no hay nada."""
-    if not os.path.exists(MOTO):
+def _hora_sortir(r):
+    """Una fila de sortir.csv, con números."""
+    n = {k: _num(r.get(k)) for k in ("probabilitat", "pluja_mm", "ratxa", "temperatura", "pluja_obs", "ratxa_obs",
+                                     "temperatura_obs")}
+    return {**n, "plou_ara": r.get("plou_ara") == "1", "avis": r.get("avis") == "1"}
+
+
+def resum_sortir():
+    """Por medio, regla y antelación: cuántas horas dio cada nivel y en cuántas
+    pasó (llovió, o la racha o el frío llegaron al umbral de «compte»). La
+    moto, también con su regla de lluvia de antes. None si aún no hay nada."""
+    if not os.path.exists(SORTIR):
         return None
-    with open(MOTO, encoding="utf-8") as f:
+    with open(SORTIR, encoding="utf-8") as f:
         files = list(csv.DictReader(f))
     if not files:
         return None
     dies = sorted({r["fins"][:10] for r in files})
-    res = {"dies": len(dies), "des_de": dies[0], "fins": dies[-1]}
-    for termini in TERMINIS_MOTO:
-        fs = [r for r in files if r["termini"] == termini]
-        plou = [float(r["pluja_obs"]) >= C.UMBRAL_MM for r in fs]
-        res[termini] = {"hores": len(fs), "hores_pluja": sum(plou)}
-        for clau in ("nivell", "nivell_abans"):
-            res[termini][clau] = {
-                "sec": {n: sum(1 for r, p in zip(fs, plou) if not p and r[clau] == n) for n in ("compte", "no")},
-                "pluja": {n: sum(1 for r, p in zip(fs, plou) if p and r[clau] == n) for n in ("be", "compte", "no")}}
+    res = {"dies": len(dies), "des_de": dies[0], "fins": dies[-1], "mitjans": {}}
+    for mitja in MITJANS_SORTIR:
+        ll = C.SORTIR_LLINDARS[mitja]
+        regles = {"pluja": (lambda h: h["pluja_obs"] is not None and h["pluja_obs"] >= C.UMBRAL_MM,
+                            lambda h: h["pluja_obs"] is not None)}
+        if ll["ratxa"][0] is not None or ll["ratxa"][1] is not None:
+            regles["vent"] = (lambda h, ll=ll: nivell_llindar(h["ratxa_obs"], ll["ratxa"]) not in (None, "be"),
+                              lambda h: h["ratxa_obs"] is not None)
+        if ll["fred"][0] is not None or ll["fred"][1] is not None:
+            regles["fred"] = (lambda h, ll=ll: nivell_llindar(h["temperatura_obs"], ll["fred"], baix=True) not in (None, "be"),
+                              lambda h: h["temperatura_obs"] is not None)
+        m = res["mitjans"][mitja] = {}
+        for regla, (passa, mesurat) in regles.items():
+            m[regla] = {}
+            for termini in TERMINIS_SORTIR:
+                hs = [_hora_sortir(r) for r in files if r["termini"] == termini]
+                hs = [h for h in hs if mesurat(h)]
+                nivell = (lambda h, regla=regla: nivells_sortir(mitja, h)[regla] or "be")
+                m[regla][termini] = {n: [sum(1 for h in hs if nivell(h) == n), sum(1 for h in hs if nivell(h) == n and passa(h))]
+                                     for n in ORDRE_NIVELLS}
+                if mitja == "moto" and regla == "pluja":
+                    m[regla][termini]["abans"] = {n: [sum(1 for h in hs if nivell_moto_abans(h) == n),
+                                                      sum(1 for h in hs if nivell_moto_abans(h) == n and passa(h))]
+                                                  for n in ORDRE_NIVELLS}
     return res
 
 
-def text_resum_moto(r):
-    """El resumen para Juanjo: falsas alarmas y lluvia con «bé», con la regla
-    de ahora y la de antes."""
-    noms = {"sortida": "Al sortir (previsió d'1 a 3 h abans)",
-            "tornada": "Tornada decidida al matí (de 6 a 10 h abans)"}
-    linies = [f"Si surts, pluja en moto: {r['dies']} dies registrats ({r['des_de']} a {r['fins']}), "
-              "hores de 6 a 22 h. Entre parèntesis, la regla d'abans del 08-10-2026."]
-    for termini, nom in noms.items():
-        t = r[termini]
-        a, b = t["nivell"], t["nivell_abans"]
-        linies.append(f"{nom}: {t['hores']} hores, {t['hores_pluja']} amb pluja. "
-                      f"Sense pluja, «no» {a['sec']['no']} ({b['sec']['no']}) i «compte» "
-                      f"{a['sec']['compte']} ({b['sec']['compte']}). "
-                      f"Amb pluja, «bé» {a['pluja']['be']} ({b['pluja']['be']}).")
-    if sum(r[t]["hores_pluja"] for t in TERMINIS_MOTO) < 5:
+def text_resum_sortir(r):
+    """El resumen para Juanjo: de cada medio y regla, al salir y la vuelta, las
+    horas con cada nivel y en cuántas pasó."""
+    noms_regla = {"pluja": "pluja", "vent": "ratxes", "fred": "fred"}
+    passa = {"pluja": "va ploure", "vent": "van arribar al llindar", "fred": "va arribar al llindar"}
+    noms_nivell = {"no": "«millor no»", "compte": "«compte»", "be": "«bé»"}
+    linies = [f"Si surts, comprovació de tots els mitjans: {r['dies']} dies ({r['des_de']} a {r['fins']}), "
+              "hores de 7 a 22 h. De cada nivell, les hores i en quantes va passar. "
+              "Al sortir (previsió d'1 a 3 h abans) / tornada decidida al matí (de 6 a 10 h abans)."]
+    pluja_total = 0
+    for mitja, regles in r["mitjans"].items():
+        for regla, t in regles.items():
+            parts = []
+            for n in ("no", "compte", "be"):
+                s, v = t["sortida"][n], t["tornada"][n]
+                if s[0] or v[0]:
+                    parts.append(f"{noms_nivell[n]} {s[0]} h, {passa[regla]} en {s[1]} / {v[0]} h, en {v[1]}")
+            if regla == "pluja":
+                pluja_total = max(pluja_total, sum(t["sortida"][n][1] for n in ORDRE_NIVELLS))
+            linia = f"{NOM_MITJA[mitja]}, {noms_regla[regla]}: " + ("; ".join(parts) or "cap hora mesurada") + "."
+            if "abans" in t["sortida"]:
+                a = t["sortida"]["abans"]
+                linia += (f" Amb la regla d'abans del 08-10-2026, al sortir: «millor no» {a['no'][0]} h "
+                          f"(va ploure en {a['no'][1]}), «bé» {a['be'][0]} h (en {a['be'][1]}).")
+            linies.append(linia)
+    if pluja_total < 5:
         linies.append("Encara hi ha massa poca pluja per jutjar-ho.")
     return "\n".join(linies)
 
 
-def avis_moto(avisa=True):
-    """El resumen, una sola vez, cuando hay DIES_RESUM_MOTO días."""
-    r = resum_moto()
-    if not r or r["dies"] < DIES_RESUM_MOTO or os.path.exists(AVIS_MOTO):
+def avis_sortir(avisa=True):
+    """El resumen, una sola vez, cuando hay DIES_RESUM_SORTIR días."""
+    r = resum_sortir()
+    if not r or r["dies"] < DIES_RESUM_SORTIR or os.path.exists(AVIS_SORTIR):
         return None
-    text = text_resum_moto(r)
+    text = text_resum_sortir(r)
     if avisa:
         subprocess.run(["avisar-juanjo", "--asunto", "meteo-local", text], check=False)
     os.makedirs(DIR, exist_ok=True)
-    open(AVIS_MOTO, "w").close()
+    open(AVIS_SORTIR, "w").close()
     return text
 
 
@@ -730,8 +829,8 @@ if __name__ == "__main__":
         diari()
     elif orden == "estat":
         estat()
-    elif orden == "moto":
-        r = resum_moto()
-        print(text_resum_moto(r) if r else "Encara no hi ha cap hora verificada.")
+    elif orden in ("sortir", "moto"):
+        r = resum_sortir()
+        print(text_resum_sortir(r) if r else "Encara no hi ha cap hora verificada.")
     else:
         print(__doc__)

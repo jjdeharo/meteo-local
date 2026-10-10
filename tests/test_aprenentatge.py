@@ -151,25 +151,38 @@ class Rasgos(unittest.TestCase):
                 A.REGISTRE = vell
 
 
-class Moto(unittest.TestCase):
-    """La regla de lluvia de la moto de «Si surts» (ADR 0047)."""
+class Sortir(unittest.TestCase):
+    """Les regles de «Si surts» de cada mitjà (ADR 0047 i 0068)."""
 
     def test_mismos_umbrales_que_la_pagina(self):
         web = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "web", "sortir.js")
         js = open(web, encoding="utf-8").read()
         for nom, valor in (("PROB_RISC_RODES", C.MOTO_PROB_RISC), ("PROB_PLUJA_RODES", C.MOTO_PROB_PLUJA),
-                           ("MM_RISC", C.MOTO_MM_RISC), ("MM_PLUJA", C.MOTO_MM_PLUJA)):
+                           ("MM_RISC", C.MOTO_MM_RISC), ("MM_PLUJA", C.MOTO_MM_PLUJA),
+                           ("PROB_RISC", C.SORTIR_PROB_RISC), ("PROB_PLUJA", C.SORTIR_PROB_PLUJA)):
             self.assertIn(f"const {nom} = {valor:g};", js)
+        self.assertIn(f"const PLUJA_COTXE = [{C.SORTIR_PLUJA_COTXE[0]}, {C.SORTIR_PLUJA_COTXE[1]}];", js)
 
     def test_el_cas_del_8_d_octubre(self):
         # A les 10 h, només l'avís; a les 17 h, ICON-EU 1,7 mm i un 25 %.
-        deu, cinc = {"probabilitat": 0.0, "pluja_mm": 0.0}, {"probabilitat": 0.25, "pluja_mm": 1.7}
-        self.assertEqual([A.nivell_moto(deu, True), A.nivell_moto(cinc, True)], ["compte", "compte"])
-        self.assertEqual([A.nivell_moto(deu, True, abans=True), A.nivell_moto(cinc, False, abans=True)], ["no", "no"])
-        self.assertEqual(A.nivell_moto({"probabilitat": 0.4, "pluja_mm": 0}, False), "no")
-        self.assertEqual(A.nivell_moto({"probabilitat": 0.05, "pluja_mm": 0.5}, False), "be")
-        self.assertEqual(A.nivell_moto({"probabilitat": None, "pluja_mm": 1.0}, False), "no")
-        self.assertEqual(A.nivell_moto({"probabilitat": 0.0, "pluja_mm": 0, "plou_ara": True}, False), "no")
+        deu, cinc = {"probabilitat": 0.0, "pluja_mm": 0.0, "avis": True}, {"probabilitat": 0.25, "pluja_mm": 1.7, "avis": True}
+        self.assertEqual([A.nivell_pluja("moto", deu), A.nivell_pluja("moto", cinc)], ["compte", "compte"])
+        self.assertEqual([A.nivell_moto_abans(deu), A.nivell_moto_abans({**cinc, "avis": False})], ["no", "no"])
+        self.assertEqual(A.nivell_pluja("moto", {"probabilitat": 0.4, "pluja_mm": 0}), "no")
+        self.assertEqual(A.nivell_pluja("moto", {"probabilitat": 0.05, "pluja_mm": 0.5}), "be")
+        self.assertEqual(A.nivell_pluja("moto", {"probabilitat": None, "pluja_mm": 1.0}), "no")
+        self.assertEqual(A.nivell_pluja("moto", {"probabilitat": 0.0, "pluja_mm": 0, "plou_ara": True}), "no")
+
+    def test_cada_mitja_amb_les_seves_regles(self):
+        h = {"probabilitat": 0.3, "pluja_mm": 0.5, "ratxa": 55, "temperatura": 2}
+        self.assertEqual(A.nivells_sortir("peu", h), {"pluja": "compte", "vent": "be", "fred": "be"})
+        self.assertEqual(A.nivells_sortir("bici", h), {"pluja": "compte", "vent": "no", "fred": "compte"})
+        self.assertEqual(A.nivells_sortir("moto", h), {"pluja": "compte", "vent": "compte", "fred": "compte"})
+        self.assertEqual(A.nivells_sortir("cotxe", h), {"pluja": "be", "vent": "be", "fred": "be"})
+        self.assertEqual(A.nivell_sortir("bici", h), "no")
+        self.assertEqual(A.nivell_pluja("cotxe", {"probabilitat": 0.1, "pluja_mm": 25}), "compte")
+        self.assertEqual(A.nivell_pluja("cotxe", {"probabilitat": 0.9, "pluja_mm": 45}), "no")
+        self.assertIsNone(A.nivells_sortir("moto", {"probabilitat": 0})["vent"])     # sense ratxa, res
 
 
 class Diari(unittest.TestCase):
@@ -183,7 +196,8 @@ class Diari(unittest.TestCase):
         A.MODEL, A.PROPOSAT = os.path.join(A.DIR, "model.json"), os.path.join(A.DIR, "proposat.json")
         A.ATURA, A.HISTORIAL = os.path.join(A.DIR, "atura"), os.path.join(A.DIR, "historial.csv")
         A.AVIS_XV = os.path.join(A.DIR, "avis-sant-cugat")
-        A.MOTO, A.AVIS_MOTO = os.path.join(A.REGISTRE, "moto.csv"), os.path.join(A.DIR, "avis-moto")
+        A.SORTIR, A.AVIS_SORTIR = os.path.join(A.REGISTRE, "sortir.csv"), os.path.join(A.DIR, "avis-sortir")
+        A.MOTO_VELL = os.path.join(A.REGISTRE, "moto.csv")
         os.makedirs(A.REGISTRE)
 
     def registra(self, dias, error=2.0, com_arxiu=False):
@@ -281,9 +295,11 @@ class Diari(unittest.TestCase):
         self.assertEqual(model["pluja"]["rasgos"], A.RASGOS_PROPIS_XV)
         self.assertEqual(model["pluja"]["error_base"], 0.09)
 
-    def test_verifica_la_moto_una_vez_por_hora(self):
-        # Cada hora, previsiones de 1 a 9 horas antes; llueve de 12 a 13 h.
+    def test_verifica_tots_els_mitjans_un_cop_per_hora(self):
+        # Cada hora, previsions d'1 a 9 hores abans; plou de 12 a 13 h i a les
+        # 15 h bufa a 60 km/h; la temperatura és sempre de 18 °C.
         mont = ["fins,pluja_mm,temperatura,humitat,rosada,pressio,solar"]
+        vent = ["fins,XV,XV_ratxa"]
         with open(os.path.join(A.REGISTRE, "casa-2026-10.jsonl"), "w") as f:
             for k in range(30):
                 emes = dt.datetime(2026, 10, 8, 0) + dt.timedelta(hours=k)
@@ -291,36 +307,55 @@ class Diari(unittest.TestCase):
                 for ant in range(1, 10):
                     fins = (emes + dt.timedelta(hours=ant)).strftime("%Y-%m-%dT%H:%M")
                     hores.append({**hora(fins, antelacio=ant - 0.05), "avis_pluja": 1.0 if ant > 5 else 0.0,
-                                  "mostrat": {"probabilitat": 0.15, "pluja_mm": 0.0}})
+                                  "mostrat": {"probabilitat": 0.15, "pluja_mm": 0.0, "temperatura": 18,
+                                              "ratxa": 45 if fins.endswith("15:00") else 20}})
                 f.write(json.dumps({"emes": emes.strftime("%Y-%m-%dT%H:%M") + "+02:00", "hores": hores}) + "\n")
                 fins = (emes + dt.timedelta(hours=1)).strftime("%Y-%m-%dT%H:%M")
                 mont.append(f"{fins},{1.5 if fins.endswith('13:00') else 0.0},18,80,15,1013,0")
+                mig = (emes + dt.timedelta(minutes=30)).strftime("%Y-%m-%dT%H:%M")
+                ratxa = 60 if fins.endswith("15:00") else 10
+                vent += [f"{mig},5,{ratxa}", f"{fins},5,{ratxa}"]
         with open(os.path.join(A.REGISTRE, "estacio-casa.csv"), "w") as f:
             f.write("\n".join(mont) + "\n")
+        with open(os.path.join(A.REGISTRE, "vent-mitges-hores.csv"), "w") as f:
+            f.write("\n".join(vent) + "\n")
         # Les hores seques només compten si Meteocat tampoc no va recollir res (ADR 0058).
         with open(os.path.join(A.REGISTRE, "meteocat-XF.csv"), "w") as f:
             f.write("fins,pluja_mm\n" + "".join(f"{l.split(',')[0]},0.0\n" for l in mont[1:]))
+        # El registre d'abans, només de la moto, se substitueix.
+        open(A.MOTO_VELL, "w").close()
         ara = dt.datetime(2026, 10, 9, 0).astimezone()
-        n = A.verifica_moto(ara)
+        n = A.verifica_sortir(ara)
         self.assertEqual(n, 16 + 16)               # de 7 a 22 h, al sortir i la tornada
-        self.assertEqual(A.verifica_moto(ara), 0)  # no es repeteix
-        r = A.resum_moto()
-        self.assertEqual(r["sortida"]["hores_pluja"], 1)
-        # Amb un 15 % i sense l'avís (al sortir), «compte»; la regla d'abans, «bé».
-        self.assertEqual(r["sortida"]["nivell"]["pluja"]["compte"], 1)
-        self.assertEqual(r["sortida"]["nivell_abans"]["pluja"]["be"], 1)
-        # La tornada porta l'avís: abans era «no» cada hora seca, ara «compte».
-        self.assertEqual(r["tornada"]["nivell_abans"]["sec"]["no"], 15)
-        self.assertEqual(r["tornada"]["nivell"]["sec"]["no"], 0)
-        self.assertIn("Encara hi ha massa poca pluja", A.text_resum_moto(r))
+        self.assertFalse(os.path.exists(A.MOTO_VELL))
+        self.assertEqual(A.verifica_sortir(ara), 0)  # no es repeteix
+        r = A.resum_sortir()
+        moto = r["mitjans"]["moto"]
+        # Amb un 15 % i sense l'avís (al sortir), «compte»: 16 hores, va ploure en una.
+        self.assertEqual(moto["pluja"]["sortida"]["compte"], [16, 1])
+        self.assertEqual(moto["pluja"]["sortida"]["abans"]["be"], [16, 1])
+        # La tornada porta l'avís: abans era «no» cada hora, ara «compte».
+        self.assertEqual(moto["pluja"]["tornada"]["abans"]["no"], [16, 1])
+        self.assertEqual(moto["pluja"]["tornada"]["no"], [0, 0])
+        # El vent: la bici va avisar a les 15 h (45 km/h, «compte») i en va fer 60.
+        self.assertEqual(r["mitjans"]["bici"]["vent"]["sortida"]["compte"], [1, 1])
+        self.assertEqual(r["mitjans"]["moto"]["vent"]["sortida"]["be"], [16, 1])   # 45 < 50: no va avisar
+        self.assertIn("vent", r["mitjans"]["cotxe"])               # 90 km/h: «compte»
+        self.assertIn("fred", r["mitjans"]["moto"])
+        self.assertNotIn("fred", r["mitjans"]["peu"])           # a peu no hi ha regla de fred
+        # A peu, el paraigua des del 20 %: amb un 15 % i sense avís, «bé».
+        self.assertEqual(r["mitjans"]["peu"]["pluja"]["sortida"]["be"], [16, 1])
+        text = A.text_resum_sortir(r)
+        self.assertIn("Bici o patinet, ratxes:", text)
+        self.assertIn("Encara hi ha massa poca pluja", text)
         # El resum per Telegram, només amb prou dies i una sola vegada.
-        self.assertIsNone(A.avis_moto(avisa=False))
-        A.DIES_RESUM_MOTO = 1
+        self.assertIsNone(A.avis_sortir(avisa=False))
+        A.DIES_RESUM_SORTIR = 1
         try:
-            self.assertIn("Si surts, pluja en moto", A.avis_moto(avisa=False))
-            self.assertIsNone(A.avis_moto(avisa=False))
+            self.assertIn("Si surts, comprovació de tots els mitjans", A.avis_sortir(avisa=False))
+            self.assertIsNone(A.avis_sortir(avisa=False))
         finally:
-            A.DIES_RESUM_MOTO = 28
+            A.DIES_RESUM_SORTIR = 28
 
     def test_propone_avisa_y_aplica_al_dia_siguiente(self):
         self.registra(20)

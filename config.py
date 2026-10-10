@@ -2,7 +2,7 @@
 """Datos fijos de «Temps a Montflorit»: lugares, horario, fuentes y umbrales.
 Se cambian aquí, no en los programas."""
 
-VERSION = "3.54.0"
+VERSION = "3.55.0"
 
 # Coordenadas con tres decimales (unos 100 m), no las exactas: para el tiempo
 # da igual una calle u otra, y el repositorio es público.
@@ -172,6 +172,23 @@ MOTO_PROB_RISC = 0.1
 MOTO_PROB_PLUJA = 0.4
 MOTO_MM_RISC = 0.2
 MOTO_MM_PLUJA = 1.0
+# La resta de regles meteorològiques de «Si surts» (web/sortir.js), per a la
+# comprovació diària de tots els mitjans (aprenentatge.verifica_sortir, ADR
+# 0068); les proves les comparen amb la pàgina. A peu, «compte» (paraigua) des
+# del 20 % o 0,2 mm; en cotxe, «compte» des del 50 % o 1 mm, i pel que plou en
+# una hora, els llindars groc i taronja d'AEMET. Ratxes (km/h) i fred (°C):
+# (compte, millor no).
+SORTIR_PROB_RISC = 0.2
+SORTIR_PROB_PLUJA = 0.5
+SORTIR_MM_RISC = 0.2
+SORTIR_MM_PLUJA = 1.0
+SORTIR_PLUJA_COTXE = (20, 40)
+SORTIR_LLINDARS = {
+    "peu": {"ratxa": (None, 70), "fred": (None, None)},
+    "bici": {"ratxa": (40, 50), "fred": (3, 1)},
+    "moto": {"ratxa": (50, 70), "fred": (3, 1)},
+    "cotxe": {"ratxa": (90, None), "fred": (1, None)},
+}
 
 # Riera de Sant Cugat (riera.py, ADR 0027): nace en Collserola y pasa por
 # Montflorit. Se desbordó con 53 mm en 3 horas en Sant Cugat (29-04-2024, el

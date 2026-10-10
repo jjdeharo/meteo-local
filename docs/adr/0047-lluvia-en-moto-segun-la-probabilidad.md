@@ -55,6 +55,8 @@ lleve a «compte» y que el programa aprenda también de los avisos.
   de 1 a 3 horas antes) y con la vuelta decidida por la mañana (de 6 a 10
   horas antes). A los 28 días, un resumen por Telegram, una vez;
   `python3 aprenentatge.py moto`, cuando se quiera.
+  Desde el 10-10-2026, sustituido por la comprobación de todos los medios
+  (`sortir.csv`, ADR 0068).
 
 ## Alternativas descartadas
 
