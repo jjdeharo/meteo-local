@@ -111,12 +111,6 @@ class Registre(unittest.TestCase):
                 self.assertTrue(R.falta_ahir_veina("ICERDA6", ara))       # falta la de 23 a 24
                 R.apunta_veina("ICERDA6", {dt.datetime(2026, 10, 6, 0, 0, tzinfo=TZ): {"pluja_mm": 0.0, "temperatura": 15.0}})
                 self.assertFalse(R.falta_ahir_veina("ICERDA6", ara))
-                # La pluja cada 5 minuts, com la de casa: lectures que no cauen en punt.
-                R.apunta_veina_5min("ICERDA6", [lectura("09:01", 0.0), lectura("09:06", 0.2), lectura("09:11", 0.2),
-                                                lectura("09:16", 0.6)])
-                with open(os.path.join(d, "veina-ICERDA6-5min.csv")) as f:
-                    self.assertEqual(f.read().splitlines(),
-                                     ["fins,pluja_mm", "2026-10-05T09:10,0.2", "2026-10-05T09:15,0.0"])
             finally:
                 R.DIR = vell
 

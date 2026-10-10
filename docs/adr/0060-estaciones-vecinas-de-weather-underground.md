@@ -41,12 +41,7 @@ datos») y decidir con los números delante. En la red hay cuatro a menos de
   estación de casa (`ecowitt.pluja_entre`). Las horas completas van al
   registro del NAS (`veina-<id>.csv`: lluvia, temperatura, humedad, rocío,
   presión, viento y racha), y una vez al día se pide el historial de ayer
-  para cerrar la última hora del día. Desde la 3.47.1, también la lluvia
-  por tramos de 5 minutos (`veina-<id>-5min.csv`), para poder comprobar en
-  la revisión del 07-11-2026 si una regla más estricta para «plou ara» (dos
-  vecinas a la vez, o una sola con más de un vuelco del cubo) quitaría
-  falsas alarmas sin perder lluvia: la API solo da las lecturas de cada 5
-  minutos del día en curso. Unas 400 consultas al día en modo
+  para cerrar la última hora del día. Unas 400 consultas al día en modo
   normal y hasta unas 1.000 en modo aviso; la documentación no fija un
   límite y la página de la clave muestra el uso diario.
 - **Si falla una vecina, solo se apunta** en el registro del NAS. Si no se
@@ -135,6 +130,10 @@ Sant Cugat (portal de datos abiertos, variable 30):
   una lectura de más de 30 minutos no vale, como en casa. Y el registro de
   cada vecina empieza en la segunda hora del día que se lee entera: la
   primera, cortada, no cuenta (como en `ecowitt.hores`).
+- La lluvia de cada vecina cada 5 minutos no se guarda: la API la da para
+  cualquier día pasado (`history/all`, comprobado el 10-10-2026 hasta el
+  01-06-2026). La 3.47.1 la guardaba en el NAS por error, creyendo que solo
+  daba la del día; se quitó en la 3.47.2.
 - `pluja_arriba.py` (cuándo llega la lluvia que ve el radar) sigue mirando
   solo el pluviómetro de casa: mide cuándo llega a casa, no al barrio.
 

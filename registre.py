@@ -13,8 +13,8 @@ Además, casa.py apunta en cada pasada lo que mide la estación de casa hora a
 hora (estacio-casa.csv, ADR 0017) y cada 5 minutos (estacio-casa-5min.csv,
 ADR 0049), la lluvia por horas de las estaciones de Meteocat de Sabadell y
 Sant Cugat (meteocat-XF.csv y meteocat-XV.csv, ADR 0058), lo que miden por
-horas y cada 5 minutos las estaciones vecinas de Weather Underground
-(veina-<id>.csv y veina-<id>-5min.csv, ADR 0060) y, una vez por hora, lo que daban los modelos para las 24 horas
+horas las estaciones vecinas de Weather Underground (veina-<id>.csv, ADR
+0060) y, una vez por hora, lo que daban los modelos para las 24 horas
 siguientes (casa-AAAA-MM.jsonl), para aprender de los fallos (ADR 0012).
 
 Los datos van a REGISTRE_DIR (en el NAS, /estat/registre), no al repositorio.
@@ -150,18 +150,6 @@ def apunta_veina(estacio, hores):
         clave = fin.strftime("%Y-%m-%dT%H:%M")
         nuevas[clave] = {"fins": clave, **{k: h.get(k) for k in CAMPOS_VEINA[1:]}}
     _desa_per_hores(os.path.join(DIR, f"veina-{estacio}.csv"), CAMPOS_VEINA, nuevas)
-
-
-# La lluvia de cada vecina por tramos de 5 minutos (veina-<id>-5min.csv), como
-# la de casa: para comprobar con un mes de datos si una regla más estricta
-# para «plou ara» (dos vecinas, o una con más de un vuelco en PLOU_ARA_MIN
-# minutos) quitaría falsas alarmas sin perder lluvia (revisión del
-# 07-11-2026). La API solo devuelve las lecturas de cada 5 minutos del día:
-# lo que no se guarda, se pierde.
-def apunta_veina_5min(estacio, filas):
-    _desa_per_hores(os.path.join(DIR, f"veina-{estacio}-5min.csv"), CAMPOS_5MIN,
-                    {fin.strftime("%Y-%m-%dT%H:%M"): {"fins": fin.strftime("%Y-%m-%dT%H:%M"), "pluja_mm": round(mm, 1)}
-                     for fin, mm in cincs_casa(filas).items()})
 
 
 def falta_ahir_veina(estacio, ahora):
