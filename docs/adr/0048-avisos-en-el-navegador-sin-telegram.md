@@ -60,6 +60,15 @@ hace, el envoltorio irá en `android/` de este repositorio.
     al final: «Toca per veure el radar»; en Telegram, el bot lo enlaza en la
     última línea (`url` y `push` en `avisos.json`; Juanjo, 08-10-2026: «no
     habría que incluir la url del radar?»).
+    Desde la 3.47.0, la previsión programada abre «Consultes» en la ficha de
+    su día: la de la mañana, «Avui»; la de las 21 h, «Demà» (Juanjo,
+    10-10-2026: «si es el tiempo de mañana, podría enviar a la página de
+    mañana»). La notificación lleva el día del que habla (`dia`): si la de
+    mañana se toca cuando ese día ya ha llegado, `sw.js` abre «Avui». Al
+    tocar cualquier aviso, si la web ya está abierta, `sw.js` lleva esa
+    ventana a la página del aviso (`WindowClient.navigate`) en lugar de abrir
+    otra; si el navegador no lo permite, abre una. Los avisos de peligro y de
+    la riera siguen yendo a «El temps», donde «Avisos actius» es lo primero.
   - Claves VAPID en `.temps-bot/vapid.json`, creadas una vez por
     `bot/instalar.sh`; la web pide la pública al servidor, no la lleva escrita.
 - **A Juanjo**, como en el bot: cada alta nueva con el total, y los
@@ -137,6 +146,12 @@ muertas, previsión a su hora, prueba y altas a Juanjo) y las de la web
 (`tests/test_montflorit.py`: traducciones de la página y de sus textos).
 Página probada con `probar-web` en Chromium y Firefox, escritorio, móvil y
 tableta, claro y oscuro, en los dos idiomas; WebKit no (ver Evidencia).
+Destino al tocar (3.47.0): `tests/test_push.py` (cada previsión con su ficha
+y su día) y `tests/test_web.py` (la de mañana tocada después de medianoche
+abre «Avui»); en Chromium, con la web abierta y el toque simulado dentro del
+service worker, los dos idiomas: la misma ventana va a «Demà», a «Avui» y a
+«El temps» sin abrir otra. Firefox y Safari no dejan simularlo desde
+Playwright; el toque real en un móvil queda por probar.
 
 ## Cambio del 09-10-2026: reintentos y tiempo de vida
 

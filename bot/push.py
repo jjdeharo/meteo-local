@@ -57,7 +57,7 @@ PROVA = {"ca": ("Prova de Temps a Montflorit", "Els avisos funcionen en aquest d
 
 # --- Texto -------------------------------------------------------------------------------
 
-def notificacio(text, url="./", etiqueta=None, expira=None):
+def notificacio(text, url="./", etiqueta=None, expira=None, dia=None):
     """Título y cuerpo a partir de un mensaje del bot (HTML de Telegram): el
     título, la primera línea en negrita; el cuerpo, el resto sin etiquetas ni
     el enlace a la web, que ya abre la notificación."""
@@ -75,7 +75,21 @@ def notificacio(text, url="./", etiqueta=None, expira=None):
     # (auditoría del 09-10-2026).
     if expira:
         res["expira"] = expira
+    # El día del que habla la previsión: si se toca la de mañana cuando ese
+    # día ya ha llegado, sw.js abre «Avui» y no «Demà» (ADR 0048).
+    if dia:
+        res["dia"] = dia
     return res
+
+
+def desti_resum(moment):
+    """Adónde lleva la previsión programada y de qué día habla: la de la
+    mañana, a la ficha «Avui» de «Consultes»; la de las 21 h (desde
+    HORA_DEMA, la de mañana, como bot.resum), a «Demà» (Juanjo, 10-10-2026:
+    «si es el tiempo de mañana, podría enviar a la página de mañana»)."""
+    dema = moment.hour >= B.HORA_DEMA
+    dia = (moment.date() + dt.timedelta(days=1 if dema else 0)).isoformat()
+    return ("consultes.html#dema" if dema else "consultes.html#avui"), dia
 
 
 # --- Archivos ----------------------------------------------------------------------------
@@ -213,7 +227,8 @@ def reparteix(estat, moment, envia=envia_push):
         if toca and fets.get(hora) != avui and e not in mortes:
             dades_web = dades_web or B.llegeix(os.path.join(B.DADES, "montflorit.json"), {})
             idioma = sub.get("idioma", "ca")
-            n = notificacio(B.resum(dades_web, idioma, moment), url("./", idioma), "resum")
+            pagina, dia = desti_resum(moment)
+            n = notificacio(B.resum(dades_web, idioma, moment), url(pagina, idioma), "resum", dia=dia)
             r = prova(e, lambda: envia(sub, n, TTL_RESUM_S))
             if r is True:
                 resums[e] = {**fets, hora: avui}

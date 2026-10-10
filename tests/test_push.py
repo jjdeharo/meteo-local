@@ -149,6 +149,17 @@ class Push(unittest.TestCase):
         self.assertEqual([e for e, _, _, _ in envia.enviats], [CA])
         self.assertEqual(estat["resums"][CA], {"21": ARA.date().isoformat()})
 
+    def test_la_previsio_porta_a_la_fitxa_del_seu_dia(self):
+        # La del matí, a «Avui»; la de les 21 h, a «Demà», amb el dia de demà (Juanjo, 10-10-2026).
+        B.desa(os.path.join(B.DADES, "montflorit.json"), {})
+        envia, estat = Envia(), {}
+        P.reparteix(estat, ARA, envia)
+        d = envia.enviats[0][1]
+        self.assertEqual((d["url"], d["dia"]), ("consultes.html#avui", ARA.date().isoformat()))
+        self.assertEqual(P.desti_resum(ARA.replace(hour=21)),
+                         ("consultes.html#dema", (ARA.date() + dt.timedelta(days=1)).isoformat()))
+        self.assertEqual(P.url("consultes.html#dema", "es"), "es/consultes.html#dema")
+
     def test_prova(self):
         subs = B.llegeix(P.SUBS, {})
         subs[ES]["prova"] = (ARA - dt.timedelta(minutes=1)).isoformat()

@@ -48,6 +48,23 @@ ARNES_ASYNC = ARNES.replace("fetch: () => new Promise(() => {}), setTimeout: () 
              "Promise.resolve(vm.runInContext(expr, ctx)).then((v) => console.log(JSON.stringify(v)));")
 
 
+# Carga sw.js con un «self» de mentira y evalúa una expresión con la hora «ara».
+ARNES_SW = r"""
+const vm = require('vm');
+const fs = require('fs');
+const [web, ara, expr] = process.argv.slice(1);
+const RealDate = Date;
+class FakeDate extends RealDate {
+  constructor(...a) { super(...(a.length ? a : [ara])); }
+  static now() { return new RealDate(ara).getTime(); }
+}
+const ctx = vm.createContext({ Date: FakeDate, URL, JSON, String, console, location: { origin: 'https://m.test' },
+  self: { addEventListener() {}, registration: { scope: 'https://m.test/' } } });
+vm.runInContext(fs.readFileSync(`${web}/sw.js`, 'utf8'), ctx);
+console.log(JSON.stringify(vm.runInContext(expr, ctx)));
+"""
+
+
 def avis(inicio, fin, tipo, nivel="groc"):
     return {"inicio": inicio, "fin": fin, "tipo": tipo, "nivel": nivel,
             "zona": "Prelitoral de Barcelona"}
@@ -250,6 +267,19 @@ class Web(unittest.TestCase):
         r = self.avalua("2026-10-08T07:44:00+02:00", f"horesVigents({json.dumps(hores)}, new Date()).map((f) => f.hora)", "sortir.js")
         self.assertEqual(r, ["2026-10-08T07:00", "2026-10-08T08:00"])
         self.assertEqual(self.avalua("2026-10-08T07:44:00+02:00", "horesVigents(null, new Date())", "sortir.js"), [])
+
+    def test_la_previsio_de_dema_tocada_despres_de_mitjanit(self):
+        # La de les 21 h porta a «Demà»; si es toca quan aquell dia ja ha arribat, a «Avui».
+        def desti(ara, url, dia):
+            r = subprocess.run(["node", "-e", ARNES_SW, WEB, ara, f"destiAvis({json.dumps(url)}, {json.dumps(dia)})"],
+                               capture_output=True, text=True, check=True, env={**os.environ, "TZ": "Europe/Madrid"})
+            return json.loads(r.stdout)
+        dema = "https://m.test/consultes.html#dema"
+        self.assertEqual(desti("2026-10-10T21:30:00+02:00", dema, "2026-10-11"), dema)
+        self.assertEqual(desti("2026-10-11T00:20:00+02:00", dema, "2026-10-11"), "https://m.test/consultes.html#avui")
+        self.assertEqual(desti("2026-10-12T08:00:00+02:00", dema, "2026-10-11"), "https://m.test/consultes.html#avui")
+        self.assertEqual(desti("2026-10-11T00:20:00+02:00", dema, None), dema)        # avisos d'abans, sense dia
+        self.assertEqual(desti("2026-10-11T07:00:00+02:00", "https://m.test/", None), "https://m.test/")
 
     def test_cada_pagina_avisa_de_les_seves_fonts(self):
         # Juanjo, 09-10-2026: «cada pagina solo avisa de lo que usa»; un 503 del sol no fa menys segura la previsió.

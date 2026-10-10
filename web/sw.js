@@ -32,7 +32,8 @@ self.addEventListener('fetch', (e) => {
 });
 
 // Els avisos al navegador (ADR 0048): bot/push.py envia {title, body, url,
-// tag}; tocar la notificació obre la web (o la porta al davant, si ja hi és).
+// tag, expira, dia}; tocar la notificació obre la pàgina de l'avís (la previsió
+// de demà, a «Consultes», fitxa «Demà»).
 self.addEventListener('push', (e) => {
   let d = {};
   try { d = e.data.json(); } catch (_) { d = { title: e.data ? e.data.text() : '' }; }
@@ -43,15 +44,42 @@ self.addEventListener('push', (e) => {
     body: d.body || '',
     icon: 'icones/icona-192.png',
     tag: d.tag,
-    data: { url: new URL(d.url || './', self.registration.scope).href },
+    data: { url: new URL(d.url || './', self.registration.scope).href, dia: d.dia },
   }));
 });
 
+// El dia d'avui al rellotge del dispositiu, «AAAA-MM-DD».
+function diaLocal(t) {
+  const dos = (n) => String(n).padStart(2, '0');
+  return `${t.getFullYear()}-${dos(t.getMonth() + 1)}-${dos(t.getDate())}`;
+}
+
+// On porta una notificació en tocar-la: la previsió de demà es toca de
+// vegades passada la mitjanit, quan «Demà» ja seria demà passat; si el dia
+// de què parla ja ha arribat, s'obre «Avui».
+function destiAvis(url, dia, ara = new Date()) {
+  const u = new URL(url);
+  if (dia && u.hash === '#dema' && dia <= diaLocal(ara)) u.hash = '#avui';
+  return u.href;
+}
+
 self.addEventListener('notificationclick', (e) => {
   e.notification.close();
-  const url = e.notification.data && e.notification.data.url;
+  const d = e.notification.data || {};
+  const url = destiAvis(d.url || self.registration.scope, d.dia);
+  const sensePunt = (u) => u.split('#')[0];
   e.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((finestres) => {
-    const oberta = finestres.find((f) => f.url.split('#')[0] === url.split('#')[0]);
-    return oberta ? oberta.focus() : self.clients.openWindow(url);
+    // Si la web ja és oberta (millor a la mateixa pàgina), s'hi porta l'avís
+    // en lloc d'obrir-ne una altra finestra; si no es pot, se n'obre una.
+    const oberta = finestres.find((f) => sensePunt(f.url) === sensePunt(url))
+      || finestres.find((f) => f.url.startsWith(self.registration.scope));
+    if (!oberta) return self.clients.openWindow(url);
+    if (oberta.url === url) return oberta.focus();
+    if (!oberta.navigate) return self.clients.openWindow(url);
+    // Primer s'hi va i després es porta al davant: si el navegador no deixa
+    // portar-la al davant, la finestra ja és a la pàgina de l'avís.
+    return oberta.navigate(url)
+      .then((nova) => (nova || oberta).focus().catch(() => {}))
+      .catch(() => self.clients.openWindow(url));
   }));
 });
