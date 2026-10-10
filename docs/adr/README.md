@@ -63,5 +63,6 @@
 | [0059](0059-estacion-de-casa-en-weather-underground.md) | La estación de casa en Weather Underground, para leer las de los vecinos | aceptado |
 | [0060](0060-estaciones-vecinas-de-weather-underground.md) | Las estaciones vecinas de Weather Underground: «plou ara» y horas secas | aceptado |
 | [0061](0061-grados-mas-o-menos-que-ayer.md) | Grados más o menos que ayer | aceptado |
+| [0062](0062-planes-de-proteccion-civil-sin-motivo-meteorologico.md) | Planes de Protección Civil sin motivo meteorológico | aceptado |
 
 Plantilla: [0000-plantilla.md](0000-plantilla.md). Para crear uno: `nuevo-adr "Título"`.

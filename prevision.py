@@ -353,6 +353,39 @@ def planes_proteccion_civil():
     return list(res.values())
 
 
+# Un plan abierto sin motivo meteorológico a la vista no se muestra (Juanjo,
+# 10-10-2026: «el plan no está abierto por motivos meteorológicos sino de
+# recuperación… confunde mucho»; ADR 0062). Se muestra si está en
+# emergencia, si su último comunicado tiene menos de PLA_COMUNICAT_H horas o
+# si hay aviso de AEMET por lluvia o tormentas en la zona, vigente o para las
+# próximas PLA_AVIS_H horas. Si no se han podido leer los avisos, se muestra.
+PLA_COMUNICAT_H = 24
+PLA_AVIS_H = 24
+
+
+def data_fase(text):
+    """«08/10/2026 17:14» (hora local) de los datos de Protección Civil."""
+    try:
+        return dt.datetime.strptime(text, "%d/%m/%Y %H:%M").astimezone()
+    except (TypeError, ValueError):
+        return None
+
+
+def pla_per_temps(p, avisos_, ahora=None):
+    ahora = ahora or AHORA
+    if p.get("fase") == "emergència":
+        return True
+    t = data_fase(p.get("des_de"))
+    if t is None or ahora - t < dt.timedelta(hours=PLA_COMUNICAT_H):
+        return True
+    if avisos_ is None:
+        return True
+    limit = ahora + dt.timedelta(hours=PLA_AVIS_H)
+    return any(a.get("zona", C.ZONA_AVISOS) == C.ZONA_AVISOS and a.get("tipo") in ("pluja", "tempestes")
+               and dt.datetime.fromisoformat(a["inicio"]) <= limit and dt.datetime.fromisoformat(a["fin"]) > ahora
+               for a in avisos_)
+
+
 # --- Horario y modo aviso -------------------------------------------------------
 
 def motivos_modo_aviso(avisos_, planes, obs, radar_):

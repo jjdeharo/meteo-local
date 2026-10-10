@@ -374,16 +374,23 @@ def decideix(estat, salida, ahora):
                     afegeix("perill", f"aemet:{k}:{a['nivel']}", text_aemet(a, ahora), a["nivel"])
         nou_of["aemet"] = {k: a["nivel"] for k, a in aemet.items()}
     if salida.get("plans") is not None:
-        plans = {p["pla"]: p for p in salida["plans"] if p.get("fase") in ("alerta", "emergència")}
+        actius = ("alerta", "emergència")
+        plans = {p["pla"]: p for p in salida["plans"] if p.get("fase") in actius}
+        # Los ocultos por no tener motivo meteorológico (ADR 0062) siguen
+        # activos: ocultarlos no es un final, y si vuelven a mostrarse en la
+        # misma fase no son nuevos. Al desactivarse uno oculto no se avisa:
+        # ya no se estaba mostrando.
+        ocults = {p["pla"]: p for p in salida.get("plans_ocults") or [] if p.get("fase") in actius}
         if of is not None:
             for k, p in plans.items():
                 abans = (of["plans"].get(k) or {}).get("fase")
                 if abans is None or FASES_PLA.index(p["fase"]) > FASES_PLA.index(abans):
                     afegeix("perill", f"pla:{k}:{p['fase']}:{hora}", text_pla(p), "pc")
             for k, p in of["plans"].items():
-                if k not in plans:
+                if k not in plans and k not in ocults and not p.get("ocult"):
                     afegeix("perill", f"pla:{k}:fi:{hora}", text_pla({**p, "pla": k}, acabat=True), "fi")
-        nou_of["plans"] = {k: {"fase": p["fase"], "nom": p["nom"]} for k, p in plans.items()}
+        nou_of["plans"] = {k: {"fase": p["fase"], "nom": p["nom"], **({"ocult": True} if k in ocults else {})}
+                           for k, p in {**ocults, **plans}.items()}
     estat["oficials"] = nou_of
     # Riera: atención y peligro, una vez cada nivel por episodio.
     riera = salida.get("riera")

@@ -446,6 +446,14 @@ def recoger(anterior=None):
         planes = P.planes_proteccion_civil()
     except Exception as ex:
         salida["errors"].append(f"plans: {ex}")
+    # Los planes sin motivo meteorológico a la vista (la recuperación tras un
+    # temporal) no se muestran ni ponen la página en modo aviso; van aparte,
+    # para que los avisos del canal no anuncien un final que no ha habido
+    # (ADR 0062).
+    salida["plans_ocults"] = None
+    if planes is not None:
+        salida["plans_ocults"] = [p for p in planes if not P.pla_per_temps(p, avisos, P.AHORA)]
+        planes = [p for p in planes if P.pla_per_temps(p, avisos, P.AHORA)]
     salida["avisos"], salida["plans"] = avisos, planes
     radar = None
     try:

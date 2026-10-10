@@ -69,6 +69,24 @@ class PlansProteccioCivil(unittest.TestCase):
         self.assertEqual(r, {("PROCICAT", "per onada de calor"): "alerta",
                              ("PROCICAT", "per contaminació"): "prealerta"})
 
+    def test_un_pla_sense_motiu_meteorologic_no_es_mostra(self):
+        # ADR 0062: l'INUNCAT del 10-10-2026, en alerta des del comunicat del 8 a les 17:14,
+        # sense cap avís de l'AEMET: no es mostra. Amb comunicat recent, emergència o avís, sí.
+        import datetime as dt
+        ara = dt.datetime(2026, 10, 10, 8, 0).astimezone()
+        pla = {"pla": "INUNCAT", "fase": "alerta", "des_de": "08/10/2026 17:14"}
+        avis = {"zona": "Prelitoral de Barcelona", "tipo": "pluja", "nivel": "groc",
+                "inicio": "2026-10-11T03:00:00+02:00", "fin": "2026-10-11T12:00:00+02:00"}
+        self.assertFalse(P.pla_per_temps(pla, [], ara))
+        self.assertTrue(P.pla_per_temps(dict(pla, des_de="10/10/2026 07:30"), [], ara))      # comunicat de fa poc
+        self.assertTrue(P.pla_per_temps(dict(pla, fase="emergència"), [], ara))
+        self.assertTrue(P.pla_per_temps(pla, [avis], ara))                                  # avís per a demà a les 3 h
+        self.assertFalse(P.pla_per_temps(pla, [dict(avis, inicio="2026-10-11T10:00:00+02:00")], ara))  # més enllà de 24 h
+        self.assertFalse(P.pla_per_temps(pla, [dict(avis, tipo="vent")], ara))
+        self.assertFalse(P.pla_per_temps(pla, [dict(avis, zona="Litoral de Barcelona")], ara))
+        self.assertTrue(P.pla_per_temps(pla, None, ara))                                    # sense avisos llegits: es mostra
+        self.assertTrue(P.pla_per_temps(dict(pla, des_de=None), [], ara))
+
     def test_un_pla_repetit_es_queda_amb_la_fase_mes_alta(self):
         r = self.plans([registre("INUNCAT", "PREALERTA", "NO"), registre("INUNCAT", "EMERGÈNCIA"),
                         registre("INUNCAT", "ALERTA")])

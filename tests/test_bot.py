@@ -571,6 +571,25 @@ class Consultes(unittest.TestCase):
         fi = perill({"avisos": [], "plans": [dict(pla, fase="prealerta")]}, 30)
         self.assertEqual(fi[0]["ca"].splitlines()[0], "<b>Protecció Civil: el pla d'inundacions (INUNCAT) ja no està en alerta</b>")
 
+    def test_un_pla_ocult_no_s_acaba_ni_torna_a_comencar(self):
+        # ADR 0062: amagar-lo per falta de motiu meteorològic no és un final; si torna a
+        # sortir en la mateixa fase no és nou; si es desactiva mentre és amagat, no es diu.
+        pla = {"pla": "INUNCAT", "nom": "d'inundacions", "fase": "alerta"}
+        estat = {}
+        perill = lambda sal, m: [a for a in AB.decideix(estat, sal, ARA + dt.timedelta(minutes=m)) if a["tipus"] == "perill"]
+        self.assertEqual(perill({"avisos": [], "plans": [pla], "plans_ocults": []}, 0), [])      # s'apunta
+        self.assertEqual(perill({"avisos": [], "plans": [], "plans_ocults": [pla]}, 6), [])      # s'amaga: res
+        self.assertEqual(perill({"avisos": [], "plans": [pla], "plans_ocults": []}, 12), [])     # torna: res
+        self.assertEqual(perill({"avisos": [], "plans": [], "plans_ocults": [pla]}, 18), [])
+        self.assertEqual(perill({"avisos": [], "plans": [], "plans_ocults": []}, 24), [])        # desactivat amagat
+        # Un que puja de fase mentre era amagat sí que s'anuncia.
+        self.assertEqual(perill({"avisos": [], "plans": [], "plans_ocults": [pla]}, 30), [])
+        nous = perill({"avisos": [], "plans": [dict(pla, fase="emergència")], "plans_ocults": []}, 36)
+        self.assertIn("emergència", nous[0]["ca"])
+        # «/avisos_actius» no diu que no hi ha cap pla, perquè n'hi ha un d'activat.
+        d = {"generat": ARA.isoformat(timespec="minutes"), "plans": [], "plans_ocults": [pla], "avisos": []}
+        self.assertEqual(B.text_avisos_actius(d, "ca", ARA), "No hi ha avisos de l'AEMET ni es preveu temps excepcional.")
+
     def test_mati_i_nit(self):
         # Una hora al matí i, a part, la de demà a les 21 h (Juanjo, 09-10-2026).
         sub = B.nou_subscriptor({})

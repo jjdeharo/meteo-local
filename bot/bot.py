@@ -862,6 +862,11 @@ def text_avisos_actius(dades, idioma, moment):
                         "<i>Ho calcula Temps a Montflorit amb els llindars de l'AEMET: no és oficial.</i>")]
                       + [html.escape(x, quote=False) for x in propis]))
     if not blocs:
+        # Amb un pla amagat per falta de motiu meteorològic (ADR 0062), el pla
+        # continua activat: no es pot dir que no n'hi ha cap.
+        if dades.get("plans_ocults"):
+            return ("No hay avisos de la AEMET ni se prevé tiempo excepcional." if es else
+                    "No hi ha avisos de l'AEMET ni es preveu temps excepcional.")
         return ("No hay avisos de la AEMET ni planes de Protección Civil activos, ni se prevé tiempo excepcional."
                 if es else
                 "No hi ha avisos de l'AEMET ni plans de Protecció Civil activats, ni es preveu temps excepcional.")
