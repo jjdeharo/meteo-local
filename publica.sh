@@ -61,12 +61,16 @@ CONF_IONOS=${CONF_IONOS:-$HOME/.config/meteo-local/ionos.env}
 GH_CADA_MIN=${GH_CADA_MIN:-30}
 a_ionos=0
 if [ -f "$CLAU_IONOS" ] && [ -n "${IONOS:-}" ]; then
+  # Lo que responde la conexión (ssh o el receptor) se guarda para el
+  # registro: falla cada día a las 06:03 y a las 06:09 y sin el mensaje no
+  # se sabe si rechaza SSH o el receptor (10-10-2026).
   if tar -czf - -C "$publica" montflorit.json $([ -f "$dades/avisos.json" ] && echo "-C $dades avisos.json") \
-      | ssh -i "$CLAU_IONOS" -o BatchMode=yes -o ConnectTimeout=20 "$IONOS" 2>/dev/null; then
+      | ssh -i "$CLAU_IONOS" -o BatchMode=yes -o ConnectTimeout=20 "$IONOS" 2>"$dades/ionos.err"; then
     a_ionos=1
     echo "$(date '+%F %T')  dades a IONOS"
   else
-    echo "$(date '+%F %T')  IONOS ha fallat: es publica a GitHub" >&2
+    sortida=$?
+    echo "$(date '+%F %T')  IONOS ha fallat (sortida $sortida: $(tr '\n' ' ' < "$dades/ionos.err" | cut -c1-300)): es publica a GitHub" >&2
   fi
 fi
 
