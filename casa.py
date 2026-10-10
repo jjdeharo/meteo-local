@@ -552,6 +552,7 @@ def recoger(anterior=None):
                 if R.falta_ahir_veina(v["estacio"], P.AHORA):
                     files = WU.hores_ahir(v["estacio"], P.AHORA) + files
                 R.apunta_veina(v["estacio"], R.hores_veina(files))
+                R.apunta_veina_5min(v["estacio"], files)
             except Exception as ex:
                 print(f"No he podido apuntar la estación vecina {v['estacio']}:", ex, file=sys.stderr)
         # Lo que daba cada radar, para saber cuál acierta más (ADR 0026).
