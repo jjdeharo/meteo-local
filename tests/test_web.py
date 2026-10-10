@@ -268,6 +268,28 @@ class Web(unittest.TestCase):
         self.assertEqual(r, ["2026-10-08T07:00", "2026-10-08T08:00"])
         self.assertEqual(self.avalua("2026-10-08T07:44:00+02:00", "horesVigents(null, new Date())", "sortir.js"), [])
 
+    def test_graus_mes_o_menys_que_ahir_igual_que_el_bot(self):
+        # ADR 0061: la web i el bot fan el mateix compte.
+        sys.path.insert(0, os.path.join(os.path.dirname(WEB), "bot"))
+        import bot as B
+        def fila(dia, h, t):
+            return {"hora": f"2026-10-{dia}T{h:02d}:00", "fins": f"2026-10-{dia}T{h + 1:02d}:00", "temperatura": t}
+        avui = [fila(10, 14, 20.0), fila(10, 15, 23.4)]
+        dema = [fila(11, 15, 18.0)]
+        mes = {"2026-10-09T14:00": 19.0, "2026-10-09T15:00": 20.0, "2026-10-09T16:00": 21.0}
+        casos = [(avui, False, mes), (avui, True, mes), (dema, False, mes), (dema, False, {}),
+                 (avui, False, {"2026-10-09T14:00": 19.0})]
+        for files, nit, m in casos:
+            js = self.avalua("2026-10-10T13:00:00+02:00", f"comparaTemp({json.dumps(files)}, {json.dumps(nit)}, {json.dumps(m)}, {json.dumps(avui + dema)})")
+            self.assertEqual(js, B.compara_temp({"temperatura_mesurada": m, "hores": avui + dema}, files, nit))
+        self.assertEqual(self.avalua("2026-10-10T13:00:00+02:00", "[textComparacio(3, false), textComparacio(-2, true), textComparacio(1, false), textComparacio(null, false)]"),
+                         ["3° més que ahir", "2° menys que avui", "semblant a ahir", None])
+        # A la capçalera del tram, al costat de la temperatura.
+        hores = [{**fila(10, h, 20.0 + h - 14), "codi": 0, "nuvols": 0} for h in range(14, 21)]
+        mes = {f"2026-10-09T{h:02d}:00": 15.0 for h in range(14, 22)}
+        r = self.avalua("2026-10-10T13:30:00+02:00", f"resumTrams({json.dumps(hores)}, new Date(), {json.dumps(mes)}).map((t) => t.compara)")
+        self.assertEqual(r, ["11° més que ahir"])                          # 26,5 contra 15
+
     def test_la_previsio_de_dema_tocada_despres_de_mitjanit(self):
         # La de les 21 h porta a «Demà»; si es toca quan aquell dia ja ha arribat, a «Avui».
         def desti(ara, url, dia):

@@ -62,5 +62,6 @@
 | [0058](0058-retirada-de-la-estacion-de-montflorit-de-meteocerdanyola-com.md) | Retirada de la estación de Montflorit de meteocerdanyola.com | aceptado |
 | [0059](0059-estacion-de-casa-en-weather-underground.md) | La estación de casa en Weather Underground, para leer las de los vecinos | aceptado |
 | [0060](0060-estaciones-vecinas-de-weather-underground.md) | Las estaciones vecinas de Weather Underground: «plou ara» y horas secas | aceptado |
+| [0061](0061-grados-mas-o-menos-que-ayer.md) | Grados más o menos que ayer | aceptado |
 
 Plantilla: [0000-plantilla.md](0000-plantilla.md). Para crear uno: `nuevo-adr "Título"`.

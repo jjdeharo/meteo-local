@@ -137,7 +137,46 @@ function celTram(files, nit) {
 // diuen les que hi ha de veritat: el tram en curs, «fins a les…», i l'últim,
 // sencer (casa.py arriba fins a les 21 h de demà i acaba amb un tram), o fins
 // on arribin les dades si en falten.
-function resumTrams(hores, ara) {
+// Quants graus més o menys que el dia abans (Juanjo, 10-10-2026; ADR 0061):
+// el tram d'avui, amb les mateixes hores d'ahir, mesurades a l'estació; el de
+// demà, amb avui (el mesurat fins ara i la previsió de la resta). La màxima de
+// dia i la mínima de nit; la xifra, només des de COMPARA_MIN graus. Igual que
+// bot.compara_temp, que les proves comparen.
+const COMPARA_MIN = 2;
+
+function diaAbans(clau) {
+  const [dia, hora] = clau.split('T');
+  const t = new Date(`${dia}T12:00`);
+  t.setDate(t.getDate() - 1);
+  const dos = (n) => String(n).padStart(2, '0');
+  return `${t.getFullYear()}-${dos(t.getMonth() + 1)}-${dos(t.getDate())}T${hora}`;
+}
+
+function comparaTemp(files, nit, mesurada, totes) {
+  if (!mesurada || !Object.keys(mesurada).length || !files.length) return null;
+  const previstes = Object.fromEntries((totes || []).map((f) => [f.hora, f]));
+  const abans = [];
+  for (const f of files) {
+    const a = mesurada[diaAbans(f.hora)];
+    const b = mesurada[diaAbans(f.fins)];
+    const p = previstes[diaAbans(f.hora)];
+    const v = a != null && b != null ? (a + b) / 2 : (p ? p.temperatura : null);
+    if (v == null || f.temperatura == null) return null;
+    abans.push(v);
+  }
+  const ara = files.map((f) => f.temperatura);
+  const d = nit ? Math.min(...ara) - Math.min(...abans) : Math.max(...ara) - Math.max(...abans);
+  return Math.sign(d) * Math.floor(Math.abs(d) + 0.5);
+}
+
+function textComparacio(n, esDema) {
+  if (n == null) return null;
+  if (Math.abs(n) < COMPARA_MIN) return esDema ? T('semblant a avui') : T('semblant a ahir');
+  if (esDema) return n > 0 ? T`${Math.abs(n)}° més que avui` : T`${Math.abs(n)}° menys que avui`;
+  return n > 0 ? T`${Math.abs(n)}° més que ahir` : T`${Math.abs(n)}° menys que ahir`;
+}
+
+function resumTrams(hores, ara, mesurada) {
   const grups = [];
   for (const f of hores || []) {
     if (new Date(f.fins) <= ara) continue;
@@ -172,6 +211,7 @@ function resumTrams(hores, ara) {
       prob: Math.max(...g.files.map((f) => f.probabilitat || 0)),
       mm: g.files.reduce((s, f) => s + (f.pluja_mm || 0), 0),
       tMin: temps.length ? Math.min(...temps) : null, tMax: temps.length ? Math.max(...temps) : null,
+      compara: textComparacio(comparaTemp(g.files, g.nom === 'Nit', mesurada, hores), esDema),
       fenomens,
       avis: g.files.some((f) => (f.avisos || []).length),
       files: g.files,
@@ -191,7 +231,7 @@ function resumTram(t) {
   if (t.cel) peca(t.cel[1], t.cel[0]);
   if (t.tMin != null) {
     const [min, max] = [Math.round(t.tMin), Math.round(t.tMax)];
-    peca('i-thermometer', min === max ? `${min} °C` : `${min}–${max} °C`);
+    peca('i-thermometer', (min === max ? `${min} °C` : `${min}–${max} °C`) + (t.compara ? ` · ${t.compara}` : ''));
   }
   if (t.plou) peca('i-umbrella', `${Math.round(t.prob * 100)} %` + (t.mm >= 1 ? T`, uns ${coma(t.mm, 0)} mm` : ''));
   for (const [text, id] of t.fenomens) peca(id, text, 'dada fenomen');
@@ -461,8 +501,8 @@ function taulaTram(t, obert) {
   return det;
 }
 
-function taula(hores, aprenentatge) {
-  const trams = resumTrams(hores, new Date());
+function taula(hores, aprenentatge, mesurada) {
+  const trams = resumTrams(hores, new Date(), mesurada);
   if (!trams.length) return null;
   const sec = element('section', 'previsio');
   const cap = element('div', 'cap-previsio');
@@ -568,7 +608,7 @@ function pinta(dades) {
     avisos.append(element('p', 'avis', T`Avui els models no veuen aquesta pluja: en les darreres ${m.hores} hores han caigut ${coma(m.mesurada_mm)}\u00a0mm a Montflorit i en preveien ${coma(m.prevista_mm)}. Les primeres hores de la taula parteixen del que mesura l\u2019estació; per a la resta, fes més cas dels avisos.`));
   }
   if (dades.ara_casa) cont.append(blocAra(dades.ara_casa, dades.radar, dades.vent, dades.veines));
-  const previsio = dades.hores && taula(dades.hores, dades.aprenentatge);
+  const previsio = dades.hores && taula(dades.hores, dades.aprenentatge, dades.temperatura_mesurada);
   if (previsio) {
     cont.append(previsio);
     ajustaFranges();

@@ -161,6 +161,25 @@ def falta_ahir_veina(estacio, ahora):
         return True
     with open(ruta, encoding="utf-8") as f:
         return not any(r["fins"] == mitjanit for r in csv.DictReader(f))
+def temperatures_casa(ahora, hores=72, recents=None):
+    """La temperatura medida en casa a cada hora en punto de las últimas
+    horas ({"AAAA-MM-DDTHH:MM" local: °C}), del registro y de las lecturas
+    de esta pasada (recents, ecowitt.hores): para comparar la previsión con
+    lo de ayer (ADR 0061)."""
+    desde = (ahora - dt.timedelta(hours=hores)).strftime("%Y-%m-%dT%H:%M")
+    res = {}
+    if os.path.exists(ESTACIO_CASA):
+        with open(ESTACIO_CASA, encoding="utf-8") as f:
+            for r in csv.DictReader(f):
+                if r["fins"] >= desde and _num(r["temperatura"]) is not None:
+                    res[r["fins"]] = _num(r["temperatura"])
+    for fin, h in (recents or {}).items():
+        clau = fin.strftime("%Y-%m-%dT%H:%M")
+        if clau >= desde and h.get("temperatura") is not None:
+            res[clau] = round(h["temperatura"], 1)
+    return dict(sorted(res.items()))
+
+
 # Cuánto se rellena hacia atrás como mucho: Ecowitt guarda 90 días cada 5 minutos.
 ESTACIO_CASA_DIES_MAX = 89
 

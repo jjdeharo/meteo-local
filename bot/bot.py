@@ -305,10 +305,58 @@ def text_pluja(tram, idioma):
                                   for a, b, p in pluges) + ".") if pluges else "Sense pluja prevista."
 
 
-def text_temperatura(tram, idioma, quan):
+# Cuántos grados más o menos que el día anterior (Juanjo, 10-10-2026: «la
+# mayoría de predicciones de otros servicios lo llevan y es muy útil»; ADR
+# 0061): lo previsto, con las mismas horas del día antes, medidas en casa o,
+# si aún no han pasado, previstas. La máxima de día y la mínima de noche, y la
+# cifra solo desde COMPARA_MIN grados: la previsión se equivoca en torno a uno.
+# Lo mismo en web/casa.js, que las pruebas comparan.
+COMPARA_MIN = 2
+
+
+def _dia_abans(clau):
+    return (dt.datetime.fromisoformat(clau) - dt.timedelta(days=1)).strftime("%Y-%m-%dT%H:%M")
+
+
+def compara_temp(dades, files, nit=False):
+    """Grados de diferencia (redondeados) entre lo previsto en «files» y las
+    mismas horas del día antes; None si falta algún dato."""
+    mesurada = dades.get("temperatura_mesurada")
+    if not mesurada or not files:
+        return None
+    previstes = {f["hora"]: f for f in dades.get("hores") or []}
+    abans, ara = [], []
+    for f in files:
+        a, b = mesurada.get(_dia_abans(f["hora"])), mesurada.get(_dia_abans(f["fins"]))
+        v = (a + b) / 2 if a is not None and b is not None else (previstes.get(_dia_abans(f["hora"])) or {}).get("temperatura")
+        if v is None or f.get("temperatura") is None:
+            return None
+        abans.append(v)
+        ara.append(f["temperatura"])
+    d = (min(ara) - min(abans)) if nit else (max(ara) - max(abans))
+    return int(math.copysign(math.floor(abs(d) + 0.5), d))
+
+
+def text_comparacio(n, idioma, respecte):
+    """«, 3 graus més que ahir», «, semblant a la d'avui»… (respecte: «ahir» o «avui»)."""
+    if n is None:
+        return ""
+    if idioma == "es":
+        dia = {"ahir": "ayer", "avui": "hoy"}[respecte]
+        if abs(n) < COMPARA_MIN:
+            return f", parecida a la de {dia}"
+        return f", {abs(n)} grados {'más' if n > 0 else 'menos'} que {dia}"
+    if abs(n) < COMPARA_MIN:
+        return ", semblant a la d'ahir" if respecte == "ahir" else ", semblant a la d'avui"
+    return f", {abs(n)} graus {'més' if n > 0 else 'menys'} que {respecte}"
+
+
+def text_temperatura(tram, idioma, quan, comparacio=None, respecte="ahir"):
     temps = [f["temperatura"] for f in tram if f.get("temperatura") is not None]
     i = " y " if idioma == "es" else " i "
-    return f"{quan}: entre {graus(min(temps))}{i}{graus(max(temps))}." if temps else None
+    if not temps:
+        return None
+    return f"{quan}: entre {graus(min(temps))}{i}{graus(max(temps))}{text_comparacio(comparacio, idioma, respecte)}."
 
 
 # La ropa para ir a pie, con los mismos tramos que «Si surts» (web/sortir.js,
@@ -424,7 +472,7 @@ def resum(dades, idioma, moment, dema=False, avui=False):
         if franges(nit):    # la noche, solo si se espera lluvia
             linies.append(("Esta noche: lluvia " if idioma == "es" else "Aquesta nit: pluja ")
                           + text_pluja(nit, idioma).split(": ", 1)[1])
-        linies.append(text_temperatura(dia, idioma, "Temperatura"))
+        linies.append(text_temperatura(dia, idioma, "Temperatura", compara_temp(dades, dia), "avui"))
         linies.append(text_pluja(dia, idioma))
         roba = text_roba(dia, idioma)
         linies += text_avisos_aemet(dades, idioma, dema, moment)
@@ -438,7 +486,7 @@ def resum(dades, idioma, moment, dema=False, avui=False):
                   else f"<b>El temps avui, {nom_dia}, a Montflorit</b>",
                   text_ara(dades, idioma),
                   text_temperatura(tram, idioma, "Temperatura de aquí a medianoche" if idioma == "es"
-                                   else "Temperatura d'aquí a mitjanit"),
+                                   else "Temperatura d'aquí a mitjanit", compara_temp(dades, tram), "ahir"),
                   text_pluja(tram, idioma)]
         roba = text_roba(tram, idioma)
         # De vespre, si ha de ploure abans de les 6, també la nit.

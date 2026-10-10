@@ -172,6 +172,29 @@ class Resum(unittest.TestCase):
         d["hores"] = [f for f in d["hores"] if f["hora"][:10] == vespre.date().isoformat()]
         self.assertIn("no en porten", B.resum(d, "ca", vespre))
 
+    def test_graus_mes_o_menys_que_el_dia_abans(self):
+        # ADR 0061: la màxima prevista d'avui contra les mateixes hores mesurades ahir.
+        def fila(dia, h, t):
+            return {"hora": f"2026-10-{dia}T{h:02d}:00", "fins": f"2026-10-{dia}T{h + 1:02d}:00", "temperatura": t}
+        avui = [fila(10, 14, 20.0), fila(10, 15, 23.4)]
+        mes = {"2026-10-09T14:00": 19.0, "2026-10-09T15:00": 20.0, "2026-10-09T16:00": 21.0}
+        d = {"temperatura_mesurada": mes, "hores": avui}
+        self.assertEqual(B.compara_temp(d, avui), 3)                        # 23,4 contra 20,5
+        self.assertEqual(B.text_comparacio(3, "ca", "ahir"), ", 3 graus més que ahir")
+        self.assertEqual(B.text_comparacio(-2, "es", "avui"), ", 2 grados menos que hoy")
+        self.assertEqual(B.text_comparacio(1, "ca", "ahir"), ", semblant a la d'ahir")     # menys de 2 graus
+        self.assertEqual(B.text_comparacio(-1, "es", "ahir"), ", parecida a la de ayer")
+        self.assertEqual(B.text_comparacio(None, "ca", "ahir"), "")
+        self.assertEqual(B.text_temperatura(avui, "ca", "Temperatura", 3), "Temperatura: entre 20 °C i 23 °C, 3 graus més que ahir.")
+        # La nit compara la mínima; si falta una hora del dia abans, no es diu res.
+        self.assertEqual(B.compara_temp(d, avui, nit=True), 1)
+        self.assertIsNone(B.compara_temp({"temperatura_mesurada": {"2026-10-09T14:00": 19.0}, "hores": avui}, avui))
+        self.assertIsNone(B.compara_temp({"hores": avui}, avui))            # sense estació (la reserva)
+        # Demà contra avui: les hores que encara no han passat, previstes.
+        dema = [fila(11, 15, 18.0)]
+        d = {"temperatura_mesurada": mes, "hores": avui + dema}
+        self.assertEqual(B.compara_temp(d, dema), -5)                      # 18 contra 23,4
+
     def test_ara_nomes_amb_l_estacio_del_barri(self):
         # Des de la 3.44.0 l'única estació és la particular (ADR 0058): el que marca mana.
         self.assertEqual(B.text_ara({"ara_casa": {"temperatura": 20, "plou": False}}, "es"),

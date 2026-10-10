@@ -395,6 +395,16 @@ def recoger(anterior=None):
     except Exception as ex:
         salida["errors"].append(f"estació de casa: {ex}")
     salida["ara_casa"] = casa and {k: v for k, v in casa.items() if k != "files"}
+    # La temperatura medida cada hora de las últimas 72, para decir cuántos
+    # grados más o menos que ayer (ADR 0061). Solo en el NAS, que tiene el
+    # registro; sin él (la reserva de IONOS), no se compara.
+    salida["temperatura_mesurada"] = None
+    if R.hay_registro():
+        try:
+            salida["temperatura_mesurada"] = R.temperatures_casa(
+                P.AHORA, recents=E.hores(casa["files"]) if casa else None) or None
+        except Exception as ex:
+            print("No he podido leer la temperatura medida:", ex, file=sys.stderr)
     # La estación de casa, a Weather Underground (ADR 0059). Si falla, no es
     # cosa de la página: solo se apunta.
     if casa and WU.disponible():
