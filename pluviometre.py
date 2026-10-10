@@ -2,10 +2,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 """¿Marca bien el pluviómetro de casa? Vigilancia de una sola vez (ADR 0017).
 
-Tras limpiar el pluviómetro, compara su lluvia con la de referencia: lo que
-recogieron a la vez las estaciones de Meteocat de Sabadell y Sant Cugat (a
-2,5 y 4,6 km; la menor de las dos en cada hora, para contar solo la lluvia
-que cae en toda la zona; ADR 0058), en cada episodio de lluvia (horas
+Tras limpiar el pluviómetro, compara su lluvia con la de referencia: la de
+Montflorit según las vecinas fiables (la mediana, con dos al menos; ADR 0070)
+o, si no las hay, lo que recogieron a la vez las estaciones de Meteocat de
+Sabadell y Sant Cugat (la menor de las dos, ADR 0058), en cada episodio de lluvia (horas
 seguidas con lluvia, con dos horas secas como mucho entre medias). Lo que
 importa es la lluvia débil, la que no marcaba: un episodio débil (de
 EPISODIO_DEBIL_MM en la referencia) cuenta como detectado si casa marca algo
@@ -37,9 +37,11 @@ def local(t=None):
 
 DIR = os.environ.get("REGISTRE_DIR", "/estat/registre")
 ESTADO = os.path.join(os.path.dirname(DIR), "vigila-pluviometre.json")
-# Las estaciones de Meteocat y la vecina fiable de Weather Underground (ADR 0060).
-REFERENCIA = ([os.path.join(DIR, f"meteocat-{codi}.csv") for codi in ("XF", "XV")]
-              + [os.path.join(DIR, f"veina-{e}.csv") for e, v in C.VEINES.items() if v.get("sec")])
+# Montflorit primero (ADR 0070): las vecinas fiables de Weather Underground y,
+# de respaldo, las estaciones de Meteocat de Sabadell y Sant Cugat.
+VEINES_REF = [os.path.join(DIR, f"veina-{e}.csv") for e, v in C.VEINES.items() if v.get("sec")]
+METEOCAT_REF = [os.path.join(DIR, f"meteocat-{codi}.csv") for codi in ("XF", "XV")]
+REFERENCIA = VEINES_REF + METEOCAT_REF
 CASA = os.path.join(DIR, "estacio-casa.csv")
 
 UMBRAL_MM = 0.2                 # una hora con lluvia
@@ -64,13 +66,21 @@ def lee(ruta):
 
 
 def referencia():
-    """{hora: mm} con la menor lluvia de las estaciones de referencia, en las
-    horas que tienen todas."""
-    series = [lee(r) for r in REFERENCIA]
-    if not series:
-        return {}
-    comunes = set.intersection(*(set(s) for s in series))
-    return {t: min(s[t] for s in series) for t in comunes}
+    """{hora: mm} de la lluvia en Montflorit: la mediana de las vecinas fiables
+    en las horas que tienen al menos dos (ADR 0070); si no, la menor de
+    Sabadell y Sant Cugat, en las horas que tienen las dos (ADR 0058)."""
+    veines = [lee(r) for r in VEINES_REF]
+    meteocat = [lee(r) for r in METEOCAT_REF]
+    res = {}
+    if meteocat:
+        for t in set.intersection(*(set(s) for s in meteocat)):
+            res[t] = min(s[t] for s in meteocat)
+    for t in set().union(*(set(s) for s in veines)) if veines else ():
+        vals = sorted(s[t] for s in veines if t in s)
+        if len(vals) >= 2:
+            n = len(vals)
+            res[t] = vals[n // 2] if n % 2 else (vals[n // 2 - 1] + vals[n // 2]) / 2
+    return res
 
 
 def episodios(mont, desde, hasta):

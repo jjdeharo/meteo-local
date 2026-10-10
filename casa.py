@@ -142,7 +142,12 @@ def temperatura_model_ara(h, ahora):
     return a + (b - a) * (ahora - ini).total_seconds() / 3600
 
 
-def al_prever(desde, h, casa, riera=None):
+def pluja_veines_ara(veines):
+    """{id: mm de la última hora} de las vecinas leídas en esta pasada."""
+    return {v["estacio"]: v.get("pluja_1h") for v in veines or []}
+
+
+def al_prever(desde, h, casa, riera=None, veines=None):
     """Lo que medían las estaciones al prever y usa el aprendizaje: la lluvia
     de la última hora en casa, lo que se equivocaba el modelo
     de temperatura en casa, lo seco que estaba el aire y la lluvia de la
@@ -154,7 +159,9 @@ def al_prever(desde, h, casa, riera=None):
     de la pasada lo deja apuntado."""
     d = {"pluja_1h_emes": casa.get("pluja_1h") if casa else None,
          "error_temp_ara": None, "deficit_rosada_ara": None,
-         "pluja_1h_xv": (riera or {}).get("mm_1h")}
+         "pluja_1h_xv": (riera or {}).get("mm_1h"),
+         # La de las vecinas de Montflorit, como la guarda el registro (ADR 0070).
+         "pluja_1h_veines": A.pluja_veines(pluja_veines_ara(veines))}
     if casa and casa.get("temperatura") is not None:
         t_model = temperatura_model_ara(h, dt.datetime.fromisoformat(casa["hora"]))
         if t_model is not None:
@@ -235,7 +242,7 @@ def previsio(desde, h, e, avisos, model=None, casa=None, nc=None, planes=None, r
     tramo de 10 a 11 se lee en la hora 11:00, y los demás valores también."""
     prob = prob_ensemble(e)
     llueve_ahora = llueve_ahora_en(casa, veines)
-    prever = al_prever(desde, h, casa, riera)
+    prever = al_prever(desde, h, casa, riera, veines)
     ultima_hora = prever["pluja_1h_emes"] or 0.0
 
     def valor(campo, i):
@@ -309,17 +316,18 @@ def previsio(desde, h, e, avisos, model=None, casa=None, nc=None, planes=None, r
     return filas
 
 
-def filas_registro(desde, h, e, mostradas, casa=None, avisos=None, planes=None, riera=None):
+def filas_registro(desde, h, e, mostradas, casa=None, avisos=None, planes=None, riera=None, veines=None):
     """Todo lo que los modelos daban para cada hora de la tabla, junto a lo que
     mostró la página: lo que hace falta para aprender de los fallos (ADR 0012)."""
     prob = prob_ensemble(e)
     indice = {t: i for i, t in enumerate(h["time"])}
-    prever = al_prever(desde, h, casa, riera)
+    prever = al_prever(desde, h, casa, riera, veines)
     filas = []
     for f in mostradas:
         d = variables_hora(desde, h, prob, indice[f["fins"]], prever)
         d.pop("pluja_1h_emes")      # ya va en «ara_casa», una vez por línea
         d.pop("pluja_1h_xv", None)  # ya va en «sant_cugat», una vez por línea
+        d.pop("pluja_1h_veines", None)  # y las vecinas, en «veines»
         fin = dt.datetime.fromisoformat(f["fins"]).astimezone()
         d.update(senyals_avis(fin - dt.timedelta(hours=1), fin, avisos, planes))
         # «plou_ara», para saber qué veredicto dio «Si surts» (ADR 0047).
@@ -578,8 +586,9 @@ def recoger(anterior=None):
             if salida["hores"] and not salida.get("previsio_de"):
                 r = salida.get("riera")
                 R.apunta_casa(P.AHORA, filas_registro(P.AHORA, h, e, salida["hores"][:HORAS], casa,
-                                                      avisos, planes, salida.get("riera")),
-                              salida["ara_casa"], {"pluja_1h": r["mm_1h"], "fins": r["fins"]} if r else None)
+                                                      avisos, planes, salida.get("riera"), veines),
+                              salida["ara_casa"], {"pluja_1h": r["mm_1h"], "fins": r["fins"]} if r else None,
+                              pluja_veines_ara(veines) if veines else None)
         except Exception as ex:
             print("No he podido apuntar en el registro:", ex, file=sys.stderr)
         if radar:

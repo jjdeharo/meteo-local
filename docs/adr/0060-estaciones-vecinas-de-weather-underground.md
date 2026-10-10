@@ -2,6 +2,10 @@
 
 Fecha: 2026-10-10 · Estado: aceptado
 
+> Desde la 3.57.0 (ADR 0070), las tres vecinas fiables confirman las horas secas
+> y, con dos, dan lluvia aunque casa no la marque; Sabadell y Sant Cugat
+> quedan de respaldo.
+
 ## Contexto
 
 El ADR 0059 dejó la estación de casa subiendo a Weather Underground para

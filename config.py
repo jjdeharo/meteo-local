@@ -2,7 +2,7 @@
 """Datos fijos de «Temps a Montflorit»: lugares, horario, fuentes y umbrales.
 Se cambian aquí, no en los programas."""
 
-VERSION = "3.56.0"
+VERSION = "3.57.0"
 
 # Coordenadas con tres decimales (unos 100 m), no las exactas: para el tiempo
 # da igual una calle u otra, y el repositorio es público.
@@ -42,14 +42,20 @@ ESTACIONES = {
 # Estaciones vecinas de la red de estaciones personales de Weather Underground
 # (ADR 0060), leídas con la clave de lectura que da la red a quien aporta una
 # estación (ADR 0059). De cada una: dónde está (sin dirección exacta), si su
-# lluvia cuenta para «plou ara» y si su cero confirma las horas secas para
-# aprender (examen del 05 al 10-10-2026 contra la estación de casa: ADR 0060).
+# lluvia cuenta para «plou ara» y para dar lluvia al aprender (con dos, ADR
+# 0070) y si su cero confirma las horas secas (examen del 05 al 10-10-2026,
+# ADR 0060; repetido con 75 días el 10-10-2026, ADR 0070: ICERDA18 e ICERDA28
+# también confirman).
 VEINES = {
     "ICERDA6": {"nom": "a 1 km a l'est, vora la riera", "plou": True, "sec": True},
-    "ICERDA18": {"nom": "al Puig de la Guàrdia", "plou": True, "sec": False},
-    "ICERDA28": {"nom": "a 400 m al nord", "plou": True, "sec": False},
+    "ICERDA18": {"nom": "al Puig de la Guàrdia", "plou": True, "sec": True},
+    "ICERDA28": {"nom": "a 400 m al nord", "plou": True, "sec": True},
     "ICERDA48": {"nom": "a 600 m al nord-est", "plou": False, "sec": False},
 }
+# Lluvia en Montflorit para aprender (aprenentatge.pluja_observada, ADR 0070):
+# si casa no la marca, llueve si la marcan al menos estas vecinas de las que
+# cuentan («plou»).
+VEINES_PLUJA_MIN = 2
 # La clave de lectura caduca a los seis meses (generada el 10-10-2026): antes
 # de esta fecha hay que regenerarla en wunderground.com (Member Settings > API
 # Keys, en la versión antigua del sitio) y cambiarla en el NAS (RESTAURAR.md).

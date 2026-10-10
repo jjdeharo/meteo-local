@@ -60,9 +60,10 @@ servicio meteorológico alemán, a 7 km. En cada pasada, el servidor guarda:
   lluvia (ADR 0017). Hasta el 09-10-2026 se guardaba también lo que medía la
   estación de Montflorit de meteocerdanyola.com, retirada desde entonces
   (ADR 0058).
-- **La lluvia por horas de las estaciones de Meteocat** de Sabadell y Sant
-  Cugat (a 2,5 y 4,6 km): cuando el pluviómetro de casa marca cero, la hora
-  solo cuenta como seca si ellas tampoco recogieron nada (ADR 0058).
+- **La lluvia por horas de las estaciones vecinas de Montflorit** (Weather
+  Underground, a menos de 1 km) y, de respaldo, **de las de Meteocat** de
+  Sabadell y Sant Cugat (a 2,5 y 4,6 km): deciden qué pasó en las horas en que
+  el pluviómetro de casa marca cero (apartado 2.2, ADR 0070).
 - **Lo que daban los modelos**, una vez por hora y para las 24 horas
   siguientes: la lluvia de los tres modelos finos (AROME HD, AROME e ICON-EU),
   la fracción de las 40 simulaciones del conjunto ICON-EU-EPS con lluvia, la
@@ -121,6 +122,7 @@ moja en moto (`UMBRAL_MM` de `config.py`).
 | Lluvia medida al prever* | $\ln(1 + \text{mm de la última hora})$ en casa si $t \le 4$; si no, 0 | Si ya llueve, es probable que siga |
 | Sequedad del aire al prever* | $\min(\max(T - T_d, 0), 15) / 10$ en casa si $t \le 4$; si no, 0 | Con el aire seco, la lluvia cercana es menos probable |
 | Lluvia en Sant Cugat al prever*† | $\ln(1 + \text{mm de la última hora})$ en la estación de Meteocat de Sant Cugat (4,6 km al oeste, en la cuenca de la riera) si $t \le 4$; si no, 0 | Lo que llueve cerca puede llegar o anticipar. Es una hipótesis: se ajusta en una variante aparte y solo se adopta si acierta más (ADR 0042) |
+| Lluvia en las vecinas al prever*† | $\ln(1 + \text{mm de la última hora})$, la mediana de las vecinas fiables de Montflorit, si $t \le 4$; si no, 0 | Lo que llueve ahora en el barrio, aunque el pluviómetro de casa no lo recoja. En el archivo (75 días) bajó el error a corto plazo un 8 %; se ajusta en una variante aparte y solo se adopta si acierta más (ADR 0070) |
 
 \* Solo con datos propios: el archivo no las tiene (apartado 2.2). $T_d$ es
 el punto de rocío. † Registrada desde el 08-10-2026. Meteocat es el Servei
@@ -207,11 +209,16 @@ las dos tablas están en `calibracio/pluja_casa.json`.
 
 ### 2.2 Segundo modelo: los datos de casa
 
-Una hora cuenta como lluviosa si casa recoge 0,2 mm o más: el pluviómetro a
-veces no marca la lluvia débil, pero lo que marca es lluvia (ADR 0017). Una
-hora con cero en casa cuenta como seca solo si las estaciones de Meteocat de
-Sabadell y Sant Cugat tampoco recogieron nada en ella; si alguna recogió
-lluvia, no se sabe qué pasó en casa y la hora no se usa (ADR 0058).
+Montflorit primero (ADR 0070). Una hora cuenta como lluviosa si casa recoge
+0,2 mm o más (lo que marca es lluvia, ADR 0017) o si lo recogen al menos dos
+de las tres vecinas fiables (ICERDA6, ICERDA18 e ICERDA28): el pluviómetro de
+casa a veces no marca la lluvia débil, y el 03-10-2026 no marcó ni la fuerte.
+Con cero en casa, la hora cuenta como seca si ninguna de esas vecinas ve
+lluvia; si solo una la ve, no se sabe y la hora no se usa. Sin vecinas, como
+antes: seca si Sabadell y Sant Cugat tampoco recogieron nada (ADR 0058). En
+75 días, las tres vecinas vieron la lluvia de casa en 33 o 34 de cada 36
+horas; Sabadell, en 28, y Sant Cugat, en 32; y una vecina sola casi nunca
+marca en falso (de 0 a 2 horas de 1.643).
 
 Cuando el registro reúna **30 horas con lluvia** (horas observadas distintas:
 cada hora se prevé muchas veces, con distintas antelaciones, y no cuenta más
@@ -545,7 +552,7 @@ estación de casa y ejecuta `aprenentatge.py diari`:
    comprobar.
 3. Lo compara con lo que se usa ahora con las mismas horas: el modelo del
    archivo para la lluvia; la corrección del año de casa para la
-   temperatura. Las variantes de la lluvia (Sant Cugat, los avisos) se
+   temperatura. Las variantes de la lluvia (Sant Cugat, las vecinas, los avisos) se
    comparan además con el modelo sin su señal ajustado a sus mismas horas,
    y solo ganan si lo mejoran en la misma proporción (apartado 2).
 4. **Solo cambia si el error baja al menos un 5 %**:
@@ -1070,8 +1077,9 @@ cifras), `python3 aprenentatge.py sortir`, `python3 fi_pluja.py resum`,
 
 **El pluviómetro de casa** (`pluviometre.py`, ADR 0017). Su cero no es
 fiable: solo cuenta cuando marca lluvia. Tras limpiarlo, una vigilancia de una
-sola vez compara cada episodio débil de la referencia (lo que recogieron a
-la vez Sabadell y Sant Cugat, la menor de las dos; de 0,6 a 4 mm, con dos
+sola vez compara cada episodio débil de la referencia (la mediana de las
+vecinas fiables o, sin ellas, la menor de Sabadell y Sant Cugat, ADR 0070;
+de 0,6 a 4 mm, con dos
 horas secas como mucho entre medias) con casa: cuenta como detectado si casa
 marca algo en él o en la hora de antes o de después. Con tres episodios
 débiles, o a los 45 días, se comunica el resultado para decidir si la página

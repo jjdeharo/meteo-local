@@ -22,8 +22,9 @@ class Vigilancia(unittest.TestCase):
         d = tempfile.mkdtemp()
         V.DIR = os.path.join(d, "registre")
         V.ESTADO, V.CASA = os.path.join(d, "vigila.json"), os.path.join(V.DIR, "c.csv")
-        # Dues estacions de referència: compta la menor de les dues en cada hora.
+        # Sense veïnes, les dues de Meteocat: compta la menor de les dues en cada hora.
         V.REFERENCIA = [os.path.join(V.DIR, "xf.csv"), os.path.join(V.DIR, "xv.csv")]
+        V.METEOCAT_REF, V.VEINES_REF = list(V.REFERENCIA), []
         os.makedirs(V.DIR)
 
     def escribe(self, mont, casa, horas=200):
@@ -74,6 +75,19 @@ class Vigilancia(unittest.TestCase):
             f.write("fins,pluja_mm\n" + "".join(f"{h(n).strftime('%Y-%m-%dT%H:%M')},0.0\n" for n in range(30)))
         self.assertEqual(V.referencia()[h(10)], 0.0)
         self.assertEqual(V.evalua(V.referencia(), V.lee(V.CASA), T0, h(29))["debils"], [])
+
+    def test_montflorit_primer(self):
+        # ADR 0070: amb dues veïnes o més, mana la seva mediana, encara que a
+        # Sabadell i a Sant Cugat no plogui (o hi plogui i aquí no).
+        V.VEINES_REF = [os.path.join(V.DIR, f"v{k}.csv") for k in range(3)]
+        self.escribe({10: 1.0}, {}, horas=30)
+        for k, mm in enumerate((0.6, 0.8, 0.0)):
+            with open(V.VEINES_REF[k], "w") as f:
+                f.write("fins,pluja_mm\n" + "".join(
+                    f"{h(n).strftime('%Y-%m-%dT%H:%M')},{mm if n == 20 else 0.0}\n" for n in range(30)))
+        ref = V.referencia()
+        self.assertEqual(ref[h(20)], 0.6)          # plou a Montflorit, no a Meteocat
+        self.assertEqual(ref[h(10)], 0.0)          # plou a Meteocat, no a Montflorit
 
     def test_sin_lluvia_en_el_plazo(self):
         self.escribe({}, {}, horas=10)

@@ -2,6 +2,7 @@
 """Pruebas del aprendizaje de la página de casa (sin red ni Telegram)."""
 import datetime as dt
 import json
+import math
 import os
 import random
 import sys
@@ -134,8 +135,23 @@ class Rasgos(unittest.TestCase):
         self.assertIsNone(A.pluja_observada(None, [sec, sec]))
         self.assertIsNone(A.pluja_observada({"pluja_mm": ""}, [sec, sec]))
 
-    def test_la_veina_fiable_confirma_les_hores_seques(self):
-        # Les referències són les de Meteocat i les veïnes amb «sec» (ADR 0060).
+    def test_montflorit_primer(self):
+        # ADR 0070: les veïnes de Montflorit manen sobre Sabadell i Sant Cugat.
+        z, p = {"pluja_mm": "0.0"}, {"pluja_mm": "0.6"}
+        seca = {k: z for k in A.C.VEINES}
+        # Casa i les veïnes a zero: seca, encara que plogui a Sabadell i a Sant Cugat.
+        self.assertEqual(A.pluja_observada(z, [p, p], seca), 0.0)
+        # Casa a zero però plou en dues veïnes que compten: plou (el pluviòmetre no ho va veure).
+        dues = {**seca, "ICERDA18": p, "ICERDA28": {"pluja_mm": "1.0"}}
+        self.assertGreaterEqual(A.pluja_observada(z, [z, z], dues), 0.6)
+        # Una sola veïna amb pluja: no se sap.
+        self.assertIsNone(A.pluja_observada(z, [z, z], {**seca, "ICERDA28": p}))
+        # La que no compta per a la pluja no decideix.
+        self.assertEqual(A.pluja_observada(z, [z, z], {**seca, "ICERDA48": p}), 0.0)
+        # Sense cap veïna que confirmi, com abans: Meteocat.
+        self.assertEqual(A.pluja_observada(z, [z, z], {}), 0.0)
+        self.assertIsNone(A.pluja_observada(z, [z, p], {}))
+        # Els registres per hores.
         import tempfile
         with tempfile.TemporaryDirectory() as d:
             vell = A.REGISTRE
@@ -143,10 +159,9 @@ class Rasgos(unittest.TestCase):
             try:
                 for nom in ("meteocat-XF", "meteocat-XV", "veina-ICERDA6", "veina-ICERDA28"):
                     with open(os.path.join(d, nom + ".csv"), "w") as f:
-                        f.write("fins,pluja_mm\n2026-10-07T03:00," + ("0.2" if nom == "veina-ICERDA28" else "0.0") + "\n")
-                refs = A._meteocat()
-                self.assertEqual(len(refs), 3)                      # XF, XV i ICERDA6; ICERDA28 no
-                self.assertEqual(A.pluja_observada({"pluja_mm": "0.0"}, [r.get("2026-10-07T03:00") for r in refs]), 0.0)
+                        f.write("fins,pluja_mm\n2026-10-07T03:00," + ("0.6" if nom.startswith("meteocat") else "0.0") + "\n")
+                self.assertEqual(len(A._meteocat()), 2)
+                self.assertEqual(A.observada({"2026-10-07T03:00": z}, A._meteocat(), A._veines(), "2026-10-07T03:00"), 0.0)
             finally:
                 A.REGISTRE = vell
 
@@ -184,6 +199,26 @@ class Sortir(unittest.TestCase):
         self.assertEqual(A.nivell_pluja("cotxe", {"probabilitat": 0.1, "pluja_mm": 25}), "compte")
         self.assertEqual(A.nivell_pluja("cotxe", {"probabilitat": 0.9, "pluja_mm": 45}), "no")
         self.assertIsNone(A.nivells_sortir("moto", {"probabilitat": 0})["vent"])     # sense ratxa, res
+
+
+class Veines(unittest.TestCase):
+    """La pluja de les veïnes de Montflorit al registre i al model (ADR 0070)."""
+
+    def test_la_mediana_de_les_que_compten(self):
+        self.assertIsNone(A.pluja_veines(None))
+        self.assertIsNone(A.pluja_veines({"ICERDA48": 3.0}))                 # no compta per a «plou ara»
+        self.assertEqual(A.pluja_veines({"ICERDA6": 0.0, "ICERDA18": 1.2, "ICERDA28": 0.4}), 0.4)
+        self.assertEqual(A.pluja_veines({"ICERDA6": 0.2, "ICERDA18": None, "ICERDA28": 0.6}), 0.4)
+
+    def test_el_rasgo_nomes_a_curt_termini(self):
+        d = {"fins": "2026-10-10T12:00", "antelacio_h": 1.0, "pluja_meteofrance_arome_france_hd": 0,
+             "pluja_meteofrance_arome_france": 0, "pluja_icon_eu": 0, "prob_ens": 0.1, "pluja_1h_emes": 0,
+             "deficit_rosada_ara": 2, "pluja_1h_veines": 1.0}
+        noms = A.RASGOS_PROPIS_VEINES
+        x = A.rasgos(d, noms)
+        self.assertAlmostEqual(x[noms.index("veines")], math.log1p(1.0))
+        self.assertIsNone(A.rasgos({**d, "pluja_1h_veines": None}, noms))      # sense dada, no hi ha vector
+        self.assertEqual(A.rasgos({**d, "antelacio_h": 12}, noms)[noms.index("veines")], 0.0)
 
 
 class Diari(unittest.TestCase):
@@ -288,12 +323,12 @@ class Diari(unittest.TestCase):
         xv = {**base, "rasgos": A.RASGOS_PROPIS_XV, "mostres": 50, "error": 0.09, "error_base": 0.09, "mostres_base": 50}
         ms = [{"emes": "2026-09-01T00:00+02:00"}]
         with patch.object(A, "valida_pluja", return_value=dict(base)), patch.object(A, "valida_temperatura", return_value=None), \
-             patch.object(A, "valida_variant", side_effect=[xv, None]):
+             patch.object(A, "valida_variant", side_effect=[xv, None, None]):
             model, vp, _ = A.candidat(ms, arxiu, None, "2026-10-09")
         self.assertEqual(model["pluja"]["rasgos"], A.RASGOS_PROPIS)
         # Amb un 5 % menys d'error que el base a les mateixes hores, sí.
         with patch.object(A, "valida_pluja", return_value=dict(base)), patch.object(A, "valida_temperatura", return_value=None), \
-             patch.object(A, "valida_variant", side_effect=[{**xv, "error": 0.08}, None]):
+             patch.object(A, "valida_variant", side_effect=[{**xv, "error": 0.08}, None, None]):
             model, vp, _ = A.candidat(ms, arxiu, None, "2026-10-09")
         self.assertEqual(model["pluja"]["rasgos"], A.RASGOS_PROPIS_XV)
         self.assertEqual(model["pluja"]["error_base"], 0.09)

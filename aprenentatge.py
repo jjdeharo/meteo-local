@@ -74,6 +74,10 @@ RASGOS_PROPIS = RASGOS_ARXIU + ["ensemble", "persistencia", "sequedat"]
 # Con la lluvia de la última hora en Sant Cugat (Meteocat, a 4,6 km, en la
 # cuenca de la riera): se ajusta aparte y solo gana si acierta más (ADR 0042).
 RASGOS_PROPIS_XV = RASGOS_PROPIS + ["sant_cugat"]
+# Con la lluvia de la última hora en las vecinas de Montflorit (Weather
+# Underground, a menos de 1 km): la mediana de las que cuentan para «plou
+# ara». Igual que la de Sant Cugat, aparte y solo si acierta más (ADR 0070).
+RASGOS_PROPIS_VEINES = RASGOS_PROPIS + ["veines"]
 AVIS_XV = os.path.join(DIR, "avis-sant-cugat")
 # Con lo oficial de cada hora: aviso de AEMET por lluvia o tormentas y el
 # INUNCAT en alerta o emergencia. Se registran desde el 08-10-2026; la variante
@@ -117,6 +121,8 @@ def rasgos(d, noms):
         "sequedat": (0.0 if not corto else None if deficit is None else min(max(deficit, 0), 15) / 10),
         # Lo que llovía en Sant Cugat al prever, como la persistencia; sin dato, no hay vector.
         "sant_cugat": (0.0 if not corto else None if d.get("pluja_1h_xv") is None else math.log1p(d["pluja_1h_xv"])),
+        "veines": (0.0 if not corto else None if d.get("pluja_1h_veines") is None
+                   else math.log1p(d["pluja_1h_veines"])),
         # Lo oficial de la hora (0 o 1); sin dato, no hay vector.
         "avis_aemet": d.get("avis_pluja"),
         "pla_inuncat": d.get("pla_inuncat"),
@@ -256,29 +262,62 @@ def _num(x):
         return None
 
 
-def pluja_observada(casa, meteocat=()):
-    """mm de la hora según la estación de casa. Lo que marca es lluvia; su
-    cero solo vale como hora seca si las estaciones de alrededor (meteocat:
-    lo que midió cada una, si lo hay: las de Meteocat y la vecina fiable de
-    Weather Underground) tampoco recogieron nada: el pluviómetro a veces no
-    marca la lluvia débil (ADR 0017, 0058 y 0060). Sin casa, o con casa a
-    cero y lluvia cerca, no se sabe."""
+def pluja_observada(casa, meteocat=(), veines=None):
+    """mm de la hora en Montflorit, con lo de Montflorit primero (Juanjo,
+    10-10-2026: «si está lloviendo en 2 estaciones de montflorit eso no puede
+    ser una hora seca, a lo mejor sí lo es en sant cugat o sabadell»; ADR 0070).
+    - Llueve si la estación de casa lo marca, o si lo marcan al menos
+      C.VEINES_PLUJA_MIN vecinas de las que cuentan para la lluvia (`plou`):
+      el pluviómetro de casa a veces no recoge la lluvia débil (ADR 0017).
+    - Seca si casa marca cero, ninguna vecina que cuenta ve lluvia y las que
+      confirman horas secas (`sec`) están a cero, con una al menos.
+    - Sin ninguna vecina que confirme, como antes: el cero de casa vale si
+      tampoco recogieron nada las estaciones de Meteocat (meteocat).
+    - Si solo una vecina ve lluvia y casa no, no se sabe.
+    veines: {id: lo medido en la hora}; meteocat: lo de cada estación."""
     c = _num((casa or {}).get("pluja_mm"))
-    if c is None:
-        return None
-    if c >= C.UMBRAL_MM:
+    v = {k: _num((x or {}).get("pluja_mm")) for k, x in (veines or {}).items()}
+    plou = [x for k, x in v.items() if C.VEINES.get(k, {}).get("plou") and x is not None]
+    mullen = [x for x in plou if x >= C.UMBRAL_MM]
+    if c is not None and c >= C.UMBRAL_MM:
         return c
+    if len(mullen) >= C.VEINES_PLUJA_MIN:
+        return sorted(mullen)[len(mullen) // 2]
+    if c is None or mullen:
+        return None
+    sec = [x for k, x in v.items() if C.VEINES.get(k, {}).get("sec") and x is not None]
+    if sec:
+        return 0.0 if all(x < C.UMBRAL_MM for x in sec) else None
     prop = [_num((m or {}).get("pluja_mm")) for m in meteocat]
     prop = [x for x in prop if x is not None]
     return 0.0 if prop and all(x < C.UMBRAL_MM for x in prop) else None
 
 
+def pluja_veines(veines):
+    """La mediana de la lluvia de la última hora de las vecinas que cuentan
+    para «plou ara» ({id: mm}); None sin ninguna (ADR 0070)."""
+    vals = sorted(v for k, v in (veines or {}).items() if C.VEINES.get(k, {}).get("plou") and v is not None)
+    if not vals:
+        return None
+    n = len(vals)
+    return vals[n // 2] if n % 2 else (vals[n // 2 - 1] + vals[n // 2]) / 2
+
+
 def _meteocat():
-    """Lo medido por horas en cada estación de Meteocat del registro y en
-    las vecinas de Weather Underground cuyo cero confirma una hora seca
-    (config.VEINES, ADR 0060)."""
-    return ([_llegeix(f"meteocat-{codi}.csv") for codi in C.ESTACIONES]
-            + [_llegeix(f"veina-{estacio}.csv") for estacio, v in C.VEINES.items() if v.get("sec")])
+    """Lo medido por horas en cada estación de Meteocat del registro: el
+    respaldo para las horas secas cuando no hay vecinas (ADR 0058 y 0070)."""
+    return [_llegeix(f"meteocat-{codi}.csv") for codi in C.ESTACIONES]
+
+
+def _veines():
+    """Lo medido por horas en cada vecina de Montflorit ({id: {fins: fila}}, ADR 0060)."""
+    return {estacio: _llegeix(f"veina-{estacio}.csv") for estacio in C.VEINES}
+
+
+def observada(casa, meteocat, veines, fins):
+    """pluja_observada de la hora que acaba en fins, con los registros leídos."""
+    return pluja_observada(casa.get(fins), [m.get(fins) for m in meteocat],
+                           {k: v.get(fins) for k, v in veines.items()})
 
 
 def mostres():
@@ -286,7 +325,7 @@ def mostres():
     lo que pasó: la lluvia y la temperatura de casa (ADR 0017), con las
     estaciones de Meteocat y la vecina fiable para confirmar las horas secas
     (ADR 0058 y 0060)."""
-    casa, meteocat = _llegeix("estacio-casa.csv"), _meteocat()
+    casa, meteocat, veines = _llegeix("estacio-casa.csv"), _meteocat(), _veines()
     res = []
     for arxiu in sorted(glob.glob(os.path.join(REGISTRE, "casa-*.jsonl"))):
         with open(arxiu, encoding="utf-8") as f:
@@ -294,12 +333,13 @@ def mostres():
                 ara_casa = linea.get("ara_casa") or {}
                 plujas = [x for x in (ara_casa.get("pluja_1h"),) if x is not None]
                 for h in linea["hores"]:
-                    obs_pluja = pluja_observada(casa.get(h["fins"]), [m.get(h["fins"]) for m in meteocat])
+                    obs_pluja = observada(casa, meteocat, veines, h["fins"])
                     obs_temp = _num((casa.get(h["fins"]) or {}).get("temperatura"))
                     if obs_pluja is None and obs_temp is None:
                         continue
                     res.append({**h, "emes": linea["emes"], "pluja_1h_emes": max(plujas) if plujas else None,
                                 "pluja_1h_xv": (linea.get("sant_cugat") or {}).get("pluja_1h"),
+                                "pluja_1h_veines": pluja_veines(linea.get("veines")),
                                 "obs_pluja": obs_pluja, "obs_temp": obs_temp})
     return res
 
@@ -396,6 +436,7 @@ def candidat(ms, arxiu, arxiu_t, avui):
     if vp:
         vp["xv"] = valida_variant(ms, arxiu, RASGOS_PROPIS_XV)
         vp["avis"] = valida_variant(ms, arxiu, RASGOS_PROPIS_AVIS)
+        vp["veines"] = valida_variant(ms, arxiu, RASGOS_PROPIS_VEINES)
     model = {"pluja": arxiu, "temperatura": arxiu_t}
 
     def val(v):
@@ -403,7 +444,7 @@ def candidat(ms, arxiu, arxiu_t, avui):
     # Una variante, solo si en sus mismas horas mejora también al base en
     # MILLORA_MINIMA; entre varias, la que más lo mejora en proporción. Si
     # ninguna, el base, si mejora al archivo.
-    variants = [v for v in ((vp or {}).get("xv"), (vp or {}).get("avis"))
+    variants = [v for v in ((vp or {}).get("xv"), (vp or {}).get("avis"), (vp or {}).get("veines"))
                 if val(v) and v.get("error_base") and v["error"] < (1 - MILLORA_MINIMA) * v["error_base"]]
     v = max(variants, key=lambda v: 1 - v["error"] / v["error_base"]) if variants else vp if val(vp) else None
     if v:
@@ -432,6 +473,7 @@ def explica(abans, nou, vp, vt):
         if nou["pluja"]["origen"] != "arxiu":
             p = nou["pluja"]
             amb_xv = (" i la pluja de Sant Cugat" if "sant_cugat" in p["rasgos"]
+                      else " i la pluja de les estacions veïnes" if "veines" in p["rasgos"]
                       else " i els avisos oficials" if "avis_aemet" in p["rasgos"] else "")
             linies.append(f"Pluja: passa a aprendre de l'estació de casa{amb_xv} "
                           f"({p['mostres']} mostres). "
@@ -693,6 +735,7 @@ def verifica_sortir(ahora=None):
         with open(SORTIR, encoding="utf-8") as f:
             fetes = {(r["fins"], r["termini"]) for r in csv.DictReader(f)}
     casa, meteocat, vent = _llegeix("estacio-casa.csv"), _meteocat(), _llegeix("vent-mitges-hores.csv")
+    veines = _veines()
     millor = {}
     for arxiu in sorted(glob.glob(os.path.join(REGISTRE, "casa-*.jsonl"))):
         with open(arxiu, encoding="utf-8") as f:
@@ -710,7 +753,7 @@ def verifica_sortir(ahora=None):
     for (fins, termini), (emes, h) in sorted(millor.items()):
         if (fins, termini) in fetes or dt.datetime.fromisoformat(fins).astimezone() > ahora:
             continue
-        obs = pluja_observada(casa.get(fins), [m.get(fins) for m in meteocat])
+        obs = observada(casa, meteocat, veines, fins)
         ratxa_obs, temp_obs = ratxa_observada(vent, fins), _num((casa.get(fins) or {}).get("temperatura"))
         if obs is None and ratxa_obs is None and temp_obs is None:
             continue

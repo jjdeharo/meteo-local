@@ -280,10 +280,11 @@ def _num(x):
         return None
 
 
-def apunta_casa(emes, hores, ara_casa=None, sant_cugat=None):
+def apunta_casa(emes, hores, ara_casa=None, sant_cugat=None, veines=None):
     """Una línea por hora de reloj: la primera pasada de cada hora. sant_cugat:
     la lluvia de la última hora en la estación de Meteocat de Sant Cugat, por
-    si lo que llueve cerca ayuda a prever (ADR 0042)."""
+    si lo que llueve cerca ayuda a prever (ADR 0042); veines: la de cada
+    estación vecina ({id: mm}), desde el 10-10-2026 (ADR 0070)."""
     hora = emes.strftime("%Y-%m-%dT%H")
     if os.path.exists(CASA_DARRERA):
         with open(CASA_DARRERA) as f:
@@ -291,7 +292,7 @@ def apunta_casa(emes, hores, ara_casa=None, sant_cugat=None):
                 return
     os.makedirs(DIR, exist_ok=True)
     linea = {"emes": emes.isoformat(timespec="minutes"), "ara_casa": ara_casa, "hores": hores,
-             "sant_cugat": sant_cugat}
+             "sant_cugat": sant_cugat, "veines": veines}
     with open(os.path.join(DIR, f"casa-{emes.strftime('%Y-%m')}.jsonl"), "a", encoding="utf-8") as f:
         f.write(json.dumps(linea, ensure_ascii=False) + "\n")
     with open(CASA_DARRERA, "w") as f:

@@ -71,5 +71,6 @@
 | [0067](0067-avisos-de-meteocat-junto-a-los-planes.md) | Avisos de peligro de Meteocat para el Vallès Occidental, junto a los planes | aceptado |
 | [0068](0068-comprobacion-de-todos-los-medios-de-si-surts.md) | Comprobación diaria de todos los medios de «Si surts» | aceptado |
 | [0069](0069-umbrales-de-lluvia-aprendidos-en-si-surts.md) | Umbrales de lluvia de «Si surts» que se aprenden, según la antelación | aceptado |
+| [0070](0070-montflorit-primero-las-estaciones-vecinas-mandan.md) | Montflorit primero: las estaciones vecinas mandan sobre Sabadell y Sant Cugat | aceptado |
 
 Plantilla: [0000-plantilla.md](0000-plantilla.md). Para crear uno: `nuevo-adr "Título"`.
