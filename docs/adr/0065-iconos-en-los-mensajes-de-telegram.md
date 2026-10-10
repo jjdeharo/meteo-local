@@ -63,7 +63,7 @@ mismo criterio.
   has añadido a los mensajes de la web? deben seguir el mismo patrón»; desde
   la 3.53.1). Sus fichas «Avui» y «Demà» muestran el texto del bot y ponían
   delante de cada línea un icono gris de tema (termómetro, paraguas, aviso,
-  tren, camisa), que se retira. Para que la web dibuje sus propios iconos de
+  tren, camisa). Para que la web dibuje sus propios iconos de
   Lucide con los colores del cielo (ADR 0063) y no emojis, `montflorit.py`
   genera esos textos con `bot.ICONES = "web"`: cada icono sale como una marca
   con su clave exacta («⟦i-cloud-moon⟧», «⟦alt⟧»), sin la pérdida de pasar
@@ -73,6 +73,13 @@ mismo criterio.
   los niveles, como un círculo del color de las barras del polen y del UV de
   la web (el texto ya dice el nivel). Las notificaciones del navegador
   siguen con los emojis, como Telegram.
+- **En «Consultes», un icono en cada línea.** Al verlo con solo el sol arriba,
+  Juanjo dijo: «haría falta 1 icono por línea. un sol suelto arriba no queda
+  bien»: en una columna de iconos, los huecos parecen un fallo. Las líneas sin
+  marca llevan la del tema, en gris como lo que no tiene color natural (ADR
+  0063): termómetro, tren y camisa; y «Sense pluja prevista», el paraguas
+  tachado, el mismo «No plou» de «Ara a Montflorit». En Telegram no hay
+  columna y el texto sigue sin iconos de tema.
 
 ## Consecuencias
 

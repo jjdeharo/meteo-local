@@ -329,7 +329,8 @@ function pintaSol(dies) {
 // --- Avui i demà: el text del bot. Les icones, només les que porta el text
 // (ADR 0065): el bot hi posa emojis i, per a la web, marques («⟦i-sun⟧»,
 // «⟦alt⟧») que aquí es dibuixen amb les icones de colors de la web. La que
-// obre la línia va a la columna de les icones. ---
+// obre la línia va a la columna de les icones; les altres línies hi porten la
+// del seu tema. ---
 const MARCA = /⟦([a-z-]+)⟧ ?/;
 const NOM_CEL = () => ({
   'i-sun': T('Serè'), 'i-moon-cel': T('Serè'), 'i-cloud-sun': T('Poc ennuvolat'), 'i-cloud-moon': T('Poc ennuvolat'),
@@ -339,6 +340,15 @@ const NOM_CEL = () => ({
   'i-cloud-lightning': T('Tempesta'), 'i-cloud-hail': T('Tempesta amb calamarsa'), 'i-umbrella': T('Plou ara'),
 });
 const NIVELLS_MARCA = ['nul', 'baix', 'mig', 'alt', 'maxim', 'extrem'];
+// Les línies sense marca també en porten una, perquè la columna no quedi amb
+// forats (Juanjo, 10-10-2026: «haría falta 1 icono por línea»): sense pluja,
+// el paraigua tancat, com «No plou» de la web; la resta, la del tema, en gris.
+const ICONA_LINIA = [
+  [/^(Sense pluja|Sin lluvia)/, 'i-umbrella-off'],
+  [/^Temperatura/, 'i-thermometer'],
+  [/^(Trens|Trenes)/, 'i-train-front'],
+  [/^(Roba|Ropa)/, 'i-shirt'],
+];
 
 // Una marca, com a element: el cel, amb la icona i el seu nom per a qui no la
 // veu; el nivell, un cercle del seu color (el text ja diu quin és).
@@ -385,7 +395,9 @@ function pintaResum(text) {
     const fila = element('p', 'resum-linia');
     if (peces.length) {
       const primera = trs[0] && trs[0].marca ? trs.shift() : null;
-      fila.append(primera ? nodeMarca(primera.marca) : element('span', 'resum-buit'));
+      const pla = trs.map((t) => t.t || '').join('');
+      const tema = (ICONA_LINIA.find(([re]) => re.test(pla)) || [])[1];
+      fila.append(primera ? nodeMarca(primera.marca) : tema ? icona(tema) : element('span', 'resum-buit'));
     }
     const cos = element('span');
     cos.append(...nodesAmbMarques(trs));
