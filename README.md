@@ -97,7 +97,9 @@ Fuentes de la previsión:
    Sabadell y Sant Cugat, que también confirman las horas secas para
    aprender (ADR 0058). El viento de ahora es
    el de Sant Cugat, por medias horas: el anemómetro de la particular no
-   funciona bien (ADR 0037). La estación de Montflorit de meteocerdanyola.com
+   funciona bien (ADR 0037). Además se estima con las vecinas que lo siguen
+   bien, llevadas a 10 m con un factor que se aprende cada día; está en
+   prueba y la página no lo muestra hasta que se decida (ADR 0064). La estación de Montflorit de meteocerdanyola.com
    se usó del 05-10-2026 al 09-10-2026 (ADR 0004 y 0058).
 2. **Radar** de Meteocat o, si su imagen va 10 minutos por detrás, de
    RainViewer; una comparación diaria decide cuál acierta más (ADR 0026).

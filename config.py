@@ -2,7 +2,7 @@
 """Datos fijos de «Temps a Montflorit»: lugares, horario, fuentes y umbrales.
 Se cambian aquí, no en los programas."""
 
-VERSION = "3.51.2"
+VERSION = "3.52.0"
 
 # Coordenadas con tres decimales (unos 100 m), no las exactas: para el tiempo
 # da igual una calle u otra, y el repositorio es público.
@@ -26,6 +26,10 @@ ALTITUD_CASA_M = 70
 # así que se muestra el de la estación de Meteocat más cercana, por medias
 # horas (ADR 0037).
 VENT_ESTACIO = "XV"
+# El viento estimado con las estaciones vecinas (vent_veines.py, ADR 0064)
+# se calcula y se aprende cada día, pero la página sigue con el de Sant Cugat
+# hasta que Juanjo lo decida con las cifras de la comprobación.
+VENT_VEINES_ACTIU = False
 
 # Estaciones automáticas de Meteocat más próximas (código: nombre). Su lluvia
 # por horas se registra: cuando el pluviómetro de casa marca cero, la hora

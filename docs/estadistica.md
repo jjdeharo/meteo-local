@@ -39,9 +39,10 @@ registros de decisiones de arquitectura (ADR, siglas en inglés de
 13. [Cuando los modelos no ven la lluvia](#13-cuando-los-modelos-no-ven-la-lluvia)
 14. [Si surts](#14-si-surts)
 15. [La calidad del aire](#15-la-calidad-del-aire)
-16. [Límites](#16-límites)
-17. [Operación](#17-operación)
-18. [Dónde está cada cosa](#18-dónde-está-cada-cosa)
+16. [El viento de ahora con las vecinas](#16-el-viento-de-ahora-con-las-vecinas)
+17. [Límites](#17-límites)
+18. [Operación](#18-operación)
+19. [Dónde está cada cosa](#19-dónde-está-cada-cosa)
 
 ## 1. Qué se registra
 
@@ -494,7 +495,7 @@ horas como mínimo y hasta las 21 h de mañana. Acaba siempre al final de un
 tramo del día, a las 7, las 14 o las 21 h, así que tiene entre 24 y 38 filas:
 38 cuando se calcula a las 7 h. Más allá de 24 horas, la antelación del modelo de lluvia y
 de la corrección de temperatura vale como un día, porque
-$\min(t/24, 1) = 1$ (apartado 16). El registro con que se aprende y el riesgo
+$\min(t/24, 1) = 1$ (apartado 17). El registro con que se aprende y el riesgo
 propio (apartado 11) usan solo las 24 primeras horas.
 
 **Lo que no cambia la estadística.** Los avisos de la AEMET y los planes de
@@ -550,7 +551,7 @@ estación de casa y ejecuta `aprenentatge.py diari`:
 4. **Solo cambia si el error baja al menos un 5 %**:
    $E_{\text{nuevo}} < 0{,}95 \, E_{\text{actual}}$. Un método nuevo se
    propone, se comunica con las cifras y se aplica al día siguiente, salvo
-   que se pare antes (apartado 17).
+   que se pare antes (apartado 18).
 5. Si el método no cambia, los pesos se ponen al día con los datos nuevos.
 6. Si un modelo propio deja de mejorar, se propone volver al anterior, de la
    misma manera.
@@ -933,7 +934,42 @@ no corrige un sesgo que cambie entre el día y la noche. Las medidas de la
 red se publican con 7 u 8 horas de retraso, por eso no se muestran en la
 página.
 
-## 16. Límites
+## 16. El viento de ahora con las vecinas
+
+**En prueba: la página sigue mostrando el viento de Sant Cugat** (ADR 0064).
+Las cuatro estaciones vecinas de Weather Underground están a menos de un
+kilómetro y dan una lectura cada cinco minutos, pero sus anemómetros no están
+a 10 m ni en campo abierto: marcan menos viento que Meteocat. El programa
+aprende cada día cuánto menos.
+
+Para cada vecina $i$, con las medias horas en que hay dato suyo $x_t$ y de
+Sant Cugat $y_t$, el factor es el de mínimos cuadrados por el origen y el
+error, el cuadrático medio:
+
+$$f_i = \frac{\sum_t x_t\,y_t}{\sum_t x_t^2}, \qquad e_i = \frac{1}{n}\sum_t (f_i\,x_t - y_t)^2$$
+
+Una vecina cuenta si tiene 96 medias horas (dos días), una correlación con
+Sant Cugat de 0,6 o más y como mucho un 25 % de medias horas a cero cuando en
+Sant Cugat sopla (5 km/h o más). La estimación es la media de las que cuentan
+y tienen lecturas en la última media hora, cada una con un peso inverso a su
+error:
+
+$$\hat v = \frac{\sum_i f_i\,x_i / e_i}{\sum_i 1 / e_i}$$
+
+La racha se estima igual, con las rachas. Del 3 al 10-10-2026 contaban el
+Puig de la Guàrdia ($f = 1{,}29$, correlación 0,82) y la de 600 m al nordeste
+($f = 1{,}87$, 0,75); las otras dos marcaban cero en el 36 % y el 68 % de las
+medias horas con viento.
+
+**Cómo se comprueba.** Se deja fuera cada día: se aprende con los demás y se
+mide el error medio absoluto contra Sant Cugat de la estimación, de Sabadell
+(otra estación oficial, a 5 km) y de Sant Cugat media hora antes, que es lo
+que enseña la página, porque su dato llega con retraso. En la primera semana,
+de calma, fueron 1,6, 3,3 y 1,0 km/h. Cuando haya 12 medias horas con 15 km/h
+o más en Sant Cugat, el programa envía las cifras a Juanjo una vez, y él
+decide si la página pasa a usar la estimación.
+
+## 17. Límites
 
 - **La lluvia es rara**: un 4 % de las horas. Las cifras del archivo se
   apoyan en unas 3.600 horas con lluvia; los tramos de la tabla de fiabilidad
@@ -971,7 +1007,7 @@ página.
   12) y la corrección del aire es un factor único para todo el día
   (apartado 15).
 
-## 17. Operación
+## 18. Operación
 
 Detalles internos para la persona que mantiene el código.
 
@@ -1017,7 +1053,7 @@ marca algo en él o en la hora de antes o de después. Con tres episodios
 débiles, o a los 45 días, se comunica el resultado para decidir si la página
 vuelve a fiarse de su cero.
 
-## 18. Dónde está cada cosa
+## 19. Dónde está cada cosa
 
 | Archivo | Qué hace |
 |---|---|

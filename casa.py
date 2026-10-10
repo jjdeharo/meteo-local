@@ -38,6 +38,7 @@ import radar_fonts as RF
 import registre as R
 import riera as RI
 import riscos as RS
+import vent_veines as VV
 import transit as TT
 import trens as TR
 import wunderground as WU
@@ -436,6 +437,15 @@ def recoger(anterior=None):
     except Exception as ex:
         salida["vent"] = None
         salida["errors"].append(f"vent: {ex}")
+    # El mismo viento estimado con las vecinas (ADR 0064): se calcula siempre
+    # para compararlo y solo sustituye al de Sant Cugat si Juanjo lo decide.
+    try:
+        salida["vent_veines"] = VV.ara(veines, ahora=P.AHORA)
+    except Exception as ex:
+        salida["vent_veines"] = None
+        print("No he podido estimar el viento con las vecinas:", ex, file=sys.stderr)
+    if C.VENT_VEINES_ACTIU and salida["vent_veines"]:
+        salida["vent"] = salida["vent_veines"]
     avisos = planes = None
     try:
         avisos = [a for a in P.avisos() if a["zona"] == C.ZONA_AVISOS
@@ -569,14 +579,27 @@ def recoger(anterior=None):
                 print(f"No he podido apuntar la estación {codi} de Meteocat:", ex, file=sys.stderr)
         # Las vecinas por horas (ADR 0060): las de hoy en cada pasada y, una
         # vez al día, las de ayer, para cerrar la última hora del día.
+        vent_mitges = {}
         for v in veines:
             try:
                 files = v["files"]
                 if R.falta_ahir_veina(v["estacio"], P.AHORA):
                     files = WU.hores_ahir(v["estacio"], P.AHORA) + files
                 R.apunta_veina(v["estacio"], R.hores_veina(files))
+                vent_mitges[v["estacio"]] = VV.mitges_hores_veina(files)
             except Exception as ex:
                 print(f"No he podido apuntar la estación vecina {v['estacio']}:", ex, file=sys.stderr)
+        # El viento por medias horas de las vecinas y de Meteocat, para
+        # aprender a estimarlo con las vecinas (ADR 0064).
+        for codi in VV.OFICIALS:
+            try:
+                vent_mitges[codi] = VV.mitges_hores_meteocat(P.files_meteocat(codi))
+            except Exception as ex:
+                print(f"No he podido leer el viento de {codi}:", ex, file=sys.stderr)
+        try:
+            VV.apunta(vent_mitges)
+        except Exception as ex:
+            print("No he podido apuntar el viento por medias horas:", ex, file=sys.stderr)
         # Lo que daba cada radar, para saber cuál acierta más (ADR 0026).
         try:
             RF.apunta(P.AHORA, nc, salida["ara_casa"])

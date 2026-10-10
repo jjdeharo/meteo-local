@@ -506,6 +506,13 @@ def diari(avui=None, avisa=True):
             print(text_moto)
     except Exception as ex:
         print("No he pogut verificar la moto:", ex)
+    # El viento con las vecinas: factores, comprobación y, una vez, el
+    # resultado a Juanjo para que decida (ADR 0064).
+    try:
+        import vent_veines
+        vent_veines.apren(avisa=avisa, registre=REGISTRE, directori=DIR)
+    except Exception as ex:
+        print("No he pogut aprendre el vent de les veïnes:", ex)
     arxiu, arxiu_t = modelo_arxiu(), modelo_arxiu_temperatura()
     en_us = carrega()
     # 1. Una propuesta de ayer que nadie ha parado: se aplica.

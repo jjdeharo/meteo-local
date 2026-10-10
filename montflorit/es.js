@@ -90,6 +90,7 @@ var IDIOMA = {
     "Humitat {0} %": "Humedad {0} %",
     "Vent {0} km/h{1}, {2} {3}": "Viento {0} km/h{1}, {2} {3}",
     " (ratxes de {0})": " (rachas de {0})",
+    "estacions veïnes": "estaciones vecinas",
     "Arribaria pluja cap a les\u00a0{0}": "Llegaría lluvia hacia las\u00a0{0}",
     "Pot arribar pluja cap a les\u00a0{0}": "Puede llegar lluvia hacia las\u00a0{0}",
     " · va cap {0} a {1}\u00a0km/h": " · va hacia {0} a {1}\u00a0km/h",

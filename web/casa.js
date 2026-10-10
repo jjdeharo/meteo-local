@@ -268,7 +268,9 @@ function blocAra(casa, radarDades, vent, veines, hores) {
   // El vent, de l'estació de Meteocat més propera, per mitges hores (ADR 0037).
   if (vent && vent.mitja != null) {
     const ratxa = vent.ratxa != null ? T` (ratxes de ${coma(vent.ratxa, 0)})` : '';
-    llista.append(dada('i-wind', T`Vent ${coma(vent.mitja, 0)} km/h${ratxa}, ${vent.estacio} ${horaCurta(vent.fins)}`));
+    // Si ve de les estacions veïnes (ADR 0064), es diu així, no amb el nom d'una estació.
+    const lloc = vent.font === 'veines' ? T('estacions veïnes') : vent.estacio;
+    llista.append(dada('i-wind', T`Vent ${coma(vent.mitja, 0)} km/h${ratxa}, ${lloc} ${horaCurta(vent.fins)}`));
   }
   sec.append(llista);
   const radar = blocRadar(radarDades, plou, hores);

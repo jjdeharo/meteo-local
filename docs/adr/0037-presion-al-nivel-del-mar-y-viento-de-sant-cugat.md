@@ -3,6 +3,8 @@
 Fecha: 2026-10-07 · Estado: aceptado
 
 
+**10-10-2026 (ADR 0064).** Se calcula también el viento estimado con las estaciones vecinas, en prueba; la página sigue con el de Sant Cugat hasta que Juanjo decida.
+
 **09-10-2026 (ADR 0058).** Montflorit se retiró; el viento de ahora sigue siendo el de Sant Cugat, ahora porque el anemómetro de la estación de casa no funciona bien (ADR 0017).
 
 ## Contexto
