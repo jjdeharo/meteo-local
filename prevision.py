@@ -226,6 +226,7 @@ def radar():
     """Lluvia apreciable más cercana a casa, si crece, y la lluvia llevada
     hacia delante hasta 2 horas (nowcast.py, ADR 0019): imagen de Meteocat
     o, si se ha quedado atrás, de RainViewer."""
+    import math
     import numpy as np
     r = N.carrega(get, get_pagina=get_recent)
     im = N.imatge(r)
@@ -240,7 +241,20 @@ def radar():
     res = {"hora": hora.isoformat(), "imatge": origen,
            "km_lluvia": round(float(dist[lluvia].min()), 1) if lluvia.any() else None,
            "km2_50km_ahora": round(float((lluvia & cerca).sum() * r["km_px"] ** 2)),
-           "km2_50km_antes": None, "nowcast": N.resum(r)}
+           "km2_50km_antes": None, "nowcast": N.resum(r), "a_prop": {}}
+    # Los píxeles con lluvia a RADAR_AVISO_KM o menos en cada radar, para
+    # seguir los ecos sueltos que encienden el modo aviso sin lluvia (registre.py).
+    mc, rv = r.get("meteocat") or {}, r.get("rainviewer")
+    for nom, t, mm in (("meteocat", mc.get("hora"), mc.get("mm_h")),
+                       ("rainviewer", rv and rv["hores"][-1], rv and rv["mm_h"][-1])):
+        if mm is None:
+            continue
+        px = []
+        for f, c in zip(*np.nonzero((mm >= RADAR_APRECIABLE_MMH) & (dist <= C.RADAR_AVISO_KM))):
+            dy, dx = (f - fila) * r["km_px"], (c - col) * r["km_px"]
+            px.append([round(float(dist[f, c]), 1), round((math.degrees(math.atan2(dx, -dy)) + 360) % 360),
+                       round(float(mm[f, c]), 2)])
+        res["a_prop"][nom] = {"hora": t.isoformat(timespec="minutes"), "px": sorted(px)[:PX_A_PROP]}
     # Si crece: la misma comparación de siempre, con RainViewer (una hora antes).
     rv = r.get("rainviewer")
     if rv and len(rv["mm_h"]) >= 7:
@@ -252,6 +266,7 @@ def radar():
 # Lluvia apreciable en el radar: unos 6 dBZ, el umbral que se usaba con la
 # opacidad de RainViewer (por debajo, llovizna o ruido).
 RADAR_APRECIABLE_MMH = 0.08
+PX_A_PROP = 40       # píxeles cercanos que se apuntan, como mucho (los más cercanos)
 
 
 # --- Avisos y planes ------------------------------------------------------------

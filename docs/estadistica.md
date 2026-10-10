@@ -979,8 +979,10 @@ Detalles internos para la persona que mantiene el código.
 Storage*), en `/estat/registre/`: `estacio-casa.csv` (lo medido hora a
 hora), `estacio-casa-5min.csv` (la lluvia de casa cada 5 minutos),
 `meteocat-XF.csv` y `meteocat-XV.csv` (la lluvia por horas de Sabadell y
-Sant Cugat), `casa-AAAA-MM.jsonl` (lo previsto), `radar-fonts-*.jsonl` (lo que
-daba cada radar), `moto.csv` (la regla de la moto), `avisos-pluja.csv`
+Sant Cugat), `veina-<id>.csv` (lo que miden por horas las estaciones vecinas de
+Weather Underground), `casa-AAAA-MM.jsonl` (lo previsto),
+`radar-fonts-*.jsonl` (lo que daba cada radar), `radar-a-prop-*.jsonl` (los
+ecos de cada radar a 15 km o menos de casa, en cada pasada), `moto.csv` (la regla de la moto), `avisos-pluja.csv`
 (episodios del aviso de lluvia) y `riera.csv` (episodios de la riera). Los
 modelos aprendidos, en `/estat/aprenentatge/`: `model.json`, `proposat.json`,
 `fi-pluja.json` y `historial.csv`, con las muestras, las horas de lluvia y

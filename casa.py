@@ -557,6 +557,11 @@ def recoger(anterior=None):
                               salida["ara_casa"], {"pluja_1h": r["mm_1h"], "fins": r["fins"]} if r else None)
         except Exception as ex:
             print("No he podido apuntar en el registro:", ex, file=sys.stderr)
+        if radar:
+            try:
+                R.apunta_radar_a_prop(P.AHORA, radar, motivos, obs)
+            except Exception as ex:
+                print("No he podido apuntar los ecos del radar:", ex, file=sys.stderr)
         for codi in C.ESTACIONES:
             try:
                 R.apunta_meteocat(codi, R.hores_meteocat(RI.files(codi, P.AHORA, 6, None)))

@@ -14,7 +14,7 @@ hora (estacio-casa.csv, ADR 0017) y cada 5 minutos (estacio-casa-5min.csv,
 ADR 0049), la lluvia por horas de las estaciones de Meteocat de Sabadell y
 Sant Cugat (meteocat-XF.csv y meteocat-XV.csv, ADR 0058), lo que miden por
 horas las estaciones vecinas de Weather Underground (veina-<id>.csv, ADR
-0060) y, una vez por hora, lo que daban los modelos para las 24 horas
+0060), los ecos del radar a 15 km o menos (radar-a-prop-AAAA-MM.jsonl) y, una vez por hora, lo que daban los modelos para las 24 horas
 siguientes (casa-AAAA-MM.jsonl), para aprender de los fallos (ADR 0012).
 
 Los datos van a REGISTRE_DIR (en el NAS, /estat/registre), no al repositorio.
@@ -29,6 +29,23 @@ import ecowitt as E
 import prevision as P
 
 DIR = os.environ.get("REGISTRE_DIR", "/estat/registre")
+
+
+# --- Los ecos del radar cerca de casa --------------------------------------------
+
+def apunta_radar_a_prop(ahora, radar, motius, obs):
+    """Una línea por pasada en radar-a-prop-AAAA-MM.jsonl: los píxeles con
+    lluvia a 15 km o menos de cada radar (distancia, rumbo y mm/h), si el modo
+    aviso se encendió y por qué, y qué estaciones medían lluvia. Para decidir
+    si los ecos sueltos de Meteocat cerca de casa son lluvia o no (seguimiento
+    pedido por Juanjo el 10-10-2026; ADR 0019)."""
+    linia = {"t": ahora.isoformat(timespec="minutes"), "triada": radar.get("imatge"),
+             "km": radar.get("km_lluvia"), "mode_avis": motius,
+             "pluja_mesurada": [o["estacion"] for o in obs or []
+                                if (o.get("mm_ultima_media_hora") or 0) > 0 or (o.get("intensitat") or 0) > 0],
+             "radars": radar.get("a_prop") or {}}
+    with open(os.path.join(DIR, f"radar-a-prop-{ahora:%Y-%m}.jsonl"), "a", encoding="utf-8") as f:
+        f.write(json.dumps(linia, ensure_ascii=False) + "\n")
 
 
 # --- Página de casa: previsiones y lo que pasó -----------------------------------

@@ -121,6 +121,23 @@ de Meteocat, que es el que él mira.
 - Un solo vector para toda la zona, medido en la lluvia de cerca (ADR 0023):
   si hay corrientes distintas en sitios distintos, se equivoca en las lejanas.
 - No ve la lluvia que nace ni la que crece o se deshace.
+- **Ecos sueltos cerca de casa** (comprobado el 10-10-2026, día seco): la
+  imagen de Meteocat tenía de 1 a 6 píxeles a 15 km o menos, todos en su
+  franja más baja (10-16 dBZ, menos de 0,4 mm/h), y uno de ellos en el
+  mismo sitio en las seis imágenes de 10:54 a 11:24 (a 12,8 km hacia el
+  sur-suroeste, entre Esplugues y Cornellà); los demás, sueltos por la
+  falda sur de Collserola y cerca de Montjuïc. Ninguna estación medía
+  lluvia y RainViewer no veía nada en 200 km. Como la página usa Meteocat
+  en unas pasadas y RainViewer en otras (según cuánto se retrase la imagen
+  de Meteocat), el modo aviso se encendía en las de :00 y :30 y se apagaba
+  tres minutos después. Sin avisos: el de lluvia depende de la probabilidad
+  en casa, no de esta distancia. Juanjo: «no me preocupa si va alternando»,
+  pero pidió seguirlo para decidir más adelante. Desde la 3.50.1 cada pasada
+  apunta en `radar-a-prop-AAAA-MM.jsonl` del NAS (`registre.py`) los píxeles
+  con lluvia a 15 km o menos de cada radar (distancia, rumbo y mm/h, los 40
+  más cercanos), el modo aviso y sus motivos y qué estaciones medían lluvia.
+  Con un mes de datos se decidirá si un eco suelto de la franja más baja deja
+  de contar como lluvia cerca; hasta entonces no cambia nada.
 - Las teselas de Meteocat no son una API documentada: si cambian, se usa
   RainViewer. Su API oficial, con clave y cuotas mensuales por plan, no
   tiene radar: su documentación
