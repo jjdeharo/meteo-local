@@ -1,5 +1,9 @@
 # meteo-local
 
+**Objetivo**: dar a los vecinos de Montflorit predicciones fiables, en la
+medida de lo posible al 100 %, con datos de fuera y del propio barrio, y que
+la web aprenda de sus errores en todo lo que predice (Juanjo, 10-10-2026).
+
 Calcula y publica **Temps a Montflorit** (<https://meteo-montflorit.github.io/>),
 la web del tiempo del barrio de Montflorit (Cerdanyola del Vallès), en catalán
 y en [castellano](https://meteo-montflorit.github.io/es/). Tiene dos páginas:
