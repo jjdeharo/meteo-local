@@ -12,8 +12,8 @@ estaciones vecinas? o una media ponderada… o lo que quieras pero que las
 tengan en cuenta».
 
 Las cuatro vecinas de Weather Underground (ADR 0060) están a menos de un
-kilómetro y dan una lectura cada cinco minutos; Sant Cugat (a unos 4 km) da
-una media cada media hora y llega con retraso: a las 14:36 del 10-10 la
+kilómetro y dan una lectura cada cinco minutos; Sant Cugat da
+una media cada media hora y llega con retraso: hacia las 14:00 del 10-10 la
 última era la de 13:00 a 13:30. Pero los anemómetros de las vecinas no están
 a 10 m ni en campo abierto, como pide la norma y como están los de Meteocat.
 Del 3 al 10-10-2026, en medias horas (`vent_veines.py omple` y `apren`):
@@ -61,7 +61,7 @@ resguardadas y casi siempre marcan cero.
   Sabadell, 3,3; de Sant Cugat media hora antes, 1,0. Con poco viento, la
   estimación se parece más a Sant Cugat que Sabadell, pero menos que el dato
   anterior de la propia Sant Cugat. Falta viento de verdad para decidir.
-- Pasada completa en el NAS el 10-10-2026 a las 14:36: estimación 9,9 km/h y
+- Pasada completa en el NAS el 10-10-2026 hacia las 14:00: estimación 9,9 km/h y
   rachas de 19,7, con las vecinas hasta las 13:59; Sant Cugat, 10,8 y 18,4,
   de 13:00 a 13:30.
 - Pruebas: `tests/test_vent_veines.py` (medias horas completas, registro por
