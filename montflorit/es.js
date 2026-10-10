@@ -46,7 +46,7 @@ var IDIOMA = {
     "Dades del servidor de reserva.": "Datos del servidor de reserva.",
     "previsió de Meteocat": "previsión de Meteocat",
     "radar": "radar",
-    "Mode normal": "Modo normal", "Mode normal ({0})": "Modo normal ({0})", "Mode vigilància ({0})": "Modo vigilancia ({0})",
+    "Mode normal": "Modo normal", "Mode vigilància": "Modo vigilancia",
     "Què vol dir el mode?": "¿Qué significa el modo?",
     "Mode normal: la pàgina s’actualitza cada {0} minuts. Mode vigilància: s’actualitza cada {1} minuts, just després de cada imatge nova del radar de Meteocat. La pàgina es posa en mode vigilància quan hi ha un avís de l’AEMET, un pla de Protecció Civil en alerta o emergència, pluja a Montflorit o pluja al radar a menys de {2} km. Quan ja no hi ha res d’això, torna al mode normal.": "Modo normal: la página se actualiza cada {0} minutos. Modo vigilancia: se actualiza cada {1} minutos, justo después de cada imagen nueva del radar de Meteocat. La página se pone en modo vigilancia cuando hay un aviso de AEMET, un plan de Protección Civil en alerta o emergencia, lluvia en Montflorit o lluvia en el radar a menos de {2} km. Cuando ya no hay nada de eso, vuelve al modo normal.",
     " del {0}": " del {0}",

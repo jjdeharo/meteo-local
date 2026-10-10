@@ -131,14 +131,18 @@ function horesActualitzacio(horari) {
 // normal» o «Mode vigilància» amb el motiu entre parèntesis (el mode avís,
 // ADR 0010), i un «?» que explica els dos. Abans «Mode avís» i «Seguiment de
 // prop» (Juanjo, 10-10-2026: «no me gusta de prop, no dice nada»).
-function textHorari(horari) {
+function modeHorari(horari) {
   const [[inici]] = horari.trams;
   const totElDia = horari.trams.length === 1 && inici === '00:00';
   const trams = totElDia ? [] : [horari.trams.map(([a, b]) => `${a}\u2013${b}`).join(T(' i '))];
-  if (horari.mode_avis && horari.mode_avis.length) {
-    return T`Mode vigilància (${[...horari.mode_avis.map((m) => TD(m).replace(/'/g, '\u2019')), ...trams].join(', ')})`;
-  }
-  return trams.length ? T`Mode normal (${trams[0]})` : T('Mode normal');
+  const vigilancia = Boolean(horari.mode_avis && horari.mode_avis.length);
+  const motius = vigilancia ? horari.mode_avis.map((m) => TD(m).replace(/'/g, '\u2019')) : [];
+  return { vigilancia, nom: vigilancia ? T('Mode vigilància') : T('Mode normal'), detall: [...motius, ...trams].join(', ') };
+}
+
+function textHorari(horari) {
+  const { nom, detall } = modeHorari(horari);
+  return detall ? `${nom} (${detall})` : nom;
 }
 
 function textModeAvis(horari) {
@@ -197,15 +201,25 @@ function pintaHorari(dades, fonts = FONTS_TEMPS) {
   const dia = generat.toDateString() === ara.toDateString() ? '' : T` del ${generat.toLocaleDateString(IDIOMA.codi)}`;
   // El mode i el seu «?» en una línia pròpia, igual en els dos modes perquè la
   // pàgina no salti quan canvia; l'explicació, a sota; després, les hores.
-  // El «?» va enganxat a l'última paraula, perquè no baixi sol a una altra línia.
-  const text = textHorari(dades.horari);
-  const tall = text.lastIndexOf(' ') + 1;
+  // El nom, en una etiqueta del color del mode (verd el normal, ambre el de
+  // vigilància); al costat, el motiu i el «?», enganxat a l'última paraula
+  // perquè no baixi sol a una altra línia.
+  const { vigilancia, nom, detall } = modeHorari(dades.horari);
   const [boto, sentit] = botoAjuda(textModeAvis(dades.horari), T('Què vol dir el mode?'), ajudaModeOberta,
     (obert) => { ajudaModeOberta = obert; });
-  const final = element('span', 'sense-tall', text.slice(tall));
-  final.append(boto);
   const mode = element('span', 'mode');
-  mode.append(text.slice(0, tall), final);
+  const etiqueta = element('span', `mode-nom ${vigilancia ? 'vigilancia' : 'normal'}`, nom);
+  if (detall) {
+    const text = ` (${detall})`;
+    const tall = text.lastIndexOf(' ') + 1;
+    const final = element('span', 'sense-tall', text.slice(tall));
+    final.append(boto);
+    mode.append(etiqueta, text.slice(0, tall), final);
+  } else {
+    const final = element('span', 'sense-tall');
+    final.append(etiqueta, boto);
+    mode.append(final);
+  }
   const linia = element('span', 'hores');
   linia.append(T('Actualitzat a les '), element('strong', null, horaCurta(generat) + dia),
     T(' · propera: '), element('strong', null, propera ? horaCurta(propera) : T`demà a les ${dades.horari.trams[0][0]}`),

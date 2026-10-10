@@ -121,3 +121,10 @@ vigilancia dice qué pasa (hay algo cerca y la página lo mira más a menudo).
   para que el «?» pueda explicarlos; con datos de antes, los valores de
   siempre.
 - Sustituye a la decisión del 09-10-2026 de no decir nada en el ritmo normal.
+- **Cada modo con su color** (3.51.1; Juanjo: «¿puedes poner con colores
+  apropiados cada modo? Así destaca un poco más»): el nombre va en una
+  etiqueta, verde el normal y ámbar el de vigilancia, los dos colores con que
+  la web ya dice «va bien» y «atención» (el rojo queda para el peligro). El
+  motivo y el «?» siguen al lado, en texto normal. Contraste del nombre sobre
+  su fondo: 6,4:1 y 4,7:1 en claro (el verde de la etiqueta, `--verd-text`,
+  es más oscuro que `--verd`, que daba 4,5 justos), 8,8:1 y 9,1:1 en oscuro.

@@ -9,6 +9,7 @@
   --enllac: #1d4ed8;
   --verd: #15803d;          /* el que va bé */
   --verd-fons: #e8f6ec;
+  --verd-text: #166534;     /* el verd damunt del seu fons, amb més contrast */
   --compte: #a15c00;
   --compte-fons: #fdf3e1;
   --vermell: #b91c1c;       /* el que no */
@@ -41,6 +42,7 @@
   --enllac: #8ab4ff;
   --verd: #4ade80;
   --verd-fons: #15291d;
+  --verd-text: #4ade80;
   --compte: #fbbf24;
   --compte-fons: #2e2412;
   --vermell: #f87171;
@@ -208,6 +210,10 @@ h1 { margin: 0; font-size: 1.6rem; line-height: 1.2; }
 .horari .mode, .horari .hores { display: block; }
 .horari .ajuda-fase { margin-left: .4rem; }
 .horari .sense-tall { white-space: nowrap; }
+/* El nom del mode, en una etiqueta del seu color: verd el normal, ambre el de vigilància. */
+.horari .mode-nom { display: inline-block; padding: 0 .5rem; border-radius: 999px; font-weight: 600; }
+.horari .mode-nom.normal { color: var(--verd-text); background: var(--verd-fons); }
+.horari .mode-nom.vigilancia { color: var(--compte); background: var(--compte-fons); }
 .horari:empty { display: none; }
 
 .perque {
