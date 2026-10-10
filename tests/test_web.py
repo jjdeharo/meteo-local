@@ -579,6 +579,40 @@ class Web(unittest.TestCase):
         self.assertIsNone(self.avalua(ara, f"avisPlaSortida({json.dumps(plans)})", "sortir.js"))
         self.assertIsNone(self.avalua(ara, "avisPlaSortida(undefined)", "sortir.js"))
 
+    def test_la_franja_del_radar_nomes_si_diu_alguna_cosa(self):
+        # «No s'acosta pluja» només surt si la previsió en dona en les dues
+        # hores que venen (Juanjo, 10-10-2026; ADR 0019).
+        ara = "2026-10-10T10:20:00+02:00"
+        hora = lambda h, p: {"hora": f"2026-10-10T{h:02d}:00", "fins": f"2026-10-10T{h + 1:02d}:00",
+                             "probabilitat": p, "pluja_mm": 0}
+        sec = [hora(10, 0), hora(11, 0), hora(12, 0.1), hora(13, 0.6)]
+        self.assertFalse(self.avalua(ara, f"plujaPrevistaAviat({json.dumps(sec)}, new Date())"))
+        aviat = [hora(10, 0), hora(11, 0), hora(12, 0.25)]
+        self.assertTrue(self.avalua(ara, f"plujaPrevistaAviat({json.dumps(aviat)}, new Date())"))
+        # Una hora que comença passades les dues hores no compta.
+        self.assertFalse(self.avalua(ara, f"plujaPrevistaAviat({json.dumps([hora(13, 0.9)])}, new Date())"))
+        self.assertFalse(self.avalua(ara, "plujaPrevistaAviat(undefined, new Date())"))
+
+    def test_icones_del_cel_amb_els_seus_colors(self):
+        # ADR 0063: cada icona del temps que posa la pàgina de casa té les
+        # peces pintades amb els colors del cel (sol, núvol, aigua, neu, lluna);
+        # i la paleta és als dos temes.
+        import re
+        with open(os.path.join(WEB, "casa.js"), encoding="utf-8") as f:
+            usades = set(re.findall(r"'(i-(?:cloud[a-z-]*|sun|moon-cel|snowflake|umbrella|droplets))'", f.read()))
+        with open(os.path.join(WEB, "casa.html"), encoding="utf-8") as f:
+            html = f.read()
+        self.assertIn("i-cloud-sun", usades)
+        for id_ in usades:
+            simbol = re.search(rf'<symbol id="{id_}"[^>]*>(.*?)</symbol>', html).group(1)
+            self.assertIn("var(--ic-", simbol, id_)
+        with open(os.path.join(WEB, "estil.css"), encoding="utf-8") as f:
+            css = f.read()
+        temes = css.split(':root[data-theme="dark"]')
+        for color in ("--c-sol:", "--c-nuvol:", "--c-aigua:", "--c-aigua-text:", "--c-neu:", "--c-lluna:", "--c-maxima:", "--c-minima:"):
+            self.assertIn(color, temes[0], color)
+            self.assertIn(color, temes[1].split("}")[0], color)
+
 
 if __name__ == "__main__":
     unittest.main()

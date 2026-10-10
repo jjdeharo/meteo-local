@@ -47,6 +47,13 @@ de Meteocat, que es el que él mira.
   parte de la hora; los mm, solo si cubre 30 minutos o más. En
   «Ara a casa», una línea dice cuándo llegaría la lluvia, hacia dónde va y a
   qué velocidad. El riesgo propio (ADR 0018) lo recoge a través de la tabla.
+  Si el radar no ve lluvia que se acerque, la franja solo sale cuando la
+  tabla da lluvia, al menos posible (20 %), en alguna de las dos horas
+  siguientes: entonces «No s'acosta pluja en 2 hores» contradice la previsión
+  y es noticia. Si no, no sale, porque no dice nada que no diga ya la tabla
+  (Juanjo, 10-10-2026, ante la franja en un día seco: «si no anuncia nada
+  como ahora mejor que no salga»). El enlace «Radar de Meteocat» del final de
+  la página sigue para quien quiera mirarlo.
 - **Trato con Meteocat**: lo que se le pide equivale a tener abierta su
   página del radar con la actualización automática (unas 27 teselas nuevas
   cada 6 minutos y una vez su página por pasada, compartida entre las dos

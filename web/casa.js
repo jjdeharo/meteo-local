@@ -225,20 +225,24 @@ function resumTram(t) {
   sum.append(element('strong', null, t.nom), element('span', 'quan', ` (${t.hores})`));
   const peca = (id, text, classe = 'dada') => {
     const s = element('span', classe);
-    s.append(icona(id), text);
+    const contingut = element('span');
+    contingut.append(...[].concat(text));
+    s.append(icona(id), typeof text === 'string' ? text : contingut);
     sum.append(s);
   };
   if (t.cel) peca(t.cel[1], t.cel[0]);
   if (t.tMin != null) {
+    // La mínima en blau i la màxima en vermell, com Meteocat (ADR 0063).
     const [min, max] = [Math.round(t.tMin), Math.round(t.tMax)];
-    peca('i-thermometer', (min === max ? `${min} °C` : `${min}–${max} °C`) + (t.compara ? ` · ${t.compara}` : ''));
+    const xifres = min === max ? [`${min}`] : [element('span', 'temp-min', `${min}`), '–', element('span', 'temp-max', `${max}`)];
+    peca('i-thermometer', [...xifres, ' °C' + (t.compara ? ` · ${t.compara}` : '')]);
   }
   if (t.plou) peca('i-umbrella', `${Math.round(t.prob * 100)} %` + (t.mm >= 1 ? T`, uns ${coma(t.mm, 0)} mm` : ''));
   for (const [text, id] of t.fenomens) peca(id, text, 'dada fenomen');
   return sum;
 }
 
-function blocAra(casa, radarDades, vent, veines) {
+function blocAra(casa, radarDades, vent, veines, hores) {
   const sec = element('section', 'decisio targeta ara');
   sec.setAttribute('aria-label', T`El temps ara a ${LLOC}`);
   sec.append(element('h2', 'data', T`Ara a ${LLOC} (${horaCurta(casa.hora)})`));
@@ -267,7 +271,7 @@ function blocAra(casa, radarDades, vent, veines) {
     llista.append(dada('i-wind', T`Vent ${coma(vent.mitja, 0)} km/h${ratxa}, ${vent.estacio} ${horaCurta(vent.fins)}`));
   }
   sec.append(llista);
-  const radar = blocRadar(radarDades, plou);
+  const radar = blocRadar(radarDades, plou, hores);
   if (radar) sec.append(radar);
   return sec;
 }
@@ -300,11 +304,22 @@ const RADAR_EN_DIRECTE = {
   meteocat: 'https://www.meteo.cat/observacions/radar',
 };
 
+// Si la previsió dona pluja, com a mínim possible, en alguna de les dues
+// hores que venen: llavors que el radar no en vegi és notícia.
+function plujaPrevistaAviat(hores, ara = new Date()) {
+  const fins = new Date(ara.getTime() + 2 * 3600e3);
+  return (hores || []).some((f) => new Date(f.fins) > ara && new Date(f.hora) < fins && plujaHora(f));
+}
+
 // Franja pròpia dins «Ara a casa», amb el color del que diu: ambre si la
-// pluja arriba, blau si és possible, neutre si no se n'acosta.
-function blocRadar(r, plou) {
+// pluja arriba, blau si és possible, neutre si no se n'acosta. Que no se
+// n'acosti només surt si la previsió en dona aviat; si no, no diu res que no
+// digui ja la previsió (Juanjo, 10-10-2026: «si no anuncia nada como ahora
+// mejor que no salga»; ADR 0019).
+function blocRadar(r, plou, hores) {
   const t = textRadar(r, plou);
   if (!t) return null;
+  if (t[0] === 'res' && !plujaPrevistaAviat(hores)) return null;
   const [estat, text, proves] = t;
   const caixa = element('div', `radar-ara ${estat}`);
   caixa.append(icona('i-radar'));
@@ -607,7 +622,7 @@ function pinta(dades) {
     const m = dades.models;
     avisos.append(element('p', 'avis', T`Avui els models no veuen aquesta pluja: en les darreres ${m.hores} hores han caigut ${coma(m.mesurada_mm)}\u00a0mm a Montflorit i en preveien ${coma(m.prevista_mm)}. Les primeres hores de la taula parteixen del que mesura l\u2019estació; per a la resta, fes més cas dels avisos.`));
   }
-  if (dades.ara_casa) cont.append(blocAra(dades.ara_casa, dades.radar, dades.vent, dades.veines));
+  if (dades.ara_casa) cont.append(blocAra(dades.ara_casa, dades.radar, dades.vent, dades.veines, dades.hores));
   const previsio = dades.hores && taula(dades.hores, dades.aprenentatge, dades.temperatura_mesurada);
   if (previsio) {
     cont.append(previsio);

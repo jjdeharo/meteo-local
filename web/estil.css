@@ -15,6 +15,20 @@
   --vermell-fons: #fdeceb;
   --taronja-text: #c2410c;  /* el títol d'un avís taronja */
   --bot: #15803d;          /* el verd de la icona del bot de Telegram */
+  /* Els colors del cel a les icones del temps (ADR 0063): cada peça amb el
+     seu color real; contorn amb contrast de 3:1 o més sobre la targeta. */
+  --c-sol: #c76f00;
+  --c-sol-fons: #fcd34d;
+  --c-nuvol: #64748b;
+  --c-nuvol-fons: #e2e8f0;
+  --c-aigua: #2563eb;
+  --c-aigua-fons: #dbeafe;
+  --c-aigua-text: #1e40af;  /* el text de pluja, també damunt la barra de probabilitat */
+  --c-neu: #0284c7;
+  --c-lluna: #5b61b8;
+  --c-lluna-fons: #e0e7ff;
+  --c-maxima: #b91c1c;
+  --c-minima: #1d4ed8;
   color-scheme: light;
 }
 
@@ -33,10 +47,39 @@
   --vermell-fons: #331a1a;
   --taronja-text: #fdba74;
   --bot: #4ade80;
+  --c-sol: #fbbf24;
+  --c-sol-fons: #a16207;
+  --c-nuvol: #94a3b8;
+  --c-nuvol-fons: #334155;
+  --c-aigua: #60a5fa;
+  --c-aigua-fons: #1e3a5f;
+  --c-aigua-text: #93c5fd;
+  --c-neu: #7dd3fc;
+  --c-lluna: #a5b4fc;
+  --c-lluna-fons: #3b3f6b;
+  --c-maxima: #f87171;
+  --c-minima: #93c5fd;
   color-scheme: dark;
 }
 
 * { box-sizing: border-box; }
+
+/* On es pinten les icones del temps amb els colors del cel. Fora d'aquí (els
+   botons, les pestanyes) les mateixes icones queden del color del text. */
+.taula-hores, .tram-hores > summary, .dades-ara {
+  --ic-sol: var(--c-sol); --ic-sol-fons: var(--c-sol-fons);
+  --ic-nuvol: var(--c-nuvol); --ic-nuvol-fons: var(--c-nuvol-fons);
+  --ic-aigua: var(--c-aigua); --ic-aigua-fons: var(--c-aigua-fons);
+  --ic-neu: var(--c-neu);
+  --ic-lluna: var(--c-lluna); --ic-lluna-fons: var(--c-lluna-fons);
+}
+/* Un fenomen destacat (tempesta, calor…) és un avís: la icona, sencera del color de l'avís. */
+.tram-hores .fenomen {
+  --ic-sol: initial; --ic-sol-fons: initial; --ic-nuvol: initial; --ic-nuvol-fons: initial;
+  --ic-aigua: initial; --ic-aigua-fons: initial; --ic-neu: initial; --ic-lluna: initial; --ic-lluna-fons: initial;
+}
+.temp-max { color: var(--c-maxima); }
+.temp-min { color: var(--c-minima); }
 
 body {
   margin: 0 auto;
@@ -116,7 +159,8 @@ h1 { margin: 0; font-size: 1.6rem; line-height: 1.2; }
   text-decoration: none;
 }
 .idiomes a:hover { background: var(--vora); }
-.idiomes [aria-current="page"] { background: var(--text); color: var(--fons); }
+/* El que està triat, amb el blau de la web, com els botons de l'ajuda (ADR 0063). */
+.idiomes [aria-current="page"] { background: var(--enllac); color: var(--fons); }
 .boto-icona svg {
   width: 1.25rem;
   height: 1.25rem;
@@ -220,7 +264,7 @@ h1 { margin: 0; font-size: 1.6rem; line-height: 1.2; }
 .barra .pagines { margin: 0; }
 /* «Avisos al mòbil», la campana de la botonera; a la seva pàgina, marcada. */
 .boto-avisos { position: relative; }
-.boto-avisos[aria-current="page"] { background: var(--text); color: var(--fons); border-color: var(--text); }
+.boto-avisos[aria-current="page"] { background: var(--enllac); color: var(--fons); border-color: var(--enllac); }
 /* «Nou!» damunt la campana, mentre la pàgina és nova (comu.js). */
 .xip-nou { position: absolute; top: -.55rem; right: -.6rem; padding: .05rem .4rem; border-radius: 999px;
   background: var(--enllac); color: var(--fons); font-size: .7rem; font-weight: 700; line-height: 1.4;
@@ -234,7 +278,7 @@ h1 { margin: 0; font-size: 1.6rem; line-height: 1.2; }
   color: var(--text);
   background: var(--superficie);
 }
-.pagines a[aria-current="page"] { background: var(--text); color: var(--fons); border-color: var(--text); }
+.pagines a[aria-current="page"] { background: var(--enllac); color: var(--fons); border-color: var(--enllac); }
 .pagines a { display: inline-flex; align-items: center; gap: .4rem; }
 .pagines svg {
   width: 1.1rem;
@@ -247,7 +291,8 @@ h1 { margin: 0; font-size: 1.6rem; line-height: 1.2; }
 }
 
 /* Pàgina de casa */
-.targeta.ara { --color: var(--enllac); border-left: 1px solid var(--vora); }
+.targeta.ara { --color: var(--text); border-left: 1px solid var(--vora); }
+.targeta.ara .vehicle { color: var(--suau); }
 .targeta.fora { --color: var(--suau); }
 .previsio { margin-top: 1rem; }
 .taula-contenidor { overflow-x: auto; }
@@ -256,10 +301,14 @@ h1 { margin: 0; font-size: 1.6rem; line-height: 1.2; }
 .taula-hores thead th { font-size: .8rem; color: var(--suau); white-space: normal; vertical-align: bottom; }
 .taula-hores .num { text-align: right; font-variant-numeric: tabular-nums; }
 .taula-hores th.hora { font-weight: 600; }
-.taula-hores tr.amb-pluja td.cel { color: var(--enllac); font-weight: 600; }
-.taula-hores tr.pluja-possible td.cel { color: var(--enllac); }
-/* La probabilitat porta una barra darrere del número; el número ja ho diu. */
-.taula-hores td.prob { background: linear-gradient(to left, color-mix(in srgb, var(--enllac) 22%, transparent) var(--prob, 0%), transparent var(--prob, 0%)); }
+.taula-hores tr.amb-pluja td.cel { color: var(--c-aigua-text); font-weight: 600; }
+.taula-hores tr.pluja-possible td.cel { color: var(--c-aigua-text); }
+/* La probabilitat porta una barra darrere del número; el número ja ho diu.
+   Amb el blau de la pluja de les icones, i el número en blau des de «possible»
+   (20 %) i en negreta des de «pluja» (50 %), com el cel de la fila (ADR 0063). */
+.taula-hores td.prob { background: linear-gradient(to left, color-mix(in srgb, var(--c-aigua) 30%, transparent) var(--prob, 0%), transparent var(--prob, 0%)); }
+.taula-hores tr.pluja-possible td.prob { color: var(--c-aigua-text); }
+.taula-hores tr.amb-pluja td.prob { color: var(--c-aigua-text); font-weight: 600; }
 @media (max-width: 380px) {
   .taula-hores { font-size: .88rem; }
   .taula-hores th, .taula-hores td { padding: .3rem .25rem; }
@@ -286,7 +335,7 @@ h1 { margin: 0; font-size: 1.6rem; line-height: 1.2; }
   stroke-linecap: round;
   stroke-linejoin: round;
 }
-.dades-ara svg { color: var(--enllac); }
+.dades-ara svg { color: var(--suau); }
 
 /* Previsió per trams del dia (matí, tarda i nit), cadascun plegable amb el
    resum a la capçalera. Les columnes, amb la mateixa amplada a tots els trams. */
@@ -296,7 +345,7 @@ h1 { margin: 0; font-size: 1.6rem; line-height: 1.2; }
 .tram-hores[open] > summary { border-bottom: 1px solid var(--vora); }
 .tram-hores .quan { color: var(--suau); margin-left: -.4rem; }
 .tram-hores .dada { display: inline-flex; align-items: center; gap: .3rem; white-space: nowrap; vertical-align: middle; }
-.tram-hores summary svg { width: 1.15em; height: 1.15em; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; color: var(--enllac); }
+.tram-hores summary svg { width: 1.15em; height: 1.15em; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; color: var(--suau); }
 .tram-hores .fenomen { color: var(--compte); font-weight: 600; }
 .tram-hores .fenomen svg { color: var(--compte); }
 .tram-hores .taula-hores { table-layout: fixed; min-width: 19rem; border-radius: 0 0 .6rem .6rem; }
@@ -423,7 +472,6 @@ h1 { margin: 0; font-size: 1.6rem; line-height: 1.2; }
   stroke-linejoin: round;
   color: var(--suau);
 }
-.taula-hores tr.amb-pluja .cel-text svg, .taula-hores tr.pluja-possible .cel-text svg { color: var(--enllac); }
 @media (max-width: 430px) {
   .taula-hores th, .taula-hores td { padding-left: .25rem; padding-right: .25rem; }
 }
@@ -513,7 +561,7 @@ h1 { margin: 0; font-size: 1.6rem; line-height: 1.2; }
   user-select: none;
 }
 .consulta-opcio input { position: absolute; opacity: 0; width: 1px; height: 1px; }
-.consulta-opcio:has(input:checked) { background: var(--text); color: var(--fons); border-color: var(--text); }
+.consulta-opcio:has(input:checked) { background: var(--enllac); color: var(--fons); border-color: var(--enllac); }
 .consulta-opcio:has(input:focus-visible) { outline: 2px solid var(--enllac); outline-offset: 2px; }
 .consulta-opcio svg { width: 1.1rem; height: 1.1rem; fill: none; stroke: currentColor; stroke-width: 2;
   stroke-linecap: round; stroke-linejoin: round; flex: none; }
