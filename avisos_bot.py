@@ -139,10 +139,10 @@ def linia_risc_es(r, ahora):
 def text_perill(nous, ahora):
     pitjor = max(nous, key=lambda r: RS.NIVELLS.index(r["nivell"]))["nivell"]
     tipus = list(dict.fromkeys(r["tipus"] for r in nous))
-    ca = [negreta(f"Avís de perill ({pitjor}): " + " i ".join(QUE_CA[t] for t in tipus), pitjor)]
+    ca = [negreta(f"Avís de perill a Montflorit ({pitjor}): " + " i ".join(QUE_CA[t] for t in tipus), pitjor)]
     ca += [html.escape(r["text"], quote=False) for r in nous]
     ca.append("Ho calcula Temps a Montflorit amb els llindars de l'AEMET: no és un avís oficial.")
-    es = [negreta(f"Aviso de peligro ({NIVELLS_ES[pitjor]}): " + " y ".join(QUE_ES[t] for t in tipus), pitjor)]
+    es = [negreta(f"Aviso de peligro en Montflorit ({NIVELLS_ES[pitjor]}): " + " y ".join(QUE_ES[t] for t in tipus), pitjor)]
     es += [html.escape(linia_risc_es(r, ahora), quote=False) for r in nous]
     es.append("Lo calcula Temps a Montflorit con los umbrales de la AEMET: no es un aviso oficial.")
     return {"ca": "\n".join(ca), "es": "\n".join(es)}, pitjor

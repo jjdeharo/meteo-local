@@ -145,7 +145,7 @@ class Resum(unittest.TestCase):
         r = B.resum(dades(), "ca", ARA)
         self.assertIn("Ara mateix: 16 °C, no plou.", r)
         self.assertIn("Pluja: possible de 12 a 15 h (probabilitat fins al 40 %).", r)
-        self.assertIn("Avís groc de l'AEMET per tempestes fins a les 20:00.", r)
+        self.assertIn("Avís groc de l'AEMET per tempestes al Vallès fins a les 20:00.", r)
         self.assertIn("Trens de Cerdanyola: 🔴 R4 sense trens.", r)
         self.assertIn("Lluvia: posible de 12 a 15 h", B.resum(dades(), "es", ARA))
 
@@ -215,12 +215,12 @@ class Resum(unittest.TestCase):
         d = {"avisos": [{"inicio": f"{ahir}T23:00:00+02:00", "fin": f"{migdia.date()}T13:59:59+02:00",
                          "nivel": "taronja", "tipo": "pluja", "zona": "Prelitoral de Barcelona"}]}
         self.assertEqual(B.text_avisos_aemet(d, "es", migdia.date(), migdia),
-                         ["🟠 Aviso naranja de la AEMET por lluvia hasta las 14:00."])
+                         ["🟠 Aviso naranja de la AEMET por lluvia en el Vallès hasta las 14:00."])
         self.assertEqual(B.text_avisos_aemet(d, "ca", dema, migdia), [])
         # I el de demà que comença avui a la nit també compta per a demà.
         d = {"avisos": [{"inicio": f"{migdia.date()}T22:00:00+02:00", "fin": f"{dema}T05:59:59+02:00",
                          "nivel": "groc", "tipo": "vent", "zona": "Prelitoral de Barcelona"}]}
-        self.assertEqual(B.text_avisos_aemet(d, "ca", dema, migdia), ["🟡 Avís groc de l'AEMET per vent de 22:00 a 06:00."])
+        self.assertEqual(B.text_avisos_aemet(d, "ca", dema, migdia), ["🟡 Avís groc de l'AEMET per vent al Vallès de 22:00 a 06:00."])
 
     def test_a_les_20_la_de_dema(self):
         vespre = ARA.replace(hour=20)
@@ -231,7 +231,7 @@ class Resum(unittest.TestCase):
         self.assertTrue(r.startswith("<b>Previsió per a demà, dijous, a Montflorit</b> (fins a les 20 h)"))
         self.assertIn("Temperatura: entre ", r)
         self.assertIn("Pluja: possible de 12 a 15 h (probabilitat fins al 40 %).", r)
-        self.assertIn("Avís groc de l'AEMET per pluja de 10:00 a 20:00.", r)
+        self.assertIn("Avís groc de l'AEMET per pluja al Vallès de 10:00 a 20:00.", r)
         self.assertNotIn("Ara mateix", r)
         self.assertNotIn("Trens", r)
         self.assertNotIn("Aquesta nit", r)
@@ -255,13 +255,13 @@ class Resum(unittest.TestCase):
                       "sense_fi": False}
         d["ara_casa"].update(intensitat=0.8, plou=True)
         self.assertTrue(B.text_radar_bot(d, "ca", ARA).startswith(
-            "Pluja a sobre. Pararia cap a les 07:10 (en entrenament: pot fallar)."))
+            "Pluja a sobre de Montflorit. Pararia cap a les 07:10 (en entrenament: pot fallar)."))
         self.assertTrue(B.text_radar_bot(d, "es", ARA).startswith(
-            "Lluvia encima. Pararía hacia las 07:10 (en entrenamiento: puede fallar)."))
+            "Lluvia encima de Montflorit. Pararía hacia las 07:10 (en entrenamiento: puede fallar)."))
         d["radar"].update(possible=None, fi=None)
-        self.assertTrue(B.text_radar_bot(d, "ca", ARA).startswith("Pluja a sobre.\n"))
+        self.assertTrue(B.text_radar_bot(d, "ca", ARA).startswith("Pluja a sobre de Montflorit.\n"))
         d["ara_casa"].update(intensitat=0, plou=False)
-        self.assertTrue(B.text_radar_bot(d, "ca", ARA).startswith("No s'acosta pluja en 2 hores."))
+        self.assertTrue(B.text_radar_bot(d, "ca", ARA).startswith("No s'acosta pluja a Montflorit en 2 hores."))
 
     def test_pluja_aquesta_nit(self):
         # El 08-10-2026 deia «Esta noche: posible de 20 a 23 h»: hi faltava la pluja.
@@ -464,7 +464,7 @@ class Consultes(unittest.TestCase):
 
     def test_respostes(self):
         subs = {"7": {"idioma": "ca", "avisos": [], "resum": None}}
-        self.assertIn("No s'acosta pluja en 2 hores.", self.ordre("/radar", subs))
+        self.assertIn("No s'acosta pluja a Montflorit en 2 hores.", self.ordre("/radar", subs))
         self.assertIn("https://www.rainviewer.com/map.html", self.ordre("/radar", subs))
         trens = self.ordre("/trens", subs)
         # Cada línia una sola vegada, amb el seu avís al costat i el text de l'operador escapat.
@@ -490,7 +490,7 @@ class Consultes(unittest.TestCase):
                         "unitat": "km/h", "text": "Ara bufa vent molt fort: ratxes de 75 km/h."}]
         json.dump(d, open(os.path.join(self.dir.name, "montflorit.json"), "w"))
         r = self.ordre("/avisos_actius", subs)
-        self.assertIn("<b>Tiempo excepcional</b>\n<i>Lo calcula Temps a Montflorit", r)
+        self.assertIn("<b>Tiempo excepcional en Montflorit</b>\n<i>Lo calcula Temps a Montflorit", r)
         subs["7"]["idioma"] = "ca"
         self.assertIn("Ara bufa vent molt fort: ratxes de 75\u00a0km/h.", self.ordre("/avisos_actius", subs))
         subs["7"]["idioma"] = "es"
@@ -505,7 +505,7 @@ class Consultes(unittest.TestCase):
         json.dump(d, open(os.path.join(self.dir.name, "montflorit.json"), "w"))
         subs = {"7": {"idioma": "ca", "avisos": [], "resum": None}}
         r = self.ordre("/avisos_actius", subs)
-        self.assertIn("<b>Bombers</b>\nIncendi forestal a Sant Cugat del Vallès, a 3,2 km", r)
+        self.assertIn("<b>Bombers</b>\nIncendi forestal a Sant Cugat del Vallès, a 3,2 km de Montflorit", r)
         self.assertIn("<b>Pla Alfa</b>\n🔴 Nivell 4 avui a Cerdanyola", r)
         self.assertNotIn("nivell 2", r)
         self.assertNotIn("Avisos actius", r)             # sense títol: l'ordre ja diu què és
@@ -527,20 +527,25 @@ class Consultes(unittest.TestCase):
         json.dump(d, open(os.path.join(self.dir.name, "montflorit.json"), "w"))
         subs = {"7": {"idioma": "ca", "avisos": [], "resum": None}}
         r = self.ordre("/transit", subs)
-        self.assertIn("<b>Trànsit a prop de Montflorit</b>\n<b>C-58</b> (Barcelona, a 4\u00a0km): Circulació amb retencions. "
+        self.assertIn("<b>Trànsit a menys de 5\u00a0km de Montflorit</b>\n<b>C-58</b> (Barcelona, a 4\u00a0km): Circulació amb retencions. "
                       "Sentit Sud cap a NUS TRINITAT, km 0-1,5.", r)
         self.assertIn("<b>BV-1414</b> (Cerdanyola del Vallès, a 750\u00a0m): Calçada restringida. Obres: Reasfaltat, "
                       "Sentit Sud cap a C-58, km 4-0.", r)
         self.assertIn("Servei Català de Trànsit", r)
         subs["7"]["idioma"] = "es"
         r = self.ordre("/transit", subs)
-        self.assertIn("<b>Tráfico cerca de Montflorit</b>", r)
+        self.assertIn("<b>Tráfico a menos de 5\u00a0km de Montflorit</b>", r)
         self.assertIn("Obras: Reasfaltat", r)
         d["transit"]["incidencies"] = []
         json.dump(d, open(os.path.join(self.dir.name, "montflorit.json"), "w"))
-        self.assertIn("Ninguna incidencia en las carreteras cercanas (5 km).", self.ordre("/transit", subs))
+        self.assertIn("Ninguna incidencia a menos de 5\u00a0km de Montflorit.", self.ordre("/transit", subs))
         # Ja no surten a /avisos_actius: no són una situació de perill.
         self.assertNotIn("Carreter", self.ordre("/avisos_actius", subs))
+
+    def test_els_5_km_dels_textos_son_els_de_config(self):
+        # Juanjo, 10-10-2026: cal dir de quina zona és el trànsit. Si canvia el radi, canvien els textos.
+        import config as C
+        self.assertEqual(C.TRANSIT_RADI_KM, 5)
 
     def test_distancia(self):
         self.assertEqual([B.distancia(x) for x in (0.01, 0.73, 0.98, 1.0, 4.04, 4.35, 4.96)],
@@ -712,7 +717,7 @@ class AvisosPublics(unittest.TestCase):
              "text": "Vent molt fort previst: ratxes de fins a 75 km/h, avui de 15 a 16 h."}
         nous = AB.decideix({}, {"riscos": [r]}, ARA)
         self.assertIn("Viento muy fuerte previsto: rachas de hasta 75 km/h, hoy de 15 a 16 h.", nous[0]["es"])
-        self.assertTrue(nous[0]["es"].startswith("🟡 <b>Aviso de peligro (amarillo): viento muy fuerte</b>"))
+        self.assertTrue(nous[0]["es"].startswith("🟡 <b>Aviso de peligro en Montflorit (amarillo): viento muy fuerte</b>"))
 
     def test_pluja_amb_el_radar(self):
         # El radar en directe que ha donat l'avís: enllaç a Telegram; a la

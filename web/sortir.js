@@ -165,7 +165,7 @@ function avalua(mitja, tram, trens, futur, transit) {
     const greus = (transit || []).filter((i) => i.tipus === 'retencio' && i.nivell >= NIVELL_TRANSIT);
     if (greus.length) {
       const carreteres = [...new Set(greus.map((i) => i.carretera))].join(', ');
-      puja('compte', T`Ara hi ha retencions o talls a prop: ${carreteres}.`);
+      puja('compte', T`Ara hi ha retencions o talls a menys de 5\u00a0km: ${carreteres}.`);
     }
   }
   return res;
@@ -435,9 +435,9 @@ function pintaSortida() {
     }
     if (MITJANS_TRANSIT.includes(clau) && dades.transit) {
       const n = (transit || []).length;
-      if (!n) li.append(element('p', 'mitja-roba', T('Trànsit ara: cap incidència a prop.')));
+      if (!n) li.append(element('p', 'mitja-roba', T('Trànsit ara: cap incidència a menys de 5\u00a0km.')));
       else {
-        li.append(plec(`transit-${clau}`, n === 1 ? T('Trànsit ara: 1 incidència') : T`Trànsit ara: ${n} incidències`,
+        li.append(plec(`transit-${clau}`, n === 1 ? T('Trànsit ara: 1 incidència a menys de 5\u00a0km') : T`Trànsit ara: ${n} incidències a menys de 5\u00a0km`,
           blocTransit(dades.transit)));
       }
     }

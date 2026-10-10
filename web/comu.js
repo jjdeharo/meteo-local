@@ -551,7 +551,7 @@ function blocEntorn(entorn) {
     return item;
   };
   for (const i of (entorn && entorn.incendis) || []) {
-    const km = i.km != null ? T`, a ${coma(i.km)}\u00a0km` : '';
+    const km = i.km != null ? T`, a ${coma(i.km)}\u00a0km de Montflorit` : '';
     items.push(nouItem('vermell', T`Bombers: incendi forestal a ${i.municipi}`,
       T`${km}, des de les ${horaCurta(i.inici)}.`,
       'https://interior.gencat.cat/ca/arees_dactuacio/bombers/actuacions-de-bombers/'));

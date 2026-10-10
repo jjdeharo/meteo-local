@@ -593,10 +593,10 @@ def text_avisos_aemet(dades, idioma, dia, moment):
             nom = {"vermell": "rojo", "taronja": "naranja", "groc": "amarillo"}[nivell]
             que = " y ".join({"pluja": "lluvia", "tempestes": "tormentas"}.get(x, x) for x in tipus)
             quan = f"hasta las {fi}" if dia == moment.date() else f"de {ini} a {fi}"
-            res.append(f"{CERCLE_AVIS[nivell]} Aviso {nom} de la AEMET por {que} {quan}.")
+            res.append(f"{CERCLE_AVIS[nivell]} Aviso {nom} de la AEMET por {que} en el Vallès {quan}.")
         else:
             quan = f"fins a les {fi}" if dia == moment.date() else f"de {ini} a {fi}"
-            res.append(f"{CERCLE_AVIS[nivell]} Avís {nivell} de l'AEMET per {' i '.join(tipus)} {quan}.")
+            res.append(f"{CERCLE_AVIS[nivell]} Avís {nivell} de l'AEMET per {' i '.join(tipus)} al Vallès {quan}.")
     return res
 
 
@@ -760,7 +760,7 @@ def text_transit_bot(dades, idioma, moment):
     transit = dades.get("transit")
     if not transit:
         return "Ahora no hay datos del tráfico." if es else "Ara no hi ha dades del trànsit."
-    cap = "Tráfico cerca de Montflorit" if es else "Trànsit a prop de Montflorit"
+    cap = "Tráfico a menos de 5\u00a0km de Montflorit" if es else "Trànsit a menys de 5\u00a0km de Montflorit"
     files = []
     for i in transit.get("incidencies") or []:
         lloc = ", ".join(x for x in (i.get("municipi"), i.get("km") is not None and f"a {distancia(i['km'])}") if x)
@@ -775,8 +775,8 @@ def text_transit_bot(dades, idioma, moment):
                      + html.escape(f"{i.get('descripcio') or ''}. {detall}." if detall else f"{i.get('descripcio') or ''}.",
                                    quote=False))
     if not files:
-        files = ["Ninguna incidencia en las carreteras cercanas (5 km)." if es
-                 else "Cap incidència a les carreteres de prop (5 km)."]
+        files = ["Ninguna incidencia a menos de 5\u00a0km de Montflorit." if es
+                 else "Cap incidència a menys de 5\u00a0km de Montflorit."]
     h = dt.datetime.fromisoformat(transit["hora"]).strftime("%H:%M") if transit.get("hora") else "?"
     return (f"<b>{cap}</b>\n" + "\n".join(files) + "\n"
             + enllac(TRANSIT.format("es" if es else "ca"), f"Servei Català de Trànsit, {h}"))
@@ -968,7 +968,7 @@ def text_radar_bot(dades, idioma, moment):
     plou = plou_ara(dades)
     aviat = r.get("arriba") and dt.datetime.fromisoformat(r["arriba"]) <= moment + dt.timedelta(minutes=5)
     if (plou and (r.get("arriba") or r.get("possible"))) or aviat:
-        que = "Lluvia encima." if es else "Pluja a sobre."
+        que = "Lluvia encima de Montflorit." if es else "Pluja a sobre de Montflorit."
         if r.get("fi"):
             que += (f" Pararía hacia las {h(r['fi'])} (en entrenamiento: puede fallar)." if es
                     else f" Pararia cap a les {h(r['fi'])} (en entrenament: pot fallar).")
@@ -976,13 +976,13 @@ def text_radar_bot(dades, idioma, moment):
             que += (" No acaba en 2 horas (en entrenamiento: puede fallar)." if es
                     else " No s'acaba en 2 hores (en entrenament: pot fallar).")
     elif plou:
-        que = "Lluvia encima." if es else "Pluja a sobre."
+        que = "Lluvia encima de Montflorit." if es else "Pluja a sobre de Montflorit."
     elif r.get("arriba"):
-        que = (f"Llegaría lluvia hacia las {h(r['arriba'])}." if idioma == "es" else f"Arribaria pluja cap a les {h(r['arriba'])}.")
+        que = (f"Llegaría lluvia a Montflorit hacia las {h(r['arriba'])}." if idioma == "es" else f"Arribaria pluja a Montflorit cap a les {h(r['arriba'])}.")
     elif r.get("possible"):
-        que = (f"Puede llegar lluvia hacia las {h(r['possible'])}." if idioma == "es" else f"Pot arribar pluja cap a les {h(r['possible'])}.")
+        que = (f"Puede llegar lluvia a Montflorit hacia las {h(r['possible'])}." if idioma == "es" else f"Pot arribar pluja a Montflorit cap a les {h(r['possible'])}.")
     else:
-        que = "No se acerca lluvia en 2 horas." if idioma == "es" else "No s'acosta pluja en 2 hores."
+        que = "No se acerca lluvia a Montflorit en 2 horas." if idioma == "es" else "No s'acosta pluja a Montflorit en 2 hores."
     font = "RainViewer" if r.get("imatge") == "rainviewer" else "Meteocat"
     mov = ""
     if r.get("cap_a"):
@@ -1037,7 +1037,7 @@ def text_avisos_actius(dades, idioma, moment):
     # (el mateix de l'avís «perill», ADR 0018), dit que no és oficial.
     propis = linies_riscos(dades.get("riscos") or [], idioma, moment)
     if propis:
-        blocs.append(("Tiempo excepcional" if es else "Temps excepcional",
+        blocs.append(("Tiempo excepcional en Montflorit" if es else "Temps excepcional a Montflorit",
                       [("<i>Lo calcula Temps a Montflorit con los umbrales de la AEMET: no es oficial.</i>" if es else
                         "<i>Ho calcula Temps a Montflorit amb els llindars de l'AEMET: no és oficial.</i>")]
                       + [html.escape(x, quote=False) for x in propis]))
@@ -1069,7 +1069,7 @@ def blocs_entorn(entorn, idioma):
     focs = []
     for i in entorn.get("incendis") or []:
         h = dt.datetime.fromisoformat(i["inici"]).strftime("%H:%M") if i.get("inici") else "?"
-        dist = f", a {str(i['km']).replace('.', ',')} km" if i.get("km") is not None else ""
+        dist = f", a {str(i['km']).replace('.', ',')} km de Montflorit" if i.get("km") is not None else ""
         focs.append(html.escape(f"Incendio forestal en {i['municipi']}{dist}, desde las {h}." if es
                                 else f"Incendi forestal a {i['municipi']}{dist}, des de les {h}.", quote=False))
     if focs:

@@ -67,5 +67,6 @@
 | [0063](0063-colores-del-cielo-en-los-iconos.md) | Colores del cielo en los iconos del tiempo, y lo seleccionado en azul | aceptado |
 | [0064](0064-viento-de-ahora-con-las-estaciones-vecinas.md) | Viento de ahora con las estaciones vecinas, en prueba | aceptado |
 | [0065](0065-iconos-en-los-mensajes-de-telegram.md) | Iconos en los mensajes de Telegram y de «Consultes», solo donde ayudan a leer | aceptado |
+| [0066](0066-cada-mensaje-dice-de-que-zona-habla.md) | Cada mensaje dice de qué zona habla | aceptado |
 
 Plantilla: [0000-plantilla.md](0000-plantilla.md). Para crear uno: `nuevo-adr "Título"`.

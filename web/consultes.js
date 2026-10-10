@@ -433,8 +433,8 @@ function pintaConsulta() {
   else if (triada === 'trens' && DADES.trens && (DADES.trens.linies || []).length) {
     peces = [titol(T('Trens de Cerdanyola')), ...blocTrens(DADES.trens)];
   } else if (triada === 'transit' && DADES.transit) {
-    peces = [titol(T('Trànsit a prop de Montflorit')), ...blocTransit(DADES.transit)];
-    if (!DADES.transit.incidencies.length) peces.splice(1, 0, element('p', null, T('Cap incidència a les carreteres de prop.')));
+    peces = [titol(T('Trànsit a menys de 5\u00a0km de Montflorit')), ...blocTransit(DADES.transit)];
+    if (!DADES.transit.incidencies.length) peces.splice(1, 0, element('p', null, T('Cap incidència a menys de 5\u00a0km de Montflorit.')));
   }
   if (peces) {
     caixa.replaceChildren(...peces);

@@ -409,7 +409,7 @@ class Web(unittest.TestCase):
                                f"avalua('{mitja}', {json.dumps(tram)}, [], {json.dumps(futur)}, {json.dumps(t)})",
                                "sortir.js")
         self.assertEqual(v("cotxe", False), {"nivell": "compte", "motius": [
-            "Sense pluja ni vent fort.", "Ara hi ha retencions o talls a prop: C-58."]})
+            "Sense pluja ni vent fort.", "Ara hi ha retencions o talls a menys de 5\u00a0km: C-58."]})
         self.assertEqual(v("moto", False)["nivell"], "compte")
         # Més tard, el trànsit d'ara no compta; a peu o en bici, tampoc.
         self.assertEqual(v("cotxe", True), {"nivell": "be", "motius": ["Sense pluja ni vent fort."]})
