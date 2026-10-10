@@ -38,6 +38,7 @@ import radar_fonts as RF
 import registre as R
 import riera as RI
 import riscos as RS
+import smp as SMP
 import vent_veines as VV
 import transit as TT
 import trens as TR
@@ -465,6 +466,14 @@ def recoger(anterior=None):
         salida["plans_ocults"] = [p for p in planes if not P.pla_per_temps(p, avisos, P.AHORA)]
         planes = [p for p in planes if P.pla_per_temps(p, avisos, P.AHORA)]
     salida["avisos"], salida["plans"] = avisos, planes
+    # Con un plan a la vista, si Meteocat tiene aviso para la comarca: los
+    # planes no dicen qué zona abarcan (ADR 0067). Si falla, no se dice nada.
+    salida["smp"] = None
+    if planes:
+        try:
+            salida["smp"] = SMP.llegeix(P.get, P.AHORA)
+        except Exception as ex:
+            salida["errors"].append(f"smp: {ex}")
     radar = None
     try:
         radar = P.radar()

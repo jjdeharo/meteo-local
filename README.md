@@ -9,7 +9,8 @@ y en [castellano](https://meteo-montflorit.github.io/es/). Tiene dos páginas:
   las 21 h de mañana, plegada por mañana, tarde y noche
   con el resumen de cada una (probabilidad de lluvia, temperaturas y
   fenómenos destacables; ADR 0041), con los avisos de AEMET y los planes de
-  Protección Civil (ADR 0007 y 0024).
+  Protección Civil (ADR 0007 y 0024), y junto a cada plan si Meteocat tiene
+  aviso de peligro para el Vallès Occidental (ADR 0067).
 - **Si surts**: para quien sale a una hora y vuelve a otra, cómo irá cada
   medio (a pie, bici o patinete, moto, coche y transporte público), qué ropa
   ponerse, consejos (lluvia, sol, noche, calor), si circulan los trenes que
@@ -131,6 +132,7 @@ Umbrales y lugares, en `config.py`. El porqué, en los ADR.
 |---|---|
 | `casa.py` | Datos de la web (`casa.json`): lo de ahora, la previsión hora a hora, el índice UV, los trenes, el tráfico y la riera |
 | `prevision.py` | Recogida de datos que usa `casa.py`: avisos de AEMET, planes de Protección Civil, radar, lluvia y viento de las estaciones, y el modo aviso |
+| `smp.py` | Con un plan de Protección Civil a la vista, si Meteocat tiene aviso de peligro para el Vallès Occidental, leído de meteo.cat, y su prueba diaria (ADR 0067) |
 | `config.py` | Coordenadas, horario, estaciones, zonas de aviso, modelos y umbrales |
 | `web/` | Las fuentes de la web pública: `casa.html` y `casa.js` (el tiempo ahora), `sortir.html` y `sortir.js` («Si surts»), `consultes.html` y `consultes.js` («Consultes»), `avisos.html` y `avisos.js` (avisos en el navegador), `telegram.html` (ayuda de Telegram), `comu.js` (lo común), `estil.css`, `fonts.html` (fuentes y créditos), `manifest.webmanifest`, `sw.js` e `icones/` |
 | `montflorit.py`, `montflorit/` | Genera la web pública a partir de `web/` y sus datos sin lo privado; manifiesto, iconos y README propios (ADR 0024), y `es.js`, los textos del programa en castellano (ADR 0025) |

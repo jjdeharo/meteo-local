@@ -498,6 +498,13 @@ def diari(avui=None, avisa=True):
             print(text_fi)
     except Exception as ex:
         print("No he pogut comprovar el final de la pluja:", ex)
+    # Que la página de Meteocat sigue trayendo sus avisos de peligro (ADR 0067).
+    try:
+        import prevision as P
+        import smp
+        smp.comprova(P.get, os.path.join(DIR, "smp-falla"), avisa)
+    except Exception as ex:
+        print("No he pogut comprovar els avisos de Meteocat:", ex)
     # Qué dijo la regla de la moto de «Si surts» y si llovió (ADR 0047).
     try:
         print("Moto: hores noves verificades:", verifica_moto())

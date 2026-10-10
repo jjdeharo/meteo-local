@@ -506,8 +506,17 @@ function deFase(fase) {
   return /^[aeiouàèéíòóúh]/i.test(fase) ? `d’${fase}` : `de ${fase}`;
 }
 
+// Si Meteocat té avís de perill per a la comarca (ADR 0067): els plans no
+// diuen quina zona abasten. Els textos vénen fets a les dades (smp.py), amb
+// el meteor i el llindar com els publica Meteocat.
+function liniesSmp(smp) {
+  if (!smp || !smp.linies) return [];
+  const es = IDIOMA.codi.startsWith('es');
+  return smp.linies.map((l) => element('span', 'smp-linia', es ? l.es : l.ca));
+}
+
 // Els plans de Protecció Civil, un element per pla, del color de la fase.
-function blocPlans(plans) {
+function blocPlans(plans, smp) {
   return (plans || []).map((p) => {
     const item = element('p', `avis-item ${COLOR_FASE[p.fase] || 'vermell'}`);
     item.setAttribute('aria-label', T('Avís de Protecció Civil'));
@@ -524,6 +533,7 @@ function blocPlans(plans) {
       a.rel = 'noopener';
       item.append(' ', a);
     }
+    item.append(...liniesSmp(smp));
     return item;
   });
 }
@@ -572,7 +582,7 @@ function blocEntorn(entorn) {
 }
 
 function blocAvisos(dades, extres = [], ara = new Date()) {
-  const items = [...blocPlans(dades.plans), ...blocEntorn(dades.entorn), ...extres.filter(Boolean),
+  const items = [...blocPlans(dades.plans, dades.smp), ...blocEntorn(dades.entorn), ...extres.filter(Boolean),
     ...(dades.avisos && dades.avisos.length ? blocAvisosAemet(dades.avisos, ara) : [])];
   if (!items.length) return null;
   const sec = element('section', 'avisos-actius');

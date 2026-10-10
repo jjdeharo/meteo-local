@@ -2,7 +2,7 @@
 """Datos fijos de «Temps a Montflorit»: lugares, horario, fuentes y umbrales.
 Se cambian aquí, no en los programas."""
 
-VERSION = "3.53.2"
+VERSION = "3.54.0"
 
 # Coordenadas con tres decimales (unos 100 m), no las exactas: para el tiempo
 # da igual una calle u otra, y el repositorio es público.
@@ -94,6 +94,11 @@ PLANES_PC = {"INUNCAT": "d'inundacions", "VENTCAT": "de vent", "NEUCAT": "de neu
 # pandemia ni el ferrocarril (los trenes ya están en «Si surts»).
 PROCICAT_PC = {"ONADA_CALOR": "per onada de calor", "ONADA_FRED": "per onada de fred",
                "CONTAMINACIÓ": "per contaminació", "VENT": "per vent"}
+# Los avisos de peligro de Meteocat (SMP) de la comarca, junto a los planes
+# (smp.py, ADR 0067): el número del Vallès Occidental en los datos de
+# Meteocat (IDComarca del mapa de comarcas de meteo.cat, comarquesAmbMar.json).
+SMP_COMARCA = 40
+SMP_COMARCA_NOM = "Vallès Occidental"
 # Si la descripción del plan nombra solo otras zonas, no afecta al barrio.
 ZONAS_PROPIAS_PC = ["Vallès", "Barcelona", "Catalunya"]
 ZONAS_AJENAS_PC = ["Ebre", "Pirineu", "Aran", "Lleida", "Girona", "Tarragona", "Empordà"]

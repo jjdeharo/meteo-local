@@ -68,5 +68,6 @@
 | [0064](0064-viento-de-ahora-con-las-estaciones-vecinas.md) | Viento de ahora con las estaciones vecinas, en prueba | aceptado |
 | [0065](0065-iconos-en-los-mensajes-de-telegram.md) | Iconos en los mensajes de Telegram y de «Consultes», solo donde ayudan a leer | aceptado |
 | [0066](0066-cada-mensaje-dice-de-que-zona-habla.md) | Cada mensaje dice de qué zona habla | aceptado |
+| [0067](0067-avisos-de-meteocat-junto-a-los-planes.md) | Avisos de peligro de Meteocat para el Vallès Occidental, junto a los planes | aceptado |
 
 Plantilla: [0000-plantilla.md](0000-plantilla.md). Para crear uno: `nuevo-adr "Título"`.

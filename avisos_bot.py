@@ -71,7 +71,7 @@ def coma(x):
 # (bot/bot.py, CERCLE): se ve la gravedad antes de leer, también en la
 # notificación del móvil (Juanjo, 10-10-2026; ADR 0065). El final, en verde.
 CERCLE = {"groc": "🟡", "taronja": "🟠", "vermell": "🔴", "atencio": "🟠", "perill": "🔴",
-          "alerta": "🟠", "emergència": "🔴", "fi": "🟢"}
+          "alerta": "🟠", "emergència": "🔴", "fi": "🟢", "nul": "⚪", "mig": "🟡", "alt": "🟠", "maxim": "🔴"}
 
 
 def negreta(text, nivell=None):
@@ -296,7 +296,13 @@ def text_aemet(a, ahora):
     return {"ca": ca, "es": es}
 
 
-def text_pla(p, acabat=False):
+def text_smp(smp, idioma):
+    """Si Meteocat té avís de perill per a la comarca (smp.py, ADR 0067)."""
+    return "".join(f"\n{CERCLE.get(l.get('nivell'), '')} {html.escape(l[idioma], quote=False)}".replace("\n ", "\n")
+                   for l in (smp or {}).get("linies") or [])
+
+
+def text_pla(p, acabat=False, smp=None):
     nom_ca, nom_es = p["nom"], NOM_PLA_ES.get(p["nom"], p["nom"])
     if acabat:
         return {"ca": negreta(f"Protecció Civil: el pla {nom_ca} ({p['pla']}) ja no està en alerta", "fi")
@@ -308,9 +314,9 @@ def text_pla(p, acabat=False):
     enllac_ca = f"\n<a href=\"{html.escape(p['comunicat'])}\">Comunicat (PDF)</a>" if p.get("comunicat") else ""
     enllac_es = enllac_ca.replace("Comunicat (PDF)", "Comunicado (PDF)")
     return {"ca": negreta(f"Protecció Civil: pla {nom_ca} ({p['pla']}) en fase {de}{p['fase']}", p["fase"])
-                  + "\n" + SENTIT_FASE["ca"][p["fase"]] + enllac_ca,
+                  + "\n" + SENTIT_FASE["ca"][p["fase"]] + text_smp(smp, "ca") + enllac_ca,
             "es": negreta(f"Protección Civil: plan {nom_es} ({p['pla']}) en fase de {fase_es}", p["fase"])
-                  + "\n" + SENTIT_FASE["es"][p["fase"]] + enllac_es}
+                  + "\n" + SENTIT_FASE["es"][p["fase"]] + text_smp(smp, "es") + enllac_es}
 
 
 # --- Decidir -----------------------------------------------------------------
@@ -393,7 +399,7 @@ def decideix(estat, salida, ahora):
             for k, p in plans.items():
                 abans = (of["plans"].get(k) or {}).get("fase")
                 if abans is None or FASES_PLA.index(p["fase"]) > FASES_PLA.index(abans):
-                    afegeix("perill", f"pla:{k}:{p['fase']}:{hora}", text_pla(p), "pc")
+                    afegeix("perill", f"pla:{k}:{p['fase']}:{hora}", text_pla(p, smp=salida.get("smp")), "pc")
             for k, p in of["plans"].items():
                 if k not in plans and k not in ocults and not p.get("ocult"):
                     afegeix("perill", f"pla:{k}:fi:{hora}", text_pla({**p, "pla": k}, acabat=True), "fi")

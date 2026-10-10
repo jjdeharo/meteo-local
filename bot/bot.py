@@ -1000,6 +1000,12 @@ PLA_ES = {"d'inundacions": "de inundaciones", "de vent": "de viento", "de neu": 
           "per contaminació": "por contaminación", "per vent": "por viento"}
 
 
+def linies_smp(smp, idioma):
+    """Les línies de Meteocat (smp.py), amb el cercle del seu nivell."""
+    return [amb_icona(CERCLE.get(l.get("nivell")), html.escape(l.get(idioma) or l.get("ca") or "", quote=False))
+            for l in (smp or {}).get("linies") or []]
+
+
 def enllac(url, text):
     return f'<a href="{html.escape(url)}">{html.escape(text, quote=False)}</a>'
 
@@ -1024,6 +1030,9 @@ def text_avisos_actius(dades, idioma, moment):
         if p.get("comunicat"):
             linia += " " + enllac(p["comunicat"], "Comunicado (PDF)" if es else "Comunicat (PDF)")
         blocs.append(("Protección Civil" if es else "Protecció Civil", [linia]))
+    # Si Meteocat té avís per a la comarca: el pla no diu quina zona abasta (ADR 0067).
+    if blocs and dades.get("smp"):
+        blocs[-1][1].extend(linies_smp(dades["smp"], idioma))
     avui, dema = moment.date(), (moment + dt.timedelta(days=1)).date()
     aemet = text_avisos_aemet(dades, idioma, avui, moment)
     aemet += [x for x in text_avisos_aemet(dades, idioma, dema, moment) if x not in aemet]

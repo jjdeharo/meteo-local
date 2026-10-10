@@ -450,6 +450,7 @@ h1 { margin: 0; font-size: 1.6rem; line-height: 1.2; }
 .avis-item { margin: 0; padding: .15rem 0 .15rem .7rem; border-left: .3rem solid var(--nivell, var(--compte)); }
 .avis-item + .avis-item, .avis-item + .risc-previst, .risc-previst + .avis-item { margin-top: .5rem; }
 .avis-item strong { color: var(--nivell-text, inherit); }
+.smp-linia { display: block; margin-top: .3rem; }
 .avis-item.groc { --nivell: #eab308; }
 .avis-item.taronja { --nivell: #fb923c; --nivell-text: var(--taronja-text); }
 .avis-item.vermell { --nivell: var(--vermell); --nivell-text: var(--vermell); }

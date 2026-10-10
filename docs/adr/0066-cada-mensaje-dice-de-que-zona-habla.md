@@ -35,9 +35,10 @@ Ya lo decían y no se tocan: el sol, el aire (zona de unos 10 km alrededor de
 Bellaterra), el polen (Bellaterra, a 3,1 km), los trenes (cada estación), el
 Pla Alfa (Cerdanyola), la riera (Sant Cugat) y los avisos de lluvia.
 
-## Pendiente
+## Los planes de Protección Civil
 
-Los planes de Protección Civil se activan para Cataluña o para unas
-comarcas, según cada comunicado, y el programa no lee qué zona abarca: el
-texto no dice zona para no afirmar una que no se sabe. Queda dicho aquí por
-si se quiere leer del comunicado.
+Se activan para Cataluña o para unas comarcas, según cada comunicado, y ni
+los datos abiertos ni el comunicado (texto libre) dicen de forma fiable qué
+zona abarcan: el texto del plan no dice zona, para no afirmar una que no se
+sabe. Desde la 3.54.0 va acompañado de si Meteocat tiene aviso de peligro
+para el Vallès Occidental (ADR 0067).
