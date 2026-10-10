@@ -390,9 +390,9 @@ class Web(unittest.TestCase):
         self.assertEqual(cotxe(2, 0.7), {"nivell": "compte", "motius": [
             "Pluja probable a l’anada i a la tornada: condueix amb compte."]})
         self.assertEqual(cotxe(0.3, 0.25), {"nivell": "be", "motius": ["Pot ploure a l’anada i a la tornada."]})
-        # Un sol model amb 1 mm i poca probabilitat: el nivell no canvia, però no és «probable» (ADR 0047).
-        self.assertEqual(cotxe(1.7, 0.25), {"nivell": "compte", "motius": [
-            "Pot ploure a l’anada i a la tornada: condueix amb compte."]})
+        # Un sol model amb 1 mm i poca probabilitat: des de la 3.56.0 decideix la
+        # probabilitat també en cotxe (ADR 0069), i només es diu.
+        self.assertEqual(cotxe(1.7, 0.25), {"nivell": "be", "motius": ["Pot ploure a l’anada i a la tornada."]})
         self.assertEqual(cotxe(0, 0.05), {"nivell": "be", "motius": ["Sense pluja ni vent fort."]})
         self.assertEqual(cotxe(0, 0.05, 0)["motius"], ["0\u00a0°C: compte amb el gel a primera hora."])
 
@@ -402,14 +402,18 @@ class Web(unittest.TestCase):
         sys.path.insert(0, os.path.dirname(WEB))
         import aprenentatge as A
         casos = []
-        for p, mm, plou, avis in ((0.02, 0, False, False), (0.12, 0, False, False), (0.25, 0.3, False, False),
+        for p, mm, plou, avis in ((0.02, 0, False, False), (0.12, 0, False, False), (0.15, 0, False, False),
+                                  (0.25, 0.3, False, False), (0.4, 0, False, False),
                                   (0.45, 0.5, False, False), (0.6, 2, False, False), (None, 0.3, False, False),
                                   (None, 1.2, False, False), (0.0, 0, True, False), (0.0, 0, False, True),
                                   (0.3, 25, False, False), (0.8, 45, False, False)):
             for ratxa, temp in ((10, 15), (45, 15), (55, 15), (75, 15), (95, 15), (10, 2.5), (10, 0.5)):
                 casos.append({"probabilitat": p, "pluja_mm": mm, "plou_ara": plou, "avis": avis,
                               "ratxa": ratxa, "temperatura": temp})
-        trams = [[{"hora": "2026-10-09T09:00", "fins": "2026-10-09T10:00", "temperatura": c["temperatura"],
+        # Dues hores: d'aquí a 2 (llindars «curt») i a 7 (llindars «llarg»), ADR 0069.
+        casos = [{**c, "antelacio_h": a} for c in casos for a in (2, 7)]
+        trams = [[{"hora": f"2026-10-09T{8 + c['antelacio_h'] - 1:02d}:00", "fins": f"2026-10-09T{8 + c['antelacio_h']:02d}:00",
+                   "temperatura": c["temperatura"],
                    "ratxa": c["ratxa"], "pluja_mm": c["pluja_mm"], "probabilitat": c["probabilitat"],
                    "plou_ara": c["plou_ara"], "avisos": [{"tipus": ["pluja"]}] if c["avis"] else []}] for c in casos]
         for mitja in A.MITJANS_SORTIR:
@@ -502,13 +506,15 @@ class Web(unittest.TestCase):
         moto = avalua("moto", viatge(0.25, 1.7))
         self.assertEqual(moto["nivell"], "compte")
         self.assertEqual(moto["motius"], ["Pot ploure a l’anada i a la tornada: porta l’impermeable."])
-        self.assertEqual(avalua("moto", viatge(0.45, 0.3))["nivell"], "no")
+        # La tornada, d'aquí a 7 hores: «millor no» des del 60 % (ADR 0069).
+        self.assertEqual(avalua("moto", viatge(0.45, 0.3))["nivell"], "compte")
+        self.assertEqual(avalua("moto", viatge(0.65, 0.3))["nivell"], "no")
         self.assertEqual(avalua("moto", viatge(0.12, 0.0, []))["nivell"], "compte")
         self.assertEqual(avalua("moto", viatge(0.05, 0.6, []))["nivell"], "be")
         # Sense probabilitat, manen els mil·límetres.
         self.assertEqual(avalua("bici", viatge(None, 1.2, []))["nivell"], "no")
-        # El cotxe no canvia: un sol model amb 1 mm o més és pluja probable.
-        self.assertEqual(avalua("cotxe", viatge(0.25, 1.7, []))["nivell"], "compte")
+        # En cotxe també decideix la probabilitat (ADR 0069): un sol model amb 1,7 mm, no.
+        self.assertEqual(avalua("cotxe", viatge(0.25, 1.7, []))["nivell"], "be")
 
     def test_nou_al_costat_dels_avisos(self):
         # «Nou!» fins que s'entra a la pàgina «Avisos» i, per a tothom, fins al

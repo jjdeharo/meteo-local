@@ -847,15 +847,29 @@ partes no están comprobadas.
 **Comprobación con lo que pasa** (desde el 10-10-2026, de todos los medios:
 apartado siguiente).
 
+### Los umbrales de lluvia, aprendidos (ADR 0069)
+
+Desde el 10-10-2026 los umbrales de lluvia son los mismos para todos los
+medios y se aprenden. Qué tiene que cumplir cada nivel: con «pluja probable»
+tiene que llover al menos 2 de cada 3 veces; con «bé», como mucho 1 de cada
+100 y nunca más de 1 de cada 10 en ninguna franja de 5 puntos. Con la
+proporción $\hat f = k/n$ de horas con lluvia, se exige la cota de Wilson
+
+$$\frac{\hat f + \frac{z^2}{2n} \mp z\sqrt{\frac{\hat f(1-\hat f)}{n} + \frac{z^2}{4n^2}}}{1 + \frac{z^2}{n}}, \qquad z = 1{,}28,$$
+
+la baja para «pluja probable» (≥ 2/3) y la alta para «bé» (≤ 1/100). Dos
+juegos: para dentro de 3 horas o menos y para más tarde. De partida, los del
+archivo con la lluvia de la estación de casa (40 % y 10 %; 60 % y 10 %); cada
+día, con 30 horas de lluvia o más en `sortir.csv` por banda, se buscan los
+que cumplen, se proponen y se aplican al día siguiente.
+
 ### Los demás medios
 
-Estos umbrales son de criterio, no ajustados con datos:
-
 - **Coche**: «millor no» con 40 mm o más en una hora y «compte» con 20 (los
-  umbrales naranja y amarillo de la AEMET); con lluvia probable (50 % o más,
-  1 mm, lluvia ahora o aviso de la AEMET), también «compte».
-- **A pie**: «compte» si alguna hora fuera de casa tiene un 20 % o más, 0,2
-  mm, lluvia ahora o aviso de la AEMET por lluvia o tormentas.
+  umbrales naranja y amarillo de la AEMET); con lluvia probable (el umbral
+  «pluja» aprendido, lluvia ahora o aviso de la AEMET), también «compte».
+- **A pie**: «compte» (paraguas) con el umbral «risc» aprendido, lluvia
+  ahora o aviso de la AEMET por lluvia o tormentas.
 - **Viento y frío**, como pares [«compte», «millor no»]: rachas en bici de
   40 y 50 km/h, en moto de 50 y 70, en coche «compte» desde 90 y a pie
   «millor no» desde 70; frío en bici y en moto de 3 y 1 °C, y en coche

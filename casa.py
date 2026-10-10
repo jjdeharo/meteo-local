@@ -467,6 +467,11 @@ def recoger(anterior=None):
         salida["plans_ocults"] = [p for p in planes if not P.pla_per_temps(p, avisos, P.AHORA)]
         planes = [p for p in planes if P.pla_per_temps(p, avisos, P.AHORA)]
     salida["avisos"], salida["plans"] = avisos, planes
+    # Los umbrales de lluvia de «Si surts», los aprendidos (ADR 0069).
+    try:
+        salida["sortir_llindars"] = A.llindars_sortir()
+    except Exception as ex:
+        salida["errors"].append(f"llindars: {ex}")
     # Con un plan a la vista, si Meteocat tiene aviso para la comarca: los
     # planes no dicen qué zona abarcan (ADR 0067). Si falla, no se dice nada.
     salida["smp"] = None

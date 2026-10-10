@@ -70,5 +70,6 @@
 | [0066](0066-cada-mensaje-dice-de-que-zona-habla.md) | Cada mensaje dice de qué zona habla | aceptado |
 | [0067](0067-avisos-de-meteocat-junto-a-los-planes.md) | Avisos de peligro de Meteocat para el Vallès Occidental, junto a los planes | aceptado |
 | [0068](0068-comprobacion-de-todos-los-medios-de-si-surts.md) | Comprobación diaria de todos los medios de «Si surts» | aceptado |
+| [0069](0069-umbrales-de-lluvia-aprendidos-en-si-surts.md) | Umbrales de lluvia de «Si surts» que se aprenden, según la antelación | aceptado |
 
 Plantilla: [0000-plantilla.md](0000-plantilla.md). Para crear uno: `nuevo-adr "Título"`.

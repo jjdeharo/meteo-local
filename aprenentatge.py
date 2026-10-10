@@ -511,6 +511,9 @@ def diari(avui=None, avisa=True):
         text_sortir = avis_sortir(avisa)
         if text_sortir:
             print(text_sortir)
+        text_llindars = aprén_sortir(avui, avisa)
+        if text_llindars:
+            print(text_llindars)
     except Exception as ex:
         print("No he pogut verificar Si surts:", ex)
     # El viento con las vecinas: factores, comprobación y, una vez, el
@@ -614,22 +617,27 @@ def _sobre(p, mm, prob, llindar_mm):
     return mm >= llindar_mm if p is None else p >= prob
 
 
-def nivell_pluja(mitja, h):
+def banda(h):
+    """«curt» si la hora es de aquí a SORTIR_CURT_H horas o menos; si no, «llarg»."""
+    return "curt" if (h.get("antelacio_h") or 0) <= C.SORTIR_CURT_H else "llarg"
+
+
+def nivell_pluja(mitja, h, llindars=None):
     """El nivel por lluvia de una hora, como avalua() de web/sortir.js. h:
-    probabilitat, pluja_mm, plou_ara y avis (aviso de AEMET por lluvia)."""
+    probabilitat, pluja_mm, plou_ara, avis (aviso de AEMET por lluvia) y
+    antelacio_h; llindars: los de lluvia en uso (llindars_sortir)."""
+    ll = (llindars or C.SORTIR_LLINDARS_PLUJA)[banda(h)]
     p, mm, plou, avis = h.get("probabilitat"), h.get("pluja_mm") or 0, bool(h.get("plou_ara")), bool(h.get("avis"))
+    pluja = plou or _sobre(p, mm, ll["pluja"], C.SORTIR_MM_PLUJA)
+    risc = plou or avis or _sobre(p, mm, ll["risc"], C.SORTIR_MM_RISC)
     if mitja in ("bici", "moto"):
-        if plou or _sobre(p, mm, C.MOTO_PROB_PLUJA, C.MOTO_MM_PLUJA):
-            return "no"
-        return "compte" if avis or _sobre(p, mm, C.MOTO_PROB_RISC, C.MOTO_MM_RISC) else "be"
+        return "no" if pluja else "compte" if risc else "be"
     if mitja == "cotxe":
         if mm >= C.SORTIR_PLUJA_COTXE[1]:
             return "no"
-        clar = (p or 0) >= C.SORTIR_PROB_PLUJA or mm >= C.SORTIR_MM_PLUJA or plou or avis
-        return "compte" if mm >= C.SORTIR_PLUJA_COTXE[0] or clar else "be"
+        return "compte" if mm >= C.SORTIR_PLUJA_COTXE[0] or pluja or avis else "be"
     if mitja == "peu":
-        mulla = (p or 0) >= C.SORTIR_PROB_RISC or mm >= C.SORTIR_MM_RISC or plou or avis
-        return "compte" if mulla else "be"
+        return "compte" if risc else "be"
     return "be"
 
 
@@ -651,16 +659,16 @@ def nivell_llindar(valor, llindars, baix=False):
     return "no" if passa(no) else "compte" if passa(compte) else "be"
 
 
-def nivells_sortir(mitja, h):
+def nivells_sortir(mitja, h, llindars=None):
     """{pluja, vent, fred} de una hora para un medio (sin el tráfico)."""
     ll = C.SORTIR_LLINDARS[mitja]
-    return {"pluja": nivell_pluja(mitja, h), "vent": nivell_llindar(h.get("ratxa"), ll["ratxa"]),
+    return {"pluja": nivell_pluja(mitja, h, llindars), "vent": nivell_llindar(h.get("ratxa"), ll["ratxa"]),
             "fred": nivell_llindar(h.get("temperatura"), ll["fred"], baix=True)}
 
 
-def nivell_sortir(mitja, h):
+def nivell_sortir(mitja, h, llindars=None):
     """El nivel de una hora: el peor de las tres reglas."""
-    return max((n for n in nivells_sortir(mitja, h).values() if n), key=ORDRE_NIVELLS.index, default="be")
+    return max((n for n in nivells_sortir(mitja, h, llindars).values() if n), key=ORDRE_NIVELLS.index, default="be")
 
 
 def ratxa_observada(vent, fins):
@@ -731,7 +739,8 @@ def _hora_sortir(r):
     """Una fila de sortir.csv, con números."""
     n = {k: _num(r.get(k)) for k in ("probabilitat", "pluja_mm", "ratxa", "temperatura", "pluja_obs", "ratxa_obs",
                                      "temperatura_obs")}
-    return {**n, "plou_ara": r.get("plou_ara") == "1", "avis": r.get("avis") == "1"}
+    return {**n, "plou_ara": r.get("plou_ara") == "1", "avis": r.get("avis") == "1",
+            "antelacio_h": _num(r.get("antelacio_h"))}
 
 
 def resum_sortir():
@@ -746,6 +755,7 @@ def resum_sortir():
         return None
     dies = sorted({r["fins"][:10] for r in files})
     res = {"dies": len(dies), "des_de": dies[0], "fins": dies[-1], "mitjans": {}}
+    llindars = llindars_sortir()
     for mitja in MITJANS_SORTIR:
         ll = C.SORTIR_LLINDARS[mitja]
         regles = {"pluja": (lambda h: h["pluja_obs"] is not None and h["pluja_obs"] >= C.UMBRAL_MM,
@@ -762,7 +772,7 @@ def resum_sortir():
             for termini in TERMINIS_SORTIR:
                 hs = [_hora_sortir(r) for r in files if r["termini"] == termini]
                 hs = [h for h in hs if mesurat(h)]
-                nivell = (lambda h, regla=regla: nivells_sortir(mitja, h)[regla] or "be")
+                nivell = (lambda h, regla=regla: nivells_sortir(mitja, h, llindars)[regla] or "be")
                 m[regla][termini] = {n: [sum(1 for h in hs if nivell(h) == n), sum(1 for h in hs if nivell(h) == n and passa(h))]
                                      for n in ORDRE_NIVELLS}
                 if mitja == "moto" and regla == "pluja":
@@ -800,6 +810,132 @@ def text_resum_sortir(r):
     if pluja_total < 5:
         linies.append("Encara hi ha massa poca pluja per jutjar-ho.")
     return "\n".join(linies)
+
+
+# --- Los umbrales de lluvia de «Si surts», aprendidos (ADR 0069) -------------------
+# Juanjo, 10-10-2026: cada nivel tiene que significar lo que dice. Con
+# «millor no» tiene que llover al menos 2 de cada 3 veces; con «bé», como
+# mucho 1 de cada 100. La probabilidad acierta más cerca de la hora, así que
+# (y ninguna franja de 5 puntos con «bé», más de 1 de cada 10). La
+# probabilidad acierta más cerca de la hora, así que
+# hay dos juegos de umbrales: para dentro de SORTIR_CURT_H horas o menos
+# («curt», se juzga con la previsión de 1 a 3 h antes) y para más tarde
+# («llarg», con la de 6 a 10 h antes). «pluja»: el umbral más bajo cuyo
+# resultado cumple el objetivo también con el margen de la muestra (cota de
+# Wilson); «risc»: el más alto. Se proponen, se avisa y se aplican al día
+# siguiente, como el resto del aprendizaje (ATURA los para).
+
+LLINDARS_SORTIR = os.path.join(DIR, "llindars-sortir.json")
+PROPOSTA_SORTIR = os.path.join(DIR, "llindars-sortir-proposta.json")
+TERMINI_BANDA = {"sortida": "curt", "tornada": "llarg"}
+GRAELLA_PLUJA = [round(0.25 + 0.05 * k, 2) for k in range(12)]          # 25 % a 80 %
+GRAELLA_RISC = [round(0.05 * k, 2) for k in range(1, 5)]                 # 5, 10, 15 i 20 %
+
+
+def wilson(exits, n, z=None):
+    """(cota baja, cota alta) de una proporción."""
+    z = C.SORTIR_Z if z is None else z
+    if not n:
+        return 0.0, 1.0
+    f = exits / n
+    centre = (f + z * z / (2 * n)) / (1 + z * z / n)
+    marge = z * math.sqrt(f * (1 - f) / n + z * z / (4 * n * n)) / (1 + z * z / n)
+    return centre - marge, centre + marge
+
+
+def apren_llindars(mostres):
+    """mostres: [(probabilitat, plou)]. Los umbrales que cumplen los objetivos,
+    o None si no hay bastante lluvia para decidir."""
+    mostres = [(p, y) for p, y in mostres if p is not None]
+    if sum(y for _, y in mostres) < C.SORTIR_MIN_PLUJA:
+        return None
+    res = {}
+    for t in GRAELLA_PLUJA:
+        dins = [y for p, y in mostres if p >= t]
+        if len(dins) >= C.SORTIR_MIN_HORES and wilson(sum(dins), len(dins))[0] >= C.SORTIR_OBJECTIU_NO:
+            res["pluja"] = t
+            break
+    # «Bé»: en conjunto, 1 de cada 100 con el margen; y ninguna franja de 5
+    # puntos por debajo puede llover más de 1 de cada 10 veces, para que las
+    # muchas horas secas no tapen las dudosas (la de justo debajo, con datos
+    # suficientes para juzgarla).
+    def franges_bones(t):
+        a = 0.0
+        while a < t - 1e-9:
+            dins = [y for p, y in mostres if a <= p < min(a + 0.05, t)]
+            if len(dins) >= C.SORTIR_MIN_HORES and sum(dins) / len(dins) > C.SORTIR_OBJECTIU_FRANJA:
+                return False
+            if a + 0.05 >= t - 1e-9 and len(dins) < C.SORTIR_MIN_HORES:
+                return False
+            a += 0.05
+        return True
+    for t in reversed(GRAELLA_RISC):
+        dins = [y for p, y in mostres if p < t]
+        if (len(dins) >= C.SORTIR_MIN_HORES and wilson(sum(dins), len(dins))[1] <= C.SORTIR_OBJECTIU_BE
+                and franges_bones(t)):
+            res["risc"] = t
+            break
+    return res or None
+
+
+def llindars_sortir():
+    """Los umbrales en uso: los aprendidos o, si no hay, los de partida."""
+    ll = json.loads(json.dumps(C.SORTIR_LLINDARS_PLUJA))
+    try:
+        with open(LLINDARS_SORTIR, encoding="utf-8") as f:
+            apresos = json.load(f)
+        for banda, v in apresos.get("llindars", {}).items():
+            ll.setdefault(banda, {}).update({k: v[k] for k in ("pluja", "risc") if k in v})
+    except (OSError, ValueError):
+        pass
+    return ll
+
+
+def mostres_sortir():
+    """De sortir.csv, por banda: [(probabilitat, plou)] de las horas con lluvia medida."""
+    res = {"curt": [], "llarg": []}
+    if not os.path.exists(SORTIR):
+        return res
+    with open(SORTIR, encoding="utf-8") as f:
+        for r in csv.DictReader(f):
+            p, obs = _num(r.get("probabilitat")), _num(r.get("pluja_obs"))
+            if p is not None and obs is not None:
+                res[TERMINI_BANDA[r["termini"]]].append((p, obs >= C.UMBRAL_MM))
+    return res
+
+
+def aprén_sortir(avui, avisa=True):
+    """1. Una propuesta de ayer, si nadie la ha parado, se aplica. 2. Con los
+    datos de hoy, si los umbrales que cumplen los objetivos no son los de
+    ahora, se propone para mañana y se avisa. Devuelve el texto del aviso."""
+    text = None
+    if os.path.exists(PROPOSTA_SORTIR):
+        with open(PROPOSTA_SORTIR, encoding="utf-8") as f:
+            proposta = json.load(f)
+        os.remove(PROPOSTA_SORTIR)
+        if proposta.get("dia", "") < avui and not os.path.exists(ATURA):
+            guarda(LLINDARS_SORTIR, {"des_de": avui, "llindars": proposta["llindars"], "dades": proposta["dades"]})
+    ara = llindars_sortir()
+    nous, dades = {}, {}
+    for banda, mostres in mostres_sortir().items():
+        apres = apren_llindars(mostres)
+        if apres:
+            nous[banda] = {**ara[banda], **apres}
+            dades[banda] = {"hores": len(mostres), "hores_pluja": sum(y for _, y in mostres)}
+    canvis = {b: v for b, v in nous.items() if v != ara.get(b)}
+    if canvis:
+        guarda(PROPOSTA_SORTIR, {"dia": avui, "llindars": {**{b: ara[b] for b in ara}, **canvis}, "dades": dades})
+        noms = {"curt": "per sortir d'aquí a 3 hores o menys", "llarg": "per a més tard"}
+        linies = [f"Si surts, llindars de pluja: canvi proposat, s'aplicarà demà (per aturar-ho, demana-ho a Claude)."]
+        for b, v in canvis.items():
+            a = ara[b]
+            linies.append(f"{noms[b].capitalize()}: «millor no» des del {round(a['pluja'] * 100)} % al "
+                          f"{round(v['pluja'] * 100)} %, «compte» des del {round(a['risc'] * 100)} % al "
+                          f"{round(v['risc'] * 100)} % ({dades[b]['hores']} hores, {dades[b]['hores_pluja']} amb pluja).")
+        text = "\n".join(linies)
+        if avisa:
+            subprocess.run(["avisar-juanjo", "--asunto", "meteo-local", text], check=False)
+    return text
 
 
 def avis_sortir(avisa=True):

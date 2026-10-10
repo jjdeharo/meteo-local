@@ -8,16 +8,27 @@
 const FITXER_DADES = document.documentElement.dataset.dades || 'casa.json';
 const TORNADA_PER_DEFECTE_H = 3;
 
-// Llindars de pluja: els del trajecte (config.py), comprovats amb dades.
-const PROB_RISC = 0.2;
-const PROB_PLUJA = 0.5;
+// Llindars de pluja, iguals per a tots els mitjans (ADR 0069): només la
+// probabilitat, que ja porta els models, el radar, les estacions i el que
+// aprèn el programa; sense probabilitat, els mil·límetres. Amb «millor no» ha
+// de ploure almenys 2 de cada 3 vegades, i amb «bé», com a molt 1 de cada 100:
+// el NAS els aprèn cada dia amb el que passa a Montflorit i arriben a les dades
+// (sortir_llindars); aquests, els de partida (config.SORTIR_LLINDARS_PLUJA),
+// per si no hi són. Dos jocs: per d'aquí a CURT_H hores o menys, i per a més
+// tard, quan la previsió és menys segura. «pluja»: «millor no» en bici i moto,
+// «compte» en cotxe; «risc»: «compte» en bici i moto i el paraigua a peu.
+const LLINDARS_PLUJA_INICI = { curt: { pluja: 0.4, risc: 0.1 }, llarg: { pluja: 0.6, risc: 0.1 } };
+const CURT_H = 3;
 const MM_RISC = 0.2;
 const MM_PLUJA = 1;
-// Moto i bici: només la probabilitat, que ja porta els models, el radar, les
-// estacions i el que aprèn el programa; un sol model plujós no decideix.
-// Comprovat amb l'arxiu del 2024 al 2026 (calibracio/regla_moto.py, ADR 0047).
-const PROB_RISC_RODES = 0.1;
-const PROB_PLUJA_RODES = 0.4;
+let llindarsPluja = LLINDARS_PLUJA_INICI;
+
+// Els llindars d'una hora, segons quant falta perquè acabi (com antelacio_h del registre).
+function llindars(f) {
+  const h = (new Date(f.fins) - Date.now()) / 3.6e6;
+  const banda = h <= CURT_H ? 'curt' : 'llarg';
+  return { ...LLINDARS_PLUJA_INICI[banda], ...((llindarsPluja || {})[banda] || {}) };
+}
 // Vent (ratxes, km/h) i fred (°C) per mitjà: [compte, millor no].
 const LLINDARS = {
   peu: { ratxa: [null, 70], fred: [null, null] },
@@ -42,36 +53,36 @@ function avisPluja(f) {
 
 // Risc de pluja en una hora: el mateix que «moja» de casa.py.
 function mulla(f) {
-  return (f.probabilitat || 0) >= PROB_RISC || (f.pluja_mm || 0) >= MM_RISC || f.plou_ara || avisPluja(f);
+  return sobre(f, llindars(f).risc, MM_RISC) || f.plou_ara || avisPluja(f);
 }
 
 // Una hora amb risc de pluja només per l'avís de l'AEMET: ni la probabilitat
 // (que ja porta el radar), ni els models, ni les estacions hi veuen pluja. Es
 // manté el que diu l'avís, però es diu clar (ADR 0008 i 0029).
 function senseDades(f) {
-  return (f.probabilitat || 0) < PROB_RISC && (f.pluja_mm || 0) < MM_RISC && !f.plou_ara;
+  return !sobre(f, llindars(f).risc, MM_RISC) && !f.plou_ara;
 }
 
 function plouClar(f) {
-  return (f.probabilitat || 0) >= PROB_PLUJA || (f.pluja_mm || 0) >= MM_PLUJA || f.plou_ara || avisPluja(f);
+  return plouRodes(f) || avisPluja(f);
 }
 
-// Moto i bici (ADR 0047). Sense probabilitat, manen els mil·límetres, com a
-// la pàgina del temps. L'avís de l'AEMET tot sol porta a «compte», no a «no».
+// Sense probabilitat, manen els mil·límetres, com a la pàgina del temps.
+// L'avís de l'AEMET tot sol porta a «compte», no a «no» (ADR 0047).
 function sobre(f, prob, mm) {
   return f.probabilitat == null ? (f.pluja_mm || 0) >= mm : f.probabilitat >= prob;
 }
 
 function plouRodes(f) {
-  return sobre(f, PROB_PLUJA_RODES, MM_PLUJA) || f.plou_ara;
+  return sobre(f, llindars(f).pluja, MM_PLUJA) || f.plou_ara;
 }
 
 function mullaRodes(f) {
-  return sobre(f, PROB_RISC_RODES, MM_RISC) || f.plou_ara || avisPluja(f);
+  return mulla(f);
 }
 
 function nomesAvisRodes(f) {
-  return !sobre(f, PROB_RISC_RODES, MM_RISC) && !f.plou_ara;
+  return senseDades(f);
 }
 
 function hora(f) {
@@ -141,7 +152,7 @@ function avalua(mitja, tram, trens, futur, transit) {
     else if (viatge.some(plouClar)) {
       // El nivell, el de sempre; el text, el mateix que en moto (ADR 0047): «Pluja
       // probable» només si la probabilitat ho diu, i l'avís, si és l'únic que la veu.
-      const dades = (f) => sobre(f, PROB_RISC_RODES, MM_RISC) || f.plou_ara;
+      const dades = (f) => sobre(f, llindars(f).risc, MM_RISC) || f.plou_ara;
       if (viatge.some(plouRodes)) puja('compte', T`Pluja probable ${quan(anada, tornada, plouRodes)}: condueix amb compte.`);
       else if (viatge.some(dades)) puja('compte', T`Pot ploure ${quan(anada, tornada, dades)}: condueix amb compte.`);
       else if (viatge.some(avisPluja)) {
@@ -481,6 +492,15 @@ function horesVigents(hores, ara) {
 function pinta(dades) {
   dades = { ...dades, hores: horesVigents(dades.hores, new Date()) };
   DADES = dades;
+  llindarsPluja = dades.sortir_llindars || LLINDARS_PLUJA_INICI;
+  // A «Com es decideix», els llindars d'ara, que s'aprenen (ADR 0069).
+  for (const banda of ['curt', 'llarg']) {
+    for (const k of ['pluja', 'risc']) {
+      const el = $(`ll-${banda}-${k}`);
+      const v = ((llindarsPluja || {})[banda] || LLINDARS_PLUJA_INICI[banda])[k];
+      if (el && v != null) el.textContent = String(Math.round(v * 100));
+    }
+  }
   // Dades de fa massa: només l'avís i on mirar (ADR 0031).
   const velles = dadesVelles(dades);
   for (const id of ['hores', 'triats']) $(id).hidden = velles;

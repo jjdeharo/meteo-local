@@ -2,6 +2,9 @@
 
 Fecha: 2026-10-08 · Estado: aceptado
 
+> Desde el 10-10-2026 los umbrales de lluvia son los mismos para todos los
+> medios, dependen de la antelación y se aprenden (ADR 0069).
+
 ## Contexto
 
 El 08-10-2026 «Si surts» desaconsejó la moto para una salida a las 10 h con

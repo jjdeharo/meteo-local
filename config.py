@@ -2,7 +2,7 @@
 """Datos fijos de «Temps a Montflorit»: lugares, horario, fuentes y umbrales.
 Se cambian aquí, no en los programas."""
 
-VERSION = "3.55.0"
+VERSION = "3.56.0"
 
 # Coordenadas con tres decimales (unos 100 m), no las exactas: para el tiempo
 # da igual una calle u otra, y el repositorio es público.
@@ -163,25 +163,36 @@ PLOU_ARA_MIN = 15
 RADAR_EN_DIRECTE = {"rainviewer": "https://www.rainviewer.com/map.html?loc=41.482,2.135,9&layer=radar",
                     "meteocat": "https://www.meteo.cat/observacions/radar"}
 
-# «Si surts», lluvia en moto y en bici (web/sortir.js, ADR 0047): solo la
-# probabilidad, desde el 10 % «compte» y desde el 40 % «millor no»; sin
-# probabilidad, la lluvia de los modelos. Un aviso de AEMET solo, «compte».
-# Comprobado con el archivo (calibracio/regla_moto.py); las pruebas miran que
-# coincidan con los de la página.
-MOTO_PROB_RISC = 0.1
-MOTO_PROB_PLUJA = 0.4
-MOTO_MM_RISC = 0.2
-MOTO_MM_PLUJA = 1.0
-# La resta de regles meteorològiques de «Si surts» (web/sortir.js), per a la
-# comprovació diària de tots els mitjans (aprenentatge.verifica_sortir, ADR
-# 0068); les proves les comparen amb la pàgina. A peu, «compte» (paraigua) des
-# del 20 % o 0,2 mm; en cotxe, «compte» des del 50 % o 1 mm, i pel que plou en
-# una hora, els llindars groc i taronja d'AEMET. Ratxes (km/h) i fred (°C):
-# (compte, millor no).
-SORTIR_PROB_RISC = 0.2
-SORTIR_PROB_PLUJA = 0.5
+# «Si surts», lluvia (web/sortir.js, ADR 0047 y 0069): solo la probabilidad,
+# con los umbrales aprendidos (SORTIR_LLINDARS_PLUJA, más abajo); sin
+# probabilidad, la lluvia de los modelos: 0,2 mm «compte» y 1 mm «millor no».
+# Un aviso de AEMET solo, «compte». Las pruebas miran que coincidan con la página.
 SORTIR_MM_RISC = 0.2
 SORTIR_MM_PLUJA = 1.0
+# Els llindars de pluja de «Si surts», per a tots els mitjans, apresos
+# (aprenentatge.aprén_sortir, ADR 0069): amb «millor no» ha de ploure almenys
+# 2 de cada 3 vegades i amb «bé», com a molt 1 de cada 100, també amb el marge
+# de la mostra (cota de Wilson amb z = 1,28, un 90 % d'un sol costat). Dos
+# jocs: «curt», per a d'aquí a SORTIR_CURT_H hores o menys, i «llarg», per a
+# més tard. Els de partida surten de l'arxiu amb la pluja de l'estació de casa
+# (del 08-10-2025 al 04-10-2026, ADR 0069). «pluja»: «millor no» en bici i
+# moto, «compte» en cotxe; «risc»: «compte» en bici i moto i el paraigua a peu.
+SORTIR_CURT_H = 3
+SORTIR_OBJECTIU_NO = 2 / 3
+SORTIR_OBJECTIU_BE = 0.01
+SORTIR_OBJECTIU_FRANJA = 0.1   # i cap franja de 5 punts amb «bé» per sobre d'1 de cada 10
+SORTIR_Z = 1.28
+SORTIR_MIN_PLUJA = 30          # hores amb pluja per banda abans d'aprendre
+SORTIR_MIN_HORES = 30          # hores per sobre (o per sota) d'un llindar per jutjar-lo
+# Curt: 40 % (hi plou el 71 %, 233 hores) i 10 % (per sota, el 0,6 %; del 10
+# al 15 % plou el 14 %, massa per a «bé»); llarg, amb la previsió d'un dia
+# abans: 60 % (el 79 %, 56 hores) i 10 % (del 10 al 15 %, el 12 %).
+SORTIR_LLINDARS_PLUJA = {"curt": {"pluja": 0.4, "risc": 0.1}, "llarg": {"pluja": 0.6, "risc": 0.1}}
+# La resta de regles meteorològiques de «Si surts» (web/sortir.js), per a la
+# comprovació diària de tots els mitjans (aprenentatge.verifica_sortir, ADR
+# 0068); les proves les comparen amb la pàgina. En cotxe, pel que plou en una
+# hora, els llindars groc i taronja d'AEMET. Ratxes (km/h) i fred (°C):
+# (compte, millor no).
 SORTIR_PLUJA_COTXE = (20, 40)
 SORTIR_LLINDARS = {
     "peu": {"ratxa": (None, 70), "fred": (None, None)},

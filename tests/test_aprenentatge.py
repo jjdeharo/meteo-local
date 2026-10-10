@@ -157,10 +157,11 @@ class Sortir(unittest.TestCase):
     def test_mismos_umbrales_que_la_pagina(self):
         web = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "web", "sortir.js")
         js = open(web, encoding="utf-8").read()
-        for nom, valor in (("PROB_RISC_RODES", C.MOTO_PROB_RISC), ("PROB_PLUJA_RODES", C.MOTO_PROB_PLUJA),
-                           ("MM_RISC", C.MOTO_MM_RISC), ("MM_PLUJA", C.MOTO_MM_PLUJA),
-                           ("PROB_RISC", C.SORTIR_PROB_RISC), ("PROB_PLUJA", C.SORTIR_PROB_PLUJA)):
+        for nom, valor in (("MM_RISC", C.SORTIR_MM_RISC), ("MM_PLUJA", C.SORTIR_MM_PLUJA), ("CURT_H", C.SORTIR_CURT_H)):
             self.assertIn(f"const {nom} = {valor:g};", js)
+        ll = C.SORTIR_LLINDARS_PLUJA
+        self.assertIn("const LLINDARS_PLUJA_INICI = { curt: { pluja: %g, risc: %g }, llarg: { pluja: %g, risc: %g } };"
+                      % (ll["curt"]["pluja"], ll["curt"]["risc"], ll["llarg"]["pluja"], ll["llarg"]["risc"]), js)
         self.assertIn(f"const PLUJA_COTXE = [{C.SORTIR_PLUJA_COTXE[0]}, {C.SORTIR_PLUJA_COTXE[1]}];", js)
 
     def test_el_cas_del_8_d_octubre(self):
@@ -198,6 +199,8 @@ class Diari(unittest.TestCase):
         A.AVIS_XV = os.path.join(A.DIR, "avis-sant-cugat")
         A.SORTIR, A.AVIS_SORTIR = os.path.join(A.REGISTRE, "sortir.csv"), os.path.join(A.DIR, "avis-sortir")
         A.MOTO_VELL = os.path.join(A.REGISTRE, "moto.csv")
+        A.LLINDARS_SORTIR = os.path.join(A.DIR, "llindars-sortir.json")
+        A.PROPOSTA_SORTIR = os.path.join(A.DIR, "llindars-sortir-proposta.json")
         os.makedirs(A.REGISTRE)
 
     def registra(self, dias, error=2.0, com_arxiu=False):
@@ -343,8 +346,8 @@ class Diari(unittest.TestCase):
         self.assertIn("vent", r["mitjans"]["cotxe"])               # 90 km/h: «compte»
         self.assertIn("fred", r["mitjans"]["moto"])
         self.assertNotIn("fred", r["mitjans"]["peu"])           # a peu no hi ha regla de fred
-        # A peu, el paraigua des del 20 %: amb un 15 % i sense avís, «bé».
-        self.assertEqual(r["mitjans"]["peu"]["pluja"]["sortida"]["be"], [16, 1])
+        # A peu, el paraigua des del 15 % per sortir aviat (ADR 0069): amb un 15 %, «compte».
+        self.assertEqual(r["mitjans"]["peu"]["pluja"]["sortida"]["compte"], [16, 1])
         text = A.text_resum_sortir(r)
         self.assertIn("Bici o patinet, ratxes:", text)
         self.assertIn("Encara hi ha massa poca pluja", text)
@@ -356,6 +359,44 @@ class Diari(unittest.TestCase):
             self.assertIsNone(A.avis_sortir(avisa=False))
         finally:
             A.DIES_RESUM_SORTIR = 28
+
+    def test_els_llindars_de_pluja_s_aprenen(self):
+        # ADR 0069: «millor no», que plogui almenys 2 de cada 3 vegades; «bé», com a molt 1 de cada 100.
+        rnd = random.Random(3)
+        mostres = []
+        for k in range(20000):
+            p = rnd.choice([0.003] * 40 + [0.05, 0.1, 0.2, 0.3, 0.5, 0.7, 0.9])
+            mostres.append((p, rnd.random() < p))      # probabilitat ben calibrada
+        ll = A.apren_llindars(mostres)
+        # El llindar més baix amb què, per sobre, plou almenys 2 de cada 3 vegades
+        # (aquí, les hores del 50, 70 i 90 %); amb el 30 % també a dins, no.
+        self.assertEqual(ll["pluja"], 0.35)
+        dins = [y for q, y in mostres if q >= ll["pluja"]]
+        self.assertGreaterEqual(sum(dins) / len(dins), 2 / 3)
+        self.assertLessEqual(ll["risc"], 0.15)           # per sota, l'1 %, i cap franja amb «bé» per sobre d'1 de cada 10
+        self.assertIsNone(A.apren_llindars(mostres[:50]))  # sense prou pluja, res
+        # Com a l'arxiu de casa: del 10 al 15 % plou el 14 %; tot i que per sota
+        # del 15 % el conjunt queda per sota de l'1 %, aquesta franja no pot ser «bé».
+        casa = ([(0.01, k < 40) for k in range(8000)] + [(0.07, k < 5) for k in range(100)]
+                + [(0.12, k < 21) for k in range(150)] + [(0.5, k < 70) for k in range(100)])
+        self.assertEqual(A.apren_llindars(casa)["risc"], 0.1)
+        lo, hi = A.wilson(70, 100)
+        self.assertTrue(lo < 0.7 < hi)
+        # Al registre: es proposa, s'avisa i s'aplica l'endemà (si ningú no ho atura).
+        os.makedirs(A.DIR, exist_ok=True)
+        with open(A.SORTIR, "w") as f:
+            f.write(",".join(A.CAMPS_SORTIR) + "\n")
+            for p, y in mostres[:6000]:
+                f.write(f"2026-10-09T12:00,sortida,x,2,{p},0,0,0,10,15,{1.0 if y else 0.0},10,15\n")
+        self.assertEqual(A.llindars_sortir(), C.SORTIR_LLINDARS_PLUJA)
+        text = A.aprén_sortir("2026-10-20", avisa=False)
+        self.assertIn("canvi proposat", text)
+        self.assertEqual(A.llindars_sortir(), C.SORTIR_LLINDARS_PLUJA)            # encara no
+        A.aprén_sortir("2026-10-21", avisa=False)
+        ara = A.llindars_sortir()
+        self.assertNotEqual(ara["curt"], C.SORTIR_LLINDARS_PLUJA["curt"])
+        self.assertEqual(ara["llarg"], C.SORTIR_LLINDARS_PLUJA["llarg"])          # sense dades de la tornada
+        self.assertIsNone(A.aprén_sortir("2026-10-22", avisa=False))               # ja hi és: res a proposar
 
     def test_propone_avisa_y_aplica_al_dia_siguiente(self):
         self.registra(20)
