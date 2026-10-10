@@ -245,6 +245,7 @@ h1 { margin: 0; font-size: 1.6rem; line-height: 1.2; }
 .com li { margin-bottom: .3rem; }
 
 .enllacos { margin: 1rem 0 0; }
+.enllacos a { white-space: nowrap; }
 
 .peu {
   margin-top: 2rem;
