@@ -125,6 +125,11 @@ Sant Cugat (portal de datos abiertos, variable 30):
 - La clave caduca el 10-04-2027: si no se regenera, la página avisará de
   que no puede leer las vecinas y «plou ara» volverá a depender solo de
   casa.
+- Las lecturas de hoy de la API llegan con unos 5-10 minutos de retraso
+  (en la primera pasada en el NAS, a las 06:42, la última era de las 06:34):
+  una lectura de más de 30 minutos no vale, como en casa. Y el registro de
+  cada vecina empieza en la segunda hora del día que se lee entera: la
+  primera, cortada, no cuenta (como en `ecowitt.hores`).
 - `pluja_arriba.py` (cuándo llega la lluvia que ve el radar) sigue mirando
   solo el pluviómetro de casa: mide cuándo llega a casa, no al barrio.
 
