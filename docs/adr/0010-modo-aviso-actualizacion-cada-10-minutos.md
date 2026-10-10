@@ -91,3 +91,33 @@ es el nombre de una fase de los planes de Protección Civil que la misma
 página muestra, y se habría leído como una alerta oficial. En el código y en
 los datos sigue siendo `mode_avis`. Desde la 3.49.0, un plan sin motivo
 meteorológico a la vista no lo activa (ADR 0062).
+
+## Cambio del 10-10-2026, por la tarde: «Mode normal» y «Mode vigilància»
+
+Juanjo: «no me gusta de prop, no dice nada», y pidió que la línea de la
+actualización empezara por el modo, con un «?» que explicara la diferencia
+entre los dos y, en el modo aviso, el motivo entre paréntesis. Los nombres
+son «Mode normal» y «Mode vigilància» («Modo normal», «Modo vigilancia»):
+vigilancia dice qué pasa (hay algo cerca y la página lo mira más a menudo).
+
+- **Una línea propia para el modo**, encima de «Actualitzat a les… ·
+  propera…», igual en los dos modos, para que la página no dé un salto al
+  cambiar de uno a otro. Medido en el móvil (360-412 px): con el modo delante
+  de la hora, la línea ocupaba dos en cualquier forma que conservara
+  «actualitzat»; así son siempre dos, partidas por el sitio que toca.
+- **El motivo entre paréntesis**, con los nombres de `motivos_modo_aviso`
+  traducidos («Mode vigilància (pluja al radar)»; varios, separados por
+  comas). El «?» va pegado a la última palabra para que no baje solo.
+- **El «?» en los dos modos**, con el mismo texto: «Mode normal: la pàgina
+  s'actualitza cada 15 minuts. Mode vigilància: s'actualitza cada 6 minuts,
+  just després de cada imatge nova del radar de Meteocat. La pàgina es posa
+  en mode vigilància quan hi ha un avís de l'AEMET, un pla de Protecció Civil
+  en alerta o emergència, pluja a Montflorit o pluja al radar a menys de
+  15 km. Quan ja no hi ha res d'això, torna al mode normal.» Juanjo corrigió
+  la primera redacción («hi passa sola no queda bien… ninguno se entiende»):
+  se nombra cada modo con todas las letras, sin pronombres.
+- **El horario de los datos lleva siempre los dos ritmos** (`normal_min`,
+  `avis_min`) y la distancia del radar (`radar_km`), también en modo normal,
+  para que el «?» pueda explicarlos; con datos de antes, los valores de
+  siempre.
+- Sustituye a la decisión del 09-10-2026 de no decir nada en el ritmo normal.

@@ -197,6 +197,15 @@ class Castella(unittest.TestCase):
         dades = js("IDIOMA.dades")
         paraules = list(R.NIVELLS) + list(C.PLANES_PC.values()) + list(C.PROCICAT_PC.values()) + list(N.RUMBS) + ["pluja", "tempestes",
                                                                                  "prealerta", "alerta", "emergència"]
+        # Els quatre motius del mode vigilància, tal com surten a les dades.
+        import datetime as dt
+        import prevision as P
+        ara = P.AHORA
+        avis = [{"zona": C.ZONA_AVISOS, "inicio": (ara - dt.timedelta(hours=1)).isoformat(),
+                 "fin": (ara + dt.timedelta(hours=1)).isoformat()}]
+        motius = P.motivos_modo_aviso(avis, [{"fase": "alerta"}], [{"intensitat": 1}], {"km_lluvia": 1})
+        self.assertEqual(len(motius), 4)
+        paraules += motius
         self.assertEqual([p for p in paraules if p not in dades], [])
         self.assertEqual(set(js("Object.keys(IDIOMA.riscos)")), set(R.TEXTOS))
 
@@ -228,13 +237,20 @@ class Castella(unittest.TestCase):
         self.assertEqual(js("textRadar({arriba: null, possible: null}, false)[1]"), "No se acerca lluvia en 2 horas")
         self.assertEqual(js("textRadar({arriba: '2026-10-06T11:15:00+02:00'}, false)[1]"), "Llegaría lluvia hacia las\u00a011:15")
         self.assertEqual(js("TD('al nord-est')"), "el nordeste")
-        self.assertEqual(js("textHorari({trams: [['00:00', '23:54']], cada_min: 6, mode_avis: ['pluja al radar']})"), "Seguimiento de cerca")
-        # Juanjo, 09-10-2026: el ritmo normal no se dice (la próxima hora ya lo dice) y el modo aviso se explica con un «?».
-        self.assertEqual(js("textHorari({trams: [['00:00', '23:45']], cada_min: 15, mode_avis: []})"), "")
-        self.assertEqual(js("textModeAvis({cada_min: 6, normal_min: 15, radar_km: 15})"),
-                         "Cuando hay un aviso de la AEMET, un plan de Protección Civil en alerta o emergencia, lluvia en "
-                         "Montflorit o lluvia en el radar a menos de 15 km, la página se actualiza más a menudo: cada 6 "
-                         "minutos en lugar de cada 15, al ritmo de las imágenes del radar.")
+        # Juanjo, 10-10-2026: «Modo normal» o «Modo vigilancia» con el motivo, y un «?» que explica los dos.
+        self.assertEqual(js("textHorari({trams: [['00:00', '23:54']], cada_min: 6, mode_avis: ['pluja al radar']})"),
+                         "Modo vigilancia (lluvia en el radar)")
+        self.assertEqual(js("textHorari({trams: [['00:00', '23:54']], cada_min: 6, mode_avis: [\"avís de l'AEMET\", 'pla de Protecció Civil']})"),
+                         "Modo vigilancia (aviso de AEMET, plan de Protección Civil)")
+        self.assertEqual(js("textHorari({trams: [['00:00', '23:45']], cada_min: 15, mode_avis: []})"), "Modo normal")
+        explicacio = ("Modo normal: la página se actualiza cada 15 minutos. Modo vigilancia: se actualiza cada 6 minutos, "
+                      "justo después de cada imagen nueva del radar de Meteocat. La página se pone en modo vigilancia "
+                      "cuando hay un aviso de AEMET, un plan de Protección Civil en alerta o emergencia, lluvia en "
+                      "Montflorit o lluvia en el radar a menos de 15 km. Cuando ya no hay nada de eso, vuelve al modo normal.")
+        self.assertEqual(js("textModeAvis({cada_min: 6, mode_avis: ['pluja al radar'], normal_min: 15, avis_min: 6, radar_km: 15})"), explicacio)
+        self.assertEqual(js("textModeAvis({cada_min: 15, mode_avis: [], normal_min: 15, avis_min: 6, radar_km: 15})"), explicacio)
+        # Datos de antes, sin los dos ritmos: los de siempre.
+        self.assertEqual(js("textModeAvis({cada_min: 15, mode_avis: []})"), explicacio)
         self.assertEqual(js("textAprenentatge({pluja: {origen: 'arxiu', des_de: '2024-01-01'}, temperatura: {origen: 'arxiu', des_de: '2025-10-08'}})"),
                          "Probabilidad de lluvia aprendida de lo que llovió de verdad en Sabadell y Sant Cugat desde 2024, "
                          "cuando los modelos decían lo mismo. Temperatura corregida con lo que ha medido la estación particular desde el 8/10/2025.")

@@ -204,10 +204,11 @@ h1 { margin: 0; font-size: 1.6rem; line-height: 1.2; }
 .nota { margin: 0; color: var(--suau); font-size: .9rem; }
 .horari { margin: .2rem 0 .7rem; font-size: .9rem; color: var(--suau); }
 .horari strong { color: var(--text); }
-.horari .mode { white-space: nowrap; }
+/* El mode en una línia pròpia, amb el «?»; les hores, a sota (ADR 0010). */
+.horari .mode, .horari .hores { display: block; }
 .horari .ajuda-fase { margin-left: .4rem; }
+.horari .sense-tall { white-space: nowrap; }
 .horari:empty { display: none; }
-.horari .mode { color: var(--suau); font-size: .9rem; }
 
 .perque {
   margin: 1.4rem 0 .5rem;

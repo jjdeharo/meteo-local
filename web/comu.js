@@ -127,20 +127,25 @@ function horesActualitzacio(horari) {
   return hores;
 }
 
-// El que s'afegeix a «Actualitzat a les… · propera…»: res si és el ritme
-// normal de tot el dia, perquè la propera hora ja diu cada quan (Juanjo,
-// 09-10-2026); «Seguiment de prop» (el mode avís) si està actiu, amb un «?» que explica què és; abans
-// «Mode avís» (Juanjo, 10-10-2026: «modo aviso no me gusta»).
+// La línia del mode, a sobre de «Actualitzat a les… · propera…»: «Mode
+// normal» o «Mode vigilància» amb el motiu entre parèntesis (el mode avís,
+// ADR 0010), i un «?» que explica els dos. Abans «Mode avís» i «Seguiment de
+// prop» (Juanjo, 10-10-2026: «no me gusta de prop, no dice nada»).
 function textHorari(horari) {
   const [[inici]] = horari.trams;
   const totElDia = horari.trams.length === 1 && inici === '00:00';
-  const trams = horari.trams.map(([a, b]) => `${a}\u2013${b}`).join(T(' i '));
-  if (horari.mode_avis && horari.mode_avis.length) return totElDia ? T('Seguiment de prop') : T`Seguiment de prop (${trams})`;
-  return totElDia ? '' : T`Dades en directe cada ${horari.cada_min} min (${trams}).`;
+  const trams = totElDia ? [] : [horari.trams.map(([a, b]) => `${a}\u2013${b}`).join(T(' i '))];
+  if (horari.mode_avis && horari.mode_avis.length) {
+    return T`Mode vigilància (${[...horari.mode_avis.map((m) => TD(m).replace(/'/g, '\u2019')), ...trams].join(', ')})`;
+  }
+  return trams.length ? T`Mode normal (${trams[0]})` : T('Mode normal');
 }
 
 function textModeAvis(horari) {
-  return T`Quan hi ha un avís de l’AEMET, un pla de Protecció Civil en alerta o emergència, pluja a Montflorit o pluja al radar a menys de ${horari.radar_km || 15} km, la pàgina s’actualitza més sovint: cada ${horari.cada_min} minuts en lloc de cada ${horari.normal_min || 15}, al ritme de les imatges del radar.`;
+  const vigilancia = horari.mode_avis && horari.mode_avis.length;
+  const normal = horari.normal_min || (vigilancia ? 15 : horari.cada_min);
+  const avis = horari.avis_min || (vigilancia ? horari.cada_min : 6);
+  return T`Mode normal: la pàgina s’actualitza cada ${normal} minuts. Mode vigilància: s’actualitza cada ${avis} minuts, just després de cada imatge nova del radar de Meteocat. La pàgina es posa en mode vigilància quan hi ha un avís de l’AEMET, un pla de Protecció Civil en alerta o emergència, pluja a Montflorit o pluja al radar a menys de ${horari.radar_km || 15} km. Quan ja no hi ha res d’això, torna al mode normal.`;
 }
 
 // Un «?» que mostra o amaga una explicació al costat (els plans de Protecció
@@ -190,23 +195,24 @@ function pintaHorari(dades, fonts = FONTS_TEMPS) {
   // L'hora d'actualització, destacada, al capdamunt de la pàgina (Juanjo, 09-10-2026:
   // «visible nada más abrir»).
   const dia = generat.toDateString() === ara.toDateString() ? '' : T` del ${generat.toLocaleDateString(IDIOMA.codi)}`;
-  $('horari').replaceChildren(T('Actualitzat a les '), element('strong', null, horaCurta(generat) + dia),
+  // El mode i el seu «?» en una línia pròpia, igual en els dos modes perquè la
+  // pàgina no salti quan canvia; l'explicació, a sota; després, les hores.
+  // El «?» va enganxat a l'última paraula, perquè no baixi sol a una altra línia.
+  const text = textHorari(dades.horari);
+  const tall = text.lastIndexOf(' ') + 1;
+  const [boto, sentit] = botoAjuda(textModeAvis(dades.horari), T('Què vol dir el mode?'), ajudaModeOberta,
+    (obert) => { ajudaModeOberta = obert; });
+  const final = element('span', 'sense-tall', text.slice(tall));
+  final.append(boto);
+  const mode = element('span', 'mode');
+  mode.append(text.slice(0, tall), final);
+  const linia = element('span', 'hores');
+  linia.append(T('Actualitzat a les '), element('strong', null, horaCurta(generat) + dia),
     T(' · propera: '), element('strong', null, propera ? horaCurta(propera) : T`demà a les ${dades.horari.trams[0][0]}`),
     '.');
-  const mode = textHorari(dades.horari);
-  if (mode) {
-    // «Mode avís» i el seu «?», sempre junts a la mateixa línia; l'explicació, a sota.
-    const span = element('span', 'mode', mode);
-    $('horari').append(' ', span);
-    if (dades.horari.mode_avis && dades.horari.mode_avis.length) {
-      const [boto, sentit] = botoAjuda(textModeAvis(dades.horari), T('Què és el seguiment de prop?'), ajudaModeOberta,
-        (obert) => { ajudaModeOberta = obert; });
-      span.append(boto);
-      $('horari').append(sentit);
-    }
-  }
+  $('horari').replaceChildren(mode, sentit, linia);
   // Calculades fora de casa perquè el servidor habitual no publica (ADR 0032).
-  if (dades.reserva) $('horari').append(' ', element('span', 'mode', T('Dades del servidor de reserva.')));
+  if (dades.reserva) linia.append(' ', element('span', 'reserva', T('Dades del servidor de reserva.')));
   const avisos = [];
   if (darreraPrevista && generat < darreraPrevista - 5 * 60000
       && ara - darreraPrevista > MARGE_RETARD_MIN * 60000) {

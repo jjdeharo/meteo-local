@@ -55,7 +55,7 @@ Temps a Montflorit (ADR 0030).
 ## Cómo funciona
 
 Un contenedor en el NAS de casa (`nas/`) ejecuta `publica.sh` cada cuarto de
-hora, todo el día; en modo aviso, que la página llama «Seguiment de prop» (aviso de AEMET, plan de Protección Civil
+hora, todo el día; en modo aviso, que la página llama «Mode vigilància», con el motivo entre paréntesis (aviso de AEMET, plan de Protección Civil
 activado o lluvia en las estaciones o en el radar a menos de 15 km), cada 6
 minutos, justo después de cada imagen nueva del radar de Meteocat (ADR 0010 y
 0020). El horario lo decide `que_toca.py` con el mismo dato que muestra la web.

@@ -46,10 +46,9 @@ var IDIOMA = {
     "Dades del servidor de reserva.": "Datos del servidor de reserva.",
     "previsió de Meteocat": "previsión de Meteocat",
     "radar": "radar",
-    "Seguiment de prop": "Seguimiento de cerca", "Seguiment de prop ({0})": "Seguimiento de cerca ({0})",
-    "Dades en directe cada {0} min ({1}).": "Datos en directo cada {0} min ({1}).",
-    "Què és el seguiment de prop?": "¿Qué es el seguimiento de cerca?",
-    "Quan hi ha un avís de l’AEMET, un pla de Protecció Civil en alerta o emergència, pluja a Montflorit o pluja al radar a menys de {0} km, la pàgina s’actualitza més sovint: cada {1} minuts en lloc de cada {2}, al ritme de les imatges del radar.": "Cuando hay un aviso de la AEMET, un plan de Protección Civil en alerta o emergencia, lluvia en Montflorit o lluvia en el radar a menos de {0} km, la página se actualiza más a menudo: cada {1} minutos en lugar de cada {2}, al ritmo de las imágenes del radar.",
+    "Mode normal": "Modo normal", "Mode normal ({0})": "Modo normal ({0})", "Mode vigilància ({0})": "Modo vigilancia ({0})",
+    "Què vol dir el mode?": "¿Qué significa el modo?",
+    "Mode normal: la pàgina s’actualitza cada {0} minuts. Mode vigilància: s’actualitza cada {1} minuts, just després de cada imatge nova del radar de Meteocat. La pàgina es posa en mode vigilància quan hi ha un avís de l’AEMET, un pla de Protecció Civil en alerta o emergència, pluja a Montflorit o pluja al radar a menys de {2} km. Quan ja no hi ha res d’això, torna al mode normal.": "Modo normal: la página se actualiza cada {0} minutos. Modo vigilancia: se actualiza cada {1} minutos, justo después de cada imagen nueva del radar de Meteocat. La página se pone en modo vigilancia cuando hay un aviso de AEMET, un plan de Protección Civil en alerta o emergencia, lluvia en Montflorit o lluvia en el radar a menos de {2} km. Cuando ya no hay nada de eso, vuelve al modo normal.",
     " del {0}": " del {0}",
     "demà a les {0}": "mañana a las {0}",
     "L’actualització de les {0} no s’ha fet: les dades són de les {1}.": "La actualización de las {0} no se ha hecho: los datos son de las {1}.",
@@ -318,6 +317,9 @@ var IDIOMA = {
   // Paraules que venen a les dades: nivells, tipus d'avís, plans i rumbs.
   dades: {
     groc: 'amarillo', taronja: 'naranja', vermell: 'rojo',
+    // Els motius del mode vigilància (prevision.motivos_modo_aviso).
+    "avís de l'AEMET": 'aviso de AEMET', 'pla de Protecció Civil': 'plan de Protección Civil',
+    'pluja a les estacions': 'lluvia en las estaciones', 'pluja al radar': 'lluvia en el radar',
     pluja: 'lluvia', tempestes: 'tormentas',
     "d'inundacions": 'de inundaciones', 'de vent': 'de viento', 'de neu': 'de nieve',
     'per onada de calor': 'por ola de calor', 'per onada de fred': 'por ola de frío',
